@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! prompt = "0.1.0"
+//! promptio = "0.1.0"
 //! ```
 //!
 //! ## Examples
