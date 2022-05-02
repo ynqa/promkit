@@ -1,7 +1,7 @@
 # promptio
 
 [![.github/workflows/promptio.yml](https://github.com/ynqa/promptio/actions/workflows/prompt.yml/badge.svg)](https://github.com/ynqa/promptio/actions/workflows/promptio.yml)
-![docs.rs](https://img.shields.io/docsrs/promptio)
+[![docs.rs](https://img.shields.io/docsrs/promptio)](https://docs.rs/promptio)
 
 A toolkit for building your own interactive command-line tools in Rust,
 utilizing [crossterm](https://github.com/crossterm-rs/crossterm).
