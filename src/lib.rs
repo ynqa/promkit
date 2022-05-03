@@ -1,6 +1,6 @@
-//! # Prompt
+//! # Promptio
 //!
-//! A toolkit for building your own interactive prompt in Rust,
+//! A toolkit for building your own interactive command-line tools in Rust,
 //! utilizing [crossterm](https://github.com/crossterm-rs/crossterm).
 //!
 //! ## Getting Started
