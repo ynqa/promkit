@@ -1,4 +1,4 @@
-use promptio::{
+use promkit::{
     build::Builder,
     edit::{Register, Suggest},
     readline, Result,

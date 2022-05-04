@@ -1,7 +1,7 @@
-# promptio
+# promkit
 
-[![.github/workflows/promptio.yml](https://github.com/ynqa/promptio/actions/workflows/prompt.yml/badge.svg)](https://github.com/ynqa/promptio/actions/workflows/promptio.yml)
-[![docs.rs](https://img.shields.io/docsrs/promptio)](https://docs.rs/promptio)
+[![.github/workflows/promkit.yml](https://github.com/ynqa/promkit/actions/workflows/promkit.yml/badge.svg)](https://github.com/ynqa/promkit/actions/workflows/promkit.yml)
+[![docs.rs](https://img.shields.io/docsrs/promkit)](https://docs.rs/promkit)
 
 A toolkit for building your own interactive command-line tools in Rust,
 utilizing [crossterm](https://github.com/crossterm-rs/crossterm).
@@ -12,7 +12,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promptio = "0.1.0"
+promkit = "0.1.0"
 ```
 
 ## Features
@@ -32,7 +32,7 @@ promptio = "0.1.0"
 Readline:
 
 ```rust
-use promptio::{build::Builder, readline, Result};
+use promkit::{build::Builder, readline, Result};
 
 fn main() -> Result<()> {
     let mut p = readline::Builder::default().build()?;
@@ -51,7 +51,7 @@ Select:
 
 ```rust
 use crossterm::style;
-use promptio::{
+use promkit::{
     build::Builder,
     edit::{Register, SelectBox},
     select, Result,

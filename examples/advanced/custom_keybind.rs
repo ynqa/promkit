@@ -5,7 +5,7 @@ use crossterm::{
     event::{Event, KeyCode, KeyEvent, KeyModifiers},
 };
 
-use promptio::{
+use promkit::{
     build::Builder,
     grapheme::Graphemes,
     keybind::KeyBind,

@@ -1,6 +1,6 @@
 use crossterm::style;
 
-use promptio::{
+use promkit::{
     build::Builder,
     edit::{Register, SelectBox},
     select, Result,

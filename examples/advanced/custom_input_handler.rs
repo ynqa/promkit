@@ -1,6 +1,6 @@
 use std::io;
 
-use promptio::{
+use promkit::{
     build::Builder,
     keybind::KeyBind,
     readline::{self, handler, State},

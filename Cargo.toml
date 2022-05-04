@@ -1,10 +1,10 @@
 [package]
-name = "promptio"
+name = "promkit"
 version = "0.1.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2018"
 description = "A toolkit for building your own interactive command-line tools"
-repository = "https://github.com/ynqa/promptio"
+repository = "https://github.com/ynqa/promkit"
 license = "MIT"
 readme = "README.md"
 
@@ -13,7 +13,7 @@ name = "debug_cursor"
 path = "debugs/cursor.rs"
 
 [lib]
-name = "promptio"
+name = "promkit"
 path = "src/lib.rs"
 
 [dependencies]

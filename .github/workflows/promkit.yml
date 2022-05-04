@@ -1,4 +1,4 @@
-name: prompt
+name: promkit
 
 on: [push]
 

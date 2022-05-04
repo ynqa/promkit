@@ -1,4 +1,4 @@
-//! # Promptio
+//! # promkit
 //!
 //! A toolkit for building your own interactive command-line tools in Rust,
 //! utilizing [crossterm](https://github.com/crossterm-rs/crossterm).
@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promptio = "0.1.0"
+//! promkit = "0.1.0"
 //! ```
 //!
 //! ## Examples
@@ -17,7 +17,7 @@
 //! Readline:
 //!
 //! ```no_run
-//! use promptio::{build::Builder, readline, Result};
+//! use promkit::{build::Builder, readline, Result};
 //!
 //! fn main() -> Result<()> {
 //!     let mut p = readline::Builder::default().build()?;
@@ -36,7 +36,7 @@
 //!
 //! ```no_run
 //! use crossterm::style;
-//! use promptio::{
+//! use promkit::{
 //!     build::Builder,
 //!     edit::{Register, SelectBox},
 //!     select, Result,

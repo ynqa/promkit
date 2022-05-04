@@ -6,7 +6,7 @@ use crossterm::{
     event::{Event, KeyCode, KeyEvent, KeyModifiers},
 };
 
-use promptio::{
+use promkit::{
     build::Builder,
     handler,
     readline::{self, State},

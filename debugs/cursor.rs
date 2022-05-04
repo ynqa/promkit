@@ -7,7 +7,7 @@ use crossterm::{
     terminal,
 };
 
-use promptio::{termutil, Result};
+use promkit::{termutil, Result};
 
 fn main() -> Result<()> {
     terminal::enable_raw_mode()?;

@@ -1,6 +1,6 @@
 use crossterm::style;
 
-use promptio::{build::Builder, readline, Result};
+use promkit::{build::Builder, readline, Result};
 
 fn main() -> Result<()> {
     let mut p = readline::Builder::default()
