@@ -45,8 +45,8 @@ impl Output for State {
 // TODO: multi-line inputs.
 // TODO: select range of buffer and replace string to the additional input.
 // TODO: input validation.
-impl state::Render for State {
-    fn pre_render<W: io::Write>(&self, out: &mut W) -> Result<()> {
+impl <W: io::Write> state::Render<W> for State {
+    fn pre_render(&self, out: &mut W) -> Result<()> {
         crossterm::execute!(
             out,
             style::SetForegroundColor(self.1.label_color),
@@ -55,7 +55,7 @@ impl state::Render for State {
         )
     }
 
-    fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
+    fn render(&mut self, out: &mut W) -> Result<()> {
         if let Some((mut prev, mut next)) = self.0.input_stream.pop() {
             // Masking.
             prev.data = match &self.1.mask {

@@ -12,7 +12,7 @@ pub struct Inherited<D> {
 }
 
 /// A trait to render the items into the output stream.
-pub trait Render {
-    fn pre_render<W: io::Write>(&self, out: &mut W) -> Result<()>;
-    fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()>;
+pub trait Render<W: io::Write> {
+    fn pre_render(&self, out: &mut W) -> Result<()>;
+    fn render(&mut self, out: &mut W) -> Result<()>;
 }

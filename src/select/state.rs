@@ -33,8 +33,8 @@ impl Output for State {
     }
 }
 
-impl state::Render for State {
-    fn pre_render<W: io::Write>(&self, out: &mut W) -> Result<()> {
+impl <W: io::Write> state::Render<W> for State {
+    fn pre_render(&self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.1.init_move_down_lines {
             crossterm::execute!(out, cursor::MoveToNextLine(self.1.init_move_down_lines))?;
@@ -55,7 +55,7 @@ impl state::Render for State {
         crossterm::execute!(out, cursor::MoveTo(0, 0))
     }
 
-    fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
+    fn render(&mut self, out: &mut W) -> Result<()> {
         if let Some((_, next)) = self.0.input_stream.pop() {
             if !next.data.is_empty() {
                 crossterm::execute!(out, cursor::SavePosition)?;
