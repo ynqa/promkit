@@ -4,7 +4,6 @@ use crate::{
     edit::{Buffer, Cursor},
     grapheme::Grapheme,
     readline::{Mode, State},
-    state::Render,
     termutil, EventHandleFn,
 };
 
@@ -134,17 +133,4 @@ pub fn input_char() -> Box<EventHandleFn<State>> {
             Ok(None)
         },
     )
-}
-
-/// Reload terminal.
-pub fn reload() -> Box<EventHandleFn<State>> {
-    Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-        termutil::clear(out)?;
-        state.pre_render(out)?;
-        state
-            .0
-            .input_stream
-            .push((Box::new(Buffer::default()), state.0.editor.clone()));
-        Ok(None)
-    })
 }

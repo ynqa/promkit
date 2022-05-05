@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::io::Stdout;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{
+    edit::SelectBox,
     handler,
     keybind::KeyBind,
     select::{self, State},
@@ -23,7 +25,7 @@ impl Default for KeyBind<State> {
         let mut b = KeyBind::<State> {
             event_mapping: HashMap::default(),
             handle_input: None,
-            handle_resize: Some(select::handler::reload()),
+            handle_resize: Some(handler::reload::<SelectBox, select::state::With, Stdout>()),
         };
         b.assign(vec![
             (

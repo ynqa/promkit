@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::io::Stdout;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{
+    edit::Buffer,
     handler,
     keybind::KeyBind,
     readline::{self, State},
@@ -28,7 +30,7 @@ impl Default for KeyBind<State> {
         let mut b = KeyBind {
             event_mapping: HashMap::default(),
             handle_input: Some(readline::handler::input_char()),
-            handle_resize: Some(readline::handler::reload()),
+            handle_resize: Some(handler::reload::<Buffer, readline::state::With, Stdout>()),
         };
         b.assign(vec![
             (

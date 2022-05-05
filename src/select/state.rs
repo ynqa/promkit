@@ -33,7 +33,7 @@ impl Output for State {
     }
 }
 
-impl <W: io::Write> state::Render<W> for State {
+impl<W: io::Write> state::Render<W> for State {
     fn pre_render(&self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.1.init_move_down_lines {
