@@ -22,10 +22,10 @@ pub type State = state::State<Buffer, With>;
 /// Readline specific state.
 #[derive(Debug)]
 pub struct With {
-    /// Define prompt (e.g. `>> `).
+    /// A label as prompt (e.g. ">>").
     pub label: Graphemes,
     pub label_color: style::Color,
-    /// A char to mask the input chars (e.g. `*`),
+    /// A char to mask the input chars (e.g. "*"),
     /// for example when you type the passwords.
     pub mask: Option<Grapheme>,
     pub edit_mode: Mode,
