@@ -17,6 +17,8 @@ use crate::{
 #[derive(Clone)]
 pub struct Builder {
     _handler: Rc<RefCell<dyn Handler<State>>>,
+    _title: Option<Graphemes>,
+    _title_color: Option<style::Color>,
     _label: Graphemes,
     _label_color: style::Color,
     _mask: Option<Grapheme>,
@@ -29,6 +31,8 @@ impl Default for Builder {
     fn default() -> Self {
         Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
+            _title: None,
+            _title_color: None,
             _label: Graphemes::from("❯❯ "),
             _label_color: style::Color::DarkRed,
             _mask: None,
@@ -47,6 +51,8 @@ impl build::Builder<Buffer, With> for Builder {
                 input_stream: vec![(Box::new(Buffer::default()), Box::new(Buffer::default()))],
             },
             With {
+                title: self._title,
+                title_color: self._title_color,
                 label: self._label,
                 label_color: self._label_color,
                 mask: self._mask,
@@ -88,6 +94,16 @@ impl build::Builder<Buffer, With> for Builder {
 impl Builder {
     pub fn handler<H: 'static + Handler<State>>(mut self, handler: H) -> Self {
         self._handler = Rc::new(RefCell::new(handler));
+        self
+    }
+
+    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
+        self._title = Some(Graphemes::from(title.into()));
+        self
+    }
+
+    pub fn title_color(mut self, color: style::Color) -> Self {
+        self._title_color = Some(color);
         self
     }
 

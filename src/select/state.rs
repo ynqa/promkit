@@ -15,6 +15,7 @@ pub type State = state::State<SelectBox, With>;
 
 /// Select specific state.
 pub struct With {
+    /// Title displayed on the initial line.
     pub title: Option<Graphemes>,
     pub title_color: Option<style::Color>,
     /// A symbol to emphasize the selected item (e.g. ">").

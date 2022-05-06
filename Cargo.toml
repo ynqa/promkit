@@ -63,6 +63,10 @@ name = "suggest"
 path = "examples/readline/suggest.rs"
 
 [[example]]
+name = "title"
+path = "examples/readline/title.rs"
+
+[[example]]
 name = "init_down"
 path = "examples/select/init_down.rs"
 
