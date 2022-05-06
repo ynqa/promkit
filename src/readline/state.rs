@@ -1,6 +1,7 @@
+use std::cmp::Ordering;
 use std::io;
 
-use crossterm::{style, terminal};
+use crossterm::{cursor, style, terminal};
 
 use crate::{
     edit::{Buffer, History, Suggest},
@@ -22,6 +23,9 @@ pub type State = state::State<Buffer, With>;
 /// Readline specific state.
 #[derive(Debug)]
 pub struct With {
+    /// Title displayed on the initial line.
+    pub title: Option<Graphemes>,
+    pub title_color: Option<style::Color>,
     /// A label as prompt (e.g. ">>").
     pub label: Graphemes,
     pub label_color: style::Color,
@@ -47,6 +51,23 @@ impl Output for State {
 // TODO: input validation.
 impl<W: io::Write> state::Render<W> for State {
     fn pre_render(&self, out: &mut W) -> Result<()> {
+        // Render the title.
+        if let Some(title) = &self.1.title {
+            if let Some(color) = self.1.title_color {
+                crossterm::execute!(out, style::SetForegroundColor(color))?;
+            }
+            crossterm::execute!(out, style::Print(title), cursor::MoveToNextLine(1))?;
+            if self.1.title_color.is_some() {
+                crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
+            }
+            if termutil::compare_cursor_position(termutil::Boundary::Bottom)? == Ordering::Equal {
+                let title_lines =
+                    termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+                crossterm::execute!(out, terminal::ScrollUp(title_lines))?;
+            }
+        }
+
+        // Render the label.
         crossterm::execute!(
             out,
             style::SetForegroundColor(self.1.label_color),
@@ -57,6 +78,16 @@ impl<W: io::Write> state::Render<W> for State {
 
     fn render(&mut self, out: &mut W) -> Result<()> {
         if let Some((mut prev, mut next)) = self.0.input_stream.pop() {
+            // Check to leave the space to render the data.
+            let used_space =
+                termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+            if terminal::size()?.1 <= used_space {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Terminal does not leave the space to render.",
+                ));
+            }
+
             // Masking.
             prev.data = match &self.1.mask {
                 None => prev.data.clone(),
