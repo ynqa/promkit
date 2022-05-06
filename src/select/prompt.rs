@@ -20,8 +20,8 @@ pub struct Builder {
     _selectbox: Box<SelectBox>,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
-    _selected_color: style::Color,
-    _selected_item_prefix: Graphemes,
+    _label: Graphemes,
+    _label_color: style::Color,
     _init_move_down_lines: u16,
     _window: Option<u16>,
     _suffix_after_trim: Graphemes,
@@ -34,8 +34,8 @@ impl Default for Builder {
             _selectbox: Box::new(SelectBox::default()),
             _title: None,
             _title_color: None,
-            _selected_color: style::Color::Cyan,
-            _selected_item_prefix: Graphemes::from("❯ "),
+            _label: Graphemes::from("❯ "),
+            _label_color: style::Color::Cyan,
             _init_move_down_lines: 0,
             _window: None,
             _suffix_after_trim: Graphemes::from("…"),
@@ -55,8 +55,8 @@ impl build::Builder<SelectBox, With> for Builder {
                 title: self._title,
                 title_color: self._title_color,
                 selected_cursor_pos: 0,
-                selected_color: self._selected_color,
-                selected_item_prefix: self._selected_item_prefix,
+                label: self._label,
+                label_color: self._label_color,
                 init_move_down_lines: self._init_move_down_lines,
                 window: self._window,
                 suffix_after_trim: self._suffix_after_trim,
@@ -109,8 +109,13 @@ impl Builder {
         self
     }
 
-    pub fn selected_color(mut self, color: style::Color) -> Self {
-        self._selected_color = color;
+    pub fn label<T: Into<String>>(mut self, label: T) -> Self {
+        self._label = Graphemes::from(label.into());
+        self
+    }
+
+    pub fn label_color(mut self, color: style::Color) -> Self {
+        self._label_color = color;
         self
     }
 

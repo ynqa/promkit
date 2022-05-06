@@ -17,9 +17,10 @@ pub type State = state::State<SelectBox, With>;
 pub struct With {
     pub title: Option<Graphemes>,
     pub title_color: Option<style::Color>,
+    /// A symbol to emphasize the selected item (e.g. ">").
+    pub label: Graphemes,
+    pub label_color: style::Color,
     pub selected_cursor_pos: u16,
-    pub selected_color: style::Color,
-    pub selected_item_prefix: Graphemes,
     pub init_move_down_lines: u16,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
@@ -86,7 +87,7 @@ impl<W: io::Write> state::Render<W> for State {
                 for i in from..to {
                     crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
                     if i == selectbox_pos {
-                        crossterm::execute!(out, style::SetForegroundColor(self.1.selected_color))?;
+                        crossterm::execute!(out, style::SetForegroundColor(self.1.label_color))?;
                     }
                     crossterm::execute!(
                         out,
@@ -96,9 +97,9 @@ impl<W: io::Write> state::Render<W> for State {
                                 .unwrap_or(&Graphemes::default())
                                 .to_string(),
                             &if i == selectbox_pos {
-                                self.1.selected_item_prefix.to_owned()
+                                self.1.label.to_owned()
                             } else {
-                                Graphemes::from(" ".repeat(self.1.selected_item_prefix.width()))
+                                Graphemes::from(" ".repeat(self.1.label.width()))
                             },
                             &self.1.suffix_after_trim
                         )?)
