@@ -6,31 +6,36 @@ use crate::{
     grapheme::Graphemes,
 };
 
-// TODO: change the limitations configurable for storing the historical inputs.
-// TODO: add a config to choose whether the duplications are accepted.
 /// New type of editor to store the histroy of the user inputs.
 #[derive(Debug, Clone)]
-pub struct History(Editor<Vec<Graphemes>>);
+pub struct History {
+    editor: Editor<Vec<Graphemes>>,
+
+    pub limit_len: Option<usize>,
+}
 
 impl Deref for History {
     type Target = Editor<Vec<Graphemes>>;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.editor
     }
 }
 
 impl DerefMut for History {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.editor
     }
 }
 
 impl Default for History {
     fn default() -> Self {
-        History(Editor::<Vec<Graphemes>> {
-            data: vec![Graphemes::default()],
-            idx: Cell::new(0),
-        })
+        History {
+            editor: Editor::<Vec<Graphemes>> {
+                data: vec![Graphemes::default()],
+                idx: Cell::new(0),
+            },
+            limit_len: None,
+        }
     }
 }
 
@@ -47,14 +52,22 @@ impl Register<Graphemes> for History {
     /// 1. Input "xyz"
     /// 1. items = ["abc", "xyz", ""]
     fn register(&mut self, item: Graphemes) {
-        if self.data.is_empty() {
-            self.data.push(item)
+        if self.editor.data.is_empty() {
+            self.editor.data.push(item)
         } else {
             if !self.exists(&item) {
-                let tail_idx = self.data.len() - 1;
-                self.data.insert(tail_idx, item);
+                let tail_idx = self.editor.data.len() - 1;
+                self.editor.data.insert(tail_idx, item);
+                // Oldest one of history is removed
+                // when the history is filled.
+                if let Some(limit) = self.limit_len {
+                    // Plus 1 considers the current input.
+                    if limit + 1 < self.editor.data.len() {
+                        self.editor.data.remove(0);
+                    }
+                }
             }
-            let tail_idx = self.data.len() - 1;
+            let tail_idx = self.editor.data.len() - 1;
             self.move_to(tail_idx);
         }
     }
@@ -62,21 +75,22 @@ impl Register<Graphemes> for History {
 
 impl History {
     pub fn get(&self) -> Graphemes {
-        self.data
-            .get(self.pos())
+        self.editor
+            .data
+            .get(self.editor.pos())
             .map(|v| v.to_owned())
             .unwrap_or_default()
     }
 
     /// Check whether the item exists or not.
     fn exists(&self, item: &Graphemes) -> bool {
-        self.data.iter().any(|i| i == item)
+        self.editor.data.iter().any(|i| i == item)
     }
 
     /// Move the cursor to the given position in the history.
     fn move_to(&self, idx: usize) -> bool {
-        if idx < self.data.len() {
-            self.idx.set(idx);
+        if idx < self.editor.data.len() {
+            self.editor.idx.set(idx);
             return true;
         }
         false
@@ -93,8 +107,31 @@ mod test {
     fn register() {
         let mut h = History::default();
         h.register(Graphemes::from("line"));
-        assert_eq!(h.pos(), 1);
+        assert_eq!(h.editor.pos(), 1);
         assert_eq!(h.get(), Graphemes::default());
+    }
+
+    #[test]
+    fn register_with_limit_len() {
+        let mut h = History {
+            limit_len: Some(3),
+            ..Default::default()
+        };
+        h.register_all(vec![
+            Graphemes::from("a"),
+            Graphemes::from("b"),
+            Graphemes::from("c"),
+        ]);
+        h.register(Graphemes::from("d"));
+        assert_eq!(
+            vec![
+                Graphemes::from("b"),
+                Graphemes::from("c"),
+                Graphemes::from("d"),
+                Graphemes::default(),
+            ],
+            h.data,
+        )
     }
 
     #[test]
@@ -113,9 +150,9 @@ mod test {
             Graphemes::from("b"),
             Graphemes::from("c"),
         ]);
-        assert!(h.move_to(h.data.len() - 1));
+        assert!(h.move_to(h.editor.data.len() - 1));
         assert!(h.move_to(0));
-        let idx_over_len = h.data.len() + 20;
+        let idx_over_len = h.editor.data.len() + 20;
         assert!(!h.move_to(idx_over_len));
     }
 }
