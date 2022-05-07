@@ -5,7 +5,7 @@ use crate::{
     grapheme::Graphemes,
 };
 
-/// New type of editor to store the candidates to choose the items from.
+/// Store the candidates to choose the items from.
 #[derive(Debug, Clone, Default)]
 pub struct SelectBox(Editor<Vec<Graphemes>>);
 

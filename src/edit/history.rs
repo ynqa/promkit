@@ -6,7 +6,7 @@ use crate::{
     grapheme::Graphemes,
 };
 
-/// New type of editor to store the histroy of the user inputs.
+/// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
 pub struct History {
     editor: Editor<Vec<Graphemes>>,

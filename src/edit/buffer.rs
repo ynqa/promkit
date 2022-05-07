@@ -5,7 +5,7 @@ use crate::{
     grapheme::{Grapheme, Graphemes},
 };
 
-/// New type of editor to store the user inputs.
+/// Store the user inputs.
 #[derive(Debug, Clone, Default)]
 pub struct Buffer(Editor<Graphemes>);
 
