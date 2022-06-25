@@ -144,7 +144,7 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<D, S> Prompt<state::State<D, S>>
+impl<D: 'static, S: 'static> Prompt<state::State<D, S>>
 where
     state::State<D, S>: Output,
 {
