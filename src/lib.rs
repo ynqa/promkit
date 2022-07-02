@@ -87,7 +87,15 @@ pub mod history;
 /// and their handlers.
 pub mod keybind;
 /// A module providing the lines to receive and display user inputs.
-pub mod readline;
+pub mod readline {
+    pub mod handler;
+    mod keybind;
+    mod prompt;
+    pub mod state;
+
+    pub use self::prompt::Builder;
+    pub use self::state::{Mode, State};
+}
 /// A module providing trait to register the item into.
 pub mod register {
     /// A trait to register the items.
@@ -101,7 +109,15 @@ pub mod register {
     }
 }
 /// A module providing the selectbox to choose the items from.
-pub mod select;
+pub mod select {
+    pub mod handler;
+    mod keybind;
+    mod prompt;
+    pub mod state;
+
+    pub use self::prompt::Builder;
+    pub use self::state::State;
+}
 /// List representing the candidate items to be chosen by the users.
 pub mod selectbox;
 /// State of applications.
