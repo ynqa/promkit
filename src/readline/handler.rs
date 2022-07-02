@@ -101,9 +101,11 @@ pub fn complete() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         let prev = state.0.editor.clone();
         if let Some(suggest) = &state.1.suggest {
-            if let Some(res) = suggest.search(&prev.data) {
-                state.0.editor.replace(&res);
-                state.0.input_stream.push((prev, state.0.editor.clone()));
+            if prev.data.len() >= state.1.min_len_to_search {
+                if let Some(res) = suggest.search(&prev.data) {
+                    state.0.editor.replace(&res);
+                    state.0.input_stream.push((prev, state.0.editor.clone()));
+                }
             }
         }
         Ok(None)
