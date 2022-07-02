@@ -43,6 +43,10 @@ name = "label"
 path = "examples/readline/label.rs"
 
 [[example]]
+name = "limit_history_size"
+path = "examples/readline/limit_history_size.rs"
+
+[[example]]
 name = "masking"
 path = "examples/readline/masking.rs"
 

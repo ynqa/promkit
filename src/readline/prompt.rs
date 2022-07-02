@@ -28,6 +28,7 @@ pub struct Builder {
     _edit_mode: Mode,
     _num_lines: Option<usize>,
     _min_len_to_search: usize,
+    _limit_history_size: Option<usize>,
     _suggest: Option<Box<Suggest>>,
 }
 
@@ -43,6 +44,7 @@ impl Default for Builder {
             _edit_mode: Mode::Insert,
             _num_lines: None,
             _min_len_to_search: 1,
+            _limit_history_size: None,
             _suggest: None,
         }
     }
@@ -65,6 +67,7 @@ impl build::Builder<Buffer, With> for Builder {
                 num_lines: self._num_lines,
                 hstr: Some(Box::new(History::default())),
                 min_len_to_search: self._min_len_to_search,
+                limit_history_size: self._limit_history_size,
                 suggest: self._suggest,
             },
         )))
@@ -87,6 +90,14 @@ impl build::Builder<Buffer, With> for Builder {
                     termutil::move_head(out)?;
                     if let Some(hstr) = &mut state.1.hstr {
                         hstr.register(state.0.editor.data.clone());
+                        // Oldest one of history is removed
+                        // when the history is filled.
+                        if let Some(limit) = state.1.limit_history_size {
+                            // Plus 1 considers the current input.
+                            if limit + 1 < hstr.data.len() {
+                                hstr.data.remove(0);
+                            }
+                        }
                     }
                     state.0.editor = Box::new(Buffer::default());
                     Ok(())
@@ -140,6 +151,11 @@ impl Builder {
 
     pub fn min_len_to_search(mut self, len: usize) -> Self {
         self._min_len_to_search = len;
+        self
+    }
+
+    pub fn limit_history_size(mut self, size: usize) -> Self {
+        self._limit_history_size = Some(size);
         self
     }
 

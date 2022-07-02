@@ -5,34 +5,27 @@ use crate::{grapheme::Graphemes, register::Register, selectbox::SelectBox};
 
 /// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
-pub struct History {
-    selectbox: SelectBox,
-
-    pub limit_len: Option<usize>,
-}
+pub struct History(SelectBox);
 
 impl Deref for History {
     type Target = SelectBox;
     fn deref(&self) -> &Self::Target {
-        &self.selectbox
+        &self.0
     }
 }
 
 impl DerefMut for History {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.selectbox
+        &mut self.0
     }
 }
 
 impl Default for History {
     fn default() -> Self {
-        History {
-            selectbox: SelectBox {
-                data: vec![Graphemes::default()],
-                idx: Cell::new(0),
-            },
-            limit_len: None,
-        }
+        History(SelectBox {
+            data: vec![Graphemes::default()],
+            idx: Cell::new(0),
+        })
     }
 }
 
@@ -49,45 +42,29 @@ impl Register<Graphemes> for History {
     /// 1. Input "xyz"
     /// 1. items = ["abc", "xyz", ""]
     fn register(&mut self, item: Graphemes) {
-        if self.selectbox.data.is_empty() {
-            self.selectbox.data.push(item)
+        if self.data.is_empty() {
+            self.data.push(item)
         } else {
             if !self.exists(&item) {
-                let tail_idx = self.selectbox.data.len() - 1;
-                self.selectbox.data.insert(tail_idx, item);
-                // Oldest one of history is removed
-                // when the history is filled.
-                if let Some(limit) = self.limit_len {
-                    // Plus 1 considers the current input.
-                    if limit + 1 < self.selectbox.data.len() {
-                        self.selectbox.data.remove(0);
-                    }
-                }
+                let tail_idx = self.data.len() - 1;
+                self.data.insert(tail_idx, item);
             }
-            let tail_idx = self.selectbox.data.len() - 1;
+            let tail_idx = self.data.len() - 1;
             self.move_to(tail_idx);
         }
     }
 }
 
 impl History {
-    pub fn get(&self) -> Graphemes {
-        self.selectbox
-            .data
-            .get(self.selectbox.pos())
-            .map(|v| v.to_owned())
-            .unwrap_or_default()
-    }
-
     /// Check whether the item exists or not.
     fn exists(&self, item: &Graphemes) -> bool {
-        self.selectbox.data.iter().any(|i| i == item)
+        self.data.iter().any(|i| i == item)
     }
 
     /// Move the cursor to the given position in the history.
     fn move_to(&self, idx: usize) -> bool {
-        if idx < self.selectbox.data.len() {
-            self.selectbox.idx.set(idx);
+        if idx < self.data.len() {
+            self.idx.set(idx);
             return true;
         }
         false
@@ -102,31 +79,8 @@ mod test {
     fn register() {
         let mut h = History::default();
         h.register(Graphemes::from("line"));
-        assert_eq!(h.selectbox.pos(), 1);
+        assert_eq!(h.pos(), 1);
         assert_eq!(h.get(), Graphemes::default());
-    }
-
-    #[test]
-    fn register_with_limit_len() {
-        let mut h = History {
-            limit_len: Some(3),
-            ..Default::default()
-        };
-        h.register_all(vec![
-            Graphemes::from("a"),
-            Graphemes::from("b"),
-            Graphemes::from("c"),
-        ]);
-        h.register(Graphemes::from("d"));
-        assert_eq!(
-            vec![
-                Graphemes::from("b"),
-                Graphemes::from("c"),
-                Graphemes::from("d"),
-                Graphemes::default(),
-            ],
-            h.data,
-        )
     }
 
     #[test]
@@ -145,9 +99,9 @@ mod test {
             Graphemes::from("b"),
             Graphemes::from("c"),
         ]);
-        assert!(h.move_to(h.selectbox.data.len() - 1));
+        assert!(h.move_to(h.data.len() - 1));
         assert!(h.move_to(0));
-        let idx_over_len = h.selectbox.data.len() + 20;
+        let idx_over_len = h.data.len() + 20;
         assert!(!h.move_to(idx_over_len));
     }
 }
