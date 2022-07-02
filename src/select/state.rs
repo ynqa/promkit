@@ -93,10 +93,7 @@ impl<W: io::Write> state::Render<W> for State {
                     crossterm::execute!(
                         out,
                         style::Print(edit(
-                            &next
-                                .get_with(i)
-                                .unwrap_or(&Graphemes::default())
-                                .to_string(),
+                            &next.get_with_index(i).to_string(),
                             &if i == selectbox_pos {
                                 self.1.label.to_owned()
                             } else {

@@ -44,15 +44,12 @@ impl SelectBox {
         self.idx.set(self.data.len() - 1)
     }
 
-    pub fn get_with(&self, i: usize) -> Option<&Graphemes> {
-        self.data.get(i)
+    pub fn get_with_index(&self, i: usize) -> Graphemes {
+        self.data.get(i).map(|v| v.to_owned()).unwrap_or_default()
     }
 
     pub fn get(&self) -> Graphemes {
-        self.data
-            .get(self.pos())
-            .map(|v| v.to_owned())
-            .unwrap_or_default()
+        self.get_with_index(self.pos())
     }
 }
 
