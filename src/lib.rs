@@ -144,12 +144,9 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<D: 'static, S: 'static> Prompt<state::State<D, S>>
-where
-    state::State<D, S>: Output,
-{
+impl<S: 'static + Output> Prompt<S> {
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<(<state::State<D, S> as Output>::Output, ExitCode)> {
+    pub fn run(&mut self) -> Result<(S::Output, ExitCode)> {
         ONCE.call_once(|| {
             termutil::clear(&mut self.out).ok();
         });
