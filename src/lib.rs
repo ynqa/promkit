@@ -67,9 +67,15 @@ extern crate scopeguard;
 /// String buffer representing the user inputs.
 pub mod buffer;
 /// A module providing the builder of [Prompt](struct.Prompt.html).
-pub mod build;
-/// Data structures to be edited by the user interactions on the terminal.
-pub mod edit;
+pub mod build {
+    use super::{state::State, Prompt, Result};
+
+    /// A trait to build [Prompt](struct.Prompt.html).
+    pub trait Builder<D, S> {
+        fn state(self) -> Result<Box<State<D, S>>>;
+        fn build(self) -> Result<Prompt<State<D, S>>>;
+    }
+}
 /// Characters and their width.
 pub mod grapheme;
 /// Collection of terminal operations.
@@ -82,12 +88,43 @@ pub mod history;
 pub mod keybind;
 /// A module providing the lines to receive and display user inputs.
 pub mod readline;
+/// A module providing trait to register the item into.
+pub mod register {
+    /// A trait to register the items.
+    pub trait Register<T> {
+        fn register(&mut self, _: T);
+        fn register_all<U: IntoIterator<Item = T>>(&mut self, items: U) {
+            for (_, item) in items.into_iter().enumerate() {
+                self.register(item)
+            }
+        }
+    }
+}
 /// A module providing the selectbox to choose the items from.
 pub mod select;
 /// List representing the candidate items to be chosen by the users.
 pub mod selectbox;
 /// State of applications.
-pub mod state;
+pub mod state {
+    use std::io;
+
+    use crate::Result;
+
+    #[derive(Default)]
+    pub struct State<D, S>(pub Inherited<D>, pub S);
+
+    #[derive(Default)]
+    pub struct Inherited<D> {
+        pub input_stream: Vec<(Box<D>, Box<D>)>,
+        pub editor: Box<D>,
+    }
+
+    /// A trait to render the items into the output stream.
+    pub trait Render<W: io::Write> {
+        fn pre_render(&self, out: &mut W) -> Result<()>;
+        fn render(&mut self, out: &mut W) -> Result<()>;
+    }
+}
 /// A data structure to store the suggestions for the completion.
 pub mod suggest;
 /// Utilities for the terminal.
@@ -203,18 +240,6 @@ impl<S: 'static + Output> Prompt<S> {
                     return Err(e);
                 }
                 _ => (),
-            }
-        }
-    }
-}
-
-pub mod register {
-    /// A trait to register the items.
-    pub trait Register<T> {
-        fn register(&mut self, _: T);
-        fn register_all<U: IntoIterator<Item = T>>(&mut self, items: U) {
-            for (_, item) in items.into_iter().enumerate() {
-                self.register(item)
             }
         }
     }
