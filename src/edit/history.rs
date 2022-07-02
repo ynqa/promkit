@@ -2,38 +2,38 @@ use std::cell::Cell;
 use std::ops::{Deref, DerefMut};
 
 use crate::{
-    edit::{Cursor, Editor, Register},
+    edit::{Cursor, Editor, Register, SelectBox},
     grapheme::Graphemes,
 };
 
 /// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
 pub struct History {
-    editor: Editor<Vec<Graphemes>>,
+    selectbox: SelectBox,
 
     pub limit_len: Option<usize>,
 }
 
 impl Deref for History {
-    type Target = Editor<Vec<Graphemes>>;
+    type Target = SelectBox;
     fn deref(&self) -> &Self::Target {
-        &self.editor
+        &self.selectbox
     }
 }
 
 impl DerefMut for History {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.editor
+        &mut self.selectbox
     }
 }
 
 impl Default for History {
     fn default() -> Self {
         History {
-            editor: Editor::<Vec<Graphemes>> {
+            selectbox: SelectBox(Editor::<Vec<Graphemes>> {
                 data: vec![Graphemes::default()],
                 idx: Cell::new(0),
-            },
+            }),
             limit_len: None,
         }
     }
@@ -52,22 +52,22 @@ impl Register<Graphemes> for History {
     /// 1. Input "xyz"
     /// 1. items = ["abc", "xyz", ""]
     fn register(&mut self, item: Graphemes) {
-        if self.editor.data.is_empty() {
-            self.editor.data.push(item)
+        if self.selectbox.data.is_empty() {
+            self.selectbox.data.push(item)
         } else {
             if !self.exists(&item) {
-                let tail_idx = self.editor.data.len() - 1;
-                self.editor.data.insert(tail_idx, item);
+                let tail_idx = self.selectbox.data.len() - 1;
+                self.selectbox.data.insert(tail_idx, item);
                 // Oldest one of history is removed
                 // when the history is filled.
                 if let Some(limit) = self.limit_len {
                     // Plus 1 considers the current input.
-                    if limit + 1 < self.editor.data.len() {
-                        self.editor.data.remove(0);
+                    if limit + 1 < self.selectbox.data.len() {
+                        self.selectbox.data.remove(0);
                     }
                 }
             }
-            let tail_idx = self.editor.data.len() - 1;
+            let tail_idx = self.selectbox.data.len() - 1;
             self.move_to(tail_idx);
         }
     }
@@ -75,22 +75,22 @@ impl Register<Graphemes> for History {
 
 impl History {
     pub fn get(&self) -> Graphemes {
-        self.editor
+        self.selectbox
             .data
-            .get(self.editor.pos())
+            .get(self.selectbox.pos())
             .map(|v| v.to_owned())
             .unwrap_or_default()
     }
 
     /// Check whether the item exists or not.
     fn exists(&self, item: &Graphemes) -> bool {
-        self.editor.data.iter().any(|i| i == item)
+        self.selectbox.data.iter().any(|i| i == item)
     }
 
     /// Move the cursor to the given position in the history.
     fn move_to(&self, idx: usize) -> bool {
-        if idx < self.editor.data.len() {
-            self.editor.idx.set(idx);
+        if idx < self.selectbox.data.len() {
+            self.selectbox.idx.set(idx);
             return true;
         }
         false
@@ -107,7 +107,7 @@ mod test {
     fn register() {
         let mut h = History::default();
         h.register(Graphemes::from("line"));
-        assert_eq!(h.editor.pos(), 1);
+        assert_eq!(h.selectbox.pos(), 1);
         assert_eq!(h.get(), Graphemes::default());
     }
 
@@ -150,9 +150,9 @@ mod test {
             Graphemes::from("b"),
             Graphemes::from("c"),
         ]);
-        assert!(h.move_to(h.editor.data.len() - 1));
+        assert!(h.move_to(h.selectbox.data.len() - 1));
         assert!(h.move_to(0));
-        let idx_over_len = h.editor.data.len() + 20;
+        let idx_over_len = h.selectbox.data.len() + 20;
         assert!(!h.move_to(idx_over_len));
     }
 }

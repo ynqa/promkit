@@ -31,36 +31,6 @@ pub trait Cursor {
     fn to_tail(&self);
 }
 
-impl<D> Cursor for Editor<Vec<D>> {
-    fn pos(&self) -> usize {
-        self.idx.get()
-    }
-
-    fn prev(&self) -> bool {
-        if 0 < self.idx.get() {
-            self.idx.set(self.idx.get() - 1);
-            return true;
-        }
-        false
-    }
-
-    fn next(&self) -> bool {
-        if !self.data.is_empty() && self.idx.get() < self.data.len() - 1 {
-            self.idx.set(self.idx.get() + 1);
-            return true;
-        }
-        false
-    }
-
-    fn to_head(&self) {
-        self.idx.set(0)
-    }
-
-    fn to_tail(&self) {
-        self.idx.set(self.data.len() - 1)
-    }
-}
-
 /// A trait to register the items.
 pub trait Register<T> {
     fn register(&mut self, _: T);

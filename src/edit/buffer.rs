@@ -7,7 +7,7 @@ use crate::{
 
 /// Store the user inputs.
 #[derive(Debug, Clone, Default)]
-pub struct Buffer(Editor<Graphemes>);
+pub struct Buffer(pub Editor<Graphemes>);
 
 impl Deref for Buffer {
     type Target = Editor<Graphemes>;

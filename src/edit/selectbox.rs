@@ -7,7 +7,7 @@ use crate::{
 
 /// Store the candidates to choose the items from.
 #[derive(Debug, Clone, Default)]
-pub struct SelectBox(Editor<Vec<Graphemes>>);
+pub struct SelectBox(pub Editor<Vec<Graphemes>>);
 
 impl Deref for SelectBox {
     type Target = Editor<Vec<Graphemes>>;
@@ -38,6 +38,36 @@ impl SelectBox {
             .get(self.pos())
             .map(|v| v.to_owned())
             .unwrap_or_default()
+    }
+}
+
+impl Cursor for Editor<Vec<Graphemes>> {
+    fn pos(&self) -> usize {
+        self.idx.get()
+    }
+
+    fn prev(&self) -> bool {
+        if 0 < self.idx.get() {
+            self.idx.set(self.idx.get() - 1);
+            return true;
+        }
+        false
+    }
+
+    fn next(&self) -> bool {
+        if !self.data.is_empty() && self.idx.get() < self.data.len() - 1 {
+            self.idx.set(self.idx.get() + 1);
+            return true;
+        }
+        false
+    }
+
+    fn to_head(&self) {
+        self.idx.set(0)
+    }
+
+    fn to_tail(&self) {
+        self.idx.set(self.data.len() - 1)
     }
 }
 
