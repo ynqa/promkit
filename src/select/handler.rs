@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{edit::Cursor, select::State, EventHandleFn};
+use crate::{select::State, EventHandleFn};
 
 /// Move up from the current selected position in the candidates.
 pub fn move_up() -> Box<EventHandleFn<State>> {

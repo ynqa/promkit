@@ -1,13 +1,9 @@
 use std::collections::HashMap;
 use std::io;
 
-use crossterm::{
-    self,
-    event::{Event, KeyCode, KeyEvent, KeyModifiers},
-};
-
 use promkit::{
     build::Builder,
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     handler,
     readline::{self, State},
     ExitCode, Handler, Result,

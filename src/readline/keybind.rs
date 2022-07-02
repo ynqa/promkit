@@ -4,7 +4,7 @@ use std::io::Stdout;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{
-    edit::Buffer,
+    buffer::Buffer,
     handler,
     keybind::KeyBind,
     readline::{self, State},

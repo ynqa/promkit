@@ -1,8 +1,4 @@
-use promkit::{
-    build::Builder,
-    edit::{Register, Suggest},
-    readline, Result,
-};
+use promkit::{build::Builder, readline, register::Register, suggest::Suggest, Result};
 
 fn main() -> Result<()> {
     let mut s = Box::new(Suggest::default());

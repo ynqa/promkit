@@ -1,25 +1,12 @@
-use std::ops::{Deref, DerefMut};
+use std::cell::Cell;
 
-use crate::{
-    edit::{Cursor, Editor, Register},
-    grapheme::Graphemes,
-};
+use crate::{grapheme::Graphemes, register::Register};
 
 /// Store the candidates to choose the items from.
 #[derive(Debug, Clone, Default)]
-pub struct SelectBox(pub Editor<Vec<Graphemes>>);
-
-impl Deref for SelectBox {
-    type Target = Editor<Vec<Graphemes>>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for SelectBox {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+pub struct SelectBox {
+    pub data: Vec<Graphemes>,
+    pub idx: Cell<usize>,
 }
 
 impl<T: Into<String>> Register<T> for SelectBox {
@@ -29,6 +16,34 @@ impl<T: Into<String>> Register<T> for SelectBox {
 }
 
 impl SelectBox {
+    pub fn pos(&self) -> usize {
+        self.idx.get()
+    }
+
+    pub fn prev(&self) -> bool {
+        if 0 < self.idx.get() {
+            self.idx.set(self.idx.get() - 1);
+            return true;
+        }
+        false
+    }
+
+    pub fn next(&self) -> bool {
+        if !self.data.is_empty() && self.idx.get() < self.data.len() - 1 {
+            self.idx.set(self.idx.get() + 1);
+            return true;
+        }
+        false
+    }
+
+    pub fn to_head(&self) {
+        self.idx.set(0)
+    }
+
+    pub fn to_tail(&self) {
+        self.idx.set(self.data.len() - 1)
+    }
+
     pub fn get_with(&self, i: usize) -> Option<&Graphemes> {
         self.data.get(i)
     }
@@ -38,36 +53,6 @@ impl SelectBox {
             .get(self.pos())
             .map(|v| v.to_owned())
             .unwrap_or_default()
-    }
-}
-
-impl Cursor for Editor<Vec<Graphemes>> {
-    fn pos(&self) -> usize {
-        self.idx.get()
-    }
-
-    fn prev(&self) -> bool {
-        if 0 < self.idx.get() {
-            self.idx.set(self.idx.get() - 1);
-            return true;
-        }
-        false
-    }
-
-    fn next(&self) -> bool {
-        if !self.data.is_empty() && self.idx.get() < self.data.len() - 1 {
-            self.idx.set(self.idx.get() + 1);
-            return true;
-        }
-        false
-    }
-
-    fn to_head(&self) {
-        self.idx.set(0)
-    }
-
-    fn to_tail(&self) {
-        self.idx.set(self.data.len() - 1)
     }
 }
 

@@ -6,10 +6,10 @@ use crossterm::style;
 
 use crate::{
     build,
-    edit::SelectBox,
     grapheme::Graphemes,
     keybind::KeyBind,
     select::{state::With, State},
+    selectbox::SelectBox,
     state::{self, Render},
     termutil, Handler, Prompt, Result,
 };

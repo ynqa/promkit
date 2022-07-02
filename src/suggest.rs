@@ -1,6 +1,6 @@
 use radix_trie::{Trie, TrieCommon};
 
-use crate::{edit::Register, grapheme::Graphemes};
+use crate::{grapheme::Graphemes, register::Register};
 
 /// Store the suggestions for completion.
 #[derive(Clone, Debug)]

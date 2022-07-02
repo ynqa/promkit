@@ -54,10 +54,11 @@ Select:
 ![select](https://user-images.githubusercontent.com/6745370/175757316-8499ace6-e520-465b-a3fe-671182015431.gif)
 
 ```rust
-use crossterm::style;
 use promkit::{
     build::Builder,
-    edit::{Register, SelectBox},
+    crossterm::style,
+    selectbox::SelectBox,
+    register::Register,
     select, Result,
 };
 
@@ -75,4 +76,5 @@ fn main() -> Result<()> {
     }
     Ok(())
 }
+
 ```

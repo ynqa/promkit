@@ -4,9 +4,12 @@ use std::io;
 use crossterm::{cursor, style, terminal};
 
 use crate::{
-    edit::{Buffer, History, Suggest},
+    buffer::Buffer,
     grapheme::{Grapheme, Graphemes},
-    state, termutil, Output, Result,
+    history::History,
+    state,
+    suggest::Suggest,
+    termutil, Output, Result,
 };
 
 /// Edit mode.

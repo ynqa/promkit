@@ -35,10 +35,11 @@
 //! Select:
 //!
 //! ```no_run
-//! use crossterm::style;
 //! use promkit::{
 //!     build::Builder,
-//!     edit::{Register, SelectBox},
+//!     crossterm::style,
+//!     selectbox::SelectBox,
+//!     register::Register,
 //!     select, Result,
 //! };
 //!
@@ -63,15 +64,18 @@ extern crate downcast_rs;
 #[macro_use(defer)]
 extern crate scopeguard;
 
-/// A module provides the builder of [Prompt](struct.Prompt.html).
+/// String buffer representing the user inputs.
+pub mod buffer;
+/// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build;
 /// Data structures to be edited by the user interactions on the terminal.
 pub mod edit;
-mod error;
 /// Characters and their width.
 pub mod grapheme;
 /// Collection of terminal operations.
 pub mod handler;
+/// A data structure to store the history of the user inputs.
+pub mod history;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
@@ -80,11 +84,16 @@ pub mod keybind;
 pub mod readline;
 /// A module providing the selectbox to choose the items from.
 pub mod select;
+/// List representing the candidate items to be chosen by the users.
+pub mod selectbox;
 /// State of applications.
 pub mod state;
+/// A data structure to store the suggestions for the completion.
+pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
 
+mod error;
 pub use error::Result;
 
 use std::cell::RefCell;
@@ -194,6 +203,18 @@ impl<S: 'static + Output> Prompt<S> {
                     return Err(e);
                 }
                 _ => (),
+            }
+        }
+    }
+}
+
+pub mod register {
+    /// A trait to register the items.
+    pub trait Register<T> {
+        fn register(&mut self, _: T);
+        fn register_all<U: IntoIterator<Item = T>>(&mut self, items: U) {
+            for (_, item) in items.into_iter().enumerate() {
+                self.register(item)
             }
         }
     }

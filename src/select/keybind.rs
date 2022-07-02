@@ -4,10 +4,10 @@ use std::io::Stdout;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{
-    edit::SelectBox,
     handler,
     keybind::KeyBind,
     select::{self, State},
+    selectbox::SelectBox,
 };
 
 /// Default key bindings for select.

@@ -1,9 +1,5 @@
-use crossterm::style;
-
 use promkit::{
-    build::Builder,
-    edit::{Register, SelectBox},
-    select, Result,
+    build::Builder, crossterm::style, register::Register, select, selectbox::SelectBox, Result,
 };
 
 fn main() -> Result<()> {

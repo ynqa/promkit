@@ -1,6 +1,4 @@
-use crossterm::style;
-
-use promkit::{build::Builder, readline, Result};
+use promkit::{build::Builder, crossterm::style, readline, Result};
 
 fn main() -> Result<()> {
     let mut p = readline::Builder::default()

@@ -5,12 +5,15 @@ use std::rc::Rc;
 use crossterm::style;
 
 use crate::{
+    buffer::Buffer,
     build,
-    edit::{Buffer, History, Register, Suggest},
     grapheme::{Grapheme, Graphemes},
+    history::History,
     keybind::KeyBind,
     readline::{state::With, Mode, State},
+    register::Register,
     state::{self, Render},
+    suggest::Suggest,
     termutil, Handler, Prompt, Result,
 };
 

@@ -1,10 +1,7 @@
 use std::cell::Cell;
 use std::ops::{Deref, DerefMut};
 
-use crate::{
-    edit::{Cursor, Editor, Register, SelectBox},
-    grapheme::Graphemes,
-};
+use crate::{grapheme::Graphemes, register::Register, selectbox::SelectBox};
 
 /// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
@@ -30,10 +27,10 @@ impl DerefMut for History {
 impl Default for History {
     fn default() -> Self {
         History {
-            selectbox: SelectBox(Editor::<Vec<Graphemes>> {
+            selectbox: SelectBox {
                 data: vec![Graphemes::default()],
                 idx: Cell::new(0),
-            }),
+            },
             limit_len: None,
         }
     }
@@ -100,8 +97,6 @@ impl History {
 #[cfg(test)]
 mod test {
     use super::{Graphemes, History, Register};
-
-    use crate::edit::Cursor;
 
     #[test]
     fn register() {

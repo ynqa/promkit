@@ -1,7 +1,7 @@
 use std::io;
 
 use crate::{
-    edit::{Buffer, Cursor},
+    buffer::Buffer,
     grapheme::Grapheme,
     readline::{Mode, State},
     termutil, EventHandleFn,

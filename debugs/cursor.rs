@@ -1,13 +1,14 @@
 use std::io;
 
-use crossterm::{
-    self, cursor,
-    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-    style::Print,
-    terminal,
+use promkit::{
+    crossterm::{
+        self, cursor,
+        event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+        style::Print,
+        terminal,
+    },
+    termutil, Result,
 };
-
-use promkit::{termutil, Result};
 
 fn main() -> Result<()> {
     terminal::enable_raw_mode()?;

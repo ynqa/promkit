@@ -1,33 +1,20 @@
-use std::ops::{Deref, DerefMut};
+use std::cell::Cell;
 
-use crate::{
-    edit::{Cursor, Editor},
-    grapheme::{Grapheme, Graphemes},
-};
+use crate::grapheme::{Grapheme, Graphemes};
 
 /// Store the user inputs.
 #[derive(Debug, Clone, Default)]
-pub struct Buffer(pub Editor<Graphemes>);
-
-impl Deref for Buffer {
-    type Target = Editor<Graphemes>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+pub struct Buffer {
+    pub data: Graphemes,
+    pub idx: Cell<usize>,
 }
 
-impl DerefMut for Buffer {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl Cursor for Buffer {
-    fn pos(&self) -> usize {
+impl Buffer {
+    pub fn pos(&self) -> usize {
         self.idx.get()
     }
 
-    fn prev(&self) -> bool {
+    pub fn prev(&self) -> bool {
         if 0 < self.idx.get() {
             self.idx.set(self.idx.get() - 1);
             return true;
@@ -36,7 +23,7 @@ impl Cursor for Buffer {
     }
 
     // e.g. "" == 0, "a" == 1
-    fn next(&self) -> bool {
+    pub fn next(&self) -> bool {
         if self.idx.get() < self.data.len() {
             self.idx.set(self.idx.get() + 1);
             return true;
@@ -44,16 +31,14 @@ impl Cursor for Buffer {
         false
     }
 
-    fn to_head(&self) {
+    pub fn to_head(&self) {
         self.idx.set(0)
     }
 
-    fn to_tail(&self) {
+    pub fn to_tail(&self) {
         self.idx.set(self.data.len())
     }
-}
 
-impl Buffer {
     pub fn width_in_pos(&self) -> usize {
         if self.pos() < 1 {
             return 0;
@@ -121,27 +106,27 @@ impl Buffer {
 mod test {
     use std::cell::Cell;
 
-    use super::{Buffer, Editor, Grapheme, Graphemes};
+    use super::{Buffer, Grapheme, Graphemes};
 
     #[test]
     fn width_in_pos() {
-        let b = Buffer(Editor::<Graphemes> {
+        let b = Buffer {
             data: Graphemes(vec![
                 Grapheme { ch: 'a', width: 10 },
                 Grapheme { ch: 'b', width: 20 },
                 Grapheme { ch: 'c', width: 30 },
             ]),
             idx: Cell::new(2), // indicate `b`.
-        });
+        };
         assert_eq!(20, b.width_in_pos());
     }
 
     #[test]
     fn replace() {
-        let mut b = Buffer(Editor::<Graphemes> {
+        let mut b = Buffer {
             data: Graphemes::from("abc"),
             ..Default::default()
-        });
+        };
 
         b.replace(&Graphemes::from("abcde"));
 
@@ -151,10 +136,10 @@ mod test {
 
     #[test]
     fn insert() {
-        let mut b = Buffer(Editor::<Graphemes> {
+        let mut b = Buffer {
             data: Graphemes::from("abcde"),
             idx: Cell::new(4), // indicate `d`.
-        });
+        };
 
         b.insert(Grapheme::from('0'));
 
@@ -164,10 +149,10 @@ mod test {
 
     #[test]
     fn overwrite() {
-        let mut b = Buffer(Editor::<Graphemes> {
+        let mut b = Buffer {
             data: Graphemes::from("abcde"),
             idx: Cell::new(3), // indicate `c`.
-        });
+        };
 
         b.overwrite(Grapheme::from('0'));
 
@@ -177,10 +162,10 @@ mod test {
 
     #[test]
     fn overwrite_on_last_char() {
-        let mut b = Buffer(Editor::<Graphemes> {
+        let mut b = Buffer {
             data: Graphemes::from("abcde"),
             idx: Cell::new(5), // indicate `e`.
-        });
+        };
 
         b.overwrite(Grapheme::from('0'));
 
@@ -190,10 +175,10 @@ mod test {
 
     #[test]
     fn erase() {
-        let mut b = Buffer(Editor::<Graphemes> {
+        let mut b = Buffer {
             data: Graphemes::from("abcde"),
             idx: Cell::new(4), // indicate `d`.
-        });
+        };
 
         b.erase();
 

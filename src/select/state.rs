@@ -4,8 +4,8 @@ use std::io;
 use crossterm::{cursor, style, terminal};
 
 use crate::{
-    edit::{Cursor, SelectBox},
     grapheme::Graphemes,
+    selectbox::SelectBox,
     state,
     termutil::{self, Boundary},
     Output, Result,
