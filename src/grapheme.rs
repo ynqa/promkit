@@ -5,9 +5,11 @@
 //! Note that to manage the width of character is
 //! in order to consider how many the positions of cursor should be moved
 //! when e.g. emojis and the special characters are displayed on the terminal.
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{self, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
+
+use crate::{crossterm::terminal, error::Result};
 
 use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
@@ -68,7 +70,7 @@ impl FromIterator<Grapheme> for Graphemes {
 }
 
 impl Display for Graphemes {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -92,6 +94,28 @@ impl Graphemes {
             .take_while(|&(a, b)| a == b)
             .map(|(a, _)| a.clone())
             .collect()
+    }
+
+    // TODO: smarter string editing mechanism for display.
+    pub fn append_prefix_and_trim_suffix(
+        &self,
+        prefix: &Graphemes,
+        suffix_after_trim: &Graphemes,
+    ) -> Result<String> {
+        let line = prefix.to_string() + &self.to_string();
+        let width_limit = terminal::size()?.0 as usize;
+        if width_limit < suffix_after_trim.width() {
+            return Ok(String::new());
+        }
+
+        let width_without_suffix = width_limit - suffix_after_trim.width();
+        let res = if width_without_suffix < line.len() {
+            line.chars().take(width_without_suffix).collect::<String>()
+                + &suffix_after_trim.to_string()
+        } else {
+            line
+        };
+        Ok(res)
     }
 }
 

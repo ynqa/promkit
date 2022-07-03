@@ -6,7 +6,7 @@ use crate::{grapheme::Graphemes, register::Register};
 
 /// Store the suggestions for completion.
 #[derive(Clone, Debug, Default)]
-pub struct Suggest(Trie<Graphemes, usize>);
+pub struct Suggest(pub Trie<Graphemes, usize>);
 
 impl Deref for Suggest {
     type Target = Trie<Graphemes, usize>;

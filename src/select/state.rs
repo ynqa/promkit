@@ -21,8 +21,8 @@ pub struct With {
     /// A symbol to emphasize the selected item (e.g. ">").
     pub label: Graphemes,
     pub label_color: style::Color,
-    pub selected_cursor_pos: u16,
     pub init_move_down_lines: u16,
+    pub selected_cursor_pos: u16,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
 }
@@ -92,8 +92,7 @@ impl<W: io::Write> state::Render<W> for State {
                     }
                     crossterm::execute!(
                         out,
-                        style::Print(edit(
-                            &next.get_with_index(i).to_string(),
+                        style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
                             &if i == selectbox_pos {
                                 self.1.label.to_owned()
                             } else {
@@ -163,20 +162,4 @@ impl State {
         .min()
         .unwrap_or(&left_space))
     }
-}
-
-fn edit(line: &str, prefix: &Graphemes, suffix_after_trim: &Graphemes) -> Result<String> {
-    let line = prefix.to_string() + line;
-    let width_limit = terminal::size()?.0 as usize;
-    if width_limit < suffix_after_trim.width() {
-        return Ok(String::new());
-    }
-
-    let width_without_suffix = width_limit - suffix_after_trim.width();
-    let res = if width_without_suffix < line.len() {
-        line.chars().take(width_without_suffix).collect::<String>() + &suffix_after_trim.to_string()
-    } else {
-        line
-    };
-    Ok(res)
 }

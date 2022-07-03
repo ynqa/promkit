@@ -5,7 +5,7 @@ use crate::{grapheme::Graphemes, register::Register, selectbox::SelectBox};
 
 /// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
-pub struct History(SelectBox);
+pub struct History(pub SelectBox);
 
 impl Deref for History {
     type Target = SelectBox;
