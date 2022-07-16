@@ -17,15 +17,18 @@ promkit = "0.1.1"
 
 ## Features
 
-- Readline
-  - Provide the lines to receive and display user inputs
-  - Masking, switch insert/overwrite modes, and suggestions
-- Select
-  - Provides the selectbox to choose the items from
-- Customization
-  - Enable to define your own command-line applications.
-  - See [examples/advanced](./examples/advanced/)
-    for more concrete examples.
+- Applications
+  - Readline: provide the lines to receive and display user inputs
+    - Masking
+    - Switch insert/overwrite modes
+    - Suggestions
+  - Select: provide the selectbox to choose the items from
+    - Move cyclically in the selectbox
+- Customizations
+  - Edit key-bindings
+  - Edit crossterm [Event](https://docs.rs/crossterm/0.23.0/crossterm/event/enum.Event.html) handler
+  - Define your own command-line applications
+    - e.g. [ynqa/hstr-rs](https://github.com/ynqa/hstr-rs)
 
 ## Examples
 
