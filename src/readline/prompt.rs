@@ -79,7 +79,17 @@ impl build::Builder<Buffer, With> for Builder {
             out: io::stdout(),
             handler: self.clone()._handler,
             pre_run: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> { state.render(out) },
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.render(out)?;
+                    state.0.prev = state.0.editor.clone();
+                    Ok(())
+                },
+            )),
+            post_run: Some(Box::new(
+                |_: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.0.next = state.0.editor.clone();
+                    Ok(())
+                },
             )),
             initialize: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> { state.pre_render(out) },

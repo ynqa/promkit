@@ -167,6 +167,9 @@ pub struct Prompt<S> {
     /// Call initially every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
     pub pre_run: Option<Box<HookFn<S>>>,
+    /// Call finally every epoch in event-loop of
+    /// [Prompt.run](struct.Prompt.html#method.run).
+    pub post_run: Option<Box<HookFn<S>>>,
     /// Call once initially when
     /// [Prompt.run](struct.Prompt.html#method.run) is called.
     pub initialize: Option<Box<HookFn<S>>>,
@@ -190,12 +193,9 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<D: 'static + Clone, S: 'static> Prompt<state::State<D, S>>
-where
-    state::State<D, S>: Output,
-{
+impl<S: 'static + Output> Prompt<S> {
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<<state::State<D, S> as Output>::Output> {
+    pub fn run(&mut self) -> Result<S::Output> {
         ONCE.call_once(|| {
             termutil::clear(&mut self.out).ok();
         });
@@ -223,7 +223,6 @@ where
                     return Err(e);
                 }
             }
-            self.state.0.prev = self.state.0.editor.clone();
             let ev = crossterm::event::read()?;
             match self
                 .handler
@@ -245,7 +244,14 @@ where
                 }
                 _ => (),
             }
-            self.state.0.next = self.state.0.editor.clone();
+            if let Some(post_run) = &self.post_run {
+                if let Err(e) = post_run(&mut self.out, &mut self.state) {
+                    if let Some(finalize) = &self.finalize {
+                        finalize(&mut self.out, &mut self.state)?;
+                    }
+                    return Err(e);
+                }
+            }
         }
     }
 }
