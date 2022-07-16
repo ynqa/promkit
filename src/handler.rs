@@ -23,10 +23,8 @@ where
     Box::new(|_, _, out: &mut Stdout, state: &mut State<D, S>| {
         termutil::clear(out)?;
         state.pre_render(out)?;
-        state
-            .0
-            .input_stream
-            .push((Box::new(D::default()), state.0.editor.clone()));
+        // Overwrite the prev as default.
+        state.0.prev = Box::new(D::default());
         Ok(None)
     })
 }

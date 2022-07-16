@@ -17,9 +17,7 @@ fn main() -> Result<()> {
             modifiers: KeyModifiers::CONTROL,
         }),
         Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-            let prev = state.0.editor.clone();
             state.0.editor.replace(&Graphemes::from("REPLCED!!"));
-            state.0.input_stream.push((prev, state.0.editor.clone()));
             Ok(None)
         }) as Box<EventHandleFn<State>>,
     )]);

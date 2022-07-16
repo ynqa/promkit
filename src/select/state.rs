@@ -58,60 +58,59 @@ impl<W: io::Write> state::Render<W> for State {
     }
 
     fn render(&mut self, out: &mut W) -> Result<()> {
-        if let Some((_, next)) = self.0.input_stream.pop() {
-            if !next.data.is_empty() {
-                crossterm::execute!(out, cursor::SavePosition)?;
+        let next = self.0.next.clone();
+        if !next.data.is_empty() {
+            crossterm::execute!(out, cursor::SavePosition)?;
 
-                // Check to leave the space to render the data.
-                let title_lines =
-                    termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
-                let used_space = self.1.init_move_down_lines + title_lines;
-                if terminal::size()?.1 <= used_space {
-                    return Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "Terminal does not leave the space to render.",
-                    ));
-                }
-
-                // Move down the lines already written.
-                let move_down_lines = self.1.init_move_down_lines
-                    + termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
-                if 0 < move_down_lines {
-                    crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
-                }
-
-                let selectbox_pos = next.pos();
-                let from = selectbox_pos - self.1.selected_cursor_pos as usize;
-                let to = selectbox_pos
-                    + (self.selectbox_lines(&next)? - self.1.selected_cursor_pos) as usize;
-
-                for i in from..to {
-                    crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
-                    if i == selectbox_pos {
-                        crossterm::execute!(out, style::SetForegroundColor(self.1.label_color))?;
-                    }
-                    crossterm::execute!(
-                        out,
-                        style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
-                            &if i == selectbox_pos {
-                                self.1.label.to_owned()
-                            } else {
-                                Graphemes::from(" ".repeat(self.1.label.width()))
-                            },
-                            &self.1.suffix_after_trim
-                        )?)
-                    )?;
-                    if i == selectbox_pos {
-                        crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
-                    }
-                    if termutil::compare_cursor_position(Boundary::Bottom)? == Ordering::Less {
-                        crossterm::execute!(out, cursor::MoveToNextLine(1))?;
-                    }
-                }
-
-                // Return to the initial position.
-                crossterm::execute!(out, cursor::RestorePosition)?;
+            // Check to leave the space to render the data.
+            let title_lines =
+                termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+            let used_space = self.1.init_move_down_lines + title_lines;
+            if terminal::size()?.1 <= used_space {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Terminal does not leave the space to render.",
+                ));
             }
+
+            // Move down the lines already written.
+            let move_down_lines = self.1.init_move_down_lines
+                + termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+            if 0 < move_down_lines {
+                crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
+            }
+
+            let selectbox_pos = next.pos();
+            let from = selectbox_pos - self.1.selected_cursor_pos as usize;
+            let to = selectbox_pos
+                + (self.selectbox_lines(&next)? - self.1.selected_cursor_pos) as usize;
+
+            for i in from..to {
+                crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
+                if i == selectbox_pos {
+                    crossterm::execute!(out, style::SetForegroundColor(self.1.label_color))?;
+                }
+                crossterm::execute!(
+                    out,
+                    style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
+                        &if i == selectbox_pos {
+                            self.1.label.to_owned()
+                        } else {
+                            Graphemes::from(" ".repeat(self.1.label.width()))
+                        },
+                        &self.1.suffix_after_trim
+                    )?)
+                )?;
+                if i == selectbox_pos {
+                    crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
+                }
+                if termutil::compare_cursor_position(Boundary::Bottom)? == Ordering::Less {
+                    crossterm::execute!(out, cursor::MoveToNextLine(1))?;
+                }
+            }
+
+            // Return to the initial position.
+            crossterm::execute!(out, cursor::RestorePosition)?;
         }
         Ok(())
     }

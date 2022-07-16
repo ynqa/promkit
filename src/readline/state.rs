@@ -85,66 +85,65 @@ impl<W: io::Write> state::Render<W> for State {
     }
 
     fn render(&mut self, out: &mut W) -> Result<()> {
-        if let Some((mut prev, mut next)) = self.0.input_stream.pop() {
-            // Check to leave the space to render the data.
-            let used_space =
-                termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
-            if terminal::size()?.1 <= used_space {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Terminal does not leave the space to render.",
-                ));
-            }
+        let (mut prev, mut next) = (self.0.prev.clone(), self.0.next.clone());
+        // Check to leave the space to render the data.
+        let used_space =
+            termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+        if terminal::size()?.1 <= used_space {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Terminal does not leave the space to render.",
+            ));
+        }
 
-            // Masking.
-            prev.data = match &self.1.mask {
-                None => prev.data.clone(),
-                Some(mask) => prev
-                    .data
-                    .iter()
-                    .map(|_| mask.clone())
-                    .collect::<Graphemes>(),
-            };
-            next.data = match &self.1.mask {
-                None => next.data.clone(),
-                Some(mask) => next
-                    .data
-                    .iter()
-                    .map(|_| mask.clone())
-                    .collect::<Graphemes>(),
-            };
-
-            // Go backward/forward to the position of lcp.
-            let lcp = prev.data.longest_common_prefix(&next.data);
-            if lcp.width() > prev.width_to_pos() {
-                termutil::move_right(out, (lcp.width() - prev.width_to_pos()) as u16)?;
-            } else {
-                termutil::move_left(out, (prev.width_to_pos() - lcp.width()) as u16)?;
-            }
-
-            // Render the suffix of next buffer.
-            crossterm::execute!(out, terminal::Clear(terminal::ClearType::FromCursorDown))?;
-            let input = next
+        // Masking.
+        prev.data = match &self.1.mask {
+            None => prev.data.clone(),
+            Some(mask) => prev
                 .data
                 .iter()
-                .enumerate()
-                .filter(|&(i, _)| i >= lcp.len())
-                .fold(Graphemes::default(), |mut g, (_, ch)| {
-                    g.push(ch.clone());
-                    g
-                });
-            crossterm::execute!(
-                out,
-                style::Print(
-                    input
-                        .iter()
-                        .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
-                )
-            )?;
+                .map(|_| mask.clone())
+                .collect::<Graphemes>(),
+        };
+        next.data = match &self.1.mask {
+            None => next.data.clone(),
+            Some(mask) => next
+                .data
+                .iter()
+                .map(|_| mask.clone())
+                .collect::<Graphemes>(),
+        };
 
-            // Go backward to the next position from the end of graphemes.
-            termutil::move_left(out, next.width_from_pos() as u16)?;
+        // Go backward/forward to the position of lcp.
+        let lcp = prev.data.longest_common_prefix(&next.data);
+        if lcp.width() > prev.width_to_pos() {
+            termutil::move_right(out, (lcp.width() - prev.width_to_pos()) as u16)?;
+        } else {
+            termutil::move_left(out, (prev.width_to_pos() - lcp.width()) as u16)?;
         }
+
+        // Render the suffix of next buffer.
+        crossterm::execute!(out, terminal::Clear(terminal::ClearType::FromCursorDown))?;
+        let input = next
+            .data
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i >= lcp.len())
+            .fold(Graphemes::default(), |mut g, (_, ch)| {
+                g.push(ch.clone());
+                g
+            });
+        crossterm::execute!(
+            out,
+            style::Print(
+                input
+                    .iter()
+                    .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
+            )
+        )?;
+
+        // Go backward to the next position from the end of graphemes.
+        termutil::move_left(out, next.width_from_pos() as u16)?;
         Ok(())
     }
 }

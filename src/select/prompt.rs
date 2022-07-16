@@ -45,11 +45,11 @@ impl Default for Builder {
 
 impl build::Builder<SelectBox, With> for Builder {
     fn state(self) -> Result<Box<State>> {
-        let tup = (self._selectbox.clone(), self._selectbox.clone());
         Ok(Box::new(state::State(
             state::Inherited {
-                editor: self._selectbox,
-                input_stream: vec![tup],
+                editor: self._selectbox.clone(),
+                prev: self._selectbox.clone(),
+                next: self._selectbox.clone(),
             },
             With {
                 title: self._title,

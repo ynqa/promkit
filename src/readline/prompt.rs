@@ -55,7 +55,8 @@ impl build::Builder<Buffer, With> for Builder {
         Ok(Box::new(state::State(
             state::Inherited {
                 editor: Box::new(Buffer::default()),
-                input_stream: vec![(Box::new(Buffer::default()), Box::new(Buffer::default()))],
+                prev: Box::new(Buffer::default()),
+                next: Box::new(Buffer::default()),
             },
             With {
                 title: self._title,

@@ -51,9 +51,7 @@ pub fn prev_history() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         if let Some(hstr) = &state.1.hstr {
             if hstr.prev() {
-                let prev = state.0.editor.clone();
                 state.0.editor.replace(&hstr.get());
-                state.0.input_stream.push((prev, state.0.editor.clone()));
             }
         }
         Ok(None)
@@ -65,9 +63,7 @@ pub fn next_history() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         if let Some(hstr) = &state.1.hstr {
             if hstr.next() {
-                let prev = state.0.editor.clone();
                 state.0.editor.replace(&hstr.get());
-                state.0.input_stream.push((prev, state.0.editor.clone()));
             }
         }
         Ok(None)
@@ -78,9 +74,7 @@ pub fn next_history() -> Box<EventHandleFn<State>> {
 pub fn erase_char() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         if state.0.editor.pos() > 0 {
-            let prev = state.0.editor.clone();
             state.0.editor.erase();
-            state.0.input_stream.push((prev, state.0.editor.clone()));
         }
         Ok(None)
     })
@@ -89,9 +83,7 @@ pub fn erase_char() -> Box<EventHandleFn<State>> {
 /// Erase all chars at the current line.
 pub fn erase_all() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        let prev = state.0.editor.clone();
         state.0.editor = Box::new(Buffer::default());
-        state.0.input_stream.push((prev, state.0.editor.clone()));
         Ok(None)
     })
 }
@@ -99,12 +91,10 @@ pub fn erase_all() -> Box<EventHandleFn<State>> {
 /// Search the item by [Suggest](../struct.Suggest.html).
 pub fn complete() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        let prev = state.0.editor.clone();
         if let Some(suggest) = &state.1.suggest {
-            if prev.data.len() >= state.1.min_len_to_search {
-                if let Some(res) = suggest.search(&prev.data) {
+            if state.0.editor.data.len() >= state.1.min_len_to_search {
+                if let Some(res) = suggest.search(&state.0.editor.data) {
                     state.0.editor.replace(&res);
-                    state.0.input_stream.push((prev, state.0.editor.clone()));
                 }
             }
         }
@@ -116,22 +106,17 @@ pub fn complete() -> Box<EventHandleFn<State>> {
 pub fn input_char() -> Box<EventHandleFn<State>> {
     Box::new(
         |_, input: Option<char>, _: &mut io::Stdout, state: &mut State| {
-            let prev = state.0.editor.clone();
             if let Some(limit) = state.buffer_limit()? {
                 if limit <= state.0.editor.data.width() {
                     return Ok(None);
                 }
             }
-
             if let Some(input) = input {
                 match state.1.edit_mode {
                     Mode::Insert => state.0.editor.insert(Grapheme::from(input)),
                     Mode::Overwrite => state.0.editor.overwrite(Grapheme::from(input)),
                 }
             }
-
-            state.0.input_stream.push((prev, state.0.editor.clone()));
-
             Ok(None)
         },
     )

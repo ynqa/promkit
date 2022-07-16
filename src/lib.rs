@@ -131,7 +131,8 @@ pub mod state {
 
     #[derive(Default)]
     pub struct Inherited<D> {
-        pub input_stream: Vec<(Box<D>, Box<D>)>,
+        pub prev: Box<D>,
+        pub next: Box<D>,
         pub editor: Box<D>,
     }
 
@@ -206,9 +207,12 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<S: 'static + Output> Prompt<S> {
+impl<D: 'static + Clone, S: 'static> Prompt<state::State<D, S>>
+where
+    state::State<D, S>: Output,
+{
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<(S::Output, ExitCode)> {
+    pub fn run(&mut self) -> Result<(<state::State<D, S> as Output>::Output, ExitCode)> {
         ONCE.call_once(|| {
             termutil::clear(&mut self.out).ok();
         });
@@ -236,6 +240,7 @@ impl<S: 'static + Output> Prompt<S> {
                     return Err(e);
                 }
             }
+            self.state.0.prev = self.state.0.editor.clone();
             let ev = crossterm::event::read()?;
             match self
                 .handler
@@ -257,6 +262,7 @@ impl<S: 'static + Output> Prompt<S> {
                 }
                 _ => (),
             }
+            self.state.0.next = self.state.0.editor.clone();
         }
     }
 }
