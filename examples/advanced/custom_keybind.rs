@@ -18,16 +18,12 @@ fn main() -> Result<()> {
         }),
         Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
             state.0.editor.replace(&Graphemes::from("REPLCED!!"));
-            Ok(None)
+            Ok(false)
         }) as Box<EventHandleFn<State>>,
     )]);
     let mut p = readline::Builder::default().handler(b).build()?;
     loop {
-        let (line, exit_code) = p.run()?;
-        match exit_code {
-            0 => println!("result: {:?}", line),
-            1 => return Ok(()),
-            _ => (),
-        }
+        let line = p.run()?;
+        println!("result: {:?}", line);
     }
 }

@@ -42,12 +42,8 @@ use promkit::{build::Builder, readline, Result};
 fn main() -> Result<()> {
     let mut p = readline::Builder::default().build()?;
     loop {
-        let (line, exit_code) = p.run()?;
-        if exit_code == 0 {
-            println!("result: {:?}", line);
-        } else {
-            return Ok(());
-        }
+        let line = p.run()?;
+        println!("result: {:?}", line);
     }
 }
 ```
@@ -58,11 +54,7 @@ Select:
 
 ```rust
 use promkit::{
-    build::Builder,
-    crossterm::style,
-    selectbox::SelectBox,
-    register::Register,
-    select, Result,
+    build::Builder, crossterm::style, register::Register, select, selectbox::SelectBox, Result,
 };
 
 fn main() -> Result<()> {
@@ -73,11 +65,8 @@ fn main() -> Result<()> {
         .title_color(style::Color::DarkGreen)
         .selectbox(selectbox)
         .build()?;
-    let (line, exit_code) = p.run()?;
-    if exit_code == 0 {
-        println!("result: {:?}", line)
-    }
+    let line = p.run()?;
+    println!("result: {:?}", line);
     Ok(())
 }
-
 ```

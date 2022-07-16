@@ -11,9 +11,7 @@ fn main() -> Result<()> {
         .selectbox(selectbox)
         .init_move_down_lines(1)
         .build()?;
-    let (line, exit_code) = p.run()?;
-    if exit_code == 0 {
-        println!("result: {:?}", line)
-    }
+    let line = p.run()?;
+    println!("result: {:?}", line);
     Ok(())
 }

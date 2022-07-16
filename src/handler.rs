@@ -7,7 +7,7 @@ use crate::{
 
 /// Leave from event-loop with exit code `0`.
 pub fn enter<S>() -> Box<EventHandleFn<S>> {
-    Box::new(|_, _, _: &mut Stdout, _: &mut S| Ok(Some(0)))
+    Box::new(|_, _, _: &mut Stdout, _: &mut S| Ok(true))
 }
 
 /// Leave from event-loop with io::ErrorKind::Interrupted error.
@@ -25,6 +25,6 @@ where
         state.pre_render(out)?;
         // Overwrite the prev as default.
         state.0.prev = Box::new(D::default());
-        Ok(None)
+        Ok(false)
     })
 }

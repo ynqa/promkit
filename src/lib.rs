@@ -22,12 +22,8 @@
 //! fn main() -> Result<()> {
 //!     let mut p = readline::Builder::default().build()?;
 //!     loop {
-//!         let (line, exit_code) = p.run()?;
-//!         if exit_code == 0 {
-//!             println!("result: {:?}", line);
-//!         } else {
-//!             return Ok(());
-//!         }
+//!         let line = p.run()?;
+//!         println!("result: {:?}", line);
 //!     }
 //! }
 //! ```
@@ -36,11 +32,7 @@
 //!
 //! ```no_run
 //! use promkit::{
-//!     build::Builder,
-//!     crossterm::style,
-//!     selectbox::SelectBox,
-//!     register::Register,
-//!     select, Result,
+//!     build::Builder, crossterm::style, register::Register, select, selectbox::SelectBox, Result,
 //! };
 //!
 //! fn main() -> Result<()> {
@@ -51,10 +43,8 @@
 //!         .title_color(style::Color::DarkGreen)
 //!         .selectbox(selectbox)
 //!         .build()?;
-//!     let (line, exit_code) = p.run()?;
-//!     if exit_code == 0 {
-//!         println!("result: {:?}", line)
-//!     }
+//!     let line = p.run()?;
+//!     println!("result: {:?}", line);
 //!     Ok(())
 //! }
 //! ```
@@ -159,18 +149,11 @@ use std::sync::Once;
 pub use crossterm;
 use downcast_rs::Downcast;
 
-/// A type representing exit code.
-pub type ExitCode = i32;
-
 /// A trait for handling the events.
 pub trait Handler<S>: Downcast {
     /// Edit the state and show the items on stdout on receiving the events.
-    fn handle(
-        &mut self,
-        _: crossterm::event::Event,
-        _: &mut io::Stdout,
-        _: &mut S,
-    ) -> Result<Option<ExitCode>>;
+    fn handle(&mut self, _: crossterm::event::Event, _: &mut io::Stdout, _: &mut S)
+        -> Result<bool>;
 }
 impl_downcast!(Handler<S>);
 
@@ -195,7 +178,7 @@ pub struct Prompt<S> {
 
 /// A type representing the event handlers.
 pub type EventHandleFn<S> =
-    dyn Fn(Option<(u16, u16)>, Option<char>, &mut io::Stdout, &mut S) -> Result<Option<ExitCode>>;
+    dyn Fn(Option<(u16, u16)>, Option<char>, &mut io::Stdout, &mut S) -> Result<bool>;
 
 /// A trait representing the final results for return.
 pub trait Output {
@@ -212,7 +195,7 @@ where
     state::State<D, S>: Output,
 {
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<(<state::State<D, S> as Output>::Output, ExitCode)> {
+    pub fn run(&mut self) -> Result<<state::State<D, S> as Output>::Output> {
         ONCE.call_once(|| {
             termutil::clear(&mut self.out).ok();
         });
@@ -247,12 +230,12 @@ where
                 .borrow_mut()
                 .handle(ev, &mut self.out, &mut self.state)
             {
-                Ok(Some(exit_code)) => {
+                Ok(true) => {
                     let item = self.state.output();
                     if let Some(finalize) = &self.finalize {
                         finalize(&mut self.out, &mut self.state)?;
                     }
-                    return Ok((item, exit_code));
+                    return Ok(item);
                 }
                 Err(e) => {
                     if let Some(finalize) = &self.finalize {

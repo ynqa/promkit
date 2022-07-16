@@ -10,9 +10,7 @@ fn main() -> Result<()> {
         .title_color(style::Color::DarkGreen)
         .selectbox(selectbox)
         .build()?;
-    let (line, exit_code) = p.run()?;
-    if exit_code == 0 {
-        println!("result: {:?}", line)
-    }
+    let line = p.run()?;
+    println!("result: {:?}", line);
     Ok(())
 }

@@ -19,7 +19,7 @@ fn main() -> Result<()> {
                     };
                     handler::input_char()(None, Some(input), out, state)
                 } else {
-                    Ok(None)
+                    Ok(false)
                 }
             },
         ) as Box<EventHandleFn<State>>),
@@ -27,11 +27,7 @@ fn main() -> Result<()> {
     };
     let mut p = readline::Builder::default().handler(b).build()?;
     loop {
-        let (line, exit_code) = p.run()?;
-        if exit_code == 0 {
-            println!("result: {:?}", line);
-        } else {
-            return Ok(());
-        }
+        let line = p.run()?;
+        println!("result: {:?}", line);
     }
 }

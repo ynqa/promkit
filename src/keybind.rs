@@ -3,7 +3,7 @@ use std::io;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{EventHandleFn, ExitCode, Handler, Result};
+use crate::{EventHandleFn, Handler, Result};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S> {
@@ -25,18 +25,13 @@ impl<S> KeyBind<S> {
 }
 
 impl<S: 'static> Handler<S> for KeyBind<S> {
-    fn handle(
-        &mut self,
-        ev: Event,
-        out: &mut io::Stdout,
-        state: &mut S,
-    ) -> Result<Option<ExitCode>> {
+    fn handle(&mut self, ev: Event, out: &mut io::Stdout, state: &mut S) -> Result<bool> {
         match self.event_mapping.get(&ev) {
             Some(handle) => handle(None, None, out, state),
             None => match ev {
                 Event::Resize(x, y) => match &self.handle_resize {
                     Some(func) => (func)(Some((x, y)), None, out, state),
-                    None => Ok(None),
+                    None => Ok(false),
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Char(ch),
@@ -47,9 +42,9 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
                     modifiers: KeyModifiers::SHIFT,
                 }) => match &self.handle_input {
                     Some(func) => (func)(None, Some(ch), out, state),
-                    None => Ok(None),
+                    None => Ok(false),
                 },
-                _ => Ok(None),
+                _ => Ok(false),
             },
         }
     }
@@ -74,7 +69,7 @@ mod test {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             }),
-            Box::new(|_, _, _: &mut io::Stdout, _: &mut Box<dyn Any>| Ok(Some(0)))
+            Box::new(|_, _, _: &mut io::Stdout, _: &mut Box<dyn Any>| Ok(true))
                 as Box<EventHandleFn<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);
