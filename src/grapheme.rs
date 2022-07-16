@@ -96,7 +96,6 @@ impl Graphemes {
             .collect()
     }
 
-    // TODO: smarter string editing mechanism for display.
     pub fn append_prefix_and_trim_suffix(
         &self,
         prefix: &Graphemes,

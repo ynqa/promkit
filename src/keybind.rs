@@ -9,7 +9,6 @@ use crate::{EventHandleFn, ExitCode, Handler, Result};
 pub struct KeyBind<S> {
     pub event_mapping: HashMap<Event, Box<EventHandleFn<S>>>,
 
-    // TODO: consider the better way (merging with `event_mapping`?)
     pub handle_input: Option<Box<EventHandleFn<S>>>,
     pub handle_resize: Option<Box<EventHandleFn<S>>>,
 }
@@ -25,7 +24,6 @@ impl<S> KeyBind<S> {
     }
 }
 
-// TODO: support https://docs.rs/crossterm/0.21.0/crossterm/event/struct.MouseEvent.html
 impl<S: 'static> Handler<S> for KeyBind<S> {
     fn handle(
         &mut self,

@@ -54,9 +54,6 @@ impl Output for State {
     }
 }
 
-// TODO: multi-line inputs.
-// TODO: select range of buffer and replace string to the additional input.
-// TODO: input validation.
 impl<W: io::Write> state::Render<W> for State {
     fn pre_render(&self, out: &mut W) -> Result<()> {
         // Render the title.
