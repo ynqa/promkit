@@ -122,6 +122,38 @@ mod test {
     }
 
     #[test]
+    fn width_to_position() {
+        let b = Buffer {
+            data: Graphemes(vec![
+                Grapheme { ch: 'a', width: 1 },
+                Grapheme { ch: 'b', width: 10 },
+                Grapheme {
+                    ch: 'c',
+                    width: 100,
+                },
+            ]),
+            position: Cell::new(2), // indicate `b`.
+        };
+        assert_eq!(11, b.width_to_position());
+    }
+
+    #[test]
+    fn width_from_position() {
+        let b = Buffer {
+            data: Graphemes(vec![
+                Grapheme { ch: 'a', width: 1 },
+                Grapheme { ch: 'b', width: 10 },
+                Grapheme {
+                    ch: 'c',
+                    width: 100,
+                },
+            ]),
+            position: Cell::new(2), // indicate `b`.
+        };
+        assert_eq!(100, b.width_from_position());
+    }
+
+    #[test]
     fn replace() {
         let mut b = Buffer {
             data: Graphemes::from("abc"),
