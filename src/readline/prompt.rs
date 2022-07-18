@@ -111,6 +111,8 @@ impl build::Builder<Buffer, With> for Builder {
                         }
                     }
                     state.0.editor = Box::new(Buffer::default());
+                    state.0.prev = Box::new(Buffer::default());
+                    state.0.next = Box::new(Buffer::default());
                     Ok(())
                 },
             )),
