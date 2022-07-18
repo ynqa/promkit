@@ -136,6 +136,14 @@ pub mod state {
 pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
+pub mod tree {
+    pub mod handler;
+    mod prompt;
+    mod state;
+
+    pub use self::state::State;
+}
+pub mod treeview;
 
 mod error;
 pub use error::Result;
