@@ -22,7 +22,7 @@ pub struct With {
     pub label: Graphemes,
     pub label_color: style::Color,
     pub init_move_down_lines: u16,
-    pub selected_cursor_pos: u16,
+    pub selected_cursor_position: u16,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
 }
@@ -80,20 +80,20 @@ impl<W: io::Write> state::Render<W> for State {
                 crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
             }
 
-            let selectbox_pos = next.pos();
-            let from = selectbox_pos - self.1.selected_cursor_pos as usize;
-            let to = selectbox_pos
-                + (self.selectbox_lines(&next)? - self.1.selected_cursor_pos) as usize;
+            let selectbox_position = next.position();
+            let from = selectbox_position - self.1.selected_cursor_position as usize;
+            let to = selectbox_position
+                + (self.selectbox_lines(&next)? - self.1.selected_cursor_position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
-                if i == selectbox_pos {
+                if i == selectbox_position {
                     crossterm::execute!(out, style::SetForegroundColor(self.1.label_color))?;
                 }
                 crossterm::execute!(
                     out,
                     style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
-                        &if i == selectbox_pos {
+                        &if i == selectbox_position {
                             self.1.label.to_owned()
                         } else {
                             Graphemes::from(" ".repeat(self.1.label.width()))
@@ -101,7 +101,7 @@ impl<W: io::Write> state::Render<W> for State {
                         &self.1.suffix_after_trim
                     )?)
                 )?;
-                if i == selectbox_pos {
+                if i == selectbox_position {
                     crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
                 }
                 if termutil::compare_cursor_position(Boundary::Bottom)? == Ordering::Less {
@@ -118,10 +118,10 @@ impl<W: io::Write> state::Render<W> for State {
 
 impl State {
     pub fn move_up(&mut self) -> Result<()> {
-        if self.1.selected_cursor_pos == 0 {
-            self.1.selected_cursor_pos = 0;
+        if self.1.selected_cursor_position == 0 {
+            self.1.selected_cursor_position = 0;
         } else {
-            self.1.selected_cursor_pos -= 1;
+            self.1.selected_cursor_position -= 1;
         }
         Ok(())
     }
@@ -129,22 +129,22 @@ impl State {
     pub fn move_down(&mut self) -> Result<()> {
         if self.selectbox_lines(&self.0.editor)? > 0 {
             let limit = self.selectbox_lines(&self.0.editor)? - 1;
-            if self.1.selected_cursor_pos >= limit {
-                self.1.selected_cursor_pos = limit;
+            if self.1.selected_cursor_position >= limit {
+                self.1.selected_cursor_position = limit;
             } else {
-                self.1.selected_cursor_pos += 1;
+                self.1.selected_cursor_position += 1;
             }
         }
         Ok(())
     }
 
     pub fn move_head(&mut self) -> Result<()> {
-        self.1.selected_cursor_pos = 0;
+        self.1.selected_cursor_position = 0;
         Ok(())
     }
 
     pub fn move_tail(&mut self) -> Result<()> {
-        self.1.selected_cursor_pos = self.selectbox_lines(&self.0.editor)? - 1;
+        self.1.selected_cursor_position = self.selectbox_lines(&self.0.editor)? - 1;
         Ok(())
     }
 

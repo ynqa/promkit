@@ -96,7 +96,7 @@ impl build::Builder<Buffer, With> for Builder {
             )),
             finalize: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    termutil::move_right(out, state.0.editor.width_from_pos() as u16)?;
+                    termutil::move_right(out, state.0.editor.width_from_position() as u16)?;
                     termutil::move_down(out)?;
                     termutil::move_head(out)?;
                     if let Some(hstr) = &mut state.1.hstr {

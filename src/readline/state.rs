@@ -113,10 +113,10 @@ impl<W: io::Write> state::Render<W> for State {
 
         // Go backward/forward to the position of lcp.
         let lcp = prev.data.longest_common_prefix(&next.data);
-        if lcp.width() > prev.width_to_pos() {
-            termutil::move_right(out, (lcp.width() - prev.width_to_pos()) as u16)?;
+        if lcp.width() > prev.width_to_position() {
+            termutil::move_right(out, (lcp.width() - prev.width_to_position()) as u16)?;
         } else {
-            termutil::move_left(out, (prev.width_to_pos() - lcp.width()) as u16)?;
+            termutil::move_left(out, (prev.width_to_position() - lcp.width()) as u16)?;
         }
 
         // Render the suffix of next buffer.
@@ -140,7 +140,7 @@ impl<W: io::Write> state::Render<W> for State {
         )?;
 
         // Go backward to the next position from the end of graphemes.
-        termutil::move_left(out, next.width_from_pos() as u16)?;
+        termutil::move_left(out, next.width_from_position() as u16)?;
         Ok(())
     }
 }

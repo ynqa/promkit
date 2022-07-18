@@ -24,7 +24,7 @@ impl Default for History {
     fn default() -> Self {
         History(SelectBox {
             data: vec![Graphemes::default()],
-            idx: Cell::new(0),
+            position: Cell::new(0),
         })
     }
 }
@@ -64,7 +64,7 @@ impl History {
     /// Move the cursor to the given position in the history.
     fn move_to(&self, idx: usize) -> bool {
         if idx < self.data.len() {
-            self.idx.set(idx);
+            self.position.set(idx);
             return true;
         }
         false
@@ -79,7 +79,7 @@ mod test {
     fn register() {
         let mut h = History::default();
         h.register(Graphemes::from("line"));
-        assert_eq!(h.pos(), 1);
+        assert_eq!(h.position(), 1);
         assert_eq!(h.get(), Graphemes::default());
     }
 

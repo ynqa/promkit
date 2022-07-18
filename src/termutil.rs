@@ -44,9 +44,9 @@ pub fn move_up<W: io::Write>(out: &mut W) -> Result<()> {
 
 /// Move cursor to head of the next line.
 pub fn move_down<W: io::Write>(out: &mut W) -> Result<()> {
-    let restored_pos = cursor::position()?;
+    let restored_position = cursor::position()?;
     crossterm::execute!(out, cursor::MoveToNextLine(1))?;
-    if restored_pos.1 == cursor::position()?.1
+    if restored_position.1 == cursor::position()?.1
         && self::compare_cursor_position(Boundary::Bottom)? == Ordering::Equal
     {
         crossterm::execute!(out, terminal::ScrollUp(1))?;
@@ -96,12 +96,12 @@ pub fn compare_cursor_position(boundary: Boundary) -> Result<Ordering> {
 }
 
 /// Return whether the given position is within or beyond the shape of terminal.
-pub fn compare_position(pos: u16, boundary: Boundary) -> Result<Ordering> {
+pub fn compare_position(position: u16, boundary: Boundary) -> Result<Ordering> {
     match boundary {
-        Boundary::Top => Ok(pos.cmp(&0)),
-        Boundary::Bottom => Ok((pos + 1).cmp(&terminal::size()?.1)),
-        Boundary::RightEdge => Ok((pos + 1).cmp(&terminal::size()?.0)),
-        Boundary::LeftEdge => Ok(pos.cmp(&0)),
+        Boundary::Top => Ok(position.cmp(&0)),
+        Boundary::Bottom => Ok((position + 1).cmp(&terminal::size()?.1)),
+        Boundary::RightEdge => Ok((position + 1).cmp(&terminal::size()?.0)),
+        Boundary::LeftEdge => Ok(position.cmp(&0)),
     }
 }
 

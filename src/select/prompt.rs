@@ -54,7 +54,7 @@ impl build::Builder<SelectBox, With> for Builder {
             With {
                 title: self._title,
                 title_color: self._title_color,
-                selected_cursor_pos: 0,
+                selected_cursor_position: 0,
                 label: self._label,
                 label_color: self._label_color,
                 init_move_down_lines: self._init_move_down_lines,
