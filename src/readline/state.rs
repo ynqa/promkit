@@ -83,6 +83,10 @@ impl<W: io::Write> state::Render<W> for State {
 
     fn render(&mut self, out: &mut W) -> Result<()> {
         let (mut prev, mut next) = (self.0.prev.clone(), self.0.next.clone());
+        if prev.data == next.data {
+            return Ok(());
+        }
+
         // Check to leave the space to render the data.
         let used_space =
             termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
