@@ -81,3 +81,7 @@ path = "examples/select/select.rs"
 [[example]]
 name = "window"
 path = "examples/select/window.rs"
+
+[[example]]
+name = "tree"
+path = "examples/tree/tree.rs"

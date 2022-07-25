@@ -138,9 +138,11 @@ pub mod suggest;
 pub mod termutil;
 pub mod tree {
     pub mod handler;
+    mod keybind;
     mod prompt;
     mod state;
 
+    pub use self::prompt::Builder;
     pub use self::state::State;
 }
 pub mod treeview;

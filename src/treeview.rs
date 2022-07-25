@@ -200,9 +200,46 @@ pub mod node {
     }
 }
 
+use std::cell::Cell;
+
+use crate::grapheme::Graphemes;
 use node::Node;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct TreeView {
     pub root: Node,
+    position: Cell<usize>,
+}
+
+impl TreeView {
+    pub fn position(&self) -> usize {
+        self.position.get()
+    }
+
+    pub fn prev(&self) -> bool {
+        if 0 < self.position.get() {
+            self.position.set(self.position.get() - 1);
+            return true;
+        }
+        false
+    }
+
+    pub fn next(&self) -> bool {
+        let limit = self.root.flatten().len() - 1;
+        if self.position.get() < limit {
+            self.position.set(self.position.get() + 1);
+            return true;
+        } else {
+            self.position.set(limit);
+        }
+        false
+    }
+
+    pub fn flatten(&self) -> Vec<Graphemes> {
+        self.flatten()
+    }
+
+    pub fn toggle(&mut self) {
+        self.root.toggle(self.position())
+    }
 }
