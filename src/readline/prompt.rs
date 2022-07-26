@@ -2,11 +2,10 @@ use std::cell::RefCell;
 use std::io;
 use std::rc::Rc;
 
-use crossterm::style;
-
 use crate::{
     buffer::Buffer,
     build,
+    crossterm::style,
     grapheme::{Grapheme, Graphemes},
     history::History,
     keybind::KeyBind,

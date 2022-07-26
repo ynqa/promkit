@@ -1,9 +1,8 @@
 use std::cmp::Ordering;
 use std::io;
 
-use crossterm::{cursor, style, terminal};
-
 use crate::{
+    crossterm::{cursor, style, terminal},
     grapheme::Graphemes,
     selectbox::SelectBox,
     state,

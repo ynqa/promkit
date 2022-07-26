@@ -1,10 +1,9 @@
 use std::cmp::Ordering;
 use std::io;
 
-use crossterm::{cursor, style, terminal};
-
 use crate::{
     buffer::Buffer,
+    crossterm::{cursor, style, terminal},
     grapheme::{Grapheme, Graphemes},
     history::History,
     state,

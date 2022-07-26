@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::io::Stdout;
 
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-
 use crate::{
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     handler,
     keybind::KeyBind,
     select::{self, State},

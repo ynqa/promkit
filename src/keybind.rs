@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::io;
 
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-
-use crate::{EventHandleFn, Handler, Result};
+use crate::{
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    EventHandleFn, Handler, Result,
+};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S> {
@@ -53,8 +54,8 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
 #[cfg(test)]
 mod test {
     use super::{io, EventHandleFn, HashMap, KeyBind};
+    use crate::crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 
-    use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
     use std::any::Any;
 
     #[test]

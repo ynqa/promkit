@@ -2,10 +2,9 @@ use std::cell::RefCell;
 use std::io;
 use std::rc::Rc;
 
-use crossterm::style;
-
 use crate::{
     build,
+    crossterm::style,
     grapheme::Graphemes,
     keybind::KeyBind,
     select::{state::With, State},

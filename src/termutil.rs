@@ -1,9 +1,11 @@
 use std::cmp::Ordering;
 use std::io;
 
-use crossterm::{cursor, terminal};
-
-use crate::{grapheme::Graphemes, Result};
+use crate::{
+    crossterm::{cursor, terminal},
+    grapheme::Graphemes,
+    Result,
+};
 
 /// All four sides of terminal.
 pub enum Boundary {
