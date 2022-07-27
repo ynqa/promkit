@@ -81,7 +81,7 @@ pub mod readline {
     pub mod handler;
     mod keybind;
     mod prompt;
-    mod state;
+    pub mod state;
 
     pub use self::prompt::Builder;
     pub use self::state::{Mode, State};
@@ -103,7 +103,7 @@ pub mod select {
     pub mod handler;
     mod keybind;
     mod prompt;
-    mod state;
+    pub mod state;
 
     pub use self::prompt::Builder;
     pub use self::state::State;
