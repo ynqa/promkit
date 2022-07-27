@@ -50,6 +50,29 @@ impl Default for Builder {
 }
 
 impl build::Builder<Buffer, With> for Builder {
+    fn state(self) -> Result<Box<State>> {
+        Ok(Box::new(state::State(
+            state::Inherited {
+                editor: Box::new(Buffer::default()),
+                prev: Box::new(Buffer::default()),
+                next: Box::new(Buffer::default()),
+            },
+            With {
+                title: self._title,
+                title_color: self._title_color,
+                label: self._label,
+                label_color: self._label_color,
+                mask: self._mask,
+                edit_mode: self._edit_mode,
+                num_lines: self._num_lines,
+                hstr: Some(Box::new(History::default())),
+                min_len_to_search: self._min_len_to_search,
+                limit_history_size: self._limit_history_size,
+                suggest: self._suggest,
+            },
+        )))
+    }
+
     fn build(self) -> Result<Prompt<State>> {
         Ok(Prompt::<State> {
             out: io::stdout(),
@@ -92,26 +115,7 @@ impl build::Builder<Buffer, With> for Builder {
                     Ok(())
                 },
             )),
-            state: Box::new(state::State(
-                state::Inherited {
-                    editor: Box::new(Buffer::default()),
-                    prev: Box::new(Buffer::default()),
-                    next: Box::new(Buffer::default()),
-                },
-                With {
-                    title: self._title,
-                    title_color: self._title_color,
-                    label: self._label,
-                    label_color: self._label_color,
-                    mask: self._mask,
-                    edit_mode: self._edit_mode,
-                    num_lines: self._num_lines,
-                    hstr: Some(Box::new(History::default())),
-                    min_len_to_search: self._min_len_to_search,
-                    limit_history_size: self._limit_history_size,
-                    suggest: self._suggest,
-                },
-            )),
+            state: self.state()?,
         })
     }
 }
