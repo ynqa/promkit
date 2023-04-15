@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Deref, DerefMut};
 
 use radix_trie::{Trie, TrieCommon};
@@ -21,9 +22,9 @@ impl DerefMut for Suggest {
     }
 }
 
-impl<T: Into<String>> Register<T> for Suggest {
+impl<T: fmt::Display> Register<T> for Suggest {
     fn register(&mut self, item: T) {
-        self.insert(Graphemes::from(item.into()), 1);
+        self.insert(Graphemes::from(format!("{}", item)), 1);
     }
 }
 
