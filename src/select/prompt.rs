@@ -3,8 +3,8 @@ use std::fmt;
 use std::io;
 use std::rc::Rc;
 
-use crate::cursor::Vertical;
 use crate::{
+    select::cursor::Cursor,
     build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
     register::Register, select::State, termutil, Handler, Prompt, Result,
 };
@@ -76,7 +76,7 @@ impl build::Builder<State> for Builder {
                 next: self._selector.clone(),
                 title: self._title,
                 title_color: self._title_color,
-                vertical_cursor: Vertical::default(),
+                cursor: Cursor::default(),
                 label: self._label,
                 label_color: self._label_color,
                 init_move_down_lines: self._init_move_down_lines,

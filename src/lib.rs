@@ -90,6 +90,7 @@ pub mod readline {
 }
 /// A module providing the selectbox to choose the items from.
 pub mod select {
+    mod cursor;
     pub mod handler;
     mod keybind;
     mod prompt;
@@ -110,7 +111,6 @@ pub mod handler;
 /// and their handlers.
 pub mod keybind;
 
-mod cursor;
 pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;

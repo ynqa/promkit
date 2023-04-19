@@ -1,11 +1,11 @@
 use crate::Result;
 
 #[derive(Default)]
-pub struct Vertical {
+pub struct Cursor {
     pub position: u16,
 }
 
-impl Vertical {
+impl Cursor {
     pub fn move_up(&mut self) -> Result<()> {
         if self.position == 0 {
             self.position = 0;

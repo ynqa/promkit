@@ -3,7 +3,7 @@ use std::io;
 
 use crate::{
     crossterm::{cursor, style, terminal},
-    cursor::Vertical,
+    select::cursor::Cursor,
     grapheme::Graphemes,
     internal::selector::Selector,
     termutil::{self, Boundary},
@@ -22,7 +22,7 @@ pub struct State {
     pub label: Graphemes,
     pub label_color: style::Color,
     pub init_move_down_lines: u16,
-    pub vertical_cursor: Vertical,
+    pub cursor: Cursor,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
 }
@@ -81,9 +81,9 @@ impl State {
             }
 
             let selector_position = next.position();
-            let from = selector_position - self.vertical_cursor.position as usize;
+            let from = selector_position - self.cursor.position as usize;
             let to = selector_position
-                + (self.screen_size(&next)? - self.vertical_cursor.position) as usize;
+                + (self.screen_size(&next)? - self.cursor.position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
