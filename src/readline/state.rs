@@ -152,7 +152,7 @@ impl State {
         if let Some(lines) = self.num_lines {
             if lines > 0 {
                 return Ok(Some(
-                    terminal::size()?.0 as usize * lines as usize - self.label.width(),
+                    terminal::size()?.0 as usize * lines - self.label.width(),
                 ));
             }
         }
