@@ -5,18 +5,18 @@ use crate::{grapheme::Graphemes, register::Register};
 
 /// Store the candidates to choose the items from.
 #[derive(Debug, Clone, Default)]
-pub struct SelectBox {
+pub struct Selector {
     pub data: Vec<Graphemes>,
     pub position: Cell<usize>,
 }
 
-impl<T: fmt::Display> Register<T> for SelectBox {
+impl<T: fmt::Display> Register<T> for Selector {
     fn register(&mut self, item: T) {
         self.data.push(Graphemes::from(format!("{}", item)))
     }
 }
 
-impl SelectBox {
+impl Selector {
     pub fn position(&self) -> usize {
         self.position.get()
     }
@@ -56,7 +56,7 @@ impl SelectBox {
 
 #[test]
 fn prev() {
-    let mut b = SelectBox::default();
+    let mut b = Selector::default();
     b.register_all(vec!["a", "b", "c"]);
     assert!(!b.prev());
     b.position.set(1);
@@ -65,7 +65,7 @@ fn prev() {
 
 #[test]
 fn next() {
-    let mut b = SelectBox::default();
+    let mut b = Selector::default();
     b.register_all(vec!["a", "b", "c"]);
     assert!(b.next());
     b.position.set(b.data.len() - 1);

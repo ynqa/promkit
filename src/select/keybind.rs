@@ -4,9 +4,9 @@ use std::io;
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     handler,
+    internal::selector::Selector,
     keybind::KeyBind,
     select::{self, State},
-    selectbox::SelectBox,
     termutil,
 };
 
@@ -29,7 +29,7 @@ impl Default for KeyBind<State> {
                 termutil::clear(out)?;
                 state.pre_render(out)?;
                 // Overwrite the prev as default.
-                state.prev = SelectBox::default();
+                state.prev = Selector::default();
                 Ok(false)
             })),
         };

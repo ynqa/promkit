@@ -3,11 +3,11 @@ use std::io;
 use std::rc::Rc;
 
 use crate::{
-    buffer::Buffer,
     build,
     crossterm::style,
     grapheme::{Grapheme, Graphemes},
-    history::History,
+    internal::buffer::Buffer,
+    internal::history::History,
     keybind::KeyBind,
     readline::{state::State, Mode},
     register::Register,

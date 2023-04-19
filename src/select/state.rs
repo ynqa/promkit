@@ -4,16 +4,16 @@ use std::io;
 use crate::{
     crossterm::{cursor, style, terminal},
     grapheme::Graphemes,
-    selectbox::SelectBox,
+    internal::selector::Selector,
     termutil::{self, Boundary},
     Output, Result,
 };
 
 /// Select specific state.
 pub struct State {
-    pub editor: SelectBox,
-    pub prev: SelectBox,
-    pub next: SelectBox,
+    pub editor: Selector,
+    pub prev: Selector,
+    pub next: Selector,
     /// Title displayed on the initial line.
     pub title: Option<Graphemes>,
     pub title_color: Option<style::Color>,
@@ -147,7 +147,7 @@ impl State {
         Ok(())
     }
 
-    pub fn selectbox_lines(&self, selectbox: &SelectBox) -> Result<u16> {
+    pub fn selectbox_lines(&self, selectbox: &Selector) -> Result<u16> {
         let left_space = terminal::size()?.1
             - (self.init_move_down_lines
                 + termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?);

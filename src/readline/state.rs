@@ -2,10 +2,10 @@ use std::cmp::Ordering;
 use std::io;
 
 use crate::{
-    buffer::Buffer,
     crossterm::{cursor, style, terminal},
     grapheme::{Grapheme, Graphemes},
-    history::History,
+    internal::buffer::Buffer,
+    internal::history::History,
     suggest::Suggest,
     termutil, Output, Result,
 };

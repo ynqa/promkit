@@ -49,8 +49,6 @@ extern crate downcast_rs;
 #[macro_use(defer)]
 extern crate scopeguard;
 
-/// String buffer representing the user inputs.
-pub mod buffer;
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
     use super::{Prompt, Result};
@@ -60,26 +58,7 @@ pub mod build {
         fn build(self) -> Result<Prompt<S>>;
     }
 }
-/// Characters and their width.
-pub mod grapheme;
-/// Collection of terminal operations.
-pub mod handler;
-/// A data structure to store the history of the user inputs.
-pub mod history;
-/// Register the pairs of
-/// [crossterm event](../crossterm/event/enum.Event.html)
-/// and their handlers.
-pub mod keybind;
-/// A module providing the lines to receive and display user inputs.
-pub mod readline {
-    pub mod handler;
-    mod keybind;
-    mod prompt;
-    pub mod state;
 
-    pub use self::prompt::Builder;
-    pub use self::state::{Mode, State};
-}
 /// A module providing trait to register the item into.
 pub mod register {
     /// A trait to register the items.
@@ -92,6 +71,25 @@ pub mod register {
         }
     }
 }
+
+pub(crate) mod internal {
+    /// String buffer representing the user inputs.
+    pub mod buffer;
+    /// A data structure to store the history of the user inputs.
+    pub mod history;
+    /// A data structure to store the suggestions for the completion.
+    pub mod selector;
+}
+/// A module providing the lines to receive and display user inputs.
+pub mod readline {
+    pub mod handler;
+    mod keybind;
+    mod prompt;
+    pub mod state;
+
+    pub use self::prompt::Builder;
+    pub use self::state::{Mode, State};
+}
 /// A module providing the selectbox to choose the items from.
 pub mod select {
     pub mod handler;
@@ -102,15 +100,21 @@ pub mod select {
     pub use self::prompt::Builder;
     pub use self::state::State;
 }
-/// List representing the candidate items to be chosen by the users.
-pub mod selectbox;
-/// A data structure to store the suggestions for the completion.
-pub mod suggest;
-/// Utilities for the terminal.
-pub mod termutil;
 
 mod error;
 pub use error::Result;
+/// Characters and their width.
+pub mod grapheme;
+/// Collection of terminal operations.
+pub mod handler;
+/// Register the pairs of
+/// [crossterm event](../crossterm/event/enum.Event.html)
+/// and their handlers.
+pub mod keybind;
+
+pub mod suggest;
+/// Utilities for the terminal.
+pub mod termutil;
 
 use std::cell::RefCell;
 use std::fmt::Display;

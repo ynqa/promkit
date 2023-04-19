@@ -1,8 +1,8 @@
 use std::io;
 
 use crate::{
-    buffer::Buffer,
     grapheme::Grapheme,
+    internal::buffer::Buffer,
     readline::{Mode, State},
     termutil, EventHandleFn,
 };

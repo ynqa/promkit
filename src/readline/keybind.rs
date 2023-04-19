@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::io;
 
 use crate::{
-    buffer::Buffer,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     handler,
+    internal::buffer::Buffer,
     keybind::KeyBind,
     readline::{self, State},
     termutil,

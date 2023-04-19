@@ -4,14 +4,14 @@ use std::io;
 use std::rc::Rc;
 
 use crate::{
-    build, crossterm::style, grapheme::Graphemes, keybind::KeyBind, register::Register,
-    select::State, selectbox::SelectBox, termutil, Handler, Prompt, Result,
+    build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
+    register::Register, select::State, termutil, Handler, Prompt, Result,
 };
 
 #[derive(Clone)]
 pub struct Builder {
     _handler: Rc<RefCell<dyn Handler<State>>>,
-    _selectbox: SelectBox,
+    _selectbox: Selector,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
     _label: Graphemes,
@@ -25,7 +25,7 @@ impl Builder {
     pub fn new<I: fmt::Display, U: IntoIterator<Item = I>>(items: U) -> Self {
         let mut res = Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
-            _selectbox: SelectBox::default(),
+            _selectbox: Selector::default(),
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯ "),
@@ -87,11 +87,6 @@ impl build::Builder<State> for Builder {
 }
 
 impl Builder {
-    pub fn selectbox(mut self, items: SelectBox) -> Self {
-        self._selectbox = items;
-        self
-    }
-
     pub fn handler<H: 'static + Handler<State>>(mut self, handler: H) -> Self {
         self._handler = Rc::new(RefCell::new(handler));
         self

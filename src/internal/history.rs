@@ -1,14 +1,14 @@
 use std::cell::Cell;
 use std::ops::{Deref, DerefMut};
 
-use crate::{grapheme::Graphemes, register::Register, selectbox::SelectBox};
+use crate::{grapheme::Graphemes, internal::selector::Selector, register::Register};
 
 /// Store the histroy of the past user inputs.
 #[derive(Debug, Clone)]
-pub struct History(pub SelectBox);
+pub struct History(pub Selector);
 
 impl Deref for History {
-    type Target = SelectBox;
+    type Target = Selector;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -22,7 +22,7 @@ impl DerefMut for History {
 
 impl Default for History {
     fn default() -> Self {
-        History(SelectBox {
+        History(Selector {
             data: vec![Graphemes::default()],
             position: Cell::new(0),
         })
