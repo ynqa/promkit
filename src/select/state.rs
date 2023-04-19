@@ -81,8 +81,9 @@ impl State {
             }
 
             let selector_position = next.position();
-            let from = selector_position - self.cursor.position as usize;
-            let to = selector_position + (self.screen_size(&next)? - self.cursor.position) as usize;
+            let from = selector_position - self.cursor.position.get() as usize;
+            let to = selector_position
+                + (self.screen_size(&next)? - self.cursor.position.get()) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;

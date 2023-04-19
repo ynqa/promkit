@@ -1,39 +1,36 @@
+use std::cell::Cell;
+
 use crate::Result;
 
 #[derive(Default)]
 pub struct Cursor {
-    pub position: u16,
+    pub position: Cell<u16>,
 }
 
 impl Cursor {
-    pub fn prev(&mut self) -> Result<()> {
-        if self.position == 0 {
-            self.position = 0;
-        } else {
-            self.position -= 1;
+    pub fn prev(&self) {
+        if 0 < self.position.get() {
+            self.position.set(self.position.get() - 1);
         }
-        Ok(())
     }
 
-    pub fn next(&mut self, screen_size: u16) -> Result<()> {
+    pub fn next(&self, screen_size: u16) -> Result<()> {
         if screen_size > 0 {
             let limit = screen_size - 1;
-            if self.position >= limit {
-                self.position = limit;
+            if self.position.get() >= limit {
+                self.position.set(limit);
             } else {
-                self.position += 1;
+                self.position.set(self.position.get() + 1);
             }
         }
         Ok(())
     }
 
-    pub fn to_head(&mut self) -> Result<()> {
-        self.position = 0;
-        Ok(())
+    pub fn to_head(&self) {
+        self.position.set(0);
     }
 
-    pub fn to_tail(&mut self, screen_size: u16) -> Result<()> {
-        self.position = screen_size - 1;
-        Ok(())
+    pub fn to_tail(&self, screen_size: u16) {
+        self.position.set(screen_size - 1);
     }
 }
