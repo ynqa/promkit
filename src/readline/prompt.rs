@@ -72,7 +72,7 @@ impl build::Builder<State> for Builder {
             finalize: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     termutil::move_right(out, state.editor.width_from_position() as u16)?;
-                    termutil::move_down(out)?;
+                    termutil::move_down(out, 1)?;
                     termutil::move_head(out)?;
                     if let Some(hstr) = &mut state.hstr {
                         hstr.register(state.editor.data.clone());

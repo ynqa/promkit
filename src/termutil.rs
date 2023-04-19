@@ -45,13 +45,15 @@ pub fn move_up<W: io::Write>(out: &mut W) -> Result<()> {
 }
 
 /// Move cursor to head of the next line.
-pub fn move_down<W: io::Write>(out: &mut W) -> Result<()> {
-    let restored_position = cursor::position()?;
-    crossterm::execute!(out, cursor::MoveToNextLine(1))?;
-    if restored_position.1 == cursor::position()?.1
-        && self::compare_cursor_position(Boundary::Bottom)? == Ordering::Equal
-    {
-        crossterm::execute!(out, terminal::ScrollUp(1))?;
+pub fn move_down<W: io::Write>(out: &mut W, n: u16) -> Result<()> {
+    for _ in 0..n {
+        let restored_position = cursor::position()?;
+        crossterm::execute!(out, cursor::MoveToNextLine(1))?;
+        if restored_position.1 == cursor::position()?.1
+            && self::compare_cursor_position(Boundary::Bottom)? == Ordering::Equal
+        {
+            crossterm::execute!(out, terminal::ScrollUp(1))?;
+        }
     }
     Ok(())
 }
@@ -74,7 +76,7 @@ pub fn move_right<W: io::Write>(out: &mut W, n: u16) -> Result<()> {
     crossterm::execute!(out, cursor::Hide)?;
     for _ in 0..n {
         if self::compare_cursor_position(Boundary::RightEdge)? == Ordering::Equal {
-            self::move_down(out)?;
+            self::move_down(out, 1)?;
         } else {
             crossterm::execute!(out, cursor::MoveRight(1))?;
         }
