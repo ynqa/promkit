@@ -117,6 +117,26 @@ pub fn num_lines(graphemes: &Graphemes) -> Result<u16> {
     })
 }
 
+pub fn append_prefix_and_trim_suffix(
+    prefix: &Graphemes,
+    data: &Graphemes,
+    suffix_after_trim: &Graphemes,
+) -> Result<String> {
+    let line = prefix.to_string() + &data.to_string();
+    let width_limit = terminal::size()?.0 as usize;
+    if width_limit < suffix_after_trim.width() {
+        return Ok(String::new());
+    }
+
+    let width_without_suffix = width_limit - suffix_after_trim.width();
+    let res = if width_without_suffix < line.len() {
+        line.chars().take(width_without_suffix).collect::<String>() + &suffix_after_trim.to_string()
+    } else {
+        line
+    };
+    Ok(res)
+}
+
 #[test]
 fn test_clear() {
     let mut out = vec![];

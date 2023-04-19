@@ -91,13 +91,14 @@ impl State {
                 }
                 crossterm::execute!(
                     out,
-                    style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
+                    style::Print(termutil::append_prefix_and_trim_suffix(
                         &if i == selector_position {
                             self.label.to_owned()
                         } else {
                             Graphemes::from(" ".repeat(self.label.width()))
                         },
-                        &self.suffix_after_trim
+                        &next.get_with_index(i),
+                        &self.suffix_after_trim,
                     )?)
                 )?;
                 if i == selector_position {

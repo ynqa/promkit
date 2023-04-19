@@ -9,8 +9,6 @@ use std::fmt::{self, Display, Formatter};
 use std::iter::FromIterator;
 use std::ops::{Deref, DerefMut};
 
-use crate::{crossterm::terminal, error::Result};
-
 use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
 
@@ -94,27 +92,6 @@ impl Graphemes {
             .take_while(|&(a, b)| a == b)
             .map(|(a, _)| a.clone())
             .collect()
-    }
-
-    pub fn append_prefix_and_trim_suffix(
-        &self,
-        prefix: &Graphemes,
-        suffix_after_trim: &Graphemes,
-    ) -> Result<String> {
-        let line = prefix.to_string() + &self.to_string();
-        let width_limit = terminal::size()?.0 as usize;
-        if width_limit < suffix_after_trim.width() {
-            return Ok(String::new());
-        }
-
-        let width_without_suffix = width_limit - suffix_after_trim.width();
-        let res = if width_without_suffix < line.len() {
-            line.chars().take(width_without_suffix).collect::<String>()
-                + &suffix_after_trim.to_string()
-        } else {
-            line
-        };
-        Ok(res)
     }
 }
 
