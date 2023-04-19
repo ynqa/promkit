@@ -3,7 +3,7 @@ use std::io;
 use promkit::{
     build::Builder,
     keybind::KeyBind,
-    readline::{self, handler, State},
+    readline::{self, cmd, State},
     EventHandleFn, Result,
 };
 
@@ -17,7 +17,7 @@ fn main() -> Result<()> {
                     } else {
                         input.to_ascii_uppercase()
                     };
-                    handler::input_char()(None, Some(input), out, state)
+                    cmd::input_char()(None, Some(input), out, state)
                 } else {
                     Ok(None)
                 }

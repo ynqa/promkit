@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::io;
 
 use crate::{
+    cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    handler,
     internal::buffer::Buffer,
     keybind::KeyBind,
     readline::{self, State},
@@ -29,7 +29,7 @@ impl Default for KeyBind<State> {
     fn default() -> Self {
         let mut b = KeyBind {
             event_mapping: HashMap::default(),
-            handle_input: Some(readline::handler::input_char()),
+            handle_input: Some(readline::cmd::input_char()),
             handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
                 termutil::clear(out)?;
                 state.pre_render(out)?;
@@ -46,7 +46,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                handler::enter(),
+                cmd::enter(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -55,7 +55,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                handler::interrupt(),
+                cmd::interrupt(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -64,7 +64,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::move_left(),
+                readline::cmd::move_left(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -73,7 +73,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::move_right(),
+                readline::cmd::move_right(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -82,7 +82,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::move_head(),
+                readline::cmd::move_head(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -91,7 +91,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::move_tail(),
+                readline::cmd::move_tail(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -100,7 +100,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::prev_history(),
+                readline::cmd::prev_history(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -109,7 +109,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::next_history(),
+                readline::cmd::next_history(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -118,7 +118,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::erase_char(),
+                readline::cmd::erase_char(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -127,7 +127,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::erase_all(),
+                readline::cmd::erase_all(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -136,7 +136,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::handler::complete(),
+                readline::cmd::complete(),
             ),
         ]);
         b

@@ -80,7 +80,7 @@ pub(crate) mod internal {
 }
 /// A module providing the lines to receive and display user inputs.
 pub mod readline {
-    pub mod handler;
+    pub mod cmd;
     mod keybind;
     mod prompt;
     pub mod state;
@@ -90,8 +90,8 @@ pub mod readline {
 }
 /// A module providing the selectbox to choose the items from.
 pub mod select {
+    pub mod cmd;
     mod cursor;
-    pub mod handler;
     mod keybind;
     mod prompt;
     pub mod state;
@@ -100,12 +100,12 @@ pub mod select {
     pub use self::state::State;
 }
 
+/// Collection of terminal operations.
+pub mod cmd;
 mod error;
 pub use error::Result;
 /// Characters and their width.
 pub mod grapheme;
-/// Collection of terminal operations.
-pub mod handler;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.

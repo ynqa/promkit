@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::io;
 
 use crate::{
+    cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    handler,
     internal::selector::Selector,
     keybind::KeyBind,
     select::{self, State},
@@ -43,7 +43,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                handler::enter(),
+                cmd::enter(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -52,7 +52,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                handler::interrupt(),
+                cmd::interrupt(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -61,7 +61,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::handler::move_up(),
+                select::cmd::move_up(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -70,7 +70,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::handler::move_down(),
+                select::cmd::move_down(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -79,7 +79,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::handler::move_head(),
+                select::cmd::move_head(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -88,7 +88,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::handler::move_tail(),
+                select::cmd::move_tail(),
             ),
         ]);
         b

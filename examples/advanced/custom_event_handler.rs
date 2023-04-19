@@ -2,8 +2,8 @@ use std::io;
 
 use promkit::{
     build::Builder,
+    cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
-    handler,
     readline::{self, State},
     Handler, Output, Result,
 };
@@ -26,12 +26,12 @@ impl Handler<State> for MyHandler {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            }) => handler::enter()(None, None, out, state),
+            }) => cmd::enter()(None, None, out, state),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
-            }) => handler::interrupt()(None, None, out, state),
+            }) => cmd::interrupt()(None, None, out, state),
             _ => Ok(None),
         }
     }
