@@ -27,6 +27,8 @@ impl Default for KeyBind<State> {
             handle_input: None,
             handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
                 termutil::clear(out)?;
+                state.editor.to_head();
+                state.move_head()?;
                 state.pre_render(out)?;
                 // Overwrite the prev as default.
                 state.prev = Selector::default();
