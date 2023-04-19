@@ -80,20 +80,20 @@ impl State {
                 crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
             }
 
-            let selectbox_position = next.position();
-            let from = selectbox_position - self.vertical_cursor.position as usize;
-            let to = selectbox_position
+            let selector_position = next.position();
+            let from = selector_position - self.vertical_cursor.position as usize;
+            let to = selector_position
                 + (self.screen_size(&next)? - self.vertical_cursor.position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
-                if i == selectbox_position {
+                if i == selector_position {
                     crossterm::execute!(out, style::SetForegroundColor(self.label_color))?;
                 }
                 crossterm::execute!(
                     out,
                     style::Print(&next.get_with_index(i).append_prefix_and_trim_suffix(
-                        &if i == selectbox_position {
+                        &if i == selector_position {
                             self.label.to_owned()
                         } else {
                             Graphemes::from(" ".repeat(self.label.width()))
@@ -101,7 +101,7 @@ impl State {
                         &self.suffix_after_trim
                     )?)
                 )?;
-                if i == selectbox_position {
+                if i == selector_position {
                     crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
                 }
                 if termutil::compare_cursor_position(Boundary::Bottom)? == Ordering::Less {
@@ -117,14 +117,14 @@ impl State {
 }
 
 impl State {
-    pub fn screen_size(&self, selectbox: &Selector) -> Result<u16> {
+    pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
         let left_space = terminal::size()?.1
             - (self.init_move_down_lines
                 + termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?);
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),
-            selectbox.data.len() as u16,
+            selector.data.len() as u16,
         ]
         .iter()
         .min()

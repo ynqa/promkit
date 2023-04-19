@@ -18,8 +18,8 @@ use crate::{
 /// | <kbd> CTRL + C </kbd>  | Leave from event-loop with [io::ErrorKind::Interrupted](https://doc.rust-lang.org/stable/std/io/enum.ErrorKind.html#variant.Interrupted)
 /// | <kbd> ↑ </kbd>         | Move backward
 /// | <kbd> ↓ </kbd>         | Move forward
-/// | <kbd> CTRL + A </kbd>  | Move to head of the selectbox
-/// | <kbd> CTRL + E </kbd>  | Move to tail of the selectbox
+/// | <kbd> CTRL + A </kbd>  | Move to head of selector
+/// | <kbd> CTRL + E </kbd>  | Move to tail of selector
 impl Default for KeyBind<State> {
     fn default() -> Self {
         let mut b = KeyBind::<State> {

@@ -22,8 +22,8 @@ promkit = "0.1.2"
     - Masking
     - Switch insert/overwrite modes
     - Suggestions
-  - Select: provide the selectbox to choose the items from
-    - Move cyclically in the selectbox
+  - Select: provide the selector to choose the items from
+    - Move cyclically in the selector
 - Customizations
   - Edit key-bindings
   - Edit crossterm [Event](https://docs.rs/crossterm/0.23.0/crossterm/event/enum.Event.html) handler

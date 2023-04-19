@@ -12,7 +12,7 @@ use crate::{
 #[derive(Clone)]
 pub struct Builder {
     _handler: Rc<RefCell<dyn Handler<State>>>,
-    _selectbox: Selector,
+    _selector: Selector,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
     _label: Graphemes,
@@ -26,7 +26,7 @@ impl Builder {
     pub fn new<I: fmt::Display, U: IntoIterator<Item = I>>(items: U) -> Self {
         let mut res = Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
-            _selectbox: Selector::default(),
+            _selector: Selector::default(),
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯ "),
@@ -35,7 +35,7 @@ impl Builder {
             _window: None,
             _suffix_after_trim: Graphemes::from("…"),
         };
-        res._selectbox.register_all(items);
+        res._selector.register_all(items);
         res
     }
 }
@@ -71,9 +71,9 @@ impl build::Builder<State> for Builder {
                 },
             )),
             state: State {
-                editor: self._selectbox.clone(),
-                prev: self._selectbox.clone(),
-                next: self._selectbox.clone(),
+                editor: self._selector.clone(),
+                prev: self._selector.clone(),
+                next: self._selector.clone(),
                 title: self._title,
                 title_color: self._title_color,
                 vertical_cursor: Vertical::default(),
