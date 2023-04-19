@@ -27,7 +27,7 @@ pub struct Builder {
     _num_lines: Option<usize>,
     _min_len_to_search: usize,
     _limit_history_size: Option<usize>,
-    _suggest: Option<Box<Suggest>>,
+    _suggest: Option<Suggest>,
 }
 
 impl Default for Builder {
@@ -102,7 +102,7 @@ impl build::Builder<State> for Builder {
                 mask: self._mask,
                 edit_mode: self._edit_mode,
                 num_lines: self._num_lines,
-                hstr: Some(Box::new(History::default())),
+                hstr: Some(History::default()),
                 min_len_to_search: self._min_len_to_search,
                 limit_history_size: self._limit_history_size,
                 suggest: self._suggest,
@@ -162,7 +162,7 @@ impl Builder {
         self
     }
 
-    pub fn suggest(mut self, suggest: Box<Suggest>) -> Self {
+    pub fn suggest(mut self, suggest: Suggest) -> Self {
         self._suggest = Some(suggest);
         self
     }

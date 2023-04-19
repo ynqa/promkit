@@ -41,8 +41,8 @@ pub struct State {
     pub min_len_to_search: usize,
     /// How many inputs to be stored into history.
     pub limit_history_size: Option<usize>,
-    pub hstr: Option<Box<History>>,
-    pub suggest: Option<Box<Suggest>>,
+    pub hstr: Option<History>,
+    pub suggest: Option<Suggest>,
 }
 
 impl Output for State {
