@@ -1,61 +1,11 @@
-use std::{collections::HashMap, io, marker::PhantomData};
+use std::collections::HashMap;
 
 use crate::{
     cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    grapheme::Grapheme,
-    internal::buffer::Buffer,
     keybind::KeyBind,
-    readline::{self, Mode, State},
-    termutil, InputHandler, Output, ResizeHandler, Result,
+    readline::{self, State},
 };
-
-pub struct Handler<S> {
-    _phantom: PhantomData<S>,
-}
-
-impl Default for Handler<State> {
-    fn default() -> Self {
-        Self {
-            _phantom: Default::default(),
-        }
-    }
-}
-
-impl InputHandler<State> for Handler<State> {
-    fn handle(
-        &mut self,
-        ch: char,
-        _out: &mut io::Stdout,
-        state: &mut State,
-    ) -> Result<Option<<State as Output>::Output>> {
-        if let Some(limit) = state.buffer_limit()? {
-            if limit <= state.editor.data.width() {
-                return Ok(None);
-            }
-        }
-        match state.edit_mode {
-            Mode::Insert => state.editor.insert(Grapheme::from(ch)),
-            Mode::Overwrite => state.editor.overwrite(Grapheme::from(ch)),
-        }
-        Ok(None)
-    }
-}
-
-impl ResizeHandler<State> for Handler<State> {
-    fn handle(
-        &mut self,
-        _: (u16, u16),
-        out: &mut io::Stdout,
-        state: &mut State,
-    ) -> Result<Option<<State as Output>::Output>> {
-        termutil::clear(out)?;
-        state.pre_render(out)?;
-        // Overwrite the prev as default.
-        state.prev = Buffer::default();
-        Ok(None)
-    }
-}
 
 /// Default key bindings for readline.
 ///

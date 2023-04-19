@@ -7,7 +7,7 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{keybind::Handler, state::State, Mode},
+    readline::{handler::Handler, state::State, Mode},
     register::Register,
     suggest::Suggest,
     termutil, Prompt, Result,

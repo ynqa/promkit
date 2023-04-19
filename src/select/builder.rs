@@ -9,7 +9,7 @@ use crate::{
     keybind::KeyBind,
     register::Register,
     select::cursor::Cursor,
-    select::{keybind::Handler, State},
+    select::{handler::Handler, State},
     termutil, Prompt, Result,
 };
 

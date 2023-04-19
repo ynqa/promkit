@@ -80,6 +80,7 @@ pub(crate) mod internal {
 pub mod readline {
     mod builder;
     pub mod cmd;
+    mod handler;
     mod keybind;
     mod state;
 
@@ -91,6 +92,7 @@ pub mod select {
     mod builder;
     pub mod cmd;
     mod cursor;
+    mod handler;
     mod keybind;
     mod state;
 
