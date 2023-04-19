@@ -3,7 +3,7 @@ use std::io::Stdout;
 
 use crate::{
     buffer::Buffer,
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     handler,
     keybind::KeyBind,
     readline::{self, State},
@@ -36,6 +36,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 handler::enter(),
             ),
@@ -43,6 +45,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('c'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 handler::interrupt(),
             ),
@@ -50,6 +54,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Left,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::move_left(),
             ),
@@ -57,6 +63,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Right,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::move_right(),
             ),
@@ -64,6 +72,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('a'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::move_head(),
             ),
@@ -71,6 +81,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('e'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::move_tail(),
             ),
@@ -78,6 +90,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Up,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::prev_history(),
             ),
@@ -85,6 +99,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::next_history(),
             ),
@@ -92,6 +108,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Backspace,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::erase_char(),
             ),
@@ -99,6 +117,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('u'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::erase_all(),
             ),
@@ -106,6 +126,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Tab,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 readline::handler::complete(),
             ),

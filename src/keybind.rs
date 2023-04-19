@@ -37,10 +37,12 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char(ch),
                     modifiers: KeyModifiers::NONE,
+                    ..
                 })
                 | Event::Key(KeyEvent {
                     code: KeyCode::Char(ch),
                     modifiers: KeyModifiers::SHIFT,
+                    ..
                 }) => match &self.handle_input {
                     Some(func) => (func)(None, Some(ch), out, state),
                     None => Ok(false),
@@ -54,7 +56,9 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
 #[cfg(test)]
 mod test {
     use super::{io, EventHandleFn, HashMap, KeyBind};
-    use crate::crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+    use crate::crossterm::event::{
+        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+    };
 
     use std::any::Any;
 
@@ -69,6 +73,8 @@ mod test {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::empty(),
             }),
             Box::new(|_, _, _: &mut io::Stdout, _: &mut Box<dyn Any>| Ok(true))
                 as Box<EventHandleFn<Box<dyn Any>>>,

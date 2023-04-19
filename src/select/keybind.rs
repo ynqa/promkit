@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::Stdout;
 
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     handler,
     keybind::KeyBind,
     select::{self, State},
@@ -31,6 +31,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 handler::enter(),
             ),
@@ -38,6 +40,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('c'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 handler::interrupt(),
             ),
@@ -45,6 +49,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Up,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 select::handler::move_up(),
             ),
@@ -52,6 +58,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Down,
                     modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 select::handler::move_down(),
             ),
@@ -59,6 +67,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('a'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 select::handler::move_head(),
             ),
@@ -66,6 +76,8 @@ impl Default for KeyBind<State> {
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('e'),
                     modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::empty(),
                 }),
                 select::handler::move_tail(),
             ),

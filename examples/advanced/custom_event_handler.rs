@@ -20,10 +20,12 @@ impl Handler<State> for MyHandler {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             }) => handler::enter()(None, None, out, state),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
+                ..
             }) => handler::interrupt()(None, None, out, state),
             _ => Ok(false),
         }

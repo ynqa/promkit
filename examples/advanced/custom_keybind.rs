@@ -2,7 +2,7 @@ use std::io;
 
 use promkit::{
     build::Builder,
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     grapheme::Graphemes,
     keybind::KeyBind,
     readline::{self, State},
@@ -15,6 +15,8 @@ fn main() -> Result<()> {
         Event::Key(KeyEvent {
             code: KeyCode::Char('r'),
             modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::empty(),
         }),
         Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
             state.0.editor.replace(&Graphemes::from("REPLCED!!"));

@@ -30,18 +30,21 @@ fn main() -> Result<()> {
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
+                ..
             }) => {
                 break;
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 termutil::move_left(&mut out, 1)?;
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
+                ..
             }) => {
                 termutil::move_right(&mut out, 1)?;
             }
