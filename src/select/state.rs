@@ -3,6 +3,7 @@ use std::io;
 
 use crate::{
     crossterm::{cursor, style, terminal},
+    cursor::Vertical,
     grapheme::Graphemes,
     internal::selector::Selector,
     termutil::{self, Boundary},
@@ -21,7 +22,7 @@ pub struct State {
     pub label: Graphemes,
     pub label_color: style::Color,
     pub init_move_down_lines: u16,
-    pub selected_cursor_position: u16,
+    pub vertical_cursor: Vertical,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
 }
@@ -80,9 +81,9 @@ impl State {
             }
 
             let selectbox_position = next.position();
-            let from = selectbox_position - self.selected_cursor_position as usize;
+            let from = selectbox_position - self.vertical_cursor.position as usize;
             let to = selectbox_position
-                + (self.selectbox_lines(&next)? - self.selected_cursor_position) as usize;
+                + (self.screen_size(&next)? - self.vertical_cursor.position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
@@ -116,38 +117,7 @@ impl State {
 }
 
 impl State {
-    pub fn move_up(&mut self) -> Result<()> {
-        if self.selected_cursor_position == 0 {
-            self.selected_cursor_position = 0;
-        } else {
-            self.selected_cursor_position -= 1;
-        }
-        Ok(())
-    }
-
-    pub fn move_down(&mut self) -> Result<()> {
-        if self.selectbox_lines(&self.editor)? > 0 {
-            let limit = self.selectbox_lines(&self.editor)? - 1;
-            if self.selected_cursor_position >= limit {
-                self.selected_cursor_position = limit;
-            } else {
-                self.selected_cursor_position += 1;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn move_head(&mut self) -> Result<()> {
-        self.selected_cursor_position = 0;
-        Ok(())
-    }
-
-    pub fn move_tail(&mut self) -> Result<()> {
-        self.selected_cursor_position = self.selectbox_lines(&self.editor)? - 1;
-        Ok(())
-    }
-
-    pub fn selectbox_lines(&self, selectbox: &Selector) -> Result<u16> {
+    pub fn screen_size(&self, selectbox: &Selector) -> Result<u16> {
         let left_space = terminal::size()?.1
             - (self.init_move_down_lines
                 + termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?);

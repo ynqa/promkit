@@ -110,6 +110,7 @@ pub mod handler;
 /// and their handlers.
 pub mod keybind;
 
+mod cursor;
 pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
