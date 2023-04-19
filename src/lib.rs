@@ -78,23 +78,23 @@ pub(crate) mod internal {
 }
 /// A module providing the lines to receive and display user inputs.
 pub mod readline {
+    mod builder;
     pub mod cmd;
     mod keybind;
-    mod prompt;
-    pub mod state;
+    mod state;
 
-    pub use self::prompt::Builder;
+    pub use self::builder::Builder;
     pub use self::state::{Mode, State};
 }
 /// A module providing the selectbox to choose the items from.
 pub mod select {
+    mod builder;
     pub mod cmd;
     mod cursor;
     mod keybind;
-    mod prompt;
-    pub mod state;
+    mod state;
 
-    pub use self::prompt::Builder;
+    pub use self::builder::Builder;
     pub use self::state::State;
 }
 
@@ -108,7 +108,6 @@ pub mod grapheme;
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
 pub mod keybind;
-
 pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
