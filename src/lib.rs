@@ -125,12 +125,16 @@ pub use crossterm;
 use downcast_rs::Downcast;
 
 /// A trait for handling the events.
-pub trait Handler<S>: Downcast {
+pub trait Handler<S: Output>: Downcast {
     /// Edit the state and show the items on stdout on receiving the events.
-    fn handle(&mut self, _: crossterm::event::Event, _: &mut io::Stdout, _: &mut S)
-        -> Result<bool>;
+    fn handle(
+        &mut self,
+        _: crossterm::event::Event,
+        _: &mut io::Stdout,
+        _: &mut S,
+    ) -> Result<Option<S::Output>>;
 }
-impl_downcast!(Handler<S>);
+impl_downcast!(Handler<S> where S: Output);
 
 /// A type representing the hooks that are called in the certain timings.
 pub type HookFn<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
@@ -155,8 +159,12 @@ pub struct Prompt<S> {
 }
 
 /// A type representing the event handlers.
-pub type EventHandleFn<S> =
-    dyn Fn(Option<(u16, u16)>, Option<char>, &mut io::Stdout, &mut S) -> Result<bool>;
+pub type EventHandleFn<S> = dyn Fn(
+    Option<(u16, u16)>,
+    Option<char>,
+    &mut io::Stdout,
+    &mut S,
+) -> Result<Option<<S as Output>::Output>>;
 
 /// A trait representing the final results for return.
 pub trait Output {
@@ -204,12 +212,13 @@ impl<S: 'static + Output> Prompt<S> {
                 .borrow_mut()
                 .handle(ev, &mut self.out, &mut self.state)
             {
-                Ok(true) => {
-                    let item = self.state.output();
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
+                Ok(maybe_output) => {
+                    if let Some(output) = maybe_output {
+                        if let Some(finalize) = &self.finalize {
+                            finalize(&mut self.out, &mut self.state)?;
+                        }
+                        return Ok(output);
                     }
-                    return Ok(item);
                 }
                 Err(e) => {
                     if let Some(finalize) = &self.finalize {
@@ -217,7 +226,6 @@ impl<S: 'static + Output> Prompt<S> {
                     }
                     return Err(e);
                 }
-                _ => (),
             }
             if let Some(post_run) = &self.post_run {
                 if let Err(e) = post_run(&mut self.out, &mut self.state) {

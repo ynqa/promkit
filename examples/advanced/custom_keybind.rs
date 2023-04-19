@@ -20,7 +20,7 @@ fn main() -> Result<()> {
         }),
         Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
             state.editor.replace(&Graphemes::from("REPLCED!!"));
-            Ok(false)
+            Ok(None)
         }) as Box<EventHandleFn<State>>,
     )]);
     let mut p = readline::Builder::default().handler(b).build()?;

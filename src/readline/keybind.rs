@@ -35,7 +35,7 @@ impl Default for KeyBind<State> {
                 state.pre_render(out)?;
                 // Overwrite the prev as default.
                 state.prev = Buffer::default();
-                Ok(false)
+                Ok(None)
             })),
         };
         b.assign(vec![

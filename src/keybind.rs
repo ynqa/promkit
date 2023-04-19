@@ -3,18 +3,18 @@ use std::io;
 
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
-    EventHandleFn, Handler, Result,
+    EventHandleFn, Handler, Output, Result,
 };
 
 /// Map key-events and their handlers.
-pub struct KeyBind<S> {
+pub struct KeyBind<S: Output> {
     pub event_mapping: HashMap<Event, Box<EventHandleFn<S>>>,
 
     pub handle_input: Option<Box<EventHandleFn<S>>>,
     pub handle_resize: Option<Box<EventHandleFn<S>>>,
 }
 
-impl<S> KeyBind<S> {
+impl<S: Output> KeyBind<S> {
     pub fn assign<I>(&mut self, items: I)
     where
         I: IntoIterator<Item = (Event, Box<EventHandleFn<S>>)>,
@@ -25,14 +25,19 @@ impl<S> KeyBind<S> {
     }
 }
 
-impl<S: 'static> Handler<S> for KeyBind<S> {
-    fn handle(&mut self, ev: Event, out: &mut io::Stdout, state: &mut S) -> Result<bool> {
+impl<S: 'static + Output> Handler<S> for KeyBind<S> {
+    fn handle(
+        &mut self,
+        ev: Event,
+        out: &mut io::Stdout,
+        state: &mut S,
+    ) -> Result<Option<S::Output>> {
         match self.event_mapping.get(&ev) {
             Some(handle) => handle(None, None, out, state),
             None => match ev {
                 Event::Resize(x, y) => match &self.handle_resize {
                     Some(func) => (func)(Some((x, y)), None, out, state),
-                    None => Ok(false),
+                    None => Ok(None),
                 },
                 Event::Key(KeyEvent {
                     code: KeyCode::Char(ch),
@@ -45,9 +50,9 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
                     ..
                 }) => match &self.handle_input {
                     Some(func) => (func)(None, Some(ch), out, state),
-                    None => Ok(false),
+                    None => Ok(None),
                 },
-                _ => Ok(false),
+                _ => Ok(None),
             },
         }
     }
@@ -55,12 +60,20 @@ impl<S: 'static> Handler<S> for KeyBind<S> {
 
 #[cfg(test)]
 mod test {
-    use super::{io, EventHandleFn, HashMap, KeyBind};
+    use super::{io, EventHandleFn, HashMap, KeyBind, Output};
     use crate::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
     };
 
     use std::any::Any;
+
+    impl Output for Box<dyn Any> {
+        type Output = String;
+
+        fn output(&self) -> Self::Output {
+            "".to_owned()
+        }
+    }
 
     #[test]
     fn assign() {
@@ -76,7 +89,7 @@ mod test {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::empty(),
             }),
-            Box::new(|_, _, _: &mut io::Stdout, _: &mut Box<dyn Any>| Ok(true))
+            Box::new(|_, _, _: &mut io::Stdout, state: &mut Box<dyn Any>| Ok(Some(state.output())))
                 as Box<EventHandleFn<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);

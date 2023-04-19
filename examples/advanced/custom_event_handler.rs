@@ -5,7 +5,7 @@ use promkit::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     handler,
     readline::{self, State},
-    Handler, Result,
+    Handler, Output, Result,
 };
 
 #[derive(Default)]
@@ -14,7 +14,12 @@ struct MyHandler {
 }
 
 impl Handler<State> for MyHandler {
-    fn handle(&mut self, ev: Event, out: &mut io::Stdout, state: &mut State) -> Result<bool> {
+    fn handle(
+        &mut self,
+        ev: Event,
+        out: &mut io::Stdout,
+        state: &mut State,
+    ) -> Result<Option<<State as Output>::Output>> {
         self.event_counter += 1;
         match ev {
             Event::Key(KeyEvent {
@@ -27,7 +32,7 @@ impl Handler<State> for MyHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             }) => handler::interrupt()(None, None, out, state),
-            _ => Ok(false),
+            _ => Ok(None),
         }
     }
 }

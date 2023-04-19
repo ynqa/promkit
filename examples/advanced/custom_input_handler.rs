@@ -19,7 +19,7 @@ fn main() -> Result<()> {
                     };
                     handler::input_char()(None, Some(input), out, state)
                 } else {
-                    Ok(false)
+                    Ok(None)
                 }
             },
         ) as Box<EventHandleFn<State>>),

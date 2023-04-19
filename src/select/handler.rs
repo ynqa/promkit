@@ -12,7 +12,7 @@ pub fn move_up() -> Box<EventHandleFn<State>> {
         } else {
             state.cursor.prev();
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -26,7 +26,7 @@ pub fn move_down() -> Box<EventHandleFn<State>> {
         } else {
             state.cursor.next(state.screen_size(&state.editor)?)?;
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -35,7 +35,7 @@ pub fn move_head() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         state.editor.to_head();
         state.cursor.to_head();
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -44,6 +44,6 @@ pub fn move_tail() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         state.editor.to_tail();
         state.cursor.to_tail(state.screen_size(&state.editor)?);
-        Ok(false)
+        Ok(None)
     })
 }

@@ -32,7 +32,7 @@ impl Default for KeyBind<State> {
                 state.pre_render(out)?;
                 // Overwrite the prev as default.
                 state.prev = Selector::default();
-                Ok(false)
+                Ok(None)
             })),
         };
         b.assign(vec![

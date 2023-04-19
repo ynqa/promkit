@@ -14,7 +14,7 @@ pub fn move_left() -> Box<EventHandleFn<State>> {
         if state.editor.prev() {
             termutil::move_left(out, width)?;
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -24,7 +24,7 @@ pub fn move_right() -> Box<EventHandleFn<State>> {
         if state.editor.next() {
             termutil::move_right(out, state.editor.width_in_position() as u16)?;
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -33,7 +33,7 @@ pub fn move_head() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
         termutil::move_left(out, state.editor.width_to_position() as u16)?;
         state.editor.to_head();
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -42,7 +42,7 @@ pub fn move_tail() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
         termutil::move_right(out, state.editor.width_from_position() as u16)?;
         state.editor.to_tail();
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -54,7 +54,7 @@ pub fn prev_history() -> Box<EventHandleFn<State>> {
                 state.editor.replace(&hstr.get());
             }
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -66,7 +66,7 @@ pub fn next_history() -> Box<EventHandleFn<State>> {
                 state.editor.replace(&hstr.get());
             }
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -76,7 +76,7 @@ pub fn erase_char() -> Box<EventHandleFn<State>> {
         if state.editor.position() > 0 {
             state.editor.erase();
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -84,7 +84,7 @@ pub fn erase_char() -> Box<EventHandleFn<State>> {
 pub fn erase_all() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         state.editor = Buffer::default();
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -98,7 +98,7 @@ pub fn complete() -> Box<EventHandleFn<State>> {
                 }
             }
         }
-        Ok(false)
+        Ok(None)
     })
 }
 
@@ -108,7 +108,7 @@ pub fn input_char() -> Box<EventHandleFn<State>> {
         |_, input: Option<char>, _: &mut io::Stdout, state: &mut State| {
             if let Some(limit) = state.buffer_limit()? {
                 if limit <= state.editor.data.width() {
-                    return Ok(false);
+                    return Ok(None);
                 }
             }
             if let Some(input) = input {
@@ -117,7 +117,7 @@ pub fn input_char() -> Box<EventHandleFn<State>> {
                     Mode::Overwrite => state.editor.overwrite(Grapheme::from(input)),
                 }
             }
-            Ok(false)
+            Ok(None)
         },
     )
 }
