@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::{
     build, crossterm::style, grapheme::Graphemes, keybind::KeyBind, select::State,
-    selectbox::SelectBox, termutil, Handler, Prompt, Result,
+    selectbox::SelectBox, termutil, Handler, Prompt, Result, register::Register,
 };
 
 #[derive(Clone)]
@@ -20,9 +20,9 @@ pub struct Builder {
     _suffix_after_trim: Graphemes,
 }
 
-impl Default for Builder {
-    fn default() -> Self {
-        Self {
+impl Builder {
+    pub fn new<U: IntoIterator<Item = String>>(items: U) -> Self {
+        let mut res = Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
             _selectbox: SelectBox::default(),
             _title: None,
@@ -32,7 +32,9 @@ impl Default for Builder {
             _init_move_down_lines: 0,
             _window: None,
             _suffix_after_trim: Graphemes::from("…"),
-        }
+        };
+        res._selectbox.register_all(items);
+        res
     }
 }
 
