@@ -3,7 +3,7 @@ use promkit::{
 };
 
 fn main() -> Result<()> {
-    let mut selectbox = Box::new(SelectBox::default());
+    let mut selectbox = SelectBox::default();
     selectbox.register_all((0..100).map(|v| v.to_string()).collect::<Vec<String>>());
     let mut p = select::Builder::default()
         .title("Q: What number do you like?")

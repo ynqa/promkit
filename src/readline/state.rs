@@ -6,7 +6,6 @@ use crate::{
     crossterm::{cursor, style, terminal},
     grapheme::{Grapheme, Graphemes},
     history::History,
-    state,
     suggest::Suggest,
     termutil, Output, Result,
 };
@@ -20,11 +19,12 @@ pub enum Mode {
     Overwrite,
 }
 
-pub type State = state::State<Buffer, With>;
-
 /// Readline specific state.
 #[derive(Debug)]
-pub struct With {
+pub struct State {
+    pub editor: Buffer,
+    pub prev: Buffer,
+    pub next: Buffer,
     /// Title displayed on the initial line.
     pub title: Option<Graphemes>,
     pub title_color: Option<style::Color>,
@@ -49,24 +49,24 @@ impl Output for State {
     type Output = String;
 
     fn output(&self) -> Self::Output {
-        self.0.editor.data.to_string()
+        self.editor.data.to_string()
     }
 }
 
-impl<W: io::Write> state::Render<W> for State {
-    fn pre_render(&self, out: &mut W) -> Result<()> {
+impl State {
+    pub fn pre_render<W: io::Write>(&self, out: &mut W) -> Result<()> {
         // Render the title.
-        if let Some(title) = &self.1.title {
-            if let Some(color) = self.1.title_color {
+        if let Some(title) = &self.title {
+            if let Some(color) = self.title_color {
                 crossterm::execute!(out, style::SetForegroundColor(color))?;
             }
             crossterm::execute!(out, style::Print(title), cursor::MoveToNextLine(1))?;
-            if self.1.title_color.is_some() {
+            if self.title_color.is_some() {
                 crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
             }
             if termutil::compare_cursor_position(termutil::Boundary::Bottom)? == Ordering::Equal {
                 let title_lines =
-                    termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+                    termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?;
                 crossterm::execute!(out, terminal::ScrollUp(title_lines))?;
             }
         }
@@ -74,21 +74,20 @@ impl<W: io::Write> state::Render<W> for State {
         // Render the label.
         crossterm::execute!(
             out,
-            style::SetForegroundColor(self.1.label_color),
-            style::Print(self.1.label.to_owned()),
+            style::SetForegroundColor(self.label_color),
+            style::Print(self.label.to_owned()),
             style::SetForegroundColor(style::Color::Reset),
         )
     }
 
-    fn render(&mut self, out: &mut W) -> Result<()> {
-        let (mut prev, mut next) = (self.0.prev.clone(), self.0.next.clone());
+    pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
+        let (mut prev, mut next) = (self.prev.clone(), self.next.clone());
         if prev.data == next.data {
             return Ok(());
         }
 
         // Check to leave the space to render the data.
-        let used_space =
-            termutil::num_lines(self.1.title.as_ref().unwrap_or(&Graphemes::default()))?;
+        let used_space = termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?;
         if terminal::size()?.1 <= used_space {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
@@ -97,7 +96,7 @@ impl<W: io::Write> state::Render<W> for State {
         }
 
         // Masking.
-        prev.data = match &self.1.mask {
+        prev.data = match &self.mask {
             None => prev.data.clone(),
             Some(mask) => prev
                 .data
@@ -105,7 +104,7 @@ impl<W: io::Write> state::Render<W> for State {
                 .map(|_| mask.clone())
                 .collect::<Graphemes>(),
         };
-        next.data = match &self.1.mask {
+        next.data = match &self.mask {
             None => next.data.clone(),
             Some(mask) => next
                 .data
@@ -150,10 +149,10 @@ impl<W: io::Write> state::Render<W> for State {
 
 impl State {
     pub fn buffer_limit(&self) -> Result<Option<usize>> {
-        if let Some(lines) = self.1.num_lines {
+        if let Some(lines) = self.num_lines {
             if lines > 0 {
                 return Ok(Some(
-                    terminal::size()?.0 as usize * lines as usize - self.1.label.width(),
+                    terminal::size()?.0 as usize * lines as usize - self.label.width(),
                 ));
             }
         }

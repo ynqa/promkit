@@ -6,8 +6,8 @@ use crate::{select::State, EventHandleFn};
 pub fn move_up() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         // cyclical movement
-        if !state.0.editor.prev() {
-            state.0.editor.to_tail();
+        if !state.editor.prev() {
+            state.editor.to_tail();
             state.move_tail()?;
         } else {
             state.move_up()?;
@@ -20,8 +20,8 @@ pub fn move_up() -> Box<EventHandleFn<State>> {
 pub fn move_down() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         // cyclical movement
-        if !state.0.editor.next() {
-            state.0.editor.to_head();
+        if !state.editor.next() {
+            state.editor.to_head();
             state.move_head()?;
         } else {
             state.move_down()?;
@@ -33,7 +33,7 @@ pub fn move_down() -> Box<EventHandleFn<State>> {
 /// Move the selected position to head.
 pub fn move_head() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        state.0.editor.to_head();
+        state.editor.to_head();
         state.move_head()?;
         Ok(false)
     })
@@ -42,7 +42,7 @@ pub fn move_head() -> Box<EventHandleFn<State>> {
 /// Move the selected position to tail.
 pub fn move_tail() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        state.0.editor.to_tail();
+        state.editor.to_tail();
         state.move_tail()?;
         Ok(false)
     })

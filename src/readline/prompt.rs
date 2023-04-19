@@ -9,9 +9,8 @@ use crate::{
     grapheme::{Grapheme, Graphemes},
     history::History,
     keybind::KeyBind,
-    readline::{state::With, Mode, State},
+    readline::{state::State, Mode},
     register::Register,
-    state::{self, Render},
     suggest::Suggest,
     termutil, Handler, Prompt, Result,
 };
@@ -49,15 +48,53 @@ impl Default for Builder {
     }
 }
 
-impl build::Builder<Buffer, With> for Builder {
-    fn state(self) -> Result<Box<State>> {
-        Ok(Box::new(state::State(
-            state::Inherited {
-                editor: Box::new(Buffer::default()),
-                prev: Box::new(Buffer::default()),
-                next: Box::new(Buffer::default()),
-            },
-            With {
+impl build::Builder<State> for Builder {
+    fn build(self) -> Result<Prompt<State>> {
+        Ok(Prompt::<State> {
+            out: io::stdout(),
+            handler: self.clone()._handler,
+            pre_run: Some(Box::new(
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.render(out)?;
+                    state.prev = state.editor.clone();
+                    Ok(())
+                },
+            )),
+            post_run: Some(Box::new(
+                |_: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.next = state.editor.clone();
+                    Ok(())
+                },
+            )),
+            initialize: Some(Box::new(
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> { state.pre_render(out) },
+            )),
+            finalize: Some(Box::new(
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    termutil::move_right(out, state.editor.width_from_position() as u16)?;
+                    termutil::move_down(out)?;
+                    termutil::move_head(out)?;
+                    if let Some(hstr) = &mut state.hstr {
+                        hstr.register(state.editor.data.clone());
+                        // Oldest one of history is removed
+                        // when the history is filled.
+                        if let Some(limit) = state.limit_history_size {
+                            // Plus 1 considers the current input.
+                            if limit + 1 < hstr.data.len() {
+                                hstr.data.remove(0);
+                            }
+                        }
+                    }
+                    state.editor = Buffer::default();
+                    state.prev = Buffer::default();
+                    state.next = Buffer::default();
+                    Ok(())
+                },
+            )),
+            state: State {
+                editor: Buffer::default(),
+                prev: Buffer::default(),
+                next: Buffer::default(),
                 title: self._title,
                 title_color: self._title_color,
                 label: self._label,
@@ -70,52 +107,6 @@ impl build::Builder<Buffer, With> for Builder {
                 limit_history_size: self._limit_history_size,
                 suggest: self._suggest,
             },
-        )))
-    }
-
-    fn build(self) -> Result<Prompt<State>> {
-        Ok(Prompt::<State> {
-            out: io::stdout(),
-            handler: self.clone()._handler,
-            pre_run: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    state.render(out)?;
-                    state.0.prev = state.0.editor.clone();
-                    Ok(())
-                },
-            )),
-            post_run: Some(Box::new(
-                |_: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    state.0.next = state.0.editor.clone();
-                    Ok(())
-                },
-            )),
-            initialize: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> { state.pre_render(out) },
-            )),
-            finalize: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    termutil::move_right(out, state.0.editor.width_from_position() as u16)?;
-                    termutil::move_down(out)?;
-                    termutil::move_head(out)?;
-                    if let Some(hstr) = &mut state.1.hstr {
-                        hstr.register(state.0.editor.data.clone());
-                        // Oldest one of history is removed
-                        // when the history is filled.
-                        if let Some(limit) = state.1.limit_history_size {
-                            // Plus 1 considers the current input.
-                            if limit + 1 < hstr.data.len() {
-                                hstr.data.remove(0);
-                            }
-                        }
-                    }
-                    state.0.editor = Box::new(Buffer::default());
-                    state.0.prev = Box::new(Buffer::default());
-                    state.0.next = Box::new(Buffer::default());
-                    Ok(())
-                },
-            )),
-            state: self.state()?,
         })
     }
 }

@@ -36,7 +36,7 @@
 //! };
 //!
 //! fn main() -> Result<()> {
-//!     let mut selectbox = Box::new(SelectBox::default());
+//!     let mut selectbox = SelectBox::default();
 //!     selectbox.register_all((0..100).map(|v| v.to_string()).collect::<Vec<String>>());
 //!     let mut p = select::Builder::default()
 //!         .title("Q: What number do you like?")
@@ -58,12 +58,11 @@ extern crate scopeguard;
 pub mod buffer;
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use super::{state::State, Prompt, Result};
+    use super::{Prompt, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder<D, S> {
-        fn state(self) -> Result<Box<State<D, S>>>;
-        fn build(self) -> Result<Prompt<State<D, S>>>;
+    pub trait Builder<S> {
+        fn build(self) -> Result<Prompt<S>>;
     }
 }
 /// Characters and their width.
@@ -110,28 +109,6 @@ pub mod select {
 }
 /// List representing the candidate items to be chosen by the users.
 pub mod selectbox;
-/// State of applications.
-pub mod state {
-    use std::io;
-
-    use crate::Result;
-
-    #[derive(Default)]
-    pub struct State<D, S>(pub Inherited<D>, pub S);
-
-    #[derive(Default)]
-    pub struct Inherited<D> {
-        pub prev: Box<D>,
-        pub next: Box<D>,
-        pub editor: Box<D>,
-    }
-
-    /// A trait to render the items into the output stream.
-    pub trait Render<W: io::Write> {
-        fn pre_render(&self, out: &mut W) -> Result<()>;
-        fn render(&mut self, out: &mut W) -> Result<()>;
-    }
-}
 /// A data structure to store the suggestions for the completion.
 pub mod suggest;
 /// Utilities for the terminal.
@@ -163,6 +140,7 @@ pub type HookFn<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<S> {
     pub out: io::Stdout,
+    pub state: S,
     pub handler: Rc<RefCell<dyn Handler<S>>>,
     /// Call initially every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
@@ -176,7 +154,6 @@ pub struct Prompt<S> {
     /// Call once finally when
     /// [Prompt.run](struct.Prompt.html#method.run) is called.
     pub finalize: Option<Box<HookFn<S>>>,
-    pub state: Box<S>,
 }
 
 /// A type representing the event handlers.

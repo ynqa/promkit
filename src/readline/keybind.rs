@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::Stdout;
+use std::io;
 
 use crate::{
     buffer::Buffer,
@@ -7,6 +7,7 @@ use crate::{
     handler,
     keybind::KeyBind,
     readline::{self, State},
+    termutil,
 };
 
 /// Default key bindings for readline.
@@ -29,7 +30,13 @@ impl Default for KeyBind<State> {
         let mut b = KeyBind {
             event_mapping: HashMap::default(),
             handle_input: Some(readline::handler::input_char()),
-            handle_resize: Some(handler::reload::<Buffer, readline::state::With, Stdout>()),
+            handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
+                termutil::clear(out)?;
+                state.pre_render(out)?;
+                // Overwrite the prev as default.
+                state.prev = Buffer::default();
+                Ok(false)
+            })),
         };
         b.assign(vec![
             (

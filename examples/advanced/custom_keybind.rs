@@ -19,7 +19,7 @@ fn main() -> Result<()> {
             state: KeyEventState::empty(),
         }),
         Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-            state.0.editor.replace(&Graphemes::from("REPLCED!!"));
+            state.editor.replace(&Graphemes::from("REPLCED!!"));
             Ok(false)
         }) as Box<EventHandleFn<State>>,
     )]);

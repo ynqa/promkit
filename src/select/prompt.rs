@@ -3,20 +3,14 @@ use std::io;
 use std::rc::Rc;
 
 use crate::{
-    build,
-    crossterm::style,
-    grapheme::Graphemes,
-    keybind::KeyBind,
-    select::{state::With, State},
-    selectbox::SelectBox,
-    state::{self, Render},
-    termutil, Handler, Prompt, Result,
+    build, crossterm::style, grapheme::Graphemes, keybind::KeyBind, select::State,
+    selectbox::SelectBox, termutil, Handler, Prompt, Result,
 };
 
 #[derive(Clone)]
 pub struct Builder {
     _handler: Rc<RefCell<dyn Handler<State>>>,
-    _selectbox: Box<SelectBox>,
+    _selectbox: SelectBox,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
     _label: Graphemes,
@@ -30,7 +24,7 @@ impl Default for Builder {
     fn default() -> Self {
         Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
-            _selectbox: Box::new(SelectBox::default()),
+            _selectbox: SelectBox::default(),
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯ "),
@@ -42,27 +36,7 @@ impl Default for Builder {
     }
 }
 
-impl build::Builder<SelectBox, With> for Builder {
-    fn state(self) -> Result<Box<State>> {
-        Ok(Box::new(state::State(
-            state::Inherited {
-                editor: self._selectbox.clone(),
-                prev: self._selectbox.clone(),
-                next: self._selectbox.clone(),
-            },
-            With {
-                title: self._title,
-                title_color: self._title_color,
-                selected_cursor_position: 0,
-                label: self._label,
-                label_color: self._label_color,
-                init_move_down_lines: self._init_move_down_lines,
-                window: self._window,
-                suffix_after_trim: self._suffix_after_trim,
-            },
-        )))
-    }
-
+impl build::Builder<State> for Builder {
     fn build(self) -> Result<Prompt<State>> {
         Ok(Prompt::<State> {
             out: io::stdout(),
@@ -70,13 +44,13 @@ impl build::Builder<SelectBox, With> for Builder {
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.render(out)?;
-                    state.0.prev = state.0.editor.clone();
+                    state.prev = state.editor.clone();
                     Ok(())
                 },
             )),
             post_run: Some(Box::new(
                 |_: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    state.0.next = state.0.editor.clone();
+                    state.next = state.editor.clone();
                     Ok(())
                 },
             )),
@@ -92,13 +66,25 @@ impl build::Builder<SelectBox, With> for Builder {
                     termutil::clear(out)
                 },
             )),
-            state: self.state()?,
+            state: State {
+                editor: self._selectbox.clone(),
+                prev: self._selectbox.clone(),
+                next: self._selectbox.clone(),
+                title: self._title,
+                title_color: self._title_color,
+                selected_cursor_position: 0,
+                label: self._label,
+                label_color: self._label_color,
+                init_move_down_lines: self._init_move_down_lines,
+                window: self._window,
+                suffix_after_trim: self._suffix_after_trim,
+            },
         })
     }
 }
 
 impl Builder {
-    pub fn selectbox(mut self, items: Box<SelectBox>) -> Self {
+    pub fn selectbox(mut self, items: SelectBox) -> Self {
         self._selectbox = items;
         self
     }

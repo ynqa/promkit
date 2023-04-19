@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::Stdout;
+use std::io;
 
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
@@ -7,6 +7,7 @@ use crate::{
     keybind::KeyBind,
     select::{self, State},
     selectbox::SelectBox,
+    termutil,
 };
 
 /// Default key bindings for select.
@@ -24,7 +25,13 @@ impl Default for KeyBind<State> {
         let mut b = KeyBind::<State> {
             event_mapping: HashMap::default(),
             handle_input: None,
-            handle_resize: Some(handler::reload::<SelectBox, select::state::With, Stdout>()),
+            handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
+                termutil::clear(out)?;
+                state.pre_render(out)?;
+                // Overwrite the prev as default.
+                state.prev = SelectBox::default();
+                Ok(false)
+            })),
         };
         b.assign(vec![
             (

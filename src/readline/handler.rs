@@ -10,8 +10,8 @@ use crate::{
 /// Move the position of buffer and cursor backward.
 pub fn move_left() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-        let width = state.0.editor.width_in_position() as u16;
-        if state.0.editor.prev() {
+        let width = state.editor.width_in_position() as u16;
+        if state.editor.prev() {
             termutil::move_left(out, width)?;
         }
         Ok(false)
@@ -21,8 +21,8 @@ pub fn move_left() -> Box<EventHandleFn<State>> {
 /// Move the position of buffer and cursor forward.
 pub fn move_right() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-        if state.0.editor.next() {
-            termutil::move_right(out, state.0.editor.width_in_position() as u16)?;
+        if state.editor.next() {
+            termutil::move_right(out, state.editor.width_in_position() as u16)?;
         }
         Ok(false)
     })
@@ -31,8 +31,8 @@ pub fn move_right() -> Box<EventHandleFn<State>> {
 /// Move the position of buffer and cursor to head.
 pub fn move_head() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-        termutil::move_left(out, state.0.editor.width_to_position() as u16)?;
-        state.0.editor.to_head();
+        termutil::move_left(out, state.editor.width_to_position() as u16)?;
+        state.editor.to_head();
         Ok(false)
     })
 }
@@ -40,8 +40,8 @@ pub fn move_head() -> Box<EventHandleFn<State>> {
 /// Move the position of buffer and cursor to tail.
 pub fn move_tail() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-        termutil::move_right(out, state.0.editor.width_from_position() as u16)?;
-        state.0.editor.to_tail();
+        termutil::move_right(out, state.editor.width_from_position() as u16)?;
+        state.editor.to_tail();
         Ok(false)
     })
 }
@@ -49,9 +49,9 @@ pub fn move_tail() -> Box<EventHandleFn<State>> {
 /// Look up a previous input in history.
 pub fn prev_history() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        if let Some(hstr) = &state.1.hstr {
+        if let Some(hstr) = &state.hstr {
             if hstr.prev() {
-                state.0.editor.replace(&hstr.get());
+                state.editor.replace(&hstr.get());
             }
         }
         Ok(false)
@@ -61,9 +61,9 @@ pub fn prev_history() -> Box<EventHandleFn<State>> {
 /// Look up a next input in history.
 pub fn next_history() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        if let Some(hstr) = &state.1.hstr {
+        if let Some(hstr) = &state.hstr {
             if hstr.next() {
-                state.0.editor.replace(&hstr.get());
+                state.editor.replace(&hstr.get());
             }
         }
         Ok(false)
@@ -73,8 +73,8 @@ pub fn next_history() -> Box<EventHandleFn<State>> {
 /// Erase a char at the current position.
 pub fn erase_char() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        if state.0.editor.position() > 0 {
-            state.0.editor.erase();
+        if state.editor.position() > 0 {
+            state.editor.erase();
         }
         Ok(false)
     })
@@ -83,7 +83,7 @@ pub fn erase_char() -> Box<EventHandleFn<State>> {
 /// Erase all chars at the current line.
 pub fn erase_all() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        state.0.editor = Box::new(Buffer::default());
+        state.editor = Buffer::default();
         Ok(false)
     })
 }
@@ -91,10 +91,10 @@ pub fn erase_all() -> Box<EventHandleFn<State>> {
 /// Search the item by [Suggest](../struct.Suggest.html).
 pub fn complete() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
-        if let Some(suggest) = &state.1.suggest {
-            if state.0.editor.data.len() >= state.1.min_len_to_search {
-                if let Some(res) = suggest.search(&state.0.editor.data) {
-                    state.0.editor.replace(&res);
+        if let Some(suggest) = &state.suggest {
+            if state.editor.data.len() >= state.min_len_to_search {
+                if let Some(res) = suggest.search(&state.editor.data) {
+                    state.editor.replace(&res);
                 }
             }
         }
@@ -107,14 +107,14 @@ pub fn input_char() -> Box<EventHandleFn<State>> {
     Box::new(
         |_, input: Option<char>, _: &mut io::Stdout, state: &mut State| {
             if let Some(limit) = state.buffer_limit()? {
-                if limit <= state.0.editor.data.width() {
+                if limit <= state.editor.data.width() {
                     return Ok(false);
                 }
             }
             if let Some(input) = input {
-                match state.1.edit_mode {
-                    Mode::Insert => state.0.editor.insert(Grapheme::from(input)),
-                    Mode::Overwrite => state.0.editor.overwrite(Grapheme::from(input)),
+                match state.edit_mode {
+                    Mode::Insert => state.editor.insert(Grapheme::from(input)),
+                    Mode::Overwrite => state.editor.overwrite(Grapheme::from(input)),
                 }
             }
             Ok(false)
