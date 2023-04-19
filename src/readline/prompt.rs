@@ -37,7 +37,7 @@ impl Default for Builder {
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯❯ "),
-            _label_color: style::Color::DarkRed,
+            _label_color: style::Color::Reset,
             _mask: None,
             _edit_mode: Mode::Insert,
             _num_lines: None,
@@ -52,7 +52,7 @@ impl build::Builder<State> for Builder {
     fn build(self) -> Result<Prompt<State>> {
         Ok(Prompt::<State> {
             out: io::stdout(),
-            handler: self.clone()._handler,
+            handler: self._handler,
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.render(out)?;

@@ -29,7 +29,7 @@ impl Builder {
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯ "),
-            _label_color: style::Color::Cyan,
+            _label_color: style::Color::Reset,
             _init_move_down_lines: 0,
             _window: None,
             _suffix_after_trim: Graphemes::from("…"),
@@ -43,7 +43,7 @@ impl build::Builder<State> for Builder {
     fn build(self) -> Result<Prompt<State>> {
         Ok(Prompt::<State> {
             out: io::stdout(),
-            handler: self.clone()._handler,
+            handler: self._handler,
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.render(out)?;
