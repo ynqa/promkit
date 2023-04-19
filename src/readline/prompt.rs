@@ -7,7 +7,7 @@ use crate::{
     crossterm::style,
     grapheme::{Grapheme, Graphemes},
     internal::buffer::Buffer,
-    internal::history::History,
+    internal::selector::history::History,
     keybind::KeyBind,
     readline::{state::State, Mode},
     register::Register,

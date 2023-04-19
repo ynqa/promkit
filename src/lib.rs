@@ -75,8 +75,6 @@ pub mod register {
 pub(crate) mod internal {
     /// String buffer representing the user inputs.
     pub mod buffer;
-    /// A data structure to store the history of the user inputs.
-    pub mod history;
     /// A data structure to store the suggestions for the completion.
     pub mod selector;
 }

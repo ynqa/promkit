@@ -3,6 +3,9 @@ use std::fmt;
 
 use crate::{grapheme::Graphemes, register::Register};
 
+/// A data structure to store the history of the user inputs.
+pub mod history;
+
 /// Store the candidates to choose the items from.
 #[derive(Debug, Clone, Default)]
 pub struct Selector {

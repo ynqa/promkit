@@ -5,7 +5,7 @@ use crate::{
     crossterm::{cursor, style, terminal},
     grapheme::{Grapheme, Graphemes},
     internal::buffer::Buffer,
-    internal::history::History,
+    internal::selector::history::History,
     suggest::Suggest,
     termutil, Output, Result,
 };
