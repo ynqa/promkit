@@ -1,4 +1,5 @@
 use std::cell::Cell;
+use std::fmt;
 
 use crate::{grapheme::Graphemes, register::Register};
 
@@ -9,9 +10,9 @@ pub struct SelectBox {
     pub position: Cell<usize>,
 }
 
-impl<T: Into<String>> Register<T> for SelectBox {
+impl<T: fmt::Display> Register<T> for SelectBox {
     fn register(&mut self, item: T) {
-        self.data.push(Graphemes::from(item.into()))
+        self.data.push(Graphemes::from(format!("{}", item)))
     }
 }
 

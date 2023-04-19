@@ -1,10 +1,11 @@
 use std::cell::RefCell;
+use std::fmt;
 use std::io;
 use std::rc::Rc;
 
 use crate::{
-    build, crossterm::style, grapheme::Graphemes, keybind::KeyBind, select::State,
-    selectbox::SelectBox, termutil, Handler, Prompt, Result, register::Register,
+    build, crossterm::style, grapheme::Graphemes, keybind::KeyBind, register::Register,
+    select::State, selectbox::SelectBox, termutil, Handler, Prompt, Result,
 };
 
 #[derive(Clone)]
@@ -21,7 +22,7 @@ pub struct Builder {
 }
 
 impl Builder {
-    pub fn new<U: IntoIterator<Item = String>>(items: U) -> Self {
+    pub fn new<I: fmt::Display, U: IntoIterator<Item = I>>(items: U) -> Self {
         let mut res = Self {
             _handler: Rc::new(RefCell::new(KeyBind::default())),
             _selectbox: SelectBox::default(),

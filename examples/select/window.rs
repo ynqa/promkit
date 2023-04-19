@@ -1,9 +1,7 @@
-use promkit::{
-    build::Builder, crossterm::style, register::Register, select, selectbox::SelectBox, Result,
-};
+use promkit::{build::Builder, crossterm::style, select, Result};
 
 fn main() -> Result<()> {
-    let mut p = select::Builder::new((0..100))
+    let mut p = select::Builder::new(0..100)
         .title("Q: What number do you like?")
         .title_color(style::Color::DarkGreen)
         .window(5)
