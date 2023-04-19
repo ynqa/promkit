@@ -44,18 +44,16 @@
 //! }
 //! ```
 
-#[macro_use]
-extern crate downcast_rs;
 #[macro_use(defer)]
 extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use super::{Prompt, Result};
+    use super::{InputHandler, Output, Prompt, ResizeHandler, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder<S> {
-        fn build(self) -> Result<Prompt<S>>;
+    pub trait Builder<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
+        fn build(self) -> Result<Prompt<S, I, R>>;
     }
 }
 
@@ -115,35 +113,35 @@ pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
 
-use std::cell::RefCell;
 use std::fmt::Display;
 use std::io;
-use std::rc::Rc;
 use std::sync::Once;
 
 pub use crossterm;
-use downcast_rs::Downcast;
 
-/// A trait for handling the events.
-pub trait Handler<S: Output>: Downcast {
-    /// Edit the state and show the items on stdout on receiving the events.
-    fn handle(
-        &mut self,
-        _: crossterm::event::Event,
-        _: &mut io::Stdout,
-        _: &mut S,
-    ) -> Result<Option<S::Output>>;
+/// A type representing the event handlers.
+pub type EventHandleFn<S> =
+    dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
+
+pub trait InputHandler<S: Output> {
+    fn handle(&mut self, _: char, _: &mut io::Stdout, _: &mut S) -> Result<Option<S::Output>>;
 }
-impl_downcast!(Handler<S> where S: Output);
+
+pub trait ResizeHandler<S: Output> {
+    fn handle(&mut self, _: (u16, u16), _: &mut io::Stdout, _: &mut S)
+        -> Result<Option<S::Output>>;
+}
 
 /// A type representing the hooks that are called in the certain timings.
 pub type HookFn<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
 
 /// A core data structure to manage the hooks and state.
-pub struct Prompt<S> {
+pub struct Prompt<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
     pub out: io::Stdout,
     pub state: S,
-    pub handler: Rc<RefCell<dyn Handler<S>>>,
+    pub keybind: keybind::KeyBind<S>,
+    pub input_handler: I,
+    pub resize_handler: R,
     /// Call initially every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
     pub pre_run: Option<Box<HookFn<S>>>,
@@ -158,14 +156,6 @@ pub struct Prompt<S> {
     pub finalize: Option<Box<HookFn<S>>>,
 }
 
-/// A type representing the event handlers.
-pub type EventHandleFn<S> = dyn Fn(
-    Option<(u16, u16)>,
-    Option<char>,
-    &mut io::Stdout,
-    &mut S,
-) -> Result<Option<<S as Output>::Output>>;
-
 /// A trait representing the final results for return.
 pub trait Output {
     /// Return data type for the edited item.
@@ -176,7 +166,7 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<S: 'static + Output> Prompt<S> {
+impl<S: 'static + Output, I: InputHandler<S>, R: ResizeHandler<S>> Prompt<S, I, R> {
     /// Loop the steps that receive an event and trigger the handler.
     pub fn run(&mut self) -> Result<S::Output> {
         ONCE.call_once(|| {
@@ -198,6 +188,7 @@ impl<S: 'static + Output> Prompt<S> {
         }
 
         loop {
+            // hook pre_run
             if let Some(pre_run) = &self.pre_run {
                 if let Err(e) = pre_run(&mut self.out, &mut self.state) {
                     if let Some(finalize) = &self.finalize {
@@ -207,11 +198,12 @@ impl<S: 'static + Output> Prompt<S> {
                 }
             }
             let ev = crossterm::event::read()?;
-            match self
-                .handler
-                .borrow_mut()
-                .handle(ev, &mut self.out, &mut self.state)
-            {
+
+            if let crossterm::event::Event::Resize(x, y) = ev {
+                self.resize_handler
+                    .handle((x, y), &mut self.out, &mut self.state)?;
+            }
+            match self.keybind.handle(&ev, &mut self.out, &mut self.state) {
                 Ok(maybe_output) => {
                     if let Some(output) = maybe_output {
                         if let Some(finalize) = &self.finalize {
@@ -227,6 +219,24 @@ impl<S: 'static + Output> Prompt<S> {
                     return Err(e);
                 }
             }
+            match ev {
+                crossterm::event::Event::Key(crossterm::event::KeyEvent {
+                    code: crossterm::event::KeyCode::Char(ch),
+                    modifiers: crossterm::event::KeyModifiers::NONE,
+                    ..
+                })
+                | crossterm::event::Event::Key(crossterm::event::KeyEvent {
+                    code: crossterm::event::KeyCode::Char(ch),
+                    modifiers: crossterm::event::KeyModifiers::SHIFT,
+                    ..
+                }) => {
+                    self.input_handler
+                        .handle(ch, &mut self.out, &mut self.state)?;
+                }
+                _ => (),
+            }
+
+            // hook post_run
             if let Some(post_run) = &self.post_run {
                 if let Err(e) = post_run(&mut self.out, &mut self.state) {
                     if let Some(finalize) = &self.finalize {

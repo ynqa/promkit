@@ -1,17 +1,11 @@
 use std::collections::HashMap;
 use std::io;
 
-use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
-    EventHandleFn, Handler, Output, Result,
-};
+use crate::{crossterm::event::Event, EventHandleFn, Output, Result};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S: Output> {
     pub event_mapping: HashMap<Event, Box<EventHandleFn<S>>>,
-
-    pub handle_input: Option<Box<EventHandleFn<S>>>,
-    pub handle_resize: Option<Box<EventHandleFn<S>>>,
 }
 
 impl<S: Output> KeyBind<S> {
@@ -23,37 +17,16 @@ impl<S: Output> KeyBind<S> {
             self.event_mapping.insert(elem.0, elem.1);
         }
     }
-}
 
-impl<S: 'static + Output> Handler<S> for KeyBind<S> {
-    fn handle(
+    pub fn handle(
         &mut self,
-        ev: Event,
+        ev: &Event,
         out: &mut io::Stdout,
         state: &mut S,
     ) -> Result<Option<S::Output>> {
-        match self.event_mapping.get(&ev) {
-            Some(handle) => handle(None, None, out, state),
-            None => match ev {
-                Event::Resize(x, y) => match &self.handle_resize {
-                    Some(func) => (func)(Some((x, y)), None, out, state),
-                    None => Ok(None),
-                },
-                Event::Key(KeyEvent {
-                    code: KeyCode::Char(ch),
-                    modifiers: KeyModifiers::NONE,
-                    ..
-                })
-                | Event::Key(KeyEvent {
-                    code: KeyCode::Char(ch),
-                    modifiers: KeyModifiers::SHIFT,
-                    ..
-                }) => match &self.handle_input {
-                    Some(func) => (func)(None, Some(ch), out, state),
-                    None => Ok(None),
-                },
-                _ => Ok(None),
-            },
+        match self.event_mapping.get(ev) {
+            Some(handle) => handle(out, state),
+            _ => Ok(None),
         }
     }
 }
@@ -79,8 +52,6 @@ mod test {
     fn assign() {
         let mut b = KeyBind::<Box<dyn Any>> {
             event_mapping: HashMap::default(),
-            handle_input: None,
-            handle_resize: None,
         };
         b.assign(vec![(
             Event::Key(KeyEvent {
@@ -89,7 +60,7 @@ mod test {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::empty(),
             }),
-            Box::new(|_, _, _: &mut io::Stdout, state: &mut Box<dyn Any>| Ok(Some(state.output())))
+            Box::new(|_: &mut io::Stdout, state: &mut Box<dyn Any>| Ok(Some(state.output())))
                 as Box<EventHandleFn<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);

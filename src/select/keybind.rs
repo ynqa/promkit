@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-use std::io;
+use std::{collections::HashMap, io, marker::PhantomData};
 
 use crate::{
     cmd,
@@ -7,8 +6,49 @@ use crate::{
     internal::selector::Selector,
     keybind::KeyBind,
     select::{self, State},
-    termutil,
+    termutil, InputHandler, Output, ResizeHandler, Result,
 };
+
+#[derive(Default)]
+pub struct Handler<S> {
+    _phantom: PhantomData<S>,
+}
+
+impl Default for Handler<State> {
+    fn default() -> Self {
+        Self {
+            _phantom: Default::default(),
+        }
+    }
+}
+
+impl InputHandler<State> for Handler<State> {
+    fn handle(
+        &mut self,
+        _: char,
+        _: &mut io::Stdout,
+        _: &mut State,
+    ) -> Result<Option<<State as Output>::Output>> {
+        Ok(None)
+    }
+}
+
+impl ResizeHandler<State> for Handler<State> {
+    fn handle(
+        &mut self,
+        _: (u16, u16),
+        out: &mut io::Stdout,
+        state: &mut State,
+    ) -> Result<Option<<State as Output>::Output>> {
+        termutil::clear(out)?;
+        state.editor.to_head();
+        state.cursor.to_head();
+        state.pre_render(out)?;
+        // Overwrite the prev as default.
+        state.prev = Selector::default();
+        Ok(None)
+    }
+}
 
 /// Default key bindings for select.
 ///
@@ -24,16 +64,6 @@ impl Default for KeyBind<State> {
     fn default() -> Self {
         let mut b = KeyBind::<State> {
             event_mapping: HashMap::default(),
-            handle_input: None,
-            handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-                termutil::clear(out)?;
-                state.editor.to_head();
-                state.cursor.to_head();
-                state.pre_render(out)?;
-                // Overwrite the prev as default.
-                state.prev = Selector::default();
-                Ok(None)
-            })),
         };
         b.assign(vec![
             (

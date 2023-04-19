@@ -1,6 +1,4 @@
-use std::cell::RefCell;
 use std::io;
-use std::rc::Rc;
 
 use crate::{
     build,
@@ -9,15 +7,14 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{state::State, Mode},
+    readline::{keybind::Handler, state::State, Mode},
     register::Register,
     suggest::Suggest,
-    termutil, Handler, Prompt, Result,
+    termutil, Prompt, Result,
 };
 
-#[derive(Clone)]
 pub struct Builder {
-    _handler: Rc<RefCell<dyn Handler<State>>>,
+    _keybind: KeyBind<State>,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
     _label: Graphemes,
@@ -33,7 +30,7 @@ pub struct Builder {
 impl Default for Builder {
     fn default() -> Self {
         Self {
-            _handler: Rc::new(RefCell::new(KeyBind::default())),
+            _keybind: KeyBind::default(),
             _title: None,
             _title_color: None,
             _label: Graphemes::from("❯❯ "),
@@ -48,11 +45,13 @@ impl Default for Builder {
     }
 }
 
-impl build::Builder<State> for Builder {
-    fn build(self) -> Result<Prompt<State>> {
-        Ok(Prompt::<State> {
+impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
+    fn build(self) -> Result<Prompt<State, Handler<State>, Handler<State>>> {
+        Ok(Prompt::<State, Handler<State>, Handler<State>> {
             out: io::stdout(),
-            handler: self._handler,
+            keybind: self._keybind,
+            input_handler: Handler::default(),
+            resize_handler: Handler::default(),
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.render(out)?;
@@ -112,8 +111,8 @@ impl build::Builder<State> for Builder {
 }
 
 impl Builder {
-    pub fn handler<H: 'static + Handler<State>>(mut self, handler: H) -> Self {
-        self._handler = Rc::new(RefCell::new(handler));
+    pub fn keybind(mut self, keybind: KeyBind<State>) -> Self {
+        self._keybind = keybind;
         self
     }
 

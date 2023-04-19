@@ -1,16 +1,20 @@
-use std::cell::RefCell;
 use std::fmt;
 use std::io;
-use std::rc::Rc;
 
 use crate::{
-    build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::cursor::Cursor, select::State, termutil, Handler, Prompt, Result,
+    build,
+    crossterm::style,
+    grapheme::Graphemes,
+    internal::selector::Selector,
+    keybind::KeyBind,
+    register::Register,
+    select::cursor::Cursor,
+    select::{keybind::Handler, State},
+    termutil, Prompt, Result,
 };
 
-#[derive(Clone)]
 pub struct Builder {
-    _handler: Rc<RefCell<dyn Handler<State>>>,
+    _keybind: KeyBind<State>,
     _selector: Selector,
     _title: Option<Graphemes>,
     _title_color: Option<style::Color>,
@@ -24,7 +28,7 @@ pub struct Builder {
 impl Builder {
     pub fn new<I: fmt::Display, U: IntoIterator<Item = I>>(items: U) -> Self {
         let mut res = Self {
-            _handler: Rc::new(RefCell::new(KeyBind::default())),
+            _keybind: KeyBind::default(),
             _selector: Selector::default(),
             _title: None,
             _title_color: None,
@@ -39,11 +43,13 @@ impl Builder {
     }
 }
 
-impl build::Builder<State> for Builder {
-    fn build(self) -> Result<Prompt<State>> {
-        Ok(Prompt::<State> {
+impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
+    fn build(self) -> Result<Prompt<State, Handler<State>, Handler<State>>> {
+        Ok(Prompt::<State, Handler<State>, Handler<State>> {
             out: io::stdout(),
-            handler: self._handler,
+            keybind: self._keybind,
+            input_handler: Handler::default(),
+            resize_handler: Handler::default(),
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.render(out)?;
@@ -90,8 +96,8 @@ impl build::Builder<State> for Builder {
 }
 
 impl Builder {
-    pub fn handler<H: 'static + Handler<State>>(mut self, handler: H) -> Self {
-        self._handler = Rc::new(RefCell::new(handler));
+    pub fn keybind(mut self, keybind: KeyBind<State>) -> Self {
+        self._keybind = keybind;
         self
     }
 

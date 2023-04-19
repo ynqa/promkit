@@ -1,14 +1,61 @@
-use std::collections::HashMap;
-use std::io;
+use std::{collections::HashMap, io, marker::PhantomData};
 
 use crate::{
     cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    grapheme::Grapheme,
     internal::buffer::Buffer,
     keybind::KeyBind,
-    readline::{self, State},
-    termutil,
+    readline::{self, Mode, State},
+    termutil, InputHandler, Output, ResizeHandler, Result,
 };
+
+pub struct Handler<S> {
+    _phantom: PhantomData<S>,
+}
+
+impl Default for Handler<State> {
+    fn default() -> Self {
+        Self {
+            _phantom: Default::default(),
+        }
+    }
+}
+
+impl InputHandler<State> for Handler<State> {
+    fn handle(
+        &mut self,
+        ch: char,
+        _out: &mut io::Stdout,
+        state: &mut State,
+    ) -> Result<Option<<State as Output>::Output>> {
+        if let Some(limit) = state.buffer_limit()? {
+            if limit <= state.editor.data.width() {
+                return Ok(None);
+            }
+        }
+        match state.edit_mode {
+            Mode::Insert => state.editor.insert(Grapheme::from(ch)),
+            Mode::Overwrite => state.editor.overwrite(Grapheme::from(ch)),
+        }
+        Ok(None)
+    }
+}
+
+impl ResizeHandler<State> for Handler<State> {
+    fn handle(
+        &mut self,
+        _: (u16, u16),
+        out: &mut io::Stdout,
+        state: &mut State,
+    ) -> Result<Option<<State as Output>::Output>> {
+        termutil::clear(out)?;
+        state.pre_render(out)?;
+        // Overwrite the prev as default.
+        state.prev = Buffer::default();
+        Ok(None)
+    }
+}
 
 /// Default key bindings for readline.
 ///
@@ -29,14 +76,6 @@ impl Default for KeyBind<State> {
     fn default() -> Self {
         let mut b = KeyBind {
             event_mapping: HashMap::default(),
-            handle_input: Some(readline::cmd::input_char()),
-            handle_resize: Some(Box::new(|_, _, out: &mut io::Stdout, state: &mut State| {
-                termutil::clear(out)?;
-                state.pre_render(out)?;
-                // Overwrite the prev as default.
-                state.prev = Buffer::default();
-                Ok(None)
-            })),
         };
         b.assign(vec![
             (

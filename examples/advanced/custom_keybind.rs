@@ -18,12 +18,12 @@ fn main() -> Result<()> {
             kind: KeyEventKind::Press,
             state: KeyEventState::empty(),
         }),
-        Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
+        Box::new(|_: &mut io::Stdout, state: &mut State| {
             state.editor.replace(&Graphemes::from("REPLCED!!"));
             Ok(None)
         }) as Box<EventHandleFn<State>>,
     )]);
-    let mut p = readline::Builder::default().handler(b).build()?;
+    let mut p = readline::Builder::default().keybind(b).build()?;
     loop {
         let line = p.run()?;
         println!("result: {:?}", line);
