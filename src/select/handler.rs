@@ -10,9 +10,9 @@ pub fn move_up() -> Box<EventHandleFn<State>> {
             state.editor.to_tail();
             state
                 .cursor
-                .move_tail(state.screen_size(&state.editor)?)?;
+                .to_tail(state.screen_size(&state.editor)?)?;
         } else {
-            state.cursor.move_up()?;
+            state.cursor.prev()?;
         }
         Ok(false)
     })
@@ -24,11 +24,11 @@ pub fn move_down() -> Box<EventHandleFn<State>> {
         // cyclical movement
         if !state.editor.next() {
             state.editor.to_head();
-            state.cursor.move_head()?;
+            state.cursor.to_head()?;
         } else {
             state
                 .cursor
-                .move_down(state.screen_size(&state.editor)?)?;
+                .next(state.screen_size(&state.editor)?)?;
         }
         Ok(false)
     })
@@ -38,7 +38,7 @@ pub fn move_down() -> Box<EventHandleFn<State>> {
 pub fn move_head() -> Box<EventHandleFn<State>> {
     Box::new(|_, _, _: &mut io::Stdout, state: &mut State| {
         state.editor.to_head();
-        state.cursor.move_head()?;
+        state.cursor.to_head()?;
         Ok(false)
     })
 }
@@ -49,7 +49,7 @@ pub fn move_tail() -> Box<EventHandleFn<State>> {
         state.editor.to_tail();
         state
             .cursor
-            .move_tail(state.screen_size(&state.editor)?)?;
+            .to_tail(state.screen_size(&state.editor)?)?;
         Ok(false)
     })
 }
