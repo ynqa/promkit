@@ -122,8 +122,7 @@ impl State {
         }
 
         // Render the suffix of next buffer.
-        crossterm::execute!(out, terminal::Clear(terminal::ClearType::FromCursorDown))?;
-        let input = next
+        let mut input = next
             .data
             .iter()
             .enumerate()
@@ -132,17 +131,20 @@ impl State {
                 g.push(ch.clone());
                 g
             });
+
+        // FromCursorDown remove the last char
+        // if the cursor is at the end of line.
+        // Therefore, put the space the last of input string.
+        input.push(Grapheme::from(' '));
         crossterm::execute!(
             out,
-            style::Print(
-                input
-                    .iter()
-                    .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
-            )
+            style::Print(input),
+            terminal::Clear(terminal::ClearType::FromCursorDown),
         )?;
 
         // Go backward to the next position from the end of graphemes.
-        termutil::move_left(out, next.width_from_position() as u16)?;
+        // +1 is for input.push(Grapheme::from(' ')) step above.
+        termutil::move_left(out, next.width_from_position() as u16 + 1)?;
         Ok(())
     }
 }
