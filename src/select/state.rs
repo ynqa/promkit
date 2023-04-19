@@ -3,9 +3,9 @@ use std::io;
 
 use crate::{
     crossterm::{cursor, style, terminal},
-    select::cursor::Cursor,
     grapheme::Graphemes,
     internal::selector::Selector,
+    select::cursor::Cursor,
     termutil::{self, Boundary},
     Output, Result,
 };
@@ -82,8 +82,7 @@ impl State {
 
             let selector_position = next.position();
             let from = selector_position - self.cursor.position as usize;
-            let to = selector_position
-                + (self.screen_size(&next)? - self.cursor.position) as usize;
+            let to = selector_position + (self.screen_size(&next)? - self.cursor.position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;

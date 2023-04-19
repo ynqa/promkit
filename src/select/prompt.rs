@@ -4,9 +4,8 @@ use std::io;
 use std::rc::Rc;
 
 use crate::{
-    select::cursor::Cursor,
     build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::State, termutil, Handler, Prompt, Result,
+    register::Register, select::cursor::Cursor, select::State, termutil, Handler, Prompt, Result,
 };
 
 #[derive(Clone)]
