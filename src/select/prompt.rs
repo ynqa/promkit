@@ -64,9 +64,12 @@ impl build::Builder<State> for Builder {
                 },
             )),
             finalize: Some(Box::new(
-                |out: &mut io::Stdout, _: &mut State| -> Result<()> {
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     termutil::show_cursor(out)?;
-                    termutil::clear(out)
+                    termutil::move_down(
+                        out,
+                        termutil::num_lines(state.title.as_ref().unwrap_or(&Graphemes::default()))?,
+                    )
                 },
             )),
             state: State {
