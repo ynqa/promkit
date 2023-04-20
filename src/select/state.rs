@@ -7,7 +7,7 @@ use crate::{
     internal::selector::Selector,
     select::cursor::Cursor,
     termutil::{self, Boundary},
-    Output, Result,
+    text, Output, Result,
 };
 
 /// Select specific state.
@@ -16,8 +16,7 @@ pub struct State {
     pub prev: Selector,
     pub next: Selector,
     /// Title displayed on the initial line.
-    pub title: Option<Graphemes>,
-    pub title_color: Option<style::Color>,
+    pub title: Option<text::State>,
     /// A symbol to emphasize the selected item (e.g. ">").
     pub label: Graphemes,
     pub label_color: style::Color,
@@ -36,21 +35,15 @@ impl Output for State {
 }
 
 impl State {
-    pub fn pre_render<W: io::Write>(&self, out: &mut W) -> Result<()> {
+    pub fn pre_render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.init_move_down_lines {
             crossterm::execute!(out, cursor::MoveToNextLine(self.init_move_down_lines))?;
         }
 
         // Render the title.
-        if let Some(title) = &self.title {
-            if let Some(color) = self.title_color {
-                crossterm::execute!(out, style::SetForegroundColor(color))?;
-            }
-            crossterm::execute!(out, style::Print(title), cursor::MoveToNextLine(1))?;
-            if self.title_color.is_some() {
-                crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
-            }
+        if let Some(ref mut title) = self.title {
+            title.render(out)?;
         }
 
         // Return to the initial position.
@@ -64,7 +57,7 @@ impl State {
 
             // Check to leave the space to render the data.
             let title_lines =
-                termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?;
+                termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
             let used_space = self.init_move_down_lines + title_lines;
             if terminal::size()?.1 <= used_space {
                 return Err(io::Error::new(
@@ -75,7 +68,9 @@ impl State {
 
             // Move down the lines already written.
             let move_down_lines = self.init_move_down_lines
-                + termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?;
+                + termutil::num_lines(
+                    &self.title.as_ref().unwrap_or(&text::State::default()).text,
+                )?;
             if 0 < move_down_lines {
                 crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
             }
@@ -121,7 +116,9 @@ impl State {
     pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
         let left_space = terminal::size()?.1
             - (self.init_move_down_lines
-                + termutil::num_lines(self.title.as_ref().unwrap_or(&Graphemes::default()))?);
+                + termutil::num_lines(
+                    &self.title.as_ref().unwrap_or(&text::State::default()).text,
+                )?);
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),

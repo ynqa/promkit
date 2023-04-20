@@ -10,14 +10,13 @@ use crate::{
     register::Register,
     select::cursor::Cursor,
     select::{handler::Handler, State},
-    termutil, Prompt, Result,
+    termutil, text, Prompt, Result,
 };
 
 pub struct Builder {
     _keybind: KeyBind<State>,
     _selector: Selector,
-    _title: Option<Graphemes>,
-    _title_color: Option<style::Color>,
+    _title: Option<text::State>,
     _label: Graphemes,
     _label_color: style::Color,
     _init_move_down_lines: u16,
@@ -31,7 +30,6 @@ impl Builder {
             _keybind: KeyBind::default(),
             _selector: Selector::default(),
             _title: None,
-            _title_color: None,
             _label: Graphemes::from("❯ "),
             _label_color: style::Color::Reset,
             _init_move_down_lines: 0,
@@ -74,7 +72,9 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
                     termutil::show_cursor(out)?;
                     termutil::move_down(
                         out,
-                        termutil::num_lines(state.title.as_ref().unwrap_or(&Graphemes::default()))?,
+                        termutil::num_lines(
+                            &state.title.as_ref().unwrap_or(&text::State::default()).text,
+                        )?,
                     )
                 },
             )),
@@ -83,7 +83,6 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
                 prev: self._selector.clone(),
                 next: self._selector.clone(),
                 title: self._title,
-                title_color: self._title_color,
                 cursor: Cursor::default(),
                 label: self._label,
                 label_color: self._label_color,
@@ -101,13 +100,19 @@ impl Builder {
         self
     }
 
-    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
-        self._title = Some(Graphemes::from(title.into()));
+    pub fn title<T: fmt::Display>(mut self, title: T) -> Self {
+        self._title = Some(text::State {
+            text: Graphemes::from(format!("{}", title)),
+            ..Default::default()
+        });
         self
     }
 
     pub fn title_color(mut self, color: style::Color) -> Self {
-        self._title_color = Some(color);
+        self._title.as_mut().map(|mut t| {
+            t.text_color = color;
+            t
+        });
         self
     }
 
