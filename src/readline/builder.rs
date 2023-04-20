@@ -1,3 +1,4 @@
+use core::fmt;
 use std::io;
 
 use crate::{
@@ -10,13 +11,12 @@ use crate::{
     readline::{handler::Handler, state::State, Mode},
     register::Register,
     suggest::Suggest,
-    termutil, Prompt, Result,
+    termutil, text, Prompt, Result,
 };
 
 pub struct Builder {
     _keybind: KeyBind<State>,
-    _title: Option<Graphemes>,
-    _title_color: Option<style::Color>,
+    _title: Option<text::State>,
     _label: Graphemes,
     _label_color: style::Color,
     _mask: Option<Grapheme>,
@@ -32,7 +32,6 @@ impl Default for Builder {
         Self {
             _keybind: KeyBind::default(),
             _title: None,
-            _title_color: None,
             _label: Graphemes::from("❯❯ "),
             _label_color: style::Color::Reset,
             _mask: None,
@@ -95,7 +94,6 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
                 prev: Buffer::default(),
                 next: Buffer::default(),
                 title: self._title,
-                title_color: self._title_color,
                 label: self._label,
                 label_color: self._label_color,
                 mask: self._mask,
@@ -116,13 +114,19 @@ impl Builder {
         self
     }
 
-    pub fn title<T: Into<String>>(mut self, title: T) -> Self {
-        self._title = Some(Graphemes::from(title.into()));
+    pub fn title<T: fmt::Display>(mut self, title: T) -> Self {
+        self._title = Some(text::State {
+            text: Graphemes::from(format!("{}", title)),
+            ..Default::default()
+        });
         self
     }
 
     pub fn title_color(mut self, color: style::Color) -> Self {
-        self._title_color = Some(color);
+        self._title.as_mut().map(|mut t| {
+            t.text_color = color;
+            t
+        });
         self
     }
 
