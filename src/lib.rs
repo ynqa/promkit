@@ -49,7 +49,7 @@ extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use super::{InputHandler, Output, Prompt, ResizeHandler, Result};
+    use crate::{InputHandler, Output, Prompt, ResizeHandler, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
     pub trait Builder<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
@@ -97,6 +97,11 @@ pub mod select {
     mod state;
 
     pub use self::builder::Builder;
+    pub use self::state::State;
+}
+pub(crate) mod text {
+    mod state;
+
     pub use self::state::State;
 }
 
