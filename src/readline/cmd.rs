@@ -87,10 +87,8 @@ pub fn erase_all() -> Box<EventHandleFn<State>> {
 pub fn complete() -> Box<EventHandleFn<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         if let Some(suggest) = &state.suggest {
-            if state.editor.data.len() >= state.min_len_to_search {
-                if let Some(res) = suggest.search(&state.editor.data) {
-                    state.editor.replace(&res);
-                }
+            if let Some(res) = suggest.search(&state.editor.data) {
+                state.editor.replace(&res);
             }
         }
         Ok(None)

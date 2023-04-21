@@ -22,7 +22,6 @@ pub struct Builder {
     _mask: Option<Grapheme>,
     _edit_mode: Mode,
     _num_lines: Option<usize>,
-    _min_len_to_search: usize,
     _suggest: Option<Suggest>,
 }
 
@@ -36,7 +35,6 @@ impl Default for Builder {
             _mask: None,
             _edit_mode: Mode::Insert,
             _num_lines: None,
-            _min_len_to_search: 1,
             _suggest: None,
         }
     }
@@ -93,7 +91,6 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
                 edit_mode: self._edit_mode,
                 num_lines: self._num_lines,
                 hstr: Some(History::default()),
-                min_len_to_search: self._min_len_to_search,
                 suggest: self._suggest,
             },
         })
@@ -144,11 +141,6 @@ impl Builder {
 
     pub fn num_lines(mut self, lines: usize) -> Self {
         self._num_lines = Some(lines);
-        self
-    }
-
-    pub fn min_len_to_search(mut self, len: usize) -> Self {
-        self._min_len_to_search = len;
         self
     }
 

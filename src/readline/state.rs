@@ -35,8 +35,6 @@ pub struct State {
     pub edit_mode: Mode,
     /// How many lines to receive the user input string.
     pub num_lines: Option<usize>,
-    /// Minimum length of chars to start searching.
-    pub min_len_to_search: usize,
     pub hstr: Option<History>,
     pub suggest: Option<Suggest>,
 }
