@@ -37,8 +37,6 @@ pub struct State {
     pub num_lines: Option<usize>,
     /// Minimum length of chars to start searching.
     pub min_len_to_search: usize,
-    /// How many inputs to be stored into history.
-    pub limit_history_size: Option<usize>,
     pub hstr: Option<History>,
     pub suggest: Option<Suggest>,
 }
