@@ -65,7 +65,9 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
                 },
             )),
             initialize: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> { state.pre_render(out) },
+                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.render_static(out)
+                },
             )),
             finalize: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {

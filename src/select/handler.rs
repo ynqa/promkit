@@ -39,7 +39,7 @@ impl ResizeHandler<State> for Handler<State> {
         termutil::clear(out)?;
         state.editor.to_head();
         state.cursor.to_head();
-        state.pre_render(out)?;
+        state.render_static(out)?;
         // Overwrite the prev as default.
         state.prev = Selector::default();
         Ok(None)

@@ -35,7 +35,7 @@ impl Output for State {
 }
 
 impl State {
-    pub fn pre_render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
+    pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.init_move_down_lines {
             crossterm::execute!(out, cursor::MoveToNextLine(self.init_move_down_lines))?;

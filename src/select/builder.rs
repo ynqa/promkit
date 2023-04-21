@@ -64,7 +64,7 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
             initialize: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     termutil::hide_cursor(out)?;
-                    state.pre_render(out)
+                    state.render_static(out)
                 },
             )),
             finalize: Some(Box::new(

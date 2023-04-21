@@ -47,7 +47,7 @@ impl ResizeHandler<State> for Handler<State> {
         state: &mut State,
     ) -> Result<Option<<State as Output>::Output>> {
         termutil::clear(out)?;
-        state.pre_render(out)?;
+        state.render_static(out)?;
         // Overwrite the prev as default.
         state.prev = Buffer::default();
         Ok(None)

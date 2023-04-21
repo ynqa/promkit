@@ -52,7 +52,7 @@ impl Output for State {
 }
 
 impl State {
-    pub fn pre_render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
+    pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Render the title.
         if let Some(ref mut title) = self.title {
             title.render(out)?;
