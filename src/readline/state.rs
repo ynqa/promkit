@@ -52,6 +52,19 @@ impl Output for State {
 }
 
 impl State {
+    pub fn can_render(&self) -> Result<()> {
+        // Check to leave the space to render the data.
+        let used_space =
+            termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
+        if terminal::size()?.1 <= used_space {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Terminal does not leave the space to render.",
+            ));
+        }
+        Ok(())
+    }
+
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Render the title.
         if let Some(ref mut title) = self.title {
@@ -71,16 +84,6 @@ impl State {
         let (mut prev, mut next) = (self.prev.clone(), self.next.clone());
         if prev.data == next.data {
             return Ok(());
-        }
-
-        // Check to leave the space to render the data.
-        let used_space =
-            termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
-        if terminal::size()?.1 <= used_space {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Terminal does not leave the space to render.",
-            ));
         }
 
         // Masking.

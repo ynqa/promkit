@@ -53,6 +53,7 @@ impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
             resize_handler: Handler::default(),
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
+                    state.can_render()?;
                     state.render(out)?;
                     state.prev = state.editor.clone();
                     Ok(())

@@ -35,6 +35,20 @@ impl Output for State {
 }
 
 impl State {
+    pub fn can_render(&self) -> Result<()> {
+        // Check to leave the space to render the data.
+        let title_lines =
+            termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
+        let used_space = self.init_move_down_lines + title_lines;
+        if terminal::size()?.1 <= used_space {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Terminal does not leave the space to render.",
+            ));
+        }
+        Ok(())
+    }
+
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.init_move_down_lines {
@@ -54,17 +68,6 @@ impl State {
         let next = self.next.clone();
         if !next.data.is_empty() {
             crossterm::execute!(out, cursor::SavePosition)?;
-
-            // Check to leave the space to render the data.
-            let title_lines =
-                termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
-            let used_space = self.init_move_down_lines + title_lines;
-            if terminal::size()?.1 <= used_space {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Terminal does not leave the space to render.",
-                ));
-            }
 
             // Move down the lines already written.
             let move_down_lines = self.init_move_down_lines
