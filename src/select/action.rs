@@ -1,9 +1,9 @@
 use std::io;
 
-use crate::{select::State, EventHandleFn};
+use crate::{select::State, Action};
 
 /// Move up from the current selected position in the candidates.
-pub fn move_up() -> Box<EventHandleFn<State>> {
+pub fn move_up() -> Box<Action<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         // cyclical movement
         if !state.editor.prev() {
@@ -17,7 +17,7 @@ pub fn move_up() -> Box<EventHandleFn<State>> {
 }
 
 /// Move down from the current selected position in the candidates.
-pub fn move_down() -> Box<EventHandleFn<State>> {
+pub fn move_down() -> Box<Action<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         // cyclical movement
         if !state.editor.next() {
@@ -31,7 +31,7 @@ pub fn move_down() -> Box<EventHandleFn<State>> {
 }
 
 /// Move the selected position to head.
-pub fn move_head() -> Box<EventHandleFn<State>> {
+pub fn move_head() -> Box<Action<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         state.editor.to_head();
         state.cursor.to_head();
@@ -40,7 +40,7 @@ pub fn move_head() -> Box<EventHandleFn<State>> {
 }
 
 /// Move the selected position to tail.
-pub fn move_tail() -> Box<EventHandleFn<State>> {
+pub fn move_tail() -> Box<Action<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         state.editor.to_tail();
         state.cursor.to_tail(state.screen_size(&state.editor)?);

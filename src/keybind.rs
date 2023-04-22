@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::io;
 
-use crate::{crossterm::event::Event, EventHandleFn, Output, Result};
+use crate::{crossterm::event::Event, Action, Output, Result};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S: Output> {
-    pub event_mapping: HashMap<Event, Box<EventHandleFn<S>>>,
+    pub event_mapping: HashMap<Event, Box<Action<S>>>,
 }
 
 impl<S: Output> KeyBind<S> {
     pub fn assign<I>(&mut self, items: I)
     where
-        I: IntoIterator<Item = (Event, Box<EventHandleFn<S>>)>,
+        I: IntoIterator<Item = (Event, Box<Action<S>>)>,
     {
         for (_, elem) in items.into_iter().enumerate() {
             self.event_mapping.insert(elem.0, elem.1);
@@ -33,7 +33,7 @@ impl<S: Output> KeyBind<S> {
 
 #[cfg(test)]
 mod test {
-    use super::{io, EventHandleFn, HashMap, KeyBind, Output};
+    use super::{io, Action, HashMap, KeyBind, Output};
     use crate::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
     };
@@ -61,7 +61,7 @@ mod test {
                 state: KeyEventState::empty(),
             }),
             Box::new(|_: &mut io::Stdout, state: &mut Box<dyn Any>| Ok(Some(state.output())))
-                as Box<EventHandleFn<Box<dyn Any>>>,
+                as Box<Action<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);
     }

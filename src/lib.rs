@@ -78,8 +78,8 @@ pub(crate) mod internal {
 }
 /// A module providing the lines to receive and display user inputs.
 pub mod readline {
+    pub mod action;
     mod builder;
-    pub mod cmd;
     mod handler;
     mod keybind;
     mod state;
@@ -89,8 +89,8 @@ pub mod readline {
 }
 /// A module providing the selectbox to choose the items from.
 pub mod select {
+    pub mod action;
     mod builder;
-    pub mod cmd;
     mod cursor;
     mod handler;
     mod keybind;
@@ -125,10 +125,6 @@ use std::sync::Once;
 
 pub use crossterm;
 
-/// A type representing the event handlers.
-pub type EventHandleFn<S> =
-    dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
-
 pub trait InputHandler<S: Output> {
     fn handle(&mut self, _: char, _: &mut io::Stdout, _: &mut S) -> Result<Option<S::Output>>;
 }
@@ -138,8 +134,10 @@ pub trait ResizeHandler<S: Output> {
         -> Result<Option<S::Output>>;
 }
 
+/// A type representing the actions when the events are received.
+pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
 /// A type representing the hooks that are called in the certain timings.
-pub type HookFn<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
+pub type Hook<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
@@ -150,16 +148,16 @@ pub struct Prompt<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
     pub resize_handler: R,
     /// Call initially every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
-    pub pre_run: Option<Box<HookFn<S>>>,
+    pub pre_run: Option<Box<Hook<S>>>,
     /// Call finally every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
-    pub post_run: Option<Box<HookFn<S>>>,
+    pub post_run: Option<Box<Hook<S>>>,
     /// Call once initially when
     /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub initialize: Option<Box<HookFn<S>>>,
+    pub initialize: Option<Box<Hook<S>>>,
     /// Call once finally when
     /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub finalize: Option<Box<HookFn<S>>>,
+    pub finalize: Option<Box<Hook<S>>>,
 }
 
 /// A trait representing the final results for return.

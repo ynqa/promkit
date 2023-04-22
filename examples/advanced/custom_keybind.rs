@@ -6,7 +6,7 @@ use promkit::{
     grapheme::Graphemes,
     keybind::KeyBind,
     readline::{self, State},
-    EventHandleFn, Result,
+    Action, Result,
 };
 
 fn main() -> Result<()> {
@@ -21,7 +21,7 @@ fn main() -> Result<()> {
         Box::new(|_: &mut io::Stdout, state: &mut State| {
             state.editor.replace(&Graphemes::from("REPLCED!!"));
             Ok(None)
-        }) as Box<EventHandleFn<State>>,
+        }) as Box<Action<State>>,
     )]);
     let mut p = readline::Builder::default().keybind(b).build()?;
     loop {

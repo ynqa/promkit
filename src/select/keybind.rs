@@ -48,7 +48,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::cmd::move_up(),
+                select::action::move_up(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -57,7 +57,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::cmd::move_down(),
+                select::action::move_down(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -66,7 +66,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::cmd::move_head(),
+                select::action::move_head(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -75,7 +75,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::cmd::move_tail(),
+                select::action::move_tail(),
             ),
         ]);
         b
