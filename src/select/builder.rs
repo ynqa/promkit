@@ -2,15 +2,9 @@ use std::fmt;
 use std::io;
 
 use crate::{
-    build,
-    crossterm::style,
-    grapheme::Graphemes,
-    internal::selector::Selector,
-    keybind::KeyBind,
-    register::Register,
-    select::cursor::Cursor,
-    select::{handler::Handler, State},
-    termutil, text, Prompt, Result,
+    build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
+    register::Register, select::cursor::Cursor, select::State, termutil, text, Output, Prompt,
+    Result,
 };
 
 pub struct Builder {
@@ -41,13 +35,26 @@ impl Builder {
     }
 }
 
-impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
-    fn build(self) -> Result<Prompt<State, Handler<State>, Handler<State>>> {
-        Ok(Prompt::<State, Handler<State>, Handler<State>> {
+impl build::Builder<State> for Builder {
+    fn build(self) -> Result<Prompt<State>> {
+        Ok(Prompt::<State> {
             out: io::stdout(),
             keybind: self._keybind,
-            input_handler: Handler::default(),
-            resize_handler: Handler::default(),
+            input_handler: None,
+            resize_handler: Some(Box::new(
+                |_: (u16, u16),
+                 out: &mut io::Stdout,
+                 state: &mut State|
+                 -> Result<Option<<State as Output>::Output>> {
+                    termutil::clear(out)?;
+                    state.editor.to_head();
+                    state.cursor.to_head();
+                    state.render_static(out)?;
+                    // Overwrite the prev as default.
+                    state.prev = Selector::default();
+                    Ok(None)
+                },
+            )),
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.can_render()?;

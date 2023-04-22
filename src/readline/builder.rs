@@ -8,10 +8,10 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{handler::Handler, state::State, Mode},
+    readline::{state::State, Mode},
     register::Register,
     suggest::Suggest,
-    termutil, text, Prompt, Result,
+    termutil, text, Output, Prompt, Result,
 };
 
 pub struct Builder {
@@ -40,13 +40,40 @@ impl Default for Builder {
     }
 }
 
-impl build::Builder<State, Handler<State>, Handler<State>> for Builder {
-    fn build(self) -> Result<Prompt<State, Handler<State>, Handler<State>>> {
-        Ok(Prompt::<State, Handler<State>, Handler<State>> {
+impl build::Builder<State> for Builder {
+    fn build(self) -> Result<Prompt<State>> {
+        Ok(Prompt::<State> {
             out: io::stdout(),
             keybind: self._keybind,
-            input_handler: Handler::default(),
-            resize_handler: Handler::default(),
+            input_handler: Some(Box::new(
+                |ch: char,
+                 _out: &mut io::Stdout,
+                 state: &mut State|
+                 -> Result<Option<<State as Output>::Output>> {
+                    if let Some(limit) = state.buffer_limit()? {
+                        if limit <= state.editor.data.width() {
+                            return Ok(None);
+                        }
+                    }
+                    match state.edit_mode {
+                        Mode::Insert => state.editor.insert(Grapheme::from(ch)),
+                        Mode::Overwrite => state.editor.overwrite(Grapheme::from(ch)),
+                    }
+                    Ok(None)
+                },
+            )),
+            resize_handler: Some(Box::new(
+                |_: (u16, u16),
+                 out: &mut io::Stdout,
+                 state: &mut State|
+                 -> Result<Option<<State as Output>::Output>> {
+                    termutil::clear(out)?;
+                    state.render_static(out)?;
+                    // Overwrite the prev as default.
+                    state.prev = Buffer::default();
+                    Ok(None)
+                },
+            )),
             pre_run: Some(Box::new(
                 |out: &mut io::Stdout, state: &mut State| -> Result<()> {
                     state.can_render()?;

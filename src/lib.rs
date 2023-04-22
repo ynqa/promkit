@@ -49,11 +49,11 @@ extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use crate::{InputHandler, Output, Prompt, ResizeHandler, Result};
+    use crate::{Output, Prompt, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
-        fn build(self) -> Result<Prompt<S, I, R>>;
+    pub trait Builder<S: Output> {
+        fn build(self) -> Result<Prompt<S>>;
     }
 }
 
@@ -80,7 +80,6 @@ pub(crate) mod internal {
 pub mod readline {
     pub mod action;
     mod builder;
-    mod handler;
     mod keybind;
     mod state;
 
@@ -92,7 +91,6 @@ pub mod select {
     pub mod action;
     mod builder;
     mod cursor;
-    mod handler;
     mod keybind;
     mod state;
 
@@ -125,27 +123,22 @@ use std::sync::Once;
 
 pub use crossterm;
 
-pub trait InputHandler<S: Output> {
-    fn handle(&mut self, _: char, _: &mut io::Stdout, _: &mut S) -> Result<Option<S::Output>>;
-}
-
-pub trait ResizeHandler<S: Output> {
-    fn handle(&mut self, _: (u16, u16), _: &mut io::Stdout, _: &mut S)
-        -> Result<Option<S::Output>>;
-}
-
+pub type HandleInput<S> =
+    dyn Fn(char, &mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
+pub type HandleResize<S> =
+    dyn Fn((u16, u16), &mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
 /// A type representing the actions when the events are received.
 pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
 /// A type representing the hooks that are called in the certain timings.
 pub type Hook<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
 
 /// A core data structure to manage the hooks and state.
-pub struct Prompt<S: Output, I: InputHandler<S>, R: ResizeHandler<S>> {
+pub struct Prompt<S: Output> {
     pub out: io::Stdout,
     pub state: S,
     pub keybind: keybind::KeyBind<S>,
-    pub input_handler: I,
-    pub resize_handler: R,
+    pub input_handler: Option<Box<HandleInput<S>>>,
+    pub resize_handler: Option<Box<HandleResize<S>>>,
     /// Call initially every epoch in event-loop of
     /// [Prompt.run](struct.Prompt.html#method.run).
     pub pre_run: Option<Box<Hook<S>>>,
@@ -170,7 +163,7 @@ pub trait Output {
 
 static ONCE: Once = Once::new();
 
-impl<S: 'static + Output, I: InputHandler<S>, R: ResizeHandler<S>> Prompt<S, I, R> {
+impl<S: 'static + Output> Prompt<S> {
     /// Loop the steps that receive an event and trigger the handler.
     pub fn run(&mut self) -> Result<S::Output> {
         ONCE.call_once(|| {
@@ -204,8 +197,9 @@ impl<S: 'static + Output, I: InputHandler<S>, R: ResizeHandler<S>> Prompt<S, I, 
             let ev = crossterm::event::read()?;
 
             if let crossterm::event::Event::Resize(x, y) = ev {
-                self.resize_handler
-                    .handle((x, y), &mut self.out, &mut self.state)?;
+                if let Some(resize_handler) = &self.resize_handler {
+                    resize_handler((x, y), &mut self.out, &mut self.state)?;
+                }
             }
             match self.keybind.handle(&ev, &mut self.out, &mut self.state) {
                 Ok(maybe_output) => {
@@ -234,8 +228,9 @@ impl<S: 'static + Output, I: InputHandler<S>, R: ResizeHandler<S>> Prompt<S, I, 
                     modifiers: crossterm::event::KeyModifiers::SHIFT,
                     ..
                 }) => {
-                    self.input_handler
-                        .handle(ch, &mut self.out, &mut self.state)?;
+                    if let Some(input_handler) = &self.input_handler {
+                        input_handler(ch, &mut self.out, &mut self.state)?;
+                    }
                 }
                 _ => (),
             }
