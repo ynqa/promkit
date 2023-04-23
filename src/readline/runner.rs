@@ -3,7 +3,7 @@ use crate::{
     internal::buffer::Buffer,
     readline::{Mode, State},
     register::Register,
-    termutil, Runnable, Runner,
+    termutil, Runnable, Runner, Result,
 };
 
 impl Runnable for Runner<State> {
@@ -11,7 +11,7 @@ impl Runnable for Runner<State> {
         &mut self,
         _: (u16, u16),
         out: &mut std::io::Stdout,
-    ) -> crate::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.render_static(out)?;
         // Overwrite the prev as default.
@@ -23,7 +23,7 @@ impl Runnable for Runner<State> {
         &mut self,
         ch: char,
         _out: &mut std::io::Stdout,
-    ) -> crate::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         if let Some(limit) = self.state.buffer_limit()? {
             if limit <= self.state.editor.data.width() {
                 return Ok(None);
@@ -40,15 +40,15 @@ impl Runnable for Runner<State> {
         &mut self,
         ev: &crossterm::event::Event,
         out: &mut std::io::Stdout,
-    ) -> crate::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         self.keybind.handle(ev, out, &mut self.state)
     }
 
-    fn initialize(&mut self, out: &mut std::io::Stdout) -> crate::Result<()> {
+    fn initialize(&mut self, out: &mut std::io::Stdout) -> Result<()> {
         self.state.render_static(out)
     }
 
-    fn finalize(&mut self, out: &mut std::io::Stdout) -> crate::Result<()> {
+    fn finalize(&mut self, out: &mut std::io::Stdout) -> Result<()> {
         termutil::move_right(out, self.state.editor.width_from_position() as u16)?;
         termutil::move_down(out, 1)?;
         termutil::move_head(out)?;
@@ -61,14 +61,14 @@ impl Runnable for Runner<State> {
         Ok(())
     }
 
-    fn pre_run(&mut self, out: &mut std::io::Stdout) -> crate::Result<()> {
+    fn pre_run(&mut self, out: &mut std::io::Stdout) -> Result<()> {
         self.state.can_render()?;
         self.state.render(out)?;
         self.state.prev = self.state.editor.clone();
         Ok(())
     }
 
-    fn post_run(&mut self, _: &mut std::io::Stdout) -> crate::Result<()> {
+    fn post_run(&mut self, _: &mut std::io::Stdout) -> Result<()> {
         self.state.next = self.state.editor.clone();
         Ok(())
     }
