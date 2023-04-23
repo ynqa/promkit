@@ -144,9 +144,11 @@ pub struct Runner<R: Renderable> {
 }
 
 pub trait Runnable {
-    fn handle_resize(&mut self, _: (u16, u16), _: &mut io::Stdout) -> Result<Option<String>>;
-    fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn act(&mut self, _: &crossterm::event::Event, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn handle_event(
+        &mut self,
+        _: &crossterm::event::Event,
+        _: &mut io::Stdout,
+    ) -> Result<Option<String>>;
     fn initialize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
     fn finalize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
     fn pre_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
@@ -180,11 +182,7 @@ impl Prompt {
             }
 
             let ev = crossterm::event::read()?;
-
-            if let crossterm::event::Event::Resize(x, y) = ev {
-                self.runner.handle_resize((x, y), &mut self.out)?;
-            }
-            match self.runner.act(&ev, &mut self.out) {
+            match self.runner.handle_event(&ev, &mut self.out) {
                 Ok(maybe_ret) => {
                     if let Some(ret) = maybe_ret {
                         self.runner.finalize(&mut self.out)?;
@@ -195,19 +193,6 @@ impl Prompt {
                     self.runner.finalize(&mut self.out)?;
                     return Err(e);
                 }
-            }
-            if let crossterm::event::Event::Key(crossterm::event::KeyEvent {
-                code: crossterm::event::KeyCode::Char(ch),
-                modifiers: crossterm::event::KeyModifiers::NONE,
-                ..
-            })
-            | crossterm::event::Event::Key(crossterm::event::KeyEvent {
-                code: crossterm::event::KeyCode::Char(ch),
-                modifiers: crossterm::event::KeyModifiers::SHIFT,
-                ..
-            }) = ev
-            {
-                self.runner.handle_input(ch, &mut self.out)?;
             }
 
             // hook post_run

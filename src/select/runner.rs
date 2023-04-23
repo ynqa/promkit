@@ -1,10 +1,13 @@
 use std::io;
 
 use crate::{
-    internal::selector::Selector, select::State, termutil, text, Result, Runnable, Runner,
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    internal::selector::Selector,
+    select::State,
+    termutil, text, Result, Runnable, Runner,
 };
 
-impl Runnable for Runner<State> {
+impl Runner<State> {
     fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.editor.to_head();
@@ -18,13 +21,32 @@ impl Runnable for Runner<State> {
     fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>> {
         Ok(None)
     }
+}
 
-    fn act(
-        &mut self,
-        ev: &crossterm::event::Event,
-        out: &mut io::Stdout,
-    ) -> Result<Option<String>> {
-        self.keybind.handle(ev, out, &mut self.state)
+impl Runnable for Runner<State> {
+    fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
+        if let Event::Resize(x, y) = ev {
+            if let Some(ret) = self.handle_resize((*x, *y), out)? {
+                return Ok(Some(ret));
+            }
+        }
+
+        if let Some(ret) = self.keybind.handle(ev, out, &mut self.state)? {
+            return Ok(Some(ret));
+        }
+
+        if let Event::Key(KeyEvent {
+            code: KeyCode::Char(ch),
+            modifiers: KeyModifiers::NONE,
+            ..
+        }) = ev
+        {
+            if let Some(ret) = self.handle_input(*ch, out)? {
+                return Ok(Some(ret));
+            }
+        }
+
+        Ok(None)
     }
 
     fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {

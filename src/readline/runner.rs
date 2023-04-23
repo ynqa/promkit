@@ -1,4 +1,7 @@
+use std::io;
+
 use crate::{
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     grapheme::Grapheme,
     internal::buffer::Buffer,
     readline::{Mode, State},
@@ -6,12 +9,8 @@ use crate::{
     termutil, Result, Runnable, Runner,
 };
 
-impl Runnable for Runner<State> {
-    fn handle_resize(
-        &mut self,
-        _: (u16, u16),
-        out: &mut std::io::Stdout,
-    ) -> Result<Option<String>> {
+impl Runner<State> {
+    fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.render_static(out)?;
         // Overwrite the prev as default.
@@ -19,7 +18,7 @@ impl Runnable for Runner<State> {
         Ok(None)
     }
 
-    fn handle_input(&mut self, ch: char, _out: &mut std::io::Stdout) -> Result<Option<String>> {
+    fn handle_input(&mut self, ch: char, _out: &mut io::Stdout) -> Result<Option<String>> {
         if let Some(limit) = self.state.buffer_limit()? {
             if limit <= self.state.editor.data.width() {
                 return Ok(None);
@@ -31,21 +30,40 @@ impl Runnable for Runner<State> {
         }
         Ok(None)
     }
+}
 
-    fn act(
-        &mut self,
-        ev: &crossterm::event::Event,
-        out: &mut std::io::Stdout,
-    ) -> Result<Option<String>> {
-        self.keybind.handle(ev, out, &mut self.state)
+impl Runnable for Runner<State> {
+    fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
+        if let Event::Resize(x, y) = ev {
+            if let Some(ret) = self.handle_resize((*x, *y), out)? {
+                return Ok(Some(ret));
+            }
+        }
+
+        if let Some(ret) = self.keybind.handle(ev, out, &mut self.state)? {
+            return Ok(Some(ret));
+        }
+
+        if let Event::Key(KeyEvent {
+            code: KeyCode::Char(ch),
+            modifiers: KeyModifiers::NONE,
+            ..
+        }) = ev
+        {
+            if let Some(ret) = self.handle_input(*ch, out)? {
+                return Ok(Some(ret));
+            }
+        }
+
+        Ok(None)
     }
 
-    fn initialize(&mut self, out: &mut std::io::Stdout) -> Result<Option<String>> {
+    fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         self.state.render_static(out)?;
         Ok(None)
     }
 
-    fn finalize(&mut self, out: &mut std::io::Stdout) -> Result<Option<String>> {
+    fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::move_right(out, self.state.editor.width_from_position() as u16)?;
         termutil::move_down(out, 1)?;
         termutil::move_head(out)?;
@@ -58,14 +76,14 @@ impl Runnable for Runner<State> {
         Ok(None)
     }
 
-    fn pre_run(&mut self, out: &mut std::io::Stdout) -> Result<Option<String>> {
+    fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         self.state.can_render()?;
         self.state.render(out)?;
         self.state.prev = self.state.editor.clone();
         Ok(None)
     }
 
-    fn post_run(&mut self, _: &mut std::io::Stdout) -> Result<Option<String>> {
+    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>> {
         self.state.next = self.state.editor.clone();
         Ok(None)
     }
