@@ -217,22 +217,20 @@ impl<S: 'static + Output> Prompt<S> {
                     return Err(e);
                 }
             }
-            match ev {
-                crossterm::event::Event::Key(crossterm::event::KeyEvent {
-                    code: crossterm::event::KeyCode::Char(ch),
-                    modifiers: crossterm::event::KeyModifiers::NONE,
-                    ..
-                })
-                | crossterm::event::Event::Key(crossterm::event::KeyEvent {
-                    code: crossterm::event::KeyCode::Char(ch),
-                    modifiers: crossterm::event::KeyModifiers::SHIFT,
-                    ..
-                }) => {
-                    if let Some(input_handler) = &self.input_handler {
-                        input_handler(ch, &mut self.out, &mut self.state)?;
-                    }
+            if let crossterm::event::Event::Key(crossterm::event::KeyEvent {
+                code: crossterm::event::KeyCode::Char(ch),
+                modifiers: crossterm::event::KeyModifiers::NONE,
+                ..
+            })
+            | crossterm::event::Event::Key(crossterm::event::KeyEvent {
+                code: crossterm::event::KeyCode::Char(ch),
+                modifiers: crossterm::event::KeyModifiers::SHIFT,
+                ..
+            }) = ev
+            {
+                if let Some(input_handler) = &self.input_handler {
+                    input_handler(ch, &mut self.out, &mut self.state)?;
                 }
-                _ => (),
             }
 
             // hook post_run
