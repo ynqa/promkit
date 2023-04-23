@@ -10,7 +10,7 @@ use crate::{
     keybind::KeyBind,
     readline::{state::State, Mode},
     suggest::Suggest,
-    text, Prompt, Result, Runner,
+    text, Prompt, Result, Runner, Runnable,
 };
 
 pub struct Builder {
@@ -43,23 +43,27 @@ impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
         Ok(Prompt {
             out: io::stdout(),
-            runner: Box::new(Runner::<State> {
-                keybind: self._keybind,
-                state: State {
-                    editor: Buffer::default(),
-                    prev: Buffer::default(),
-                    next: Buffer::default(),
-                    title: self._title,
-                    label: self._label,
-                    label_color: self._label_color,
-                    mask: self._mask,
-                    edit_mode: self._edit_mode,
-                    num_lines: self._num_lines,
-                    hstr: Some(History::default()),
-                    suggest: self._suggest,
-                },
-            }),
+            runner: self.runnable()?,
         })
+    }
+
+    fn runnable(self) -> Result<Box<dyn Runnable>> {
+        Ok(Box::new(Runner::<State> {
+            keybind: self._keybind,
+            state: State {
+                editor: Buffer::default(),
+                prev: Buffer::default(),
+                next: Buffer::default(),
+                title: self._title,
+                label: self._label,
+                label_color: self._label_color,
+                mask: self._mask,
+                edit_mode: self._edit_mode,
+                num_lines: self._num_lines,
+                hstr: Some(History::default()),
+                suggest: self._suggest,
+            },
+        }))
     }
 }
 

@@ -49,11 +49,12 @@ extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use crate::{Prompt, Result};
+    use crate::{Prompt, Result, Runnable};
 
     /// A trait to build [Prompt](struct.Prompt.html).
     pub trait Builder {
         fn build(self) -> Result<Prompt>;
+        fn runnable(self) -> Result<Box<dyn Runnable>>;
     }
 }
 

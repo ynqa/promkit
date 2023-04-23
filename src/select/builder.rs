@@ -3,7 +3,7 @@ use std::io;
 
 use crate::{
     build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::cursor::Cursor, select::State, text, Prompt, Result, Runner,
+    register::Register, select::cursor::Cursor, select::State, text, Prompt, Result, Runner, Runnable,
 };
 
 pub struct Builder {
@@ -38,7 +38,12 @@ impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
         Ok(Prompt {
             out: io::stdout(),
-            runner: Box::new(Runner::<State> {
+            runner: self.runnable()?,
+        })
+    }
+
+    fn runnable(self) -> Result<Box<dyn Runnable>> {
+        Ok(Box::new(Runner::<State> {
                 keybind: self._keybind,
                 state: State {
                     editor: self._selector.clone(),
@@ -52,8 +57,7 @@ impl build::Builder for Builder {
                     window: self._window,
                     suffix_after_trim: self._suffix_after_trim,
                 },
-            }),
-        })
+        }))
     }
 }
 
