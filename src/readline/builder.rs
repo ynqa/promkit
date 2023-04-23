@@ -10,7 +10,7 @@ use crate::{
     keybind::KeyBind,
     readline::{state::State, Mode},
     suggest::Suggest,
-    text, Prompt, Result, Runner, Runnable,
+    text, Prompt, Result, Runnable, Runner,
 };
 
 pub struct Builder {

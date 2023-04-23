@@ -147,10 +147,10 @@ pub trait Runnable {
     fn handle_resize(&mut self, _: (u16, u16), _: &mut io::Stdout) -> Result<Option<String>>;
     fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>>;
     fn act(&mut self, _: &crossterm::event::Event, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn initialize(&mut self, _: &mut io::Stdout) -> Result<()>;
-    fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
-    fn pre_run(&mut self, _: &mut io::Stdout) -> Result<()>;
-    fn post_run(&mut self, _: &mut io::Stdout) -> Result<()>;
+    fn initialize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn finalize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn pre_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
 }
 
 static ONCE: Once = Once::new();

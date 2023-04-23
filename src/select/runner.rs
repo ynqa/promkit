@@ -27,12 +27,13 @@ impl Runnable for Runner<State> {
         self.keybind.handle(ev, out, &mut self.state)
     }
 
-    fn initialize(&mut self, out: &mut io::Stdout) -> Result<()> {
+    fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::hide_cursor(out)?;
-        self.state.render_static(out)
+        self.state.render_static(out)?;
+        Ok(None)
     }
 
-    fn finalize(&mut self, out: &mut io::Stdout) -> Result<()> {
+    fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::show_cursor(out)?;
         termutil::move_down(
             out,
@@ -44,18 +45,19 @@ impl Runnable for Runner<State> {
                     .unwrap_or(&text::State::default())
                     .text,
             )?,
-        )
+        )?;
+        Ok(None)
     }
 
-    fn pre_run(&mut self, out: &mut io::Stdout) -> Result<()> {
+    fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         self.state.can_render()?;
         self.state.render(out)?;
         self.state.prev = self.state.editor.clone();
-        Ok(())
+        Ok(None)
     }
 
-    fn post_run(&mut self, _: &mut io::Stdout) -> Result<()> {
+    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>> {
         self.state.next = self.state.editor.clone();
-        Ok(())
+        Ok(None)
     }
 }
