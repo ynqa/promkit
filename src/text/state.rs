@@ -3,7 +3,7 @@ use std::io;
 use crate::{
     crossterm::{style, terminal},
     grapheme::Graphemes,
-    termutil, Output, Result,
+    termutil, Result,
 };
 
 /// Text specific state.
@@ -19,14 +19,6 @@ impl Default for State {
             text: Default::default(),
             text_color: style::Color::Reset,
         }
-    }
-}
-
-impl Output for State {
-    type Output = String;
-
-    fn output(&self) -> Self::Output {
-        self.text.to_string()
     }
 }
 

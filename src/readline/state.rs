@@ -6,7 +6,7 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     suggest::Suggest,
-    termutil, text, Output, Result,
+    termutil, text, Renderable, Result,
 };
 
 /// Edit mode.
@@ -39,10 +39,8 @@ pub struct State {
     pub suggest: Option<Suggest>,
 }
 
-impl Output for State {
-    type Output = String;
-
-    fn output(&self) -> Self::Output {
+impl Renderable for State {
+    fn output(&self) -> String {
         self.editor.data.to_string()
     }
 }

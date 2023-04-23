@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::io;
 
-use crate::{crossterm::event::Event, Action, Output, Result};
+use crate::{crossterm::event::Event, Action, Result};
 
 /// Map key-events and their handlers.
-pub struct KeyBind<S: Output> {
+pub struct KeyBind<S> {
     pub event_mapping: HashMap<Event, Box<Action<S>>>,
 }
 
-impl<S: Output> KeyBind<S> {
+impl<S> KeyBind<S> {
     pub fn assign<I>(&mut self, items: I)
     where
         I: IntoIterator<Item = (Event, Box<Action<S>>)>,
@@ -23,7 +23,7 @@ impl<S: Output> KeyBind<S> {
         ev: &Event,
         out: &mut io::Stdout,
         state: &mut S,
-    ) -> Result<Option<S::Output>> {
+    ) -> Result<Option<String>> {
         match self.event_mapping.get(ev) {
             Some(handle) => handle(out, state),
             _ => Ok(None),
@@ -33,20 +33,12 @@ impl<S: Output> KeyBind<S> {
 
 #[cfg(test)]
 mod test {
-    use super::{io, Action, HashMap, KeyBind, Output};
+    use super::{io, Action, HashMap, KeyBind};
     use crate::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
     };
 
     use std::any::Any;
-
-    impl Output for Box<dyn Any> {
-        type Output = String;
-
-        fn output(&self) -> Self::Output {
-            "".to_owned()
-        }
-    }
 
     #[test]
     fn assign() {
@@ -60,7 +52,7 @@ mod test {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::empty(),
             }),
-            Box::new(|_: &mut io::Stdout, state: &mut Box<dyn Any>| Ok(Some(state.output())))
+            Box::new(|_: &mut io::Stdout, _state: &mut Box<dyn Any>| Ok(Some(String::new())))
                 as Box<Action<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);

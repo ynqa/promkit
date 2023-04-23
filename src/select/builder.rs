@@ -3,8 +3,8 @@ use std::io;
 
 use crate::{
     build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::cursor::Cursor, select::State, termutil, text, Output, Prompt,
-    Result,
+    register::Register, select::cursor::Cursor, select::select::Select, select::State, text,
+    Prompt, Result,
 };
 
 pub struct Builder {
@@ -35,69 +35,25 @@ impl Builder {
     }
 }
 
-impl build::Builder<State> for Builder {
-    fn build(self) -> Result<Prompt<State>> {
-        Ok(Prompt::<State> {
+impl build::Builder for Builder {
+    fn build(self) -> Result<Prompt> {
+        Ok(Prompt {
             out: io::stdout(),
-            keybind: self._keybind,
-            input_handler: None,
-            resize_handler: Some(Box::new(
-                |_: (u16, u16),
-                 out: &mut io::Stdout,
-                 state: &mut State|
-                 -> Result<Option<<State as Output>::Output>> {
-                    termutil::clear(out)?;
-                    state.editor.to_head();
-                    state.cursor.to_head();
-                    state.render_static(out)?;
-                    // Overwrite the prev as default.
-                    state.prev = Selector::default();
-                    Ok(None)
+            runner: Box::new(Select {
+                keybind: self._keybind,
+                state: State {
+                    editor: self._selector.clone(),
+                    prev: self._selector.clone(),
+                    next: self._selector.clone(),
+                    title: self._title,
+                    cursor: Cursor::default(),
+                    label: self._label,
+                    label_color: self._label_color,
+                    init_move_down_lines: self._init_move_down_lines,
+                    window: self._window,
+                    suffix_after_trim: self._suffix_after_trim,
                 },
-            )),
-            pre_run: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    state.can_render()?;
-                    state.render(out)?;
-                    state.prev = state.editor.clone();
-                    Ok(())
-                },
-            )),
-            post_run: Some(Box::new(
-                |_: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    state.next = state.editor.clone();
-                    Ok(())
-                },
-            )),
-            initialize: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    termutil::hide_cursor(out)?;
-                    state.render_static(out)
-                },
-            )),
-            finalize: Some(Box::new(
-                |out: &mut io::Stdout, state: &mut State| -> Result<()> {
-                    termutil::show_cursor(out)?;
-                    termutil::move_down(
-                        out,
-                        termutil::num_lines(
-                            &state.title.as_ref().unwrap_or(&text::State::default()).text,
-                        )?,
-                    )
-                },
-            )),
-            state: State {
-                editor: self._selector.clone(),
-                prev: self._selector.clone(),
-                next: self._selector.clone(),
-                title: self._title,
-                cursor: Cursor::default(),
-                label: self._label,
-                label_color: self._label_color,
-                init_move_down_lines: self._init_move_down_lines,
-                window: self._window,
-                suffix_after_trim: self._suffix_after_trim,
-            },
+            }),
         })
     }
 }

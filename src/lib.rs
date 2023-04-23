@@ -49,11 +49,11 @@ extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use crate::{Output, Prompt, Result};
+    use crate::{Prompt, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder<S: Output> {
-        fn build(self) -> Result<Prompt<S>>;
+    pub trait Builder {
+        fn build(self) -> Result<Prompt>;
     }
 }
 
@@ -81,6 +81,7 @@ pub mod readline {
     pub mod action;
     mod builder;
     mod keybind;
+    mod readline;
     mod state;
 
     pub use self::builder::Builder;
@@ -92,6 +93,7 @@ pub mod select {
     mod builder;
     mod cursor;
     mod keybind;
+    mod select;
     mod state;
 
     pub use self::builder::Builder;
@@ -117,55 +119,39 @@ pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
 
-use std::fmt::Display;
 use std::io;
 use std::sync::Once;
 
 pub use crossterm;
 
-pub type HandleInput<S> =
-    dyn Fn(char, &mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
-pub type HandleResize<S> =
-    dyn Fn((u16, u16), &mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
 /// A type representing the actions when the events are received.
-pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<<S as Output>::Output>>;
-/// A type representing the hooks that are called in the certain timings.
-pub type Hook<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
+pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
 
-/// A core data structure to manage the hooks and state.
-pub struct Prompt<S: Output> {
-    pub out: io::Stdout,
-    pub state: S,
-    pub keybind: keybind::KeyBind<S>,
-    pub input_handler: Option<Box<HandleInput<S>>>,
-    pub resize_handler: Option<Box<HandleResize<S>>>,
-    /// Call initially every epoch in event-loop of
-    /// [Prompt.run](struct.Prompt.html#method.run).
-    pub pre_run: Option<Box<Hook<S>>>,
-    /// Call finally every epoch in event-loop of
-    /// [Prompt.run](struct.Prompt.html#method.run).
-    pub post_run: Option<Box<Hook<S>>>,
-    /// Call once initially when
-    /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub initialize: Option<Box<Hook<S>>>,
-    /// Call once finally when
-    /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub finalize: Option<Box<Hook<S>>>,
+pub trait Renderable {
+    fn output(&self) -> String;
 }
 
-/// A trait representing the final results for return.
-pub trait Output {
-    /// Return data type for the edited item.
-    type Output: Display;
-    /// Return the edited item.
-    fn output(&self) -> Self::Output;
+/// A core data structure to manage the hooks and state.
+pub struct Prompt {
+    out: io::Stdout,
+    runner: Box<dyn Runnable>,
+}
+
+pub trait Runnable {
+    fn handle_resize(&mut self, _: (u16, u16), _: &mut io::Stdout) -> Result<Option<String>>;
+    fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn act(&mut self, _: &crossterm::event::Event, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn initialize(&mut self, _: &mut io::Stdout) -> Result<()>;
+    fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
+    fn pre_run(&mut self, _: &mut io::Stdout) -> Result<()>;
+    fn post_run(&mut self, _: &mut io::Stdout) -> Result<()>;
 }
 
 static ONCE: Once = Once::new();
 
-impl<S: 'static + Output> Prompt<S> {
+impl Prompt {
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<S::Output> {
+    pub fn run(&mut self) -> Result<String> {
         ONCE.call_once(|| {
             termutil::clear(&mut self.out).ok();
         });
@@ -175,45 +161,32 @@ impl<S: 'static + Output> Prompt<S> {
             crossterm::terminal::disable_raw_mode().ok();
         }};
 
-        if let Some(initialize) = &self.initialize {
-            if let Err(e) = initialize(&mut self.out, &mut self.state) {
-                if let Some(finalize) = &self.finalize {
-                    finalize(&mut self.out, &mut self.state)?;
-                }
-                return Err(e);
-            }
+        if let Err(e) = self.runner.initialize(&mut self.out) {
+            self.runner.finalize(&mut self.out)?;
+            return Err(e);
         }
 
         loop {
             // hook pre_run
-            if let Some(pre_run) = &self.pre_run {
-                if let Err(e) = pre_run(&mut self.out, &mut self.state) {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Err(e);
-                }
+            if let Err(e) = self.runner.pre_run(&mut self.out) {
+                self.runner.finalize(&mut self.out)?;
+                return Err(e);
             }
+
             let ev = crossterm::event::read()?;
 
             if let crossterm::event::Event::Resize(x, y) = ev {
-                if let Some(resize_handler) = &self.resize_handler {
-                    resize_handler((x, y), &mut self.out, &mut self.state)?;
-                }
+                self.runner.handle_resize((x, y), &mut self.out)?;
             }
-            match self.keybind.handle(&ev, &mut self.out, &mut self.state) {
-                Ok(maybe_output) => {
-                    if let Some(output) = maybe_output {
-                        if let Some(finalize) = &self.finalize {
-                            finalize(&mut self.out, &mut self.state)?;
-                        }
-                        return Ok(output);
+            match self.runner.act(&ev, &mut self.out) {
+                Ok(maybe_ret) => {
+                    if let Some(ret) = maybe_ret {
+                        self.runner.finalize(&mut self.out)?;
+                        return Ok(ret);
                     }
                 }
                 Err(e) => {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
+                    self.runner.finalize(&mut self.out)?;
                     return Err(e);
                 }
             }
@@ -228,19 +201,13 @@ impl<S: 'static + Output> Prompt<S> {
                 ..
             }) = ev
             {
-                if let Some(input_handler) = &self.input_handler {
-                    input_handler(ch, &mut self.out, &mut self.state)?;
-                }
+                self.runner.handle_input(ch, &mut self.out)?;
             }
 
             // hook post_run
-            if let Some(post_run) = &self.post_run {
-                if let Err(e) = post_run(&mut self.out, &mut self.state) {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Err(e);
-                }
+            if let Err(e) = self.runner.post_run(&mut self.out) {
+                self.runner.finalize(&mut self.out)?;
+                return Err(e);
             }
         }
     }

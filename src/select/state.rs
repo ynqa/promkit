@@ -7,7 +7,7 @@ use crate::{
     internal::selector::Selector,
     select::cursor::Cursor,
     termutil::{self, Boundary},
-    text, Output, Result,
+    text, Renderable, Result,
 };
 
 /// Select specific state.
@@ -26,10 +26,8 @@ pub struct State {
     pub suffix_after_trim: Graphemes,
 }
 
-impl Output for State {
-    type Output = String;
-
-    fn output(&self) -> Self::Output {
+impl Renderable for State {
+    fn output(&self) -> String {
         self.editor.get().to_string()
     }
 }
