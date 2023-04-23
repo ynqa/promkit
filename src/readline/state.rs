@@ -1,3 +1,4 @@
+use std::fmt;
 use std::io;
 
 use crate::{
@@ -6,7 +7,7 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     suggest::Suggest,
-    termutil, text, Renderable, Result,
+    termutil, text, Result,
 };
 
 /// Edit mode.
@@ -39,9 +40,9 @@ pub struct State {
     pub suggest: Option<Suggest>,
 }
 
-impl Renderable for State {
-    fn output(&self) -> String {
-        self.editor.data.to_string()
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.editor.data)
     }
 }
 

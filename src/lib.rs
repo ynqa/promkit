@@ -128,19 +128,15 @@ pub use crossterm;
 /// A type representing the actions when the events are received.
 pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
 
-pub trait Renderable {
-    fn output(&self) -> String;
-}
-
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     out: io::Stdout,
     runner: Box<dyn Runnable>,
 }
 
-pub struct Runner<R: Renderable> {
-    pub keybind: keybind::KeyBind<R>,
-    pub state: R,
+pub struct Runner<S> {
+    pub keybind: keybind::KeyBind<S>,
+    pub state: S,
 }
 
 pub trait Runnable {

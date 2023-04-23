@@ -1,10 +1,11 @@
+use std::fmt;
 use std::io::{Error, ErrorKind, Stdout};
 
-use crate::{Action, Renderable};
+use crate::Action;
 
 /// Leave from event-loop with exit code `0`.
-pub fn enter<R: Renderable>() -> Box<Action<R>> {
-    Box::new(|_: &mut Stdout, state: &mut R| Ok(Some(state.output())))
+pub fn enter<S: fmt::Display>() -> Box<Action<S>> {
+    Box::new(|_: &mut Stdout, state: &mut S| Ok(Some(format!("{}", state))))
 }
 
 /// Leave from event-loop with io::ErrorKind::Interrupted error.

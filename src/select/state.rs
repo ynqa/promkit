@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::fmt;
 use std::io;
 
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
     internal::selector::Selector,
     select::cursor::Cursor,
     termutil::{self, Boundary},
-    text, Renderable, Result,
+    text, Result,
 };
 
 /// Select specific state.
@@ -26,9 +27,9 @@ pub struct State {
     pub suffix_after_trim: Graphemes,
 }
 
-impl Renderable for State {
-    fn output(&self) -> String {
-        self.editor.get().to_string()
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.editor.get())
     }
 }
 

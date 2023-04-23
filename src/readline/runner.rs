@@ -18,7 +18,7 @@ impl Runner<State> {
         Ok(None)
     }
 
-    fn handle_input(&mut self, ch: char, _out: &mut io::Stdout) -> Result<Option<String>> {
+    fn handle_input(&mut self, ch: char, _: &mut io::Stdout) -> Result<Option<String>> {
         if let Some(limit) = self.state.buffer_limit()? {
             if limit <= self.state.editor.data.width() {
                 return Ok(None);
