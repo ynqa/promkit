@@ -81,7 +81,7 @@ pub mod readline {
     pub mod action;
     mod builder;
     mod keybind;
-    mod readline;
+    mod runner;
     mod state;
 
     pub use self::builder::Builder;
@@ -93,7 +93,7 @@ pub mod select {
     mod builder;
     mod cursor;
     mod keybind;
-    mod select;
+    mod runner;
     mod state;
 
     pub use self::builder::Builder;
@@ -135,6 +135,11 @@ pub trait Renderable {
 pub struct Prompt {
     out: io::Stdout,
     runner: Box<dyn Runnable>,
+}
+
+pub struct Runner<R: Renderable> {
+    pub keybind: keybind::KeyBind<R>,
+    pub state: R,
 }
 
 pub trait Runnable {

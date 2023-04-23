@@ -1,18 +1,12 @@
 use crate::{
     grapheme::Grapheme,
     internal::buffer::Buffer,
-    keybind::KeyBind,
     readline::{Mode, State},
     register::Register,
-    termutil, Runnable,
+    termutil, Runnable, Runner,
 };
 
-pub struct Readline {
-    pub keybind: KeyBind<State>,
-    pub state: State,
-}
-
-impl Runnable for Readline {
+impl Runnable for Runner<State> {
     fn handle_resize(
         &mut self,
         _: (u16, u16),

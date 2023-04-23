@@ -10,10 +10,8 @@ use crate::{
     keybind::KeyBind,
     readline::{state::State, Mode},
     suggest::Suggest,
-    text, Prompt, Result,
+    text, Prompt, Result, Runner,
 };
-
-use super::readline::Readline;
 
 pub struct Builder {
     _keybind: KeyBind<State>,
@@ -45,7 +43,7 @@ impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
         Ok(Prompt {
             out: io::stdout(),
-            runner: Box::new(Readline {
+            runner: Box::new(Runner::<State> {
                 keybind: self._keybind,
                 state: State {
                     editor: Buffer::default(),

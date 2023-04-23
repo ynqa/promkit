@@ -1,26 +1,21 @@
 use std::io;
 
 use crate::{
-    internal::selector::Selector, keybind::KeyBind, select::State, termutil, text, Result, Runnable,
+    internal::selector::Selector, select::State, termutil, text, Result, Runnable, Runner,
 };
 
-pub struct Select {
-    pub keybind: KeyBind<State>,
-    pub state: State,
-}
-
-impl Runnable for Select {
-    fn handle_resize(&mut self, _: (u16, u16), _: &mut io::Stdout) -> Result<Option<String>> {
-        Ok(None)
-    }
-
-    fn handle_input(&mut self, _: char, out: &mut io::Stdout) -> Result<Option<String>> {
+impl Runnable for Runner<State> {
+    fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.editor.to_head();
         self.state.cursor.to_head();
         self.state.render_static(out)?;
         // Overwrite the prev as default.
         self.state.prev = Selector::default();
+        Ok(None)
+    }
+
+    fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>> {
         Ok(None)
     }
 
