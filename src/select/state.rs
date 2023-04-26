@@ -36,8 +36,7 @@ impl fmt::Display for State {
 impl State {
     pub fn can_render(&self) -> Result<()> {
         // Check to leave the space to render the data.
-        let title_lines =
-            termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
         let used_space = self.init_move_down_lines + title_lines;
         if terminal::size()?.1 <= used_space {
             return Err(io::Error::new(
@@ -69,10 +68,8 @@ impl State {
             crossterm::execute!(out, cursor::SavePosition)?;
 
             // Move down the lines already written.
-            let move_down_lines = self.init_move_down_lines
-                + termutil::num_lines(
-                    &self.title.as_ref().unwrap_or(&text::State::default()).text,
-                )?;
+            let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+            let move_down_lines = self.init_move_down_lines + title_lines;
             if 0 < move_down_lines {
                 crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
             }
@@ -116,11 +113,8 @@ impl State {
 
 impl State {
     pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
-        let left_space = terminal::size()?.1
-            - (self.init_move_down_lines
-                + termutil::num_lines(
-                    &self.title.as_ref().unwrap_or(&text::State::default()).text,
-                )?);
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),

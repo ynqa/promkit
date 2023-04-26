@@ -4,7 +4,7 @@ use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     internal::selector::Selector,
     select::State,
-    termutil, text, Result, Runnable, Runner,
+    termutil, Result, Runnable, Runner,
 };
 
 impl Runner<State> {
@@ -59,14 +59,7 @@ impl Runnable for Runner<State> {
         termutil::show_cursor(out)?;
         termutil::move_down(
             out,
-            termutil::num_lines(
-                &self
-                    .state
-                    .title
-                    .as_ref()
-                    .unwrap_or(&text::State::default())
-                    .text,
-            )?,
+            self.state.title.as_ref().map_or(Ok(0), |t| t.num_lines())?,
         )?;
         Ok(None)
     }

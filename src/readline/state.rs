@@ -49,8 +49,7 @@ impl fmt::Display for State {
 impl State {
     pub fn can_render(&self) -> Result<()> {
         // Check to leave the space to render the data.
-        let used_space =
-            termutil::num_lines(&self.title.as_ref().unwrap_or(&text::State::default()).text)?;
+        let used_space = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
         if terminal::size()?.1 <= used_space {
             return Err(io::Error::new(
                 io::ErrorKind::Other,

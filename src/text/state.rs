@@ -35,6 +35,11 @@ impl State {
             ),
             style::SetForegroundColor(style::Color::Reset),
         )?;
+        // Move to next line.
         termutil::move_down(out, 1)
+    }
+
+    pub fn num_lines(&self) -> Result<u16> {
+        termutil::num_lines(&self.text)
     }
 }
