@@ -50,7 +50,7 @@ impl State {
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         // Move down with init_move_down_lines.
         if 0 < self.init_move_down_lines {
-            crossterm::execute!(out, cursor::MoveToNextLine(self.init_move_down_lines))?;
+            termutil::move_down(out, self.init_move_down_lines)?;
         }
 
         // Render the title.
@@ -71,7 +71,7 @@ impl State {
             let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
             let move_down_lines = self.init_move_down_lines + title_lines;
             if 0 < move_down_lines {
-                crossterm::execute!(out, cursor::MoveToNextLine(move_down_lines))?;
+                termutil::move_down(out, move_down_lines)?;
             }
 
             let selector_position = next.position();
@@ -100,7 +100,7 @@ impl State {
                     crossterm::execute!(out, style::SetForegroundColor(style::Color::Reset))?;
                 }
                 if termutil::compare_cursor_position(Boundary::Bottom)? == Ordering::Less {
-                    crossterm::execute!(out, cursor::MoveToNextLine(1))?;
+                    termutil::move_down(out, 1)?;
                 }
             }
 
