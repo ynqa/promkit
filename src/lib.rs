@@ -58,6 +58,14 @@ pub mod build {
     }
 }
 
+mod error {
+    use std::io;
+
+    /// Result for `prompt`.
+    pub type Result<T> = std::result::Result<T, io::Error>;
+}
+pub use error::Result;
+
 /// A module providing trait to register the item into.
 pub mod register {
     /// A trait to register the items.
@@ -108,8 +116,6 @@ pub(crate) mod text {
 
 /// Collection of terminal operations.
 pub mod cmd;
-mod error;
-pub use error::Result;
 /// Characters and their width.
 pub mod grapheme;
 /// Register the pairs of
