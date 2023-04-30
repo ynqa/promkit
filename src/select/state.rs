@@ -34,17 +34,31 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn can_render(&self) -> Result<()> {
-        // Check to leave the space to render the data.
+    pub fn used_lines(&self) -> Result<u16> {
         let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
-        let used_space = self.init_move_down_lines + title_lines;
-        if terminal::size()?.1 <= used_space {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Terminal does not leave the space to render.",
-            ));
-        }
-        Ok(())
+        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
+        let selector_lines = *vec![
+            left_space,
+            self.window.unwrap_or(left_space),
+            self.next.data.len() as u16,
+        ]
+        .iter()
+        .min()
+        .unwrap_or(&left_space);
+        Ok(self.init_move_down_lines + title_lines + selector_lines)
+    }
+
+    pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
+        Ok(*vec![
+            left_space,
+            self.window.unwrap_or(left_space),
+            selector.data.len() as u16,
+        ]
+        .iter()
+        .min()
+        .unwrap_or(&left_space))
     }
 
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
@@ -108,20 +122,5 @@ impl State {
             crossterm::execute!(out, cursor::RestorePosition)?;
         }
         Ok(())
-    }
-}
-
-impl State {
-    pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
-        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
-        Ok(*vec![
-            left_space,
-            self.window.unwrap_or(left_space),
-            selector.data.len() as u16,
-        ]
-        .iter()
-        .min()
-        .unwrap_or(&left_space))
     }
 }

@@ -47,16 +47,20 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn can_render(&self) -> Result<()> {
-        // Check to leave the space to render the data.
-        let used_space = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
-        if terminal::size()?.1 <= used_space {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Terminal does not leave the space to render.",
-            ));
+    pub fn used_lines(&self) -> Result<u16> {
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        Ok(title_lines)
+    }
+
+    pub fn buffer_limit(&self) -> Result<Option<usize>> {
+        if let Some(lines) = self.num_lines {
+            if lines > 0 {
+                return Ok(Some(
+                    terminal::size()?.0 as usize * lines - self.label.width(),
+                ));
+            }
         }
-        Ok(())
+        Ok(None)
     }
 
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
@@ -131,18 +135,5 @@ impl State {
         // +1 is for input.push(Grapheme::from(' ')) step above.
         termutil::move_left(out, next.width_from_position() as u16 + 1)?;
         Ok(())
-    }
-}
-
-impl State {
-    pub fn buffer_limit(&self) -> Result<Option<usize>> {
-        if let Some(lines) = self.num_lines {
-            if lines > 0 {
-                return Ok(Some(
-                    terminal::size()?.0 as usize * lines - self.label.width(),
-                ));
-            }
-        }
-        Ok(None)
     }
 }

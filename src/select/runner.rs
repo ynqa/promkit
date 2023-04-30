@@ -24,6 +24,10 @@ impl Runner<State> {
 }
 
 impl Runnable for Runner<State> {
+    fn used_lines(&self) -> Result<u16> {
+        self.state.used_lines()
+    }
+
     fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
         if let Event::Resize(x, y) = ev {
             if let Some(ret) = self.handle_resize((*x, *y), out)? {
@@ -65,7 +69,6 @@ impl Runnable for Runner<State> {
     }
 
     fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        self.state.can_render()?;
         self.state.render(out)?;
         self.state.prev = self.state.editor.clone();
         Ok(None)

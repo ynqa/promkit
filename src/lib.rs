@@ -146,6 +146,7 @@ pub struct Runner<S> {
 }
 
 pub trait Runnable {
+    fn used_lines(&self) -> Result<u16>;
     fn handle_event(
         &mut self,
         _: &crossterm::event::Event,
@@ -177,6 +178,14 @@ impl Prompt {
         }
 
         loop {
+            // check whether to be able to render.
+            if crossterm::terminal::size()?.1 < self.runner.used_lines()? {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "Terminal does not leave the space to render.",
+                ));
+            }
+
             // hook pre_run
             if let Err(e) = self.runner.pre_run(&mut self.out) {
                 self.runner.finalize(&mut self.out)?;
