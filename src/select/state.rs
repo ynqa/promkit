@@ -36,25 +36,16 @@ impl fmt::Display for State {
 impl State {
     pub fn used_lines(&self) -> Result<u16> {
         let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
-        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
-        let selector_lines = *vec![
-            left_space,
-            self.window.unwrap_or(left_space),
-            self.next.data.len() as u16,
-        ]
-        .iter()
-        .min()
-        .unwrap_or(&left_space);
-        Ok(self.init_move_down_lines + title_lines + selector_lines)
+        Ok(self.init_move_down_lines + title_lines + self.selector_lines()?)
     }
 
-    pub fn screen_size(&self, selector: &Selector) -> Result<u16> {
+    pub fn selector_lines(&self) -> Result<u16> {
         let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
         let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),
-            selector.data.len() as u16,
+            self.editor.data.len() as u16,
         ]
         .iter()
         .min()
@@ -90,8 +81,8 @@ impl State {
 
             let selector_position = next.position();
             let from = selector_position - self.cursor.position.get() as usize;
-            let to = selector_position
-                + (self.screen_size(&next)? - self.cursor.position.get()) as usize;
+            let to =
+                selector_position + (self.selector_lines()? - self.cursor.position.get()) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;

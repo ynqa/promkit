@@ -4,11 +4,10 @@ use crate::{select::State, Action};
 
 /// Move up from the current selected position in the candidates.
 pub fn move_up() -> Box<Action<State>> {
-    Box::new(|_: &mut io::Stdout, state: &mut State| {
+    Box::new(|out: &mut io::Stdout, state: &mut State| {
         // cyclical movement
         if !state.editor.prev() {
-            state.editor.to_tail();
-            state.cursor.to_tail(state.screen_size(&state.editor)?);
+            move_tail()(out, state)?;
         } else {
             state.cursor.prev();
         }
@@ -18,13 +17,17 @@ pub fn move_up() -> Box<Action<State>> {
 
 /// Move down from the current selected position in the candidates.
 pub fn move_down() -> Box<Action<State>> {
-    Box::new(|_: &mut io::Stdout, state: &mut State| {
+    Box::new(|out: &mut io::Stdout, state: &mut State| {
         // cyclical movement
         if !state.editor.next() {
-            state.editor.to_head();
-            state.cursor.to_head();
+            move_head()(out, state)?;
         } else {
-            state.cursor.next(state.screen_size(&state.editor)?)?;
+            state.cursor.move_to(
+                *vec![state.cursor.position.get() + 1, state.selector_lines()? - 1]
+                    .iter()
+                    .min()
+                    .unwrap_or(&0),
+            );
         }
         Ok(None)
     })
@@ -43,7 +46,7 @@ pub fn move_head() -> Box<Action<State>> {
 pub fn move_tail() -> Box<Action<State>> {
     Box::new(|_: &mut io::Stdout, state: &mut State| {
         state.editor.to_tail();
-        state.cursor.to_tail(state.screen_size(&state.editor)?);
+        state.cursor.move_to(state.selector_lines()? - 1);
         Ok(None)
     })
 }
