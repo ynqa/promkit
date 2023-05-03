@@ -23,6 +23,10 @@ impl Default for State {
 }
 
 impl State {
+    pub fn used_lines(&self) -> Result<u16> {
+        termutil::num_lines(&self.text)
+    }
+
     pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         crossterm::execute!(
             out,
@@ -37,9 +41,5 @@ impl State {
         )?;
         // Move to next line.
         termutil::move_down(out, 1)
-    }
-
-    pub fn num_lines(&self) -> Result<u16> {
-        termutil::num_lines(&self.text)
     }
 }

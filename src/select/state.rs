@@ -35,12 +35,12 @@ impl fmt::Display for State {
 
 impl State {
     pub fn used_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
         Ok(self.init_move_down_lines + title_lines + self.selector_lines()?)
     }
 
     pub fn selector_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
         let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
         Ok(*vec![
             left_space,
@@ -73,7 +73,7 @@ impl State {
             crossterm::execute!(out, cursor::SavePosition)?;
 
             // Move down the lines already written.
-            let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+            let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
             let move_down_lines = self.init_move_down_lines + title_lines;
             if 0 < move_down_lines {
                 termutil::move_down(out, move_down_lines)?;

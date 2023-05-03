@@ -48,7 +48,7 @@ impl fmt::Display for State {
 
 impl State {
     pub fn used_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.num_lines())?;
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
         Ok(title_lines)
     }
 
