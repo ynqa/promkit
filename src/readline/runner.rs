@@ -68,9 +68,7 @@ impl Runnable for Runner<State> {
     }
 
     fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        termutil::move_right(out, self.state.editor.width_from_position() as u16)?;
         termutil::move_down(out, 1)?;
-        termutil::move_head(out)?;
         if let Some(hstr) = &mut self.state.hstr {
             hstr.register(self.state.editor.data.clone());
         }
