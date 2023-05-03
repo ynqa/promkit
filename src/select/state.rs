@@ -70,8 +70,6 @@ impl State {
     pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         let next = self.next.clone();
         if !next.data.is_empty() {
-            crossterm::execute!(out, cursor::SavePosition)?;
-
             // Move down the lines already written.
             let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
             let move_down_lines = self.init_move_down_lines + title_lines;
@@ -108,9 +106,6 @@ impl State {
                     termutil::move_down(out, 1)?;
                 }
             }
-
-            // Return to the initial position.
-            crossterm::execute!(out, cursor::RestorePosition)?;
         }
         Ok(())
     }

@@ -1,7 +1,10 @@
 use std::io;
 
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    crossterm::{
+        cursor,
+        event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    },
     internal::selector::Selector,
     select::State,
     termutil, Dispatcher, Result, Runnable,
@@ -72,12 +75,15 @@ impl Runnable for Dispatcher<State> {
     }
 
     fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
+        crossterm::execute!(out, cursor::SavePosition)?;
         self.state.render(out)?;
+        // Return to the initial position before rendering.
+        crossterm::execute!(out, cursor::RestorePosition)?;
         self.state.prev = self.state.editor.clone();
         Ok(None)
     }
 
-    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>> {
+    fn post_run(&mut self, _out: &mut io::Stdout) -> Result<Option<String>> {
         self.state.next = self.state.editor.clone();
         Ok(None)
     }
