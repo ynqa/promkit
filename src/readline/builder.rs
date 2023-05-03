@@ -8,9 +8,9 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{state::State, Mode},
+    readline::{dispatcher::Dispatcher, state::State, Mode},
     suggest::Suggest,
-    text, Dispatcher, Prompt, Result, Runnable,
+    text, Prompt, Result, Runnable,
 };
 
 pub struct Builder {
@@ -48,7 +48,7 @@ impl build::Builder for Builder {
     }
 
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
-        Ok(Box::new(Dispatcher::<State> {
+        Ok(Box::new(Dispatcher {
             keybind: self._keybind,
             state: State {
                 editor: Buffer::default(),

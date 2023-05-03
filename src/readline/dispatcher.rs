@@ -1,32 +1,44 @@
 use std::io;
 
 use crate::{
-    crossterm::{
-        cursor,
-        event::{Event, KeyCode, KeyEvent, KeyModifiers},
-    },
-    internal::selector::Selector,
-    select::State,
-    termutil, Dispatcher, Result, Runnable,
+    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
+    grapheme::Grapheme,
+    internal::buffer::Buffer,
+    keybind::KeyBind,
+    readline::{Mode, State},
+    register::Register,
+    termutil, Result, Runnable,
 };
 
-impl Dispatcher<State> {
+pub struct Dispatcher {
+    pub keybind: KeyBind<State>,
+    pub state: State,
+}
+
+impl Dispatcher {
     fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
-        self.state.editor.to_head();
-        self.state.screen_position = 0;
         self.state.render_static(out)?;
         // Overwrite the prev as default.
-        self.state.prev = Selector::default();
+        self.state.prev = Buffer::default();
         Ok(None)
     }
 
-    fn handle_input(&mut self, _: char, _: &mut io::Stdout) -> Result<Option<String>> {
+    fn handle_input(&mut self, ch: char, _: &mut io::Stdout) -> Result<Option<String>> {
+        if let Some(limit) = self.state.buffer_limit()? {
+            if limit <= self.state.editor.data.width() {
+                return Ok(None);
+            }
+        }
+        match self.state.edit_mode {
+            Mode::Insert => self.state.editor.insert(Grapheme::from(ch)),
+            Mode::Overwrite => self.state.editor.overwrite(Grapheme::from(ch)),
+        }
         Ok(None)
     }
 }
 
-impl Runnable for Dispatcher<State> {
+impl Runnable for Dispatcher {
     fn used_lines(&self) -> Result<u16> {
         self.state.used_lines()
     }
@@ -57,26 +69,28 @@ impl Runnable for Dispatcher<State> {
     }
 
     fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        termutil::hide_cursor(out)?;
         self.state.render_static(out)?;
         Ok(None)
     }
 
     fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        termutil::show_cursor(out)?;
+        termutil::move_down(out, 1)?;
+        if let Some(hstr) = &mut self.state.hstr {
+            hstr.register(self.state.editor.data.clone());
+        }
+        self.state.editor = Buffer::default();
+        self.state.prev = Buffer::default();
+        self.state.next = Buffer::default();
         Ok(None)
     }
 
     fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        crossterm::execute!(out, cursor::SavePosition)?;
         self.state.render(out)?;
-        // Return to the initial position before rendering.
-        crossterm::execute!(out, cursor::RestorePosition)?;
         self.state.prev = self.state.editor.clone();
         Ok(None)
     }
 
-    fn post_run(&mut self, _out: &mut io::Stdout) -> Result<Option<String>> {
+    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>> {
         self.state.next = self.state.editor.clone();
         Ok(None)
     }

@@ -2,8 +2,14 @@ use std::fmt;
 use std::io;
 
 use crate::{
-    build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::State, text, Dispatcher, Prompt, Result, Runnable,
+    build,
+    crossterm::style,
+    grapheme::Graphemes,
+    internal::selector::Selector,
+    keybind::KeyBind,
+    register::Register,
+    select::{dispatcher::Dispatcher, State},
+    text, Prompt, Result, Runnable,
 };
 
 pub struct Builder {
@@ -41,7 +47,7 @@ impl build::Builder for Builder {
     }
 
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
-        Ok(Box::new(Dispatcher::<State> {
+        Ok(Box::new(Dispatcher {
             keybind: self._keybind,
             state: State {
                 editor: self._selector.clone(),

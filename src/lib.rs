@@ -89,8 +89,8 @@ pub(crate) mod internal {
 pub mod readline {
     pub mod action;
     mod builder;
+    mod dispatcher;
     mod keybind;
-    mod runner;
     mod state;
 
     pub use self::builder::Builder;
@@ -100,8 +100,8 @@ pub mod readline {
 pub mod select {
     pub mod action;
     mod builder;
+    mod dispatcher;
     mod keybind;
-    mod runner;
     mod state;
 
     pub use self::builder::Builder;
@@ -137,11 +137,6 @@ pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
 pub struct Prompt {
     out: io::Stdout,
     dispatcher: Box<dyn Runnable>,
-}
-
-pub struct Dispatcher<S> {
-    pub keybind: keybind::KeyBind<S>,
-    pub state: S,
 }
 
 pub trait Runnable {
