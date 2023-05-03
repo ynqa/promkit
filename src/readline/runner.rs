@@ -6,10 +6,10 @@ use crate::{
     internal::buffer::Buffer,
     readline::{Mode, State},
     register::Register,
-    termutil, Result, Runnable, Runner,
+    termutil, Dispatcher, Result, Runnable,
 };
 
-impl Runner<State> {
+impl Dispatcher<State> {
     fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.render_static(out)?;
@@ -32,7 +32,7 @@ impl Runner<State> {
     }
 }
 
-impl Runnable for Runner<State> {
+impl Runnable for Dispatcher<State> {
     fn used_lines(&self) -> Result<u16> {
         self.state.used_lines()
     }

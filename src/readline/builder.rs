@@ -10,7 +10,7 @@ use crate::{
     keybind::KeyBind,
     readline::{state::State, Mode},
     suggest::Suggest,
-    text, Prompt, Result, Runnable, Runner,
+    text, Dispatcher, Prompt, Result, Runnable,
 };
 
 pub struct Builder {
@@ -43,12 +43,12 @@ impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
         Ok(Prompt {
             out: io::stdout(),
-            runner: self.runnable()?,
+            dispatcher: self.dispatcher()?,
         })
     }
 
-    fn runnable(self) -> Result<Box<dyn Runnable>> {
-        Ok(Box::new(Runner::<State> {
+    fn dispatcher(self) -> Result<Box<dyn Runnable>> {
+        Ok(Box::new(Dispatcher::<State> {
             keybind: self._keybind,
             state: State {
                 editor: Buffer::default(),

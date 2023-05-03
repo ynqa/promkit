@@ -54,7 +54,7 @@ pub mod build {
     /// A trait to build [Prompt](struct.Prompt.html).
     pub trait Builder {
         fn build(self) -> Result<Prompt>;
-        fn runnable(self) -> Result<Box<dyn Runnable>>;
+        fn dispatcher(self) -> Result<Box<dyn Runnable>>;
     }
 }
 
@@ -137,10 +137,10 @@ pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     out: io::Stdout,
-    runner: Box<dyn Runnable>,
+    dispatcher: Box<dyn Runnable>,
 }
 
-pub struct Runner<S> {
+pub struct Dispatcher<S> {
     pub keybind: keybind::KeyBind<S>,
     pub state: S,
 }
@@ -172,14 +172,14 @@ impl Prompt {
             crossterm::terminal::disable_raw_mode().ok();
         }};
 
-        if let Err(e) = self.runner.initialize(&mut self.out) {
-            self.runner.finalize(&mut self.out)?;
+        if let Err(e) = self.dispatcher.initialize(&mut self.out) {
+            self.dispatcher.finalize(&mut self.out)?;
             return Err(e);
         }
 
         loop {
             // check whether to be able to render.
-            if crossterm::terminal::size()?.1 < self.runner.used_lines()? {
+            if crossterm::terminal::size()?.1 < self.dispatcher.used_lines()? {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
                     "Terminal does not leave the space to render.",
@@ -187,28 +187,28 @@ impl Prompt {
             }
 
             // hook pre_run
-            if let Err(e) = self.runner.pre_run(&mut self.out) {
-                self.runner.finalize(&mut self.out)?;
+            if let Err(e) = self.dispatcher.pre_run(&mut self.out) {
+                self.dispatcher.finalize(&mut self.out)?;
                 return Err(e);
             }
 
             let ev = crossterm::event::read()?;
-            match self.runner.handle_event(&ev, &mut self.out) {
+            match self.dispatcher.handle_event(&ev, &mut self.out) {
                 Ok(maybe_ret) => {
                     if let Some(ret) = maybe_ret {
-                        self.runner.finalize(&mut self.out)?;
+                        self.dispatcher.finalize(&mut self.out)?;
                         return Ok(ret);
                     }
                 }
                 Err(e) => {
-                    self.runner.finalize(&mut self.out)?;
+                    self.dispatcher.finalize(&mut self.out)?;
                     return Err(e);
                 }
             }
 
             // hook post_run
-            if let Err(e) = self.runner.post_run(&mut self.out) {
-                self.runner.finalize(&mut self.out)?;
+            if let Err(e) = self.dispatcher.post_run(&mut self.out) {
+                self.dispatcher.finalize(&mut self.out)?;
                 return Err(e);
             }
         }
