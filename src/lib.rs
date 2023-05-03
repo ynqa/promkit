@@ -100,7 +100,6 @@ pub mod readline {
 pub mod select {
     pub mod action;
     mod builder;
-    mod cursor;
     mod keybind;
     mod runner;
     mod state;

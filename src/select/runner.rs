@@ -14,7 +14,7 @@ impl Dispatcher<State> {
     fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
         self.state.editor.to_head();
-        self.state.cursor.to_head();
+        self.state.screen_position = 0;
         self.state.render_static(out)?;
         // Overwrite the prev as default.
         self.state.prev = Selector::default();

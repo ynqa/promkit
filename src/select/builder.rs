@@ -3,8 +3,7 @@ use std::io;
 
 use crate::{
     build, crossterm::style, grapheme::Graphemes, internal::selector::Selector, keybind::KeyBind,
-    register::Register, select::cursor::Cursor, select::State, text, Dispatcher, Prompt, Result,
-    Runnable,
+    register::Register, select::State, text, Dispatcher, Prompt, Result, Runnable,
 };
 
 pub struct Builder {
@@ -51,7 +50,7 @@ impl build::Builder for Builder {
                 prev: self._selector.clone(),
                 next: self._selector.clone(),
                 title: self._title,
-                cursor: Cursor::default(),
+                screen_position: 0,
                 label: self._label,
                 label_color: self._label_color,
                 init_move_down_lines: self._init_move_down_lines,

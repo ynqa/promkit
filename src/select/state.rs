@@ -6,7 +6,6 @@ use crate::{
     crossterm::{cursor, style, terminal},
     grapheme::Graphemes,
     internal::selector::Selector,
-    select::cursor::Cursor,
     termutil::{self, Boundary},
     text, Result,
 };
@@ -22,7 +21,7 @@ pub struct State {
     pub label: Graphemes,
     pub label_color: style::Color,
     pub init_move_down_lines: u16,
-    pub cursor: Cursor,
+    pub screen_position: u16,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
 }
@@ -78,9 +77,8 @@ impl State {
             }
 
             let selector_position = next.position();
-            let from = selector_position - self.cursor.position.get() as usize;
-            let to =
-                selector_position + (self.selector_lines()? - self.cursor.position.get()) as usize;
+            let from = selector_position - self.screen_position as usize;
+            let to = selector_position + (self.selector_lines()? - self.screen_position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;
