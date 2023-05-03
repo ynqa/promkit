@@ -12,7 +12,6 @@ pub struct Builder {
     _title: Option<text::State>,
     _label: Graphemes,
     _label_color: style::Color,
-    _init_move_down_lines: u16,
     _window: Option<u16>,
     _suffix_after_trim: Graphemes,
 }
@@ -25,7 +24,6 @@ impl Builder {
             _title: None,
             _label: Graphemes::from("❯ "),
             _label_color: style::Color::Reset,
-            _init_move_down_lines: 0,
             _window: None,
             _suffix_after_trim: Graphemes::from("…"),
         };
@@ -53,7 +51,6 @@ impl build::Builder for Builder {
                 screen_position: 0,
                 label: self._label,
                 label_color: self._label_color,
-                init_move_down_lines: self._init_move_down_lines,
                 window: self._window,
                 suffix_after_trim: self._suffix_after_trim,
             },
@@ -90,11 +87,6 @@ impl Builder {
 
     pub fn label_color(mut self, color: style::Color) -> Self {
         self._label_color = color;
-        self
-    }
-
-    pub fn init_move_down_lines(mut self, lines: u16) -> Self {
-        self._init_move_down_lines = lines;
         self
     }
 

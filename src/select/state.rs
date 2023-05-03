@@ -3,7 +3,7 @@ use std::fmt;
 use std::io;
 
 use crate::{
-    crossterm::{cursor, style, terminal},
+    crossterm::{style, terminal},
     grapheme::Graphemes,
     internal::selector::Selector,
     termutil::{self, Boundary},
@@ -20,7 +20,6 @@ pub struct State {
     /// A symbol to emphasize the selected item (e.g. ">").
     pub label: Graphemes,
     pub label_color: style::Color,
-    pub init_move_down_lines: u16,
     pub screen_position: u16,
     pub window: Option<u16>,
     pub suffix_after_trim: Graphemes,
@@ -35,12 +34,12 @@ impl fmt::Display for State {
 impl State {
     pub fn used_lines(&self) -> Result<u16> {
         let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-        Ok(self.init_move_down_lines + title_lines + self.selector_lines()?)
+        Ok(title_lines + self.selector_lines()?)
     }
 
     pub fn selector_lines(&self) -> Result<u16> {
         let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-        let left_space = terminal::size()?.1 - (self.init_move_down_lines + title_lines);
+        let left_space = terminal::size()?.1 - title_lines;
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),
@@ -52,30 +51,16 @@ impl State {
     }
 
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
-        // Move down with init_move_down_lines.
-        if 0 < self.init_move_down_lines {
-            termutil::move_down(out, self.init_move_down_lines)?;
-        }
-
         // Render the title.
         if let Some(ref mut title) = self.title {
             title.render(out)?;
         }
-
-        // Return to the initial position.
-        crossterm::execute!(out, cursor::MoveTo(0, 0))
+        Ok(())
     }
 
     pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
         let next = self.next.clone();
         if !next.data.is_empty() {
-            // Move down the lines already written.
-            let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-            let move_down_lines = self.init_move_down_lines + title_lines;
-            if 0 < move_down_lines {
-                termutil::move_down(out, move_down_lines)?;
-            }
-
             let selector_position = next.position();
             let from = selector_position - self.screen_position as usize;
             let to = selector_position + (self.selector_lines()? - self.screen_position) as usize;

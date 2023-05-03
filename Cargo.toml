@@ -58,10 +58,6 @@ name = "title"
 path = "examples/readline/title.rs"
 
 [[example]]
-name = "init_down"
-path = "examples/select/init_down.rs"
-
-[[example]]
 name = "select"
 path = "examples/select/select.rs"
 

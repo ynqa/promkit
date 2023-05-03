@@ -64,13 +64,6 @@ impl Runnable for Dispatcher<State> {
 
     fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::show_cursor(out)?;
-        termutil::move_down(
-            out,
-            self.state
-                .title
-                .as_ref()
-                .map_or(Ok(0), |t| t.used_lines())?,
-        )?;
         Ok(None)
     }
 
