@@ -133,7 +133,6 @@ impl State {
 
         // Go backward to the next position from the end of graphemes.
         // +1 is for input.push(Grapheme::from(' ')) step above.
-        termutil::move_left(out, next.width_from_position() as u16 + 1)?;
-        Ok(())
+        termutil::move_left(out, next.width_from_position() as u16 + 1)
     }
 }
