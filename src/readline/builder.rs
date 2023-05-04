@@ -5,22 +5,18 @@ use crate::{
     build,
     crossterm::style,
     grapheme::{Grapheme, Graphemes},
+    grid::Grid,
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{
-        self,
-        event::{dispatcher::Dispatcher, handler::EventHandler},
-        render::Renderer,
-        Mode,
-    },
+    readline::{self, handler::EventHandler, render::Renderer, store::Store, Mode},
     suggest::Suggest,
-    text, Prompt, Result, Runnable,
+    text, Prompt, Result,
 };
 
 pub struct Builder {
     _keybind: KeyBind<readline::State>,
-    _title_dispatcher: Option<text::event::dispatcher::Dispatcher>,
+    _title_store: Option<text::Store>,
     _label: Graphemes,
     _label_color: style::Color,
     _mask: Option<Grapheme>,
@@ -33,7 +29,7 @@ impl Default for Builder {
     fn default() -> Self {
         Self {
             _keybind: KeyBind::default(),
-            _title_dispatcher: None,
+            _title_store: None,
             _label: Graphemes::from("❯❯ "),
             _label_color: style::Color::Reset,
             _mask: None,
@@ -46,24 +42,11 @@ impl Default for Builder {
 
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
-        Ok(Prompt {
-            out: io::stdout(),
-            dispatcher: self.dispatcher()?,
-        })
-    }
-
-    fn dispatcher(self) -> Result<Box<dyn Runnable>> {
-        let _title_lines = self
-            ._title_dispatcher
-            .as_ref()
-            .map_or(Ok(0), |t| t.state.text_lines())?;
-        Ok(Box::new(Dispatcher {
-            title_dispatcher: self._title_dispatcher,
+        let mut grid = Grid(vec![Box::new(Store {
             readline: readline::State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
                 next: Buffer::default(),
-                title_lines: _title_lines,
                 label: self._label,
                 label_color: self._label_color,
                 mask: self._mask,
@@ -76,7 +59,14 @@ impl build::Builder for Builder {
                 keybind: self._keybind,
             },
             renderer: Renderer {},
-        }))
+        })]);
+        if let Some(title_store) = self._title_store {
+            grid.insert(0, Box::new(title_store));
+        }
+        Ok(Prompt {
+            out: io::stdout(),
+            grid: grid,
+        })
     }
 }
 
@@ -87,7 +77,7 @@ impl Builder {
     }
 
     pub fn title<T: fmt::Display>(mut self, title: T) -> Self {
-        self._title_dispatcher = Some(text::event::dispatcher::Dispatcher {
+        self._title_store = Some(text::Store {
             state: text::State {
                 text: Graphemes::from(format!("{}", title)),
                 ..Default::default()
@@ -98,7 +88,7 @@ impl Builder {
     }
 
     pub fn title_color(mut self, color: style::Color) -> Self {
-        self._title_dispatcher.as_mut().map(|mut t| {
+        self._title_store.as_mut().map(|mut t| {
             t.state.text_color = color;
             t
         });

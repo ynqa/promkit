@@ -24,7 +24,6 @@ pub struct State {
     pub editor: Buffer,
     pub prev: Buffer,
     pub next: Buffer,
-    pub title_lines: u16,
     /// A label as prompt (e.g. ">>").
     pub label: Graphemes,
     pub label_color: style::Color,
@@ -45,12 +44,15 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn buffer_lines(&self) -> Result<u16> {
-        let left_space = terminal::size()?.1 - self.title_lines;
-        Ok(self.num_lines.unwrap_or(left_space))
+    pub fn buffer_lines(&self, unused_rows: u16) -> Result<u16> {
+        Ok(*vec![unused_rows, self.num_lines.unwrap_or(unused_rows)]
+            .iter()
+            .min()
+            .unwrap_or(&unused_rows))
     }
 
-    pub fn buffer_limit(&self) -> Result<u16> {
-        Ok(terminal::size()?.0 * self.buffer_lines()? - self.label.width() as u16 - 1)
+    pub fn buffer_limit(&self, unused_rows: u16) -> Result<u16> {
+        // -1 is for the space for cursor.
+        Ok(terminal::size()?.0 * self.buffer_lines(unused_rows)? - self.label.width() as u16 - 1)
     }
 }
