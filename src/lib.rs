@@ -89,13 +89,14 @@ pub(crate) mod internal {
 pub mod readline {
     pub mod action;
     mod builder;
-    mod dispatcher;
+    mod event;
     mod keybind;
     mod state;
 
     pub use self::builder::Builder;
     pub use self::state::{Mode, State};
 }
+
 /// A module providing the selectbox to choose the items from.
 pub mod select {
     pub mod action;

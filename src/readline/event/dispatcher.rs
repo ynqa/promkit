@@ -1,45 +1,18 @@
 use std::io;
 
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
-    grapheme::Grapheme,
+    crossterm::event::Event,
     internal::buffer::Buffer,
-    keybind::KeyBind,
-    readline::{Mode, State},
+    readline::{self, event::handler::EventHandler},
     register::Register,
     termutil, text, Result, Runnable,
 };
 
 pub struct Dispatcher {
-    pub keybind: KeyBind<State>,
     /// Title displayed on the initial line.
     pub title: Option<text::State>,
-    pub readline: State,
-}
-
-impl Dispatcher {
-    fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
-        termutil::clear(out)?;
-        // Render the title.
-        if let Some(ref mut title) = self.title {
-            title.render(out)?;
-        }
-        self.readline.render_static(out)?;
-        // Overwrite the prev as default.
-        self.readline.prev = Buffer::default();
-        Ok(None)
-    }
-
-    fn handle_input(&mut self, ch: char, _: &mut io::Stdout) -> Result<Option<String>> {
-        if self.readline.buffer_limit()? <= self.readline.editor.data.width() as u16 {
-            return Ok(None);
-        }
-        match self.readline.edit_mode {
-            Mode::Insert => self.readline.editor.insert(Grapheme::from(ch)),
-            Mode::Overwrite => self.readline.editor.overwrite(Grapheme::from(ch)),
-        }
-        Ok(None)
-    }
+    pub readline: readline::State,
+    pub handler: EventHandler,
 }
 
 impl Runnable for Dispatcher {
@@ -50,28 +23,8 @@ impl Runnable for Dispatcher {
     }
 
     fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
-        if let Event::Resize(x, y) = ev {
-            if let Some(ret) = self.handle_resize((*x, *y), out)? {
-                return Ok(Some(ret));
-            }
-        }
-
-        if let Some(ret) = self.keybind.handle(ev, out, &mut self.readline)? {
-            return Ok(Some(ret));
-        }
-
-        if let Event::Key(KeyEvent {
-            code: KeyCode::Char(ch),
-            modifiers: KeyModifiers::NONE,
-            ..
-        }) = ev
-        {
-            if let Some(ret) = self.handle_input(*ch, out)? {
-                return Ok(Some(ret));
-            }
-        }
-
-        Ok(None)
+        self.handler
+            .handle_event(ev, out, &mut self.title, &mut self.readline)
     }
 
     fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {

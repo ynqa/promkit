@@ -8,13 +8,17 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{dispatcher::Dispatcher, state::State, Mode},
+    readline::{
+        self,
+        event::{dispatcher::Dispatcher, handler::EventHandler},
+        Mode,
+    },
     suggest::Suggest,
     text, Prompt, Result, Runnable,
 };
 
 pub struct Builder {
-    _keybind: KeyBind<State>,
+    _keybind: KeyBind<readline::State>,
     _title: Option<text::State>,
     _label: Graphemes,
     _label_color: style::Color,
@@ -50,9 +54,11 @@ impl build::Builder for Builder {
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
         let tl = self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
         Ok(Box::new(Dispatcher {
-            keybind: self._keybind,
+            handler: EventHandler {
+                keybind: self._keybind,
+            },
             title: self._title,
-            readline: State {
+            readline: readline::State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
                 next: Buffer::default(),
@@ -70,7 +76,23 @@ impl build::Builder for Builder {
 }
 
 impl Builder {
-    pub fn keybind(mut self, keybind: KeyBind<State>) -> Self {
+    pub fn state(self) -> Result<readline::State> {
+        Ok(readline::State {
+            editor: Buffer::default(),
+            prev: Buffer::default(),
+            next: Buffer::default(),
+            title_lines: self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?,
+            label: self._label,
+            label_color: self._label_color,
+            mask: self._mask,
+            edit_mode: self._edit_mode,
+            num_lines: self._num_lines,
+            hstr: Some(History::default()),
+            suggest: self._suggest,
+        })
+    }
+
+    pub fn keybind(mut self, keybind: KeyBind<readline::State>) -> Self {
         self._keybind = keybind;
         self
     }
