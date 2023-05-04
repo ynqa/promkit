@@ -1,8 +1,6 @@
 use std::io;
 
-use crate::{
-    crossterm::event::Event, grid::UpstreamContext, keybind::KeyBind, select::State, Result,
-};
+use crate::{crossterm::event::Event, keybind::KeyBind, select::State, Result};
 
 pub struct EventHandler {
     pub keybind: KeyBind<State>,
@@ -13,9 +11,8 @@ impl EventHandler {
         &self,
         ev: &Event,
         out: &mut io::Stdout,
-        context: &UpstreamContext,
-        select: &mut State,
+        state: &mut State,
     ) -> Result<Option<String>> {
-        self.keybind.handle(ev, out, context, select)
+        self.keybind.handle(ev, out, state)
     }
 }

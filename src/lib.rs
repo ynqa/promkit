@@ -142,7 +142,6 @@ pub(crate) mod text {
 pub mod cmd;
 /// Characters and their width.
 pub mod grapheme;
-pub mod grid;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
@@ -158,26 +157,19 @@ pub use crossterm;
 use crossterm::event::Event;
 
 /// A type representing the actions when the events are received.
-pub type Action<S> =
-    dyn Fn(&mut io::Stdout, &grid::UpstreamContext, &mut S) -> Result<Option<String>>;
+pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     out: io::Stdout,
-    grid: grid::Grid,
+    ctr: Box<dyn Controller>,
 }
 
 pub trait Controller {
-    fn used_rows(&self, _: &grid::UpstreamContext) -> Result<u16>;
+    fn can_render(&self) -> Result<()>;
     fn render_static(&self, _: &mut io::Stdout) -> Result<()>;
-    fn run_on_resize(&mut self) -> Result<()>;
-    fn handle_event(
-        &mut self,
-        _: &Event,
-        _: &mut io::Stdout,
-        _: &grid::UpstreamContext,
-    ) -> Result<Option<String>>;
-    fn render(&mut self, _: &mut io::Stdout, _: &grid::UpstreamContext) -> Result<()>;
+    fn handle_event(&mut self, _: &Event, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn render(&mut self, _: &mut io::Stdout) -> Result<()>;
     fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
 }
 
@@ -196,42 +188,42 @@ impl Prompt {
         }};
 
         // check whether to be able to render.
-        if let Err(e) = self.grid.can_render() {
-            self.grid.finalize(&mut self.out)?;
+        if let Err(e) = self.ctr.can_render() {
+            self.ctr.finalize(&mut self.out)?;
             return Err(e);
         }
 
         // Render the static contents (e.g. title, label)
         // which state is not changed after the events are received.
-        if let Err(e) = self.grid.render_static(&mut self.out) {
-            self.grid.finalize(&mut self.out)?;
+        if let Err(e) = self.ctr.render_static(&mut self.out) {
+            self.ctr.finalize(&mut self.out)?;
             return Err(e);
         }
 
         loop {
             // check whether to be able to render.
-            if let Err(e) = self.grid.can_render() {
-                self.grid.finalize(&mut self.out)?;
+            if let Err(e) = self.ctr.can_render() {
+                self.ctr.finalize(&mut self.out)?;
                 return Err(e);
             }
 
-            if let Err(e) = self.grid.render(&mut self.out) {
-                self.grid.finalize(&mut self.out)?;
+            if let Err(e) = self.ctr.render(&mut self.out) {
+                self.ctr.finalize(&mut self.out)?;
                 return Err(e);
             }
 
             match self
-                .grid
+                .ctr
                 .handle_event(&crossterm::event::read()?, &mut self.out)
             {
                 Ok(maybe_ret) => {
                     if let Some(ret) = maybe_ret {
-                        self.grid.finalize(&mut self.out)?;
+                        self.ctr.finalize(&mut self.out)?;
                         return Ok(ret);
                     }
                 }
                 Err(e) => {
-                    self.grid.finalize(&mut self.out)?;
+                    self.ctr.finalize(&mut self.out)?;
                     return Err(e);
                 }
             }

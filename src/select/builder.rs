@@ -5,7 +5,6 @@ use crate::{
     build,
     crossterm::style,
     grapheme::Graphemes,
-    grid::Grid,
     internal::selector::Selector,
     keybind::KeyBind,
     readline,
@@ -44,30 +43,23 @@ impl Builder {
 
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
-        let mut g = Grid(vec![]);
-        if let Some(title_store) = self._title_store {
-            g.push(Box::new(title_store));
-        }
-        if let Some(query_builder) = self._query_builder {
-            g.push(Box::new(query_builder.store()));
-        }
-        g.push(Box::new(Store {
-            select: State {
-                editor: self._selector.clone(),
-                screen_position: 0,
-                label: self._label,
-                label_color: self._label_color,
-                window: self._window,
-                suffix_after_trim: self._suffix_after_trim,
-            },
-            handler: EventHandler {
-                keybind: self._keybind,
-            },
-            renderer: Renderer {},
-        }));
         Ok(Prompt {
             out: io::stdout(),
-            grid: g,
+            ctr: Box::new(Store {
+                state: State {
+                    editor: self._selector.clone(),
+                    screen_position: 0,
+                    label: self._label,
+                    label_color: self._label_color,
+                    window: self._window,
+                    suffix_after_trim: self._suffix_after_trim,
+                },
+                handler: EventHandler {
+                    keybind: self._keybind,
+                },
+                renderer: Renderer {},
+                title_store: self._title_store,
+            }),
         })
     }
 }

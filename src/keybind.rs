@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io;
 
-use crate::{crossterm::event::Event, grid::UpstreamContext, Action, Result};
+use crate::{crossterm::event::Event, Action, Result};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S> {
@@ -22,11 +22,10 @@ impl<S> KeyBind<S> {
         &self,
         ev: &Event,
         out: &mut io::Stdout,
-        context: &UpstreamContext,
         state: &mut S,
     ) -> Result<Option<String>> {
         match self.event_mapping.get(ev) {
-            Some(handle) => handle(out, context, state),
+            Some(handle) => handle(out, state),
             _ => Ok(None),
         }
     }
@@ -36,7 +35,7 @@ impl<S> KeyBind<S> {
 mod test {
     use std::any::Any;
 
-    use super::{io, Action, HashMap, KeyBind, UpstreamContext};
+    use super::{io, Action, HashMap, KeyBind};
 
     use crate::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
@@ -54,11 +53,8 @@ mod test {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::empty(),
             }),
-            Box::new(
-                |_: &mut io::Stdout, _: &UpstreamContext, _: &mut Box<dyn Any>| {
-                    Ok(Some(String::new()))
-                },
-            ) as Box<Action<Box<dyn Any>>>,
+            Box::new(|_: &mut io::Stdout, _: &mut Box<dyn Any>| Ok(Some(String::new())))
+                as Box<Action<Box<dyn Any>>>,
         )]);
         assert_eq!(b.event_mapping.len(), 1);
     }

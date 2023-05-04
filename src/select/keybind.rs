@@ -4,7 +4,7 @@ use crate::{
     cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     keybind::KeyBind,
-    select::{self, State},
+    select::{action, State},
 };
 
 /// Default key bindings for select.
@@ -48,7 +48,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::action::move_up(),
+                action::move_up(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -57,7 +57,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::action::move_down(),
+                action::move_down(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -66,7 +66,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::action::move_head(),
+                action::move_head(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -75,7 +75,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                select::action::move_tail(),
+                action::move_tail(),
             ),
         ]);
         b

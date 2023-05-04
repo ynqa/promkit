@@ -3,7 +3,6 @@ use std::io;
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     grapheme::Grapheme,
-    grid::UpstreamContext,
     keybind::KeyBind,
     readline::{Mode, State},
     Result,
@@ -18,10 +17,9 @@ impl EventHandler {
         &self,
         ev: &Event,
         out: &mut io::Stdout,
-        context: &UpstreamContext,
         readline: &mut State,
     ) -> Result<Option<String>> {
-        if let Some(ret) = self.keybind.handle(ev, out, context, readline)? {
+        if let Some(ret) = self.keybind.handle(ev, out, readline)? {
             return Ok(Some(ret));
         }
 
@@ -31,7 +29,7 @@ impl EventHandler {
             ..
         }) = ev
         {
-            if readline.buffer_limit(context)? <= readline.editor.data.width() as u16 {
+            if readline.buffer_limit()? <= readline.editor.data.width() as u16 {
                 return Ok(None);
             }
             match readline.edit_mode {

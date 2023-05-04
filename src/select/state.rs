@@ -1,9 +1,10 @@
 use std::fmt;
 
+use crossterm::cursor;
+
 use crate::{
     crossterm::{style, terminal},
     grapheme::Graphemes,
-    grid::UpstreamContext,
     internal::selector::Selector,
     Result,
 };
@@ -26,8 +27,8 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn selector_lines(&self, context: &UpstreamContext) -> Result<u16> {
-        let unused_rows = terminal::size()?.1 - context.used_rows;
+    pub fn selector_lines(&self) -> Result<u16> {
+        let unused_rows = terminal::size()?.1 - cursor::position()?.1;
         Ok(*vec![
             unused_rows,
             self.window.unwrap_or(unused_rows),

@@ -4,7 +4,6 @@ use promkit::{
     build::Builder,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     grapheme::Graphemes,
-    grid::UpstreamContext,
     keybind::KeyBind,
     readline::{self, State},
     Action, Result,
@@ -19,12 +18,10 @@ fn main() -> Result<()> {
             kind: KeyEventKind::Press,
             state: KeyEventState::empty(),
         }),
-        Box::new(
-            |_: &mut io::Stdout, _: &UpstreamContext, state: &mut State| {
-                state.editor.replace(&Graphemes::from("REPLCED!!"));
-                Ok(None)
-            },
-        ) as Box<Action<State>>,
+        Box::new(|_: &mut io::Stdout, state: &mut State| {
+            state.editor.replace(&Graphemes::from("REPLCED!!"));
+            Ok(None)
+        }) as Box<Action<State>>,
     )]);
     let mut p = readline::Builder::default().keybind(b).build()?;
     loop {

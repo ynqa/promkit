@@ -2,7 +2,6 @@ use std::io;
 
 use crate::{
     crossterm::{style, terminal},
-    termutil,
     text::State,
     Result,
 };
@@ -22,8 +21,6 @@ impl Renderer {
                     .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
             ),
             style::SetForegroundColor(style::Color::Reset),
-        )?;
-        // Move to next line.
-        termutil::move_down(out, 1)
+        )
     }
 }
