@@ -41,7 +41,11 @@ impl Builder {
 
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
-        let mut g = Grid(vec![Box::new(Store {
+        let mut g = Grid(vec![]);
+        if let Some(title_store) = self._title_store {
+            g.push(Box::new(title_store));
+        }
+        g.push(Box::new(Store {
             select: State {
                 editor: self._selector.clone(),
                 screen_position: 0,
@@ -54,10 +58,7 @@ impl build::Builder for Builder {
                 keybind: self._keybind,
             },
             renderer: Renderer {},
-        })]);
-        if let Some(title_store) = self._title_store {
-            g.insert(0, Box::new(title_store));
-        }
+        }));
         Ok(Prompt {
             out: io::stdout(),
             grid: g,
