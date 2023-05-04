@@ -14,7 +14,7 @@ pub struct EventHandler {
 
 impl EventHandler {
     pub fn handle_event(
-        &mut self,
+        &self,
         ev: &Event,
         out: &mut io::Stdout,
         context: &UpstreamContext,

@@ -19,7 +19,7 @@ impl<S> KeyBind<S> {
     }
 
     pub fn handle(
-        &mut self,
+        &self,
         ev: &Event,
         out: &mut io::Stdout,
         context: &UpstreamContext,

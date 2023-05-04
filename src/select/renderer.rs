@@ -13,12 +13,7 @@ use crate::{
 pub struct Renderer {}
 
 impl Renderer {
-    pub fn render<W: io::Write>(
-        &mut self,
-        out: &mut W,
-        unused_rows: u16,
-        state: &State,
-    ) -> Result<()> {
+    pub fn render<W: io::Write>(&self, out: &mut W, unused_rows: u16, state: &State) -> Result<()> {
         let next = state.next.clone();
         if !next.data.is_empty() {
             let selector_position = next.position();
