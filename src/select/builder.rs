@@ -1,11 +1,11 @@
 use std::fmt;
 use std::io;
 
-use crate::grid::Grid;
 use crate::{
     build,
     crossterm::style,
     grapheme::Graphemes,
+    grid::Grid,
     internal::selector::Selector,
     keybind::KeyBind,
     register::Register,
