@@ -1,7 +1,10 @@
 use std::io;
 use std::ops::{Deref, DerefMut};
 
-use crate::{crossterm::terminal, Controller, Result, UpstreamContext};
+use crate::{
+    crossterm::{event::Event, terminal},
+    termutil, Controller, Result, UpstreamContext,
+};
 
 pub struct Grid(pub Vec<Box<dyn Controller>>);
 
@@ -42,20 +45,29 @@ impl Grid {
         Ok(())
     }
 
-    pub fn handle_event(
-        &mut self,
-        ev: &crossterm::event::Event,
-        out: &mut io::Stdout,
-    ) -> Result<Option<String>> {
-        let mut upstream_used_rows = 0;
+    fn handle_resize(&mut self, out: &mut io::Stdout) -> Result<()> {
+        termutil::clear(out)?;
         for d in self.iter_mut() {
-            let context = UpstreamContext {
-                unused_rows: terminal::size()?.1 - upstream_used_rows,
-            };
-            if let Some(ret) = d.handle_event(ev, out, &context)? {
-                return Ok(Some(ret));
+            d.run_on_resize()?;
+        }
+        self.can_render()?;
+        self.render_static(out)
+    }
+
+    pub fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
+        if let Event::Resize(_, _) = ev {
+            self.handle_resize(out)?;
+        } else {
+            let mut upstream_used_rows = 0;
+            for d in self.iter_mut() {
+                let context = UpstreamContext {
+                    unused_rows: terminal::size()?.1 - upstream_used_rows,
+                };
+                if let Some(ret) = d.handle_event(ev, out, &context)? {
+                    return Ok(Some(ret));
+                }
+                upstream_used_rows += d.used_rows(&context)?;
             }
-            upstream_used_rows += d.used_rows(&context)?;
         }
         Ok(None)
     }

@@ -16,6 +16,10 @@ impl Controller for Store {
         self.renderer.render(out, &self.state)
     }
 
+    fn run_on_resize(&mut self) -> Result<()> {
+        Ok(())
+    }
+
     fn handle_event(
         &mut self,
         _: &Event,

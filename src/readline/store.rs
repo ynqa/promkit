@@ -14,21 +14,15 @@ pub struct Store {
     pub renderer: Renderer,
 }
 
-impl Store {
-    fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<()> {
-        termutil::clear(out)?;
-
-        // Overwrite the prev as default.
-        self.readline.prev = Buffer::default();
-
-        // self.can_render()?;
-        self.render_static(out)
-    }
-}
-
 impl Controller for Store {
     fn used_rows(&self, context: &UpstreamContext) -> Result<u16> {
         self.readline.buffer_lines(context.unused_rows)
+    }
+
+    fn run_on_resize(&mut self) -> Result<()> {
+        // Overwrite the prev as default.
+        self.readline.prev = Buffer::default();
+        Ok(())
     }
 
     fn handle_event(
@@ -37,10 +31,6 @@ impl Controller for Store {
         out: &mut io::Stdout,
         context: &UpstreamContext,
     ) -> Result<Option<String>> {
-        if let Event::Resize(x, y) = ev {
-            self.handle_resize((*x, *y), out)?;
-        }
-
         self.handler
             .handle_event(ev, out, context, &mut self.readline)
     }
