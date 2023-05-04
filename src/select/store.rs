@@ -56,15 +56,14 @@ impl Controller for Store {
         if let Some(ref query_store) = self.query_store {
             query_store.render_static(out)?;
         }
-
-        termutil::hide_cursor(out)
+        Ok(())
     }
 
     fn finalize(&mut self, out: &mut io::Stdout) -> Result<()> {
-        termutil::show_cursor(out)?;
         if self.query_store.is_some() {
             termutil::move_down(out, 1)?;
         }
+        termutil::show_cursor(out)?;
         crossterm::execute!(out, terminal::Clear(terminal::ClearType::FromCursorDown))
     }
 
@@ -73,10 +72,14 @@ impl Controller for Store {
             query_store.render(out)?;
         }
         crossterm::execute!(out, cursor::SavePosition)?;
+        termutil::hide_cursor(out)?;
         if self.query_store.is_some() {
             termutil::move_down(out, 1)?;
         }
         self.renderer.render(out, &self.state)?;
+        if self.query_store.is_some() {
+            termutil::show_cursor(out)?;
+        }
         // Return to the initial position before rendering.
         crossterm::execute!(out, cursor::RestorePosition)
     }
