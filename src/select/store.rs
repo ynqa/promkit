@@ -2,7 +2,6 @@ use std::io;
 
 use crate::{
     crossterm::{cursor, event::Event},
-    internal::selector::Selector,
     select::{EventHandler, Renderer, State},
     termutil, Controller, Result, UpstreamContext,
 };
@@ -21,8 +20,6 @@ impl Controller for Store {
     fn run_on_resize(&mut self) -> Result<()> {
         self.select.editor.to_head();
         self.select.screen_position = 0;
-        // Overwrite the prev as default.
-        self.select.prev = Selector::default();
         Ok(())
     }
 
@@ -46,10 +43,8 @@ impl Controller for Store {
 
     fn render(&mut self, out: &mut io::Stdout, context: &UpstreamContext) -> Result<()> {
         crossterm::execute!(out, cursor::SavePosition)?;
-        self.select.next = self.select.editor.clone();
         self.renderer
             .render(out, context.unused_rows, &self.select)?;
-        self.select.prev = self.select.editor.clone();
         // Return to the initial position before rendering.
         crossterm::execute!(out, cursor::RestorePosition)
     }

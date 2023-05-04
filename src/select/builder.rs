@@ -44,8 +44,6 @@ impl build::Builder for Builder {
         let mut g = Grid(vec![Box::new(Store {
             select: State {
                 editor: self._selector.clone(),
-                prev: self._selector.clone(),
-                next: self._selector.clone(),
                 screen_position: 0,
                 label: self._label,
                 label_color: self._label_color,

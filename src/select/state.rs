@@ -5,8 +5,6 @@ use crate::{crossterm::style, grapheme::Graphemes, internal::selector::Selector,
 /// Select specific state.
 pub struct State {
     pub editor: Selector,
-    pub prev: Selector,
-    pub next: Selector,
     /// A symbol to emphasize the selected item (e.g. ">").
     pub label: Graphemes,
     pub label_color: style::Color,

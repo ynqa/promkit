@@ -14,9 +14,8 @@ pub struct Renderer {}
 
 impl Renderer {
     pub fn render<W: io::Write>(&self, out: &mut W, unused_rows: u16, state: &State) -> Result<()> {
-        let next = state.next.clone();
-        if !next.data.is_empty() {
-            let selector_position = next.position();
+        if !state.editor.data.is_empty() {
+            let selector_position = state.editor.position();
             let from = selector_position - state.screen_position as usize;
             let to = selector_position
                 + (state.selector_lines(unused_rows)? - state.screen_position) as usize;
@@ -34,7 +33,7 @@ impl Renderer {
                         } else {
                             Graphemes::from(" ".repeat(state.label.width()))
                         },
-                        &next.get_with_index(i),
+                        &state.editor.get_with_index(i),
                         &state.suffix_after_trim,
                     )?)
                 )?;
