@@ -8,22 +8,27 @@ use crate::{
     internal::selector::Selector,
     keybind::KeyBind,
     select::State,
-    termutil, Result, Runnable,
+    termutil, text, Result, Runnable,
 };
 
 pub struct Dispatcher {
     pub keybind: KeyBind<State>,
-    pub state: State,
+    /// Title displayed on the initial line.
+    pub title: Option<text::State>,
+    pub select: State,
 }
 
 impl Dispatcher {
     fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::clear(out)?;
-        self.state.editor.to_head();
-        self.state.screen_position = 0;
-        self.state.render_static(out)?;
+        self.select.editor.to_head();
+        self.select.screen_position = 0;
+        // Render the title.
+        if let Some(ref mut title) = self.title {
+            title.render(out)?;
+        }
         // Overwrite the prev as default.
-        self.state.prev = Selector::default();
+        self.select.prev = Selector::default();
         Ok(None)
     }
 
@@ -34,7 +39,9 @@ impl Dispatcher {
 
 impl Runnable for Dispatcher {
     fn used_lines(&self) -> Result<u16> {
-        self.state.used_lines()
+        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
+        let selector_lines = self.select.selector_lines()?;
+        Ok(title_lines + selector_lines)
     }
 
     fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
@@ -44,7 +51,7 @@ impl Runnable for Dispatcher {
             }
         }
 
-        if let Some(ret) = self.keybind.handle(ev, out, &mut self.state)? {
+        if let Some(ret) = self.keybind.handle(ev, out, &mut self.select)? {
             return Ok(Some(ret));
         }
 
@@ -64,7 +71,10 @@ impl Runnable for Dispatcher {
 
     fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         termutil::hide_cursor(out)?;
-        self.state.render_static(out)?;
+        // Render the title.
+        if let Some(ref mut title) = self.title {
+            title.render(out)?;
+        }
         Ok(None)
     }
 
@@ -75,15 +85,17 @@ impl Runnable for Dispatcher {
 
     fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
         crossterm::execute!(out, cursor::SavePosition)?;
-        self.state.render(out)?;
+        // Sync number of title lines with select state.
+        self.select.title_lines = self.title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
+        self.select.render(out)?;
         // Return to the initial position before rendering.
         crossterm::execute!(out, cursor::RestorePosition)?;
-        self.state.prev = self.state.editor.clone();
+        self.select.prev = self.select.editor.clone();
         Ok(None)
     }
 
     fn post_run(&mut self, _out: &mut io::Stdout) -> Result<Option<String>> {
-        self.state.next = self.state.editor.clone();
+        self.select.next = self.select.editor.clone();
         Ok(None)
     }
 }

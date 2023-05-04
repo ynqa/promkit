@@ -7,7 +7,7 @@ use crate::{
     grapheme::Graphemes,
     internal::selector::Selector,
     termutil::{self, Boundary},
-    text, Result,
+    Result,
 };
 
 /// Select specific state.
@@ -15,8 +15,7 @@ pub struct State {
     pub editor: Selector,
     pub prev: Selector,
     pub next: Selector,
-    /// Title displayed on the initial line.
-    pub title: Option<text::State>,
+    pub title_lines: u16,
     /// A symbol to emphasize the selected item (e.g. ">").
     pub label: Graphemes,
     pub label_color: style::Color,
@@ -32,14 +31,8 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn used_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-        Ok(title_lines + self.selector_lines()?)
-    }
-
     pub fn selector_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-        let left_space = terminal::size()?.1 - title_lines;
+        let left_space = terminal::size()?.1 - self.title_lines;
         Ok(*vec![
             left_space,
             self.window.unwrap_or(left_space),
@@ -48,14 +41,6 @@ impl State {
         .iter()
         .min()
         .unwrap_or(&left_space))
-    }
-
-    pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
-        // Render the title.
-        if let Some(ref mut title) = self.title {
-            title.render(out)?;
-        }
-        Ok(())
     }
 
     pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {

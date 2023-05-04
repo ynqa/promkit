@@ -20,7 +20,7 @@ pub struct Builder {
     _label_color: style::Color,
     _mask: Option<Grapheme>,
     _edit_mode: Mode,
-    _num_lines: Option<usize>,
+    _num_lines: Option<u16>,
     _suggest: Option<Suggest>,
 }
 
@@ -48,13 +48,15 @@ impl build::Builder for Builder {
     }
 
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
+        let tl = self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
         Ok(Box::new(Dispatcher {
             keybind: self._keybind,
-            state: State {
+            title: self._title,
+            readline: State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
                 next: Buffer::default(),
-                title: self._title,
+                title_lines: tl,
                 label: self._label,
                 label_color: self._label_color,
                 mask: self._mask,
@@ -109,7 +111,7 @@ impl Builder {
         self
     }
 
-    pub fn num_lines(mut self, lines: usize) -> Self {
+    pub fn num_lines(mut self, lines: u16) -> Self {
         self._num_lines = Some(lines);
         self
     }

@@ -7,7 +7,7 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     suggest::Suggest,
-    termutil, text, Result,
+    termutil, Result,
 };
 
 /// Edit mode.
@@ -25,8 +25,7 @@ pub struct State {
     pub editor: Buffer,
     pub prev: Buffer,
     pub next: Buffer,
-    /// Title displayed on the initial line.
-    pub title: Option<text::State>,
+    pub title_lines: u16,
     /// A label as prompt (e.g. ">>").
     pub label: Graphemes,
     pub label_color: style::Color,
@@ -35,7 +34,7 @@ pub struct State {
     pub mask: Option<Grapheme>,
     pub edit_mode: Mode,
     /// How many lines to receive the user input string.
-    pub num_lines: Option<usize>,
+    pub num_lines: Option<u16>,
     pub hstr: Option<History>,
     pub suggest: Option<Suggest>,
 }
@@ -47,28 +46,16 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn used_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.used_lines())?;
-        Ok(title_lines)
+    pub fn buffer_lines(&self) -> Result<u16> {
+        let left_space = terminal::size()?.1 - self.title_lines;
+        Ok(self.num_lines.unwrap_or(left_space))
     }
 
-    pub fn buffer_limit(&self) -> Result<Option<usize>> {
-        if let Some(lines) = self.num_lines {
-            if lines > 0 {
-                return Ok(Some(
-                    terminal::size()?.0 as usize * lines - self.label.width(),
-                ));
-            }
-        }
-        Ok(None)
+    pub fn buffer_limit(&self) -> Result<u16> {
+        Ok(terminal::size()?.0 * self.buffer_lines()? - self.label.width() as u16 - 1)
     }
 
     pub fn render_static<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
-        // Render the title.
-        if let Some(ref mut title) = self.title {
-            title.render(out)?;
-        }
-
         // Render the label.
         crossterm::execute!(
             out,

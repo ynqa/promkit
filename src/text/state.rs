@@ -23,7 +23,7 @@ impl Default for State {
 }
 
 impl State {
-    pub fn used_lines(&self) -> Result<u16> {
+    pub fn text_lines(&self) -> Result<u16> {
         termutil::num_lines(&self.text)
     }
 

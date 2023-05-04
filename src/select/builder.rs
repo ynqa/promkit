@@ -47,13 +47,15 @@ impl build::Builder for Builder {
     }
 
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
+        let tl = self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
         Ok(Box::new(Dispatcher {
             keybind: self._keybind,
-            state: State {
+            title: self._title,
+            select: State {
                 editor: self._selector.clone(),
                 prev: self._selector.clone(),
                 next: self._selector.clone(),
-                title: self._title,
+                title_lines: tl,
                 screen_position: 0,
                 label: self._label,
                 label_color: self._label_color,
