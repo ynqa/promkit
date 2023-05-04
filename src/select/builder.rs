@@ -59,6 +59,7 @@ impl build::Builder for Builder {
                 },
                 renderer: Renderer {},
                 title_store: self._title_store,
+                query_store: self._query_builder.map(|b| b.store()),
             }),
         })
     }

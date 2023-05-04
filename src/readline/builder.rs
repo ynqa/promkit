@@ -67,6 +67,28 @@ impl build::Builder for Builder {
 }
 
 impl Builder {
+    pub fn store(self) -> Store {
+        Store {
+            state: State {
+                editor: Buffer::default(),
+                prev: Buffer::default(),
+                next: Buffer::default(),
+                label: self._label,
+                label_color: self._label_color,
+                mask: self._mask,
+                edit_mode: self._edit_mode,
+                num_lines: self._num_lines,
+                hstr: Some(History::default()),
+                suggest: self._suggest,
+            },
+            handler: EventHandler {
+                keybind: self._keybind,
+            },
+            renderer: Renderer {},
+            title_store: self._title_store,
+        }
+    }
+
     pub fn keybind(mut self, keybind: KeyBind<State>) -> Self {
         self._keybind = keybind;
         self
