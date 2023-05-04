@@ -3,40 +3,66 @@ use std::io;
 use crate::{
     crossterm::event::Event,
     internal::buffer::Buffer,
-    readline::{self, event::handler::EventHandler},
+    readline::{self, event::handler::EventHandler, render::Renderer},
     register::Register,
     termutil, text, Result, Runnable,
 };
 
 pub struct Dispatcher {
-    /// Title displayed on the initial line.
-    pub title: Option<text::State>,
+    pub title_dispatcher: Option<text::event::dispatcher::Dispatcher>,
     pub readline: readline::State,
     pub handler: EventHandler,
+    pub renderer: Renderer,
+}
+
+impl Dispatcher {
+    fn handle_resize(&mut self, _: (u16, u16), out: &mut io::Stdout) -> Result<()> {
+        termutil::clear(out)?;
+
+        // Overwrite the prev as default.
+        self.readline.prev = Buffer::default();
+
+        self.can_render()?;
+        self.render_static(out)
+    }
 }
 
 impl Runnable for Dispatcher {
-    fn used_lines(&self) -> Result<u16> {
-        let title_lines = self.title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
+    fn can_render(&self) -> Result<()> {
+        let title_lines = self
+            .title_dispatcher
+            .as_ref()
+            .map_or(Ok(0), |t| t.state.text_lines())?;
         let buffer_lines = self.readline.buffer_lines()?;
-        Ok(title_lines + buffer_lines)
+
+        if crossterm::terminal::size()?.1 < title_lines + buffer_lines {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Terminal does not leave the space to render.",
+            ));
+        }
+
+        Ok(())
     }
 
     fn handle_event(&mut self, ev: &Event, out: &mut io::Stdout) -> Result<Option<String>> {
-        self.handler
-            .handle_event(ev, out, &mut self.title, &mut self.readline)
-    }
-
-    fn initialize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
-        // Render the title.
-        if let Some(ref mut title) = self.title {
-            title.render(out)?;
+        if let Event::Resize(x, y) = ev {
+            self.handle_resize((*x, *y), out)?;
         }
-        self.readline.render_static(out)?;
-        Ok(None)
+
+        self.handler.handle_event(ev, out, &mut self.readline)
     }
 
-    fn finalize(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
+    fn render_static(&mut self, out: &mut io::Stdout) -> Result<()> {
+        // Render title.
+        if let Some(dispatcher) = &self.title_dispatcher {
+            dispatcher.renderer.render(out, &dispatcher.state)?;
+        }
+        // Render label.
+        self.renderer.render_static(out, &self.readline)
+    }
+
+    fn finalize(&mut self, out: &mut io::Stdout) -> Result<()> {
         termutil::move_down(out, 1)?;
         if let Some(hstr) = &mut self.readline.hstr {
             hstr.register(self.readline.editor.data.clone());
@@ -44,19 +70,19 @@ impl Runnable for Dispatcher {
         self.readline.editor = Buffer::default();
         self.readline.prev = Buffer::default();
         self.readline.next = Buffer::default();
-        Ok(None)
+        Ok(())
     }
 
-    fn pre_run(&mut self, out: &mut io::Stdout) -> Result<Option<String>> {
+    fn render(&mut self, out: &mut io::Stdout) -> Result<()> {
         // Sync number of title lines with select state.
-        self.readline.title_lines = self.title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
-        self.readline.render(out)?;
-        self.readline.prev = self.readline.editor.clone();
-        Ok(None)
-    }
+        self.readline.title_lines = self
+            .title_dispatcher
+            .as_ref()
+            .map_or(Ok(0), |t| t.state.text_lines())?;
 
-    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>> {
         self.readline.next = self.readline.editor.clone();
-        Ok(None)
+        self.renderer.render(out, &self.readline)?;
+        self.readline.prev = self.readline.editor.clone();
+        Ok(())
     }
 }

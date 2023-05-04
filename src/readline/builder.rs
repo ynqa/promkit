@@ -11,6 +11,7 @@ use crate::{
     readline::{
         self,
         event::{dispatcher::Dispatcher, handler::EventHandler},
+        render::Renderer,
         Mode,
     },
     suggest::Suggest,
@@ -19,7 +20,7 @@ use crate::{
 
 pub struct Builder {
     _keybind: KeyBind<readline::State>,
-    _title: Option<text::State>,
+    _title_dispatcher: Option<text::event::dispatcher::Dispatcher>,
     _label: Graphemes,
     _label_color: style::Color,
     _mask: Option<Grapheme>,
@@ -32,7 +33,7 @@ impl Default for Builder {
     fn default() -> Self {
         Self {
             _keybind: KeyBind::default(),
-            _title: None,
+            _title_dispatcher: None,
             _label: Graphemes::from("❯❯ "),
             _label_color: style::Color::Reset,
             _mask: None,
@@ -52,17 +53,17 @@ impl build::Builder for Builder {
     }
 
     fn dispatcher(self) -> Result<Box<dyn Runnable>> {
-        let tl = self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
+        let _title_lines = self
+            ._title_dispatcher
+            .as_ref()
+            .map_or(Ok(0), |t| t.state.text_lines())?;
         Ok(Box::new(Dispatcher {
-            handler: EventHandler {
-                keybind: self._keybind,
-            },
-            title: self._title,
+            title_dispatcher: self._title_dispatcher,
             readline: readline::State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
                 next: Buffer::default(),
-                title_lines: tl,
+                title_lines: _title_lines,
                 label: self._label,
                 label_color: self._label_color,
                 mask: self._mask,
@@ -71,43 +72,34 @@ impl build::Builder for Builder {
                 hstr: Some(History::default()),
                 suggest: self._suggest,
             },
+            handler: EventHandler {
+                keybind: self._keybind,
+            },
+            renderer: Renderer {},
         }))
     }
 }
 
 impl Builder {
-    pub fn state(self) -> Result<readline::State> {
-        Ok(readline::State {
-            editor: Buffer::default(),
-            prev: Buffer::default(),
-            next: Buffer::default(),
-            title_lines: self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?,
-            label: self._label,
-            label_color: self._label_color,
-            mask: self._mask,
-            edit_mode: self._edit_mode,
-            num_lines: self._num_lines,
-            hstr: Some(History::default()),
-            suggest: self._suggest,
-        })
-    }
-
     pub fn keybind(mut self, keybind: KeyBind<readline::State>) -> Self {
         self._keybind = keybind;
         self
     }
 
     pub fn title<T: fmt::Display>(mut self, title: T) -> Self {
-        self._title = Some(text::State {
-            text: Graphemes::from(format!("{}", title)),
-            ..Default::default()
+        self._title_dispatcher = Some(text::event::dispatcher::Dispatcher {
+            state: text::State {
+                text: Graphemes::from(format!("{}", title)),
+                ..Default::default()
+            },
+            renderer: text::Renderer {},
         });
         self
     }
 
     pub fn title_color(mut self, color: style::Color) -> Self {
-        self._title.as_mut().map(|mut t| {
-            t.text_color = color;
+        self._title_dispatcher.as_mut().map(|mut t| {
+            t.state.text_color = color;
             t
         });
         self

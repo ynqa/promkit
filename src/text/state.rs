@@ -1,10 +1,4 @@
-use std::io;
-
-use crate::{
-    crossterm::{style, terminal},
-    grapheme::Graphemes,
-    termutil, Result,
-};
+use crate::{crossterm::style, grapheme::Graphemes, termutil, Result};
 
 /// Text specific state.
 #[derive(Debug)]
@@ -25,21 +19,5 @@ impl Default for State {
 impl State {
     pub fn text_lines(&self) -> Result<u16> {
         termutil::num_lines(&self.text)
-    }
-
-    pub fn render<W: io::Write>(&mut self, out: &mut W) -> Result<()> {
-        crossterm::execute!(
-            out,
-            terminal::Clear(terminal::ClearType::CurrentLine),
-            style::SetForegroundColor(self.text_color),
-            style::Print(
-                self.text
-                    .iter()
-                    .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
-            ),
-            style::SetForegroundColor(style::Color::Reset),
-        )?;
-        // Move to next line.
-        termutil::move_down(out, 1)
     }
 }
