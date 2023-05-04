@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io;
 
-use crate::{crossterm::event::Event, Action, Result, UpstreamContext};
+use crate::{crossterm::event::Event, grid::UpstreamContext, Action, Result};
 
 /// Map key-events and their handlers.
 pub struct KeyBind<S> {

@@ -1,6 +1,12 @@
 use std::fmt;
 
-use crate::{crossterm::style, grapheme::Graphemes, internal::selector::Selector, Result};
+use crate::{
+    crossterm::{style, terminal},
+    grapheme::Graphemes,
+    grid::UpstreamContext,
+    internal::selector::Selector,
+    Result,
+};
 
 /// Select specific state.
 pub struct State {
@@ -20,7 +26,8 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn selector_lines(&self, unused_rows: u16) -> Result<u16> {
+    pub fn selector_lines(&self, context: &UpstreamContext) -> Result<u16> {
+        let unused_rows = terminal::size()?.1 - context.used_rows;
         Ok(*vec![
             unused_rows,
             self.window.unwrap_or(unused_rows),

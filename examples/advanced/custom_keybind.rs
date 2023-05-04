@@ -4,9 +4,10 @@ use promkit::{
     build::Builder,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     grapheme::Graphemes,
+    grid::UpstreamContext,
     keybind::KeyBind,
     readline::{self, State},
-    Action, Result, UpstreamContext,
+    Action, Result,
 };
 
 fn main() -> Result<()> {

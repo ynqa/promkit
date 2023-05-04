@@ -2,10 +2,11 @@ use std::io;
 
 use crate::{
     crossterm::event::Event,
+    grid::UpstreamContext,
     internal::buffer::Buffer,
     readline::{handler::EventHandler, renderer::Renderer, State},
     register::Register,
-    termutil, Controller, Result, UpstreamContext,
+    termutil, Controller, Result,
 };
 
 pub struct Store {
@@ -16,7 +17,7 @@ pub struct Store {
 
 impl Controller for Store {
     fn used_rows(&self, context: &UpstreamContext) -> Result<u16> {
-        self.readline.buffer_lines(context.unused_rows)
+        self.readline.buffer_lines(context)
     }
 
     fn run_on_resize(&mut self) -> Result<()> {

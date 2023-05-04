@@ -142,7 +142,7 @@ pub(crate) mod text {
 pub mod cmd;
 /// Characters and their width.
 pub mod grapheme;
-mod grid;
+pub mod grid;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
@@ -158,7 +158,8 @@ pub use crossterm;
 use crossterm::event::Event;
 
 /// A type representing the actions when the events are received.
-pub type Action<S> = dyn Fn(&mut io::Stdout, &UpstreamContext, &mut S) -> Result<Option<String>>;
+pub type Action<S> =
+    dyn Fn(&mut io::Stdout, &grid::UpstreamContext, &mut S) -> Result<Option<String>>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
@@ -166,21 +167,17 @@ pub struct Prompt {
     grid: grid::Grid,
 }
 
-pub struct UpstreamContext {
-    unused_rows: u16,
-}
-
 pub trait Controller {
-    fn used_rows(&self, _: &UpstreamContext) -> Result<u16>;
+    fn used_rows(&self, _: &grid::UpstreamContext) -> Result<u16>;
     fn render_static(&self, _: &mut io::Stdout) -> Result<()>;
     fn run_on_resize(&mut self) -> Result<()>;
     fn handle_event(
         &mut self,
         _: &Event,
         _: &mut io::Stdout,
-        _: &UpstreamContext,
+        _: &grid::UpstreamContext,
     ) -> Result<Option<String>>;
-    fn render(&mut self, _: &mut io::Stdout, _: &UpstreamContext) -> Result<()>;
+    fn render(&mut self, _: &mut io::Stdout, _: &grid::UpstreamContext) -> Result<()>;
     fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
 }
 

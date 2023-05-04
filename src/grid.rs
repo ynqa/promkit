@@ -3,8 +3,12 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     crossterm::{event::Event, terminal},
-    termutil, Controller, Result, UpstreamContext,
+    termutil, Controller, Result,
 };
+
+pub struct UpstreamContext {
+    pub used_rows: u16,
+}
 
 pub struct Grid(pub Vec<Box<dyn Controller>>);
 
@@ -26,7 +30,7 @@ impl Grid {
         let mut upstream_used_rows = 0;
         self.iter().try_for_each(|d| {
             upstream_used_rows += d.used_rows(&UpstreamContext {
-                unused_rows: terminal::size()?.1 - upstream_used_rows,
+                used_rows: upstream_used_rows,
             })?;
             if terminal::size()?.1 < upstream_used_rows {
                 return Err(io::Error::new(
@@ -61,7 +65,7 @@ impl Grid {
             let mut upstream_used_rows = 0;
             for d in self.iter_mut() {
                 let context = UpstreamContext {
-                    unused_rows: terminal::size()?.1 - upstream_used_rows,
+                    used_rows: upstream_used_rows,
                 };
                 if let Some(ret) = d.handle_event(ev, out, &context)? {
                     return Ok(Some(ret));
@@ -76,7 +80,7 @@ impl Grid {
         let mut upstream_used_rows = 0;
         for d in self.iter_mut() {
             let context = UpstreamContext {
-                unused_rows: terminal::size()?.1 - upstream_used_rows,
+                used_rows: upstream_used_rows,
             };
             d.render(out, &context)?;
             upstream_used_rows += d.used_rows(&context)?;

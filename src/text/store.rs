@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{crossterm::event::Event, text, Controller, Result, UpstreamContext};
+use crate::{crossterm::event::Event, grid::UpstreamContext, text, Controller, Result};
 
 pub struct Store {
     pub state: text::State,

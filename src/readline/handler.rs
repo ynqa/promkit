@@ -3,9 +3,10 @@ use std::io;
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     grapheme::Grapheme,
+    grid::UpstreamContext,
     keybind::KeyBind,
     readline::{Mode, State},
-    Result, UpstreamContext,
+    Result,
 };
 
 pub struct EventHandler {
@@ -30,7 +31,7 @@ impl EventHandler {
             ..
         }) = ev
         {
-            if readline.buffer_limit(context.unused_rows)? <= readline.editor.data.width() as u16 {
+            if readline.buffer_limit(context)? <= readline.editor.data.width() as u16 {
                 return Ok(None);
             }
             match readline.edit_mode {

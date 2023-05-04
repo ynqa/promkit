@@ -58,6 +58,10 @@ name = "title"
 path = "examples/readline/title.rs"
 
 [[example]]
+name = "query"
+path = "examples/select/query.rs"
+
+[[example]]
 name = "select"
 path = "examples/select/select.rs"
 

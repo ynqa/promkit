@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{internal::buffer::Buffer, readline::State, termutil, Action, UpstreamContext};
+use crate::{grid::UpstreamContext, internal::buffer::Buffer, readline::State, termutil, Action};
 
 /// Move the position of buffer and cursor backward.
 pub fn move_left() -> Box<Action<State>> {

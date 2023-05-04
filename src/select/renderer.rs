@@ -5,6 +5,7 @@ use std::io;
 use crate::{
     crossterm::{style, terminal},
     grapheme::Graphemes,
+    grid::UpstreamContext,
     select::State,
     termutil::{self, Boundary},
     Result,
@@ -13,12 +14,17 @@ use crate::{
 pub struct Renderer {}
 
 impl Renderer {
-    pub fn render<W: io::Write>(&self, out: &mut W, unused_rows: u16, state: &State) -> Result<()> {
+    pub fn render<W: io::Write>(
+        &self,
+        out: &mut W,
+        context: &UpstreamContext,
+        state: &State,
+    ) -> Result<()> {
         if !state.editor.data.is_empty() {
             let selector_position = state.editor.position();
             let from = selector_position - state.screen_position as usize;
             let to = selector_position
-                + (state.selector_lines(unused_rows)? - state.screen_position) as usize;
+                + (state.selector_lines(context)? - state.screen_position) as usize;
 
             for i in from..to {
                 crossterm::execute!(out, terminal::Clear(terminal::ClearType::CurrentLine))?;

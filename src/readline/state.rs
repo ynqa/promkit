@@ -3,6 +3,7 @@ use std::fmt;
 use crate::{
     crossterm::{style, terminal},
     grapheme::{Grapheme, Graphemes},
+    grid::UpstreamContext,
     internal::buffer::Buffer,
     internal::selector::history::History,
     readline::Mode,
@@ -36,15 +37,16 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn buffer_lines(&self, unused_rows: u16) -> Result<u16> {
+    pub fn buffer_lines(&self, context: &UpstreamContext) -> Result<u16> {
+        let unused_rows = terminal::size()?.1 - context.used_rows;
         Ok(*vec![unused_rows, self.num_lines.unwrap_or(unused_rows)]
             .iter()
             .min()
             .unwrap_or(&unused_rows))
     }
 
-    pub fn buffer_limit(&self, unused_rows: u16) -> Result<u16> {
+    pub fn buffer_limit(&self, context: &UpstreamContext) -> Result<u16> {
         // -1 is for the space for cursor.
-        Ok(terminal::size()?.0 * self.buffer_lines(unused_rows)? - self.label.width() as u16 - 1)
+        Ok(terminal::size()?.0 * self.buffer_lines(context)? - self.label.width() as u16 - 1)
     }
 }

@@ -8,6 +8,7 @@ use crate::{
     grid::Grid,
     internal::selector::Selector,
     keybind::KeyBind,
+    readline,
     register::Register,
     select::{EventHandler, Renderer, State, Store},
     text, Prompt, Result,
@@ -17,6 +18,7 @@ pub struct Builder {
     _keybind: KeyBind<State>,
     _selector: Selector,
     _title_store: Option<text::Store>,
+    _query_builder: Option<readline::Builder>,
     _label: Graphemes,
     _label_color: style::Color,
     _window: Option<u16>,
@@ -29,6 +31,7 @@ impl Builder {
             _keybind: KeyBind::default(),
             _selector: Selector::default(),
             _title_store: None,
+            _query_builder: None,
             _label: Graphemes::from("❯ "),
             _label_color: style::Color::Reset,
             _window: None,
@@ -44,6 +47,9 @@ impl build::Builder for Builder {
         let mut g = Grid(vec![]);
         if let Some(title_store) = self._title_store {
             g.push(Box::new(title_store));
+        }
+        if let Some(query_builder) = self._query_builder {
+            g.push(Box::new(query_builder.store()));
         }
         g.push(Box::new(Store {
             select: State {
@@ -88,6 +94,11 @@ impl Builder {
             t.state.text_color = color;
             t
         });
+        self
+    }
+
+    pub fn query(mut self) -> Self {
+        self._query_builder = Some(readline::Builder::default().num_lines(1));
         self
     }
 

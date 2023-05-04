@@ -1,7 +1,7 @@
 use std::fmt;
 use std::io::{Error, ErrorKind, Stdout};
 
-use crate::{Action, UpstreamContext};
+use crate::{grid::UpstreamContext, Action};
 
 /// Leave from event-loop with exit code `0`.
 pub fn enter<S: fmt::Display>() -> Box<Action<S>> {

@@ -1,6 +1,8 @@
 use std::io;
 
-use crate::{crossterm::event::Event, keybind::KeyBind, select::State, Result, UpstreamContext};
+use crate::{
+    crossterm::event::Event, grid::UpstreamContext, keybind::KeyBind, select::State, Result,
+};
 
 pub struct EventHandler {
     pub keybind: KeyBind<State>,

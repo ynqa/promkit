@@ -1,6 +1,6 @@
 use std::io;
 
-use crate::{select::State, Action, UpstreamContext};
+use crate::{grid::UpstreamContext, select::State, Action};
 
 /// Move up from the current selected position in the candidates.
 pub fn move_up() -> Box<Action<State>> {
@@ -27,7 +27,7 @@ pub fn move_down() -> Box<Action<State>> {
             } else {
                 state.screen_position = *vec![
                     state.screen_position + 1,
-                    state.selector_lines(context.unused_rows)? - 1,
+                    state.selector_lines(context)? - 1,
                 ]
                 .iter()
                 .min()
@@ -54,7 +54,7 @@ pub fn move_tail() -> Box<Action<State>> {
     Box::new(
         |_: &mut io::Stdout, context: &UpstreamContext, state: &mut State| {
             state.editor.to_tail();
-            state.screen_position = state.selector_lines(context.unused_rows)? - 1;
+            state.screen_position = state.selector_lines(context)? - 1;
             Ok(None)
         },
     )
