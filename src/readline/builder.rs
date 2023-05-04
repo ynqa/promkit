@@ -42,7 +42,7 @@ impl Default for Builder {
 
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
-        let mut grid = Grid(vec![Box::new(Store {
+        let mut g = Grid(vec![Box::new(Store {
             readline: readline::State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
@@ -61,11 +61,11 @@ impl build::Builder for Builder {
             renderer: Renderer {},
         })]);
         if let Some(title_store) = self._title_store {
-            grid.insert(0, Box::new(title_store));
+            g.insert(0, Box::new(title_store));
         }
         Ok(Prompt {
             out: io::stdout(),
-            grid: grid,
+            grid: g,
         })
     }
 }

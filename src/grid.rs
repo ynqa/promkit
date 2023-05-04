@@ -1,7 +1,7 @@
 use std::io;
 use std::ops::{Deref, DerefMut};
 
-use crate::{crossterm::terminal, Controller, Result};
+use crate::{crossterm::terminal, Controller, Result, UpstreamContext};
 
 pub struct Grid(pub Vec<Box<dyn Controller>>);
 
@@ -22,7 +22,9 @@ impl Grid {
     pub fn can_render(&self) -> Result<()> {
         let mut upstream_used_rows = 0;
         self.iter().try_for_each(|d| {
-            upstream_used_rows += d.used_rows(upstream_used_rows)?;
+            upstream_used_rows += d.used_rows(&UpstreamContext {
+                unused_rows: terminal::size()?.1 - upstream_used_rows,
+            })?;
             if terminal::size()?.1 < upstream_used_rows {
                 return Err(io::Error::new(
                     io::ErrorKind::Other,
@@ -34,10 +36,8 @@ impl Grid {
     }
 
     pub fn render_static(&self, out: &mut io::Stdout) -> Result<()> {
-        let mut upstream_used_rows = 0;
         for d in self.iter() {
-            d.render_static(out, terminal::size()?.1 - upstream_used_rows)?;
-            upstream_used_rows += d.used_rows(upstream_used_rows)?;
+            d.render_static(out)?;
         }
         Ok(())
     }
@@ -49,28 +49,27 @@ impl Grid {
     ) -> Result<Option<String>> {
         let mut upstream_used_rows = 0;
         for d in self.iter_mut() {
-            if let Some(ret) = d.handle_event(ev, out, terminal::size()?.1 - upstream_used_rows)? {
+            let context = UpstreamContext {
+                unused_rows: terminal::size()?.1 - upstream_used_rows,
+            };
+            if let Some(ret) = d.handle_event(ev, out, &context)? {
                 return Ok(Some(ret));
             }
-            upstream_used_rows += d.used_rows(upstream_used_rows)?;
+            upstream_used_rows += d.used_rows(&context)?;
         }
         Ok(None)
     }
 
     pub fn render(&mut self, out: &mut io::Stdout) -> Result<()> {
-        let mut upstream_used_rows = 0;
         for d in self.iter_mut() {
-            d.render(out, terminal::size()?.1 - upstream_used_rows)?;
-            upstream_used_rows += d.used_rows(upstream_used_rows)?;
+            d.render(out)?;
         }
         Ok(())
     }
 
     pub fn finalize(&mut self, out: &mut io::Stdout) -> Result<()> {
-        let mut upstream_used_rows = 0;
         for d in self.iter_mut() {
             d.finalize(out)?;
-            upstream_used_rows += d.used_rows(upstream_used_rows)?;
         }
         Ok(())
     }

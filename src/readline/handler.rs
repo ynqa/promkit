@@ -5,7 +5,7 @@ use crate::{
     grapheme::Grapheme,
     keybind::KeyBind,
     readline::{self, Mode},
-    Result,
+    Result, UpstreamContext,
 };
 
 pub struct EventHandler {
@@ -17,7 +17,7 @@ impl EventHandler {
         &mut self,
         ev: &Event,
         out: &mut io::Stdout,
-        unused_rows: u16,
+        context: &UpstreamContext,
         readline: &mut readline::State,
     ) -> Result<Option<String>> {
         if let Some(ret) = self.keybind.handle(ev, out, readline)? {
@@ -30,7 +30,7 @@ impl EventHandler {
             ..
         }) = ev
         {
-            if readline.buffer_limit(unused_rows)? <= readline.editor.data.width() as u16 {
+            if readline.buffer_limit(context.unused_rows)? <= readline.editor.data.width() as u16 {
                 return Ok(None);
             }
             match readline.edit_mode {
