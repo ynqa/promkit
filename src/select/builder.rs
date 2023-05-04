@@ -1,6 +1,7 @@
 use std::fmt;
 use std::io;
 
+use crate::grid::Grid;
 use crate::{
     build,
     crossterm::style,
@@ -8,14 +9,14 @@ use crate::{
     internal::selector::Selector,
     keybind::KeyBind,
     register::Register,
-    select::{dispatcher::Dispatcher, State},
-    text, Prompt, Result, Runnable,
+    select::{handler::EventHandler, renderer::Renderer, store::Store, State},
+    text, Prompt, Result,
 };
 
 pub struct Builder {
     _keybind: KeyBind<State>,
     _selector: Selector,
-    _title: Option<text::State>,
+    _title_store: Option<text::Store>,
     _label: Graphemes,
     _label_color: style::Color,
     _window: Option<u16>,
@@ -27,7 +28,7 @@ impl Builder {
         let mut res = Self {
             _keybind: KeyBind::default(),
             _selector: Selector::default(),
-            _title: None,
+            _title_store: None,
             _label: Graphemes::from("❯ "),
             _label_color: style::Color::Reset,
             _window: None,
@@ -40,29 +41,29 @@ impl Builder {
 
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
-        Ok(Prompt {
-            out: io::stdout(),
-            dispatcher: self.dispatcher()?,
-        })
-    }
-
-    fn dispatcher(self) -> Result<Box<dyn Runnable>> {
-        let tl = self._title.as_ref().map_or(Ok(0), |t| t.text_lines())?;
-        Ok(Box::new(Dispatcher {
-            keybind: self._keybind,
-            title: self._title,
+        let mut g = Grid(vec![Box::new(Store {
             select: State {
                 editor: self._selector.clone(),
                 prev: self._selector.clone(),
                 next: self._selector.clone(),
-                title_lines: tl,
                 screen_position: 0,
                 label: self._label,
                 label_color: self._label_color,
                 window: self._window,
                 suffix_after_trim: self._suffix_after_trim,
             },
-        }))
+            handler: EventHandler {
+                keybind: self._keybind,
+            },
+            renderer: Renderer {},
+        })]);
+        if let Some(title_store) = self._title_store {
+            g.insert(0, Box::new(title_store));
+        }
+        Ok(Prompt {
+            out: io::stdout(),
+            grid: g,
+        })
     }
 }
 
@@ -73,16 +74,19 @@ impl Builder {
     }
 
     pub fn title<T: fmt::Display>(mut self, title: T) -> Self {
-        self._title = Some(text::State {
-            text: Graphemes::from(format!("{}", title)),
-            ..Default::default()
+        self._title_store = Some(text::Store {
+            state: text::State {
+                text: Graphemes::from(format!("{}", title)),
+                ..Default::default()
+            },
+            renderer: text::Renderer {},
         });
         self
     }
 
     pub fn title_color(mut self, color: style::Color) -> Self {
-        self._title.as_mut().map(|mut t| {
-            t.text_color = color;
+        self._title_store.as_mut().map(|mut t| {
+            t.state.text_color = color;
             t
         });
         self

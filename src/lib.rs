@@ -49,12 +49,11 @@ extern crate scopeguard;
 
 /// A module providing the builder of [Prompt](struct.Prompt.html).
 pub mod build {
-    use crate::{Prompt, Result, Runnable};
+    use crate::{Prompt, Result};
 
     /// A trait to build [Prompt](struct.Prompt.html).
     pub trait Builder {
         fn build(self) -> Result<Prompt>;
-        fn dispatcher(self) -> Result<Box<dyn Runnable>>;
     }
 }
 
@@ -89,9 +88,11 @@ pub(crate) mod internal {
 pub mod readline {
     pub mod action;
     mod builder;
-    mod event;
+    mod handler;
     mod keybind;
+    mod renderer;
     mod state;
+    mod store;
 
     pub use self::builder::Builder;
     pub use self::state::{Mode, State};
@@ -101,23 +102,30 @@ pub mod readline {
 pub mod select {
     pub mod action;
     mod builder;
-    mod dispatcher;
+    mod handler;
     mod keybind;
+    mod renderer;
     mod state;
+    mod store;
 
     pub use self::builder::Builder;
     pub use self::state::State;
 }
 pub(crate) mod text {
+    mod renderer;
     mod state;
+    mod store;
 
+    pub use self::renderer::Renderer;
     pub use self::state::State;
+    pub use self::store::Store;
 }
 
 /// Collection of terminal operations.
 pub mod cmd;
 /// Characters and their width.
 pub mod grapheme;
+pub mod grid;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
@@ -130,27 +138,33 @@ use std::io;
 use std::sync::Once;
 
 pub use crossterm;
+use crossterm::event::Event;
 
 /// A type representing the actions when the events are received.
-pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
+pub type Action<S> = dyn Fn(&mut io::Stdout, &UpstreamContext, &mut S) -> Result<Option<String>>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     out: io::Stdout,
-    dispatcher: Box<dyn Runnable>,
+    grid: grid::Grid,
 }
 
-pub trait Runnable {
-    fn used_lines(&self) -> Result<u16>;
+pub struct UpstreamContext {
+    unused_rows: u16,
+}
+
+pub trait Controller {
+    fn used_rows(&self, _: &UpstreamContext) -> Result<u16>;
+    fn render_static(&self, _: &mut io::Stdout) -> Result<()>;
+    fn run_on_resize(&mut self) -> Result<()>;
     fn handle_event(
         &mut self,
-        _: &crossterm::event::Event,
+        _: &Event,
         _: &mut io::Stdout,
+        _: &UpstreamContext,
     ) -> Result<Option<String>>;
-    fn initialize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn finalize(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn pre_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn post_run(&mut self, _: &mut io::Stdout) -> Result<Option<String>>;
+    fn render(&mut self, _: &mut io::Stdout, _: &UpstreamContext) -> Result<()>;
+    fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
 }
 
 static ONCE: Once = Once::new();
@@ -167,44 +181,45 @@ impl Prompt {
             crossterm::terminal::disable_raw_mode().ok();
         }};
 
-        if let Err(e) = self.dispatcher.initialize(&mut self.out) {
-            self.dispatcher.finalize(&mut self.out)?;
+        // check whether to be able to render.
+        if let Err(e) = self.grid.can_render() {
+            self.grid.finalize(&mut self.out)?;
+            return Err(e);
+        }
+
+        // Render the static contents (e.g. title, label)
+        // which state is not changed after the events are received.
+        if let Err(e) = self.grid.render_static(&mut self.out) {
+            self.grid.finalize(&mut self.out)?;
             return Err(e);
         }
 
         loop {
             // check whether to be able to render.
-            if crossterm::terminal::size()?.1 < self.dispatcher.used_lines()? {
-                return Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Terminal does not leave the space to render.",
-                ));
-            }
-
-            // hook pre_run
-            if let Err(e) = self.dispatcher.pre_run(&mut self.out) {
-                self.dispatcher.finalize(&mut self.out)?;
+            if let Err(e) = self.grid.can_render() {
+                self.grid.finalize(&mut self.out)?;
                 return Err(e);
             }
 
-            let ev = crossterm::event::read()?;
-            match self.dispatcher.handle_event(&ev, &mut self.out) {
+            if let Err(e) = self.grid.render(&mut self.out) {
+                self.grid.finalize(&mut self.out)?;
+                return Err(e);
+            }
+
+            match self
+                .grid
+                .handle_event(&crossterm::event::read()?, &mut self.out)
+            {
                 Ok(maybe_ret) => {
                     if let Some(ret) = maybe_ret {
-                        self.dispatcher.finalize(&mut self.out)?;
+                        self.grid.finalize(&mut self.out)?;
                         return Ok(ret);
                     }
                 }
                 Err(e) => {
-                    self.dispatcher.finalize(&mut self.out)?;
+                    self.grid.finalize(&mut self.out)?;
                     return Err(e);
                 }
-            }
-
-            // hook post_run
-            if let Err(e) = self.dispatcher.post_run(&mut self.out) {
-                self.dispatcher.finalize(&mut self.out)?;
-                return Err(e);
             }
         }
     }

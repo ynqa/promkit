@@ -3,7 +3,7 @@ use std::io;
 use crate::{
     crossterm::event::Event,
     internal::buffer::Buffer,
-    readline::{self, handler::EventHandler, render::Renderer},
+    readline::{self, handler::EventHandler, renderer::Renderer},
     register::Register,
     termutil, Controller, Result, UpstreamContext,
 };
@@ -51,7 +51,7 @@ impl Controller for Store {
         Ok(())
     }
 
-    fn render(&mut self, out: &mut io::Stdout) -> Result<()> {
+    fn render(&mut self, out: &mut io::Stdout, _context: &UpstreamContext) -> Result<()> {
         self.readline.next = self.readline.editor.clone();
         self.renderer.render(out, &self.readline)?;
         self.readline.prev = self.readline.editor.clone();

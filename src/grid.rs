@@ -73,8 +73,13 @@ impl Grid {
     }
 
     pub fn render(&mut self, out: &mut io::Stdout) -> Result<()> {
+        let mut upstream_used_rows = 0;
         for d in self.iter_mut() {
-            d.render(out)?;
+            let context = UpstreamContext {
+                unused_rows: terminal::size()?.1 - upstream_used_rows,
+            };
+            d.render(out, &context)?;
+            upstream_used_rows += d.used_rows(&context)?;
         }
         Ok(())
     }

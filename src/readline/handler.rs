@@ -20,7 +20,7 @@ impl EventHandler {
         context: &UpstreamContext,
         readline: &mut readline::State,
     ) -> Result<Option<String>> {
-        if let Some(ret) = self.keybind.handle(ev, out, readline)? {
+        if let Some(ret) = self.keybind.handle(ev, out, context, readline)? {
             return Ok(Some(ret));
         }
 

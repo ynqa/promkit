@@ -29,7 +29,7 @@ impl Controller for Store {
         Ok(None)
     }
 
-    fn render(&mut self, _: &mut io::Stdout) -> Result<()> {
+    fn render(&mut self, _: &mut io::Stdout, _: &UpstreamContext) -> Result<()> {
         Ok(())
     }
 

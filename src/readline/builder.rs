@@ -9,7 +9,7 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{self, handler::EventHandler, render::Renderer, store::Store, Mode},
+    readline::{self, handler::EventHandler, renderer::Renderer, store::Store, Mode},
     suggest::Suggest,
     text, Prompt, Result,
 };
