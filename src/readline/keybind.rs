@@ -4,7 +4,7 @@ use crate::{
     cmd,
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     keybind::KeyBind,
-    readline::{self, State},
+    readline::{action, State},
 };
 
 /// Default key bindings for readline.
@@ -53,7 +53,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::move_left(),
+                action::move_left(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -62,7 +62,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::move_right(),
+                action::move_right(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -71,7 +71,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::move_head(),
+                action::move_head(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -80,7 +80,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::move_tail(),
+                action::move_tail(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -89,7 +89,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::prev_history(),
+                action::prev_history(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -98,7 +98,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::next_history(),
+                action::next_history(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -107,7 +107,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::erase_char(),
+                action::erase_char(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -116,7 +116,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::erase_all(),
+                action::erase_all(),
             ),
             (
                 Event::Key(KeyEvent {
@@ -125,7 +125,7 @@ impl Default for KeyBind<State> {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::empty(),
                 }),
-                readline::action::complete(),
+                action::complete(),
             ),
         ]);
         b

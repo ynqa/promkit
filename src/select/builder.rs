@@ -9,7 +9,7 @@ use crate::{
     internal::selector::Selector,
     keybind::KeyBind,
     register::Register,
-    select::{handler::EventHandler, renderer::Renderer, store::Store, State},
+    select::{EventHandler, Renderer, State, Store},
     text, Prompt, Result,
 };
 

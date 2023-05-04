@@ -4,12 +4,12 @@ use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers},
     grapheme::Grapheme,
     keybind::KeyBind,
-    readline::{self, Mode},
+    readline::{Mode, State},
     Result, UpstreamContext,
 };
 
 pub struct EventHandler {
-    pub keybind: KeyBind<readline::State>,
+    pub keybind: KeyBind<State>,
 }
 
 impl EventHandler {
@@ -18,7 +18,7 @@ impl EventHandler {
         ev: &Event,
         out: &mut io::Stdout,
         context: &UpstreamContext,
-        readline: &mut readline::State,
+        readline: &mut State,
     ) -> Result<Option<String>> {
         if let Some(ret) = self.keybind.handle(ev, out, context, readline)? {
             return Ok(Some(ret));

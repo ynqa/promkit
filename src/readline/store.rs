@@ -3,13 +3,13 @@ use std::io;
 use crate::{
     crossterm::event::Event,
     internal::buffer::Buffer,
-    readline::{self, handler::EventHandler, renderer::Renderer},
+    readline::{handler::EventHandler, renderer::Renderer, State},
     register::Register,
     termutil, Controller, Result, UpstreamContext,
 };
 
 pub struct Store {
-    pub readline: readline::State,
+    pub readline: State,
     pub handler: EventHandler,
     pub renderer: Renderer,
 }

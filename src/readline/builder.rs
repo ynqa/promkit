@@ -9,13 +9,13 @@ use crate::{
     internal::buffer::Buffer,
     internal::selector::history::History,
     keybind::KeyBind,
-    readline::{self, handler::EventHandler, renderer::Renderer, store::Store, Mode},
+    readline::{EventHandler, Mode, Renderer, State, Store},
     suggest::Suggest,
     text, Prompt, Result,
 };
 
 pub struct Builder {
-    _keybind: KeyBind<readline::State>,
+    _keybind: KeyBind<State>,
     _title_store: Option<text::Store>,
     _label: Graphemes,
     _label_color: style::Color,
@@ -43,7 +43,7 @@ impl Default for Builder {
 impl build::Builder for Builder {
     fn build(self) -> Result<Prompt> {
         let mut g = Grid(vec![Box::new(Store {
-            readline: readline::State {
+            readline: State {
                 editor: Buffer::default(),
                 prev: Buffer::default(),
                 next: Buffer::default(),
@@ -71,7 +71,7 @@ impl build::Builder for Builder {
 }
 
 impl Builder {
-    pub fn keybind(mut self, keybind: KeyBind<readline::State>) -> Self {
+    pub fn keybind(mut self, keybind: KeyBind<State>) -> Self {
         self._keybind = keybind;
         self
     }

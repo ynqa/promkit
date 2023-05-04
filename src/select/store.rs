@@ -3,7 +3,7 @@ use std::io;
 use crate::{
     crossterm::{cursor, event::Event},
     internal::selector::Selector,
-    select::{handler::EventHandler, renderer::Renderer, State},
+    select::{EventHandler, Renderer, State},
     termutil, Controller, Result, UpstreamContext,
 };
 

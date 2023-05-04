@@ -5,18 +5,10 @@ use crate::{
     grapheme::{Grapheme, Graphemes},
     internal::buffer::Buffer,
     internal::selector::history::History,
+    readline::Mode,
     suggest::Suggest,
     Result,
 };
-
-/// Edit mode.
-#[derive(Debug, Clone)]
-pub enum Mode {
-    /// Insert a char at the current position.
-    Insert,
-    /// Overwrite a char at the current position.
-    Overwrite,
-}
 
 /// Readline specific state.
 #[derive(Debug)]

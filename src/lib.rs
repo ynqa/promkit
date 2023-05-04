@@ -84,6 +84,7 @@ pub(crate) mod internal {
     /// A data structure to store the suggestions for the completion.
     pub mod selector;
 }
+
 /// A module providing the lines to receive and display user inputs.
 pub mod readline {
     pub mod action;
@@ -94,8 +95,20 @@ pub mod readline {
     mod state;
     mod store;
 
+    /// Edit mode.
+    #[derive(Debug, Clone)]
+    pub enum Mode {
+        /// Insert a char at the current position.
+        Insert,
+        /// Overwrite a char at the current position.
+        Overwrite,
+    }
+
     pub use self::builder::Builder;
-    pub use self::state::{Mode, State};
+    pub(crate) use self::handler::EventHandler;
+    pub(crate) use self::renderer::Renderer;
+    pub use self::state::State;
+    pub(crate) use self::store::Store;
 }
 
 /// A module providing the selectbox to choose the items from.
@@ -109,23 +122,27 @@ pub mod select {
     mod store;
 
     pub use self::builder::Builder;
+    pub(crate) use self::handler::EventHandler;
+    pub(crate) use self::renderer::Renderer;
     pub use self::state::State;
+    pub(crate) use self::store::Store;
 }
+
 pub(crate) mod text {
     mod renderer;
     mod state;
     mod store;
 
-    pub use self::renderer::Renderer;
+    pub(crate) use self::renderer::Renderer;
     pub use self::state::State;
-    pub use self::store::Store;
+    pub(crate) use self::store::Store;
 }
 
 /// Collection of terminal operations.
 pub mod cmd;
 /// Characters and their width.
 pub mod grapheme;
-pub mod grid;
+mod grid;
 /// Register the pairs of
 /// [crossterm event](../crossterm/event/enum.Event.html)
 /// and their handlers.
