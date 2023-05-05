@@ -128,16 +128,6 @@ pub mod select {
     pub(crate) use self::store::Store;
 }
 
-pub(crate) mod text {
-    mod renderer;
-    mod state;
-    mod store;
-
-    pub(crate) use self::renderer::Renderer;
-    pub use self::state::State;
-    pub(crate) use self::store::Store;
-}
-
 /// Collection of terminal operations.
 pub mod cmd;
 /// Characters and their width.
@@ -149,6 +139,7 @@ pub mod keybind;
 pub mod suggest;
 /// Utilities for the terminal.
 pub mod termutil;
+pub(crate) mod text;
 
 use std::io;
 use std::sync::Once;

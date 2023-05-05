@@ -43,7 +43,7 @@ impl Controller for Store {
     fn render_static(&self, out: &mut io::Stdout) -> Result<()> {
         // Render title
         if let Some(ref title_store) = self.title_store {
-            title_store.render_static(out)?;
+            title_store.renderer.render(out, &title_store.state)?;
             termutil::move_down(out, 1)?;
         }
         // Render label.
