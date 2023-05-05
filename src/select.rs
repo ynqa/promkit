@@ -132,6 +132,8 @@ impl Controller for Store {
         if let Event::Resize(_, _) = ev {
             self.state.editor.to_head();
             self.state.screen_position = 0;
+            termutil::clear(out)?;
+            self.render_static(out)?;
             Ok(None)
         } else {
             if let Some(ref mut query_store) = self.query_store {

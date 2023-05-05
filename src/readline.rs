@@ -167,6 +167,7 @@ impl Renderer {
         crossterm::execute!(
             out,
             style::Print(input),
+            // For replacing with other words.
             terminal::Clear(terminal::ClearType::FromCursorDown),
         )?;
 
@@ -202,6 +203,8 @@ impl Controller for Store {
         if let Event::Resize(_, _) = ev {
             // Overwrite the prev as default.
             self.state.prev = Buffer::default();
+            termutil::clear(out)?;
+            self.render_static(out)?;
             Ok(None)
         } else {
             self.handler.handle_event(ev, out, &mut self.state)
