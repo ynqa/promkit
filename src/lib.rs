@@ -86,47 +86,10 @@ pub(crate) mod internal {
 }
 
 /// A module providing the lines to receive and display user inputs.
-pub mod readline {
-    pub mod action;
-    mod builder;
-    mod handler;
-    mod keybind;
-    mod renderer;
-    mod state;
-    mod store;
-
-    /// Edit mode.
-    #[derive(Debug, Clone)]
-    pub enum Mode {
-        /// Insert a char at the current position.
-        Insert,
-        /// Overwrite a char at the current position.
-        Overwrite,
-    }
-
-    pub use self::builder::Builder;
-    pub(crate) use self::handler::EventHandler;
-    pub(crate) use self::renderer::Renderer;
-    pub use self::state::State;
-    pub(crate) use self::store::Store;
-}
+pub mod readline;
 
 /// A module providing the selectbox to choose the items from.
-pub mod select {
-    pub mod action;
-    mod builder;
-    mod handler;
-    mod keybind;
-    mod renderer;
-    mod state;
-    mod store;
-
-    pub use self::builder::Builder;
-    pub(crate) use self::handler::EventHandler;
-    pub(crate) use self::renderer::Renderer;
-    pub use self::state::State;
-    pub(crate) use self::store::Store;
-}
+pub mod select;
 
 /// Collection of terminal operations.
 pub mod cmd;
