@@ -112,6 +112,20 @@ impl TextBuffer {
         }
         None
     }
+
+    pub fn matrixify(&self, width: u16) -> Vec<Graphemes> {
+        let mut res = vec![];
+        let mut row = Graphemes::default();
+        for ch in self.buf.iter() {
+            if width <= row.len() as u16 {
+                res.push(row);
+                row = Graphemes::default();
+            }
+            row.push(ch.clone());
+        }
+        res.push(row);
+        res
+    }
 }
 
 #[cfg(test)]
@@ -536,6 +550,20 @@ mod test {
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff.unwrap(), [old, new]);
+        }
+    }
+
+    mod matrixify {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let txt = TextBuffer {
+                buf: Graphemes::from("aaa "),
+                position: 0,
+            };
+            let expect = vec![Graphemes::from("aa"), Graphemes::from("a ")];
+            assert_eq!(expect, txt.matrixify(2));
         }
     }
 }
