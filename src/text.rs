@@ -2,6 +2,8 @@ use std::fmt;
 
 use crate::grapheme::{Grapheme, Graphemes};
 
+pub mod styled;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextBuffer {
     buf: Graphemes,
@@ -111,24 +113,6 @@ impl TextBuffer {
             return Some([prev, self.clone()]);
         }
         None
-    }
-
-    pub fn matrixify(&self, width: u16) -> Vec<Graphemes> {
-        let mut res = vec![];
-        let mut row = Graphemes::default();
-        for ch in self.buf.iter() {
-            let current_row_width = row.iter().fold(0, |mut res, g| {
-                res += g.width;
-                res
-            });
-            if width <= current_row_width as u16 {
-                res.push(row);
-                row = Graphemes::default();
-            }
-            row.push(ch.clone());
-        }
-        res.push(row);
-        res
     }
 }
 
@@ -554,34 +538,6 @@ mod test {
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff.unwrap(), [old, new]);
-        }
-    }
-
-    mod matrixify {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let txt = TextBuffer {
-                buf: Graphemes::from("aaa "),
-                position: 0,
-            };
-            let expect = vec![Graphemes::from("aa"), Graphemes::from("a ")];
-            assert_eq!(expect, txt.matrixify(2));
-        }
-
-        #[test]
-        fn test_with_emoji() {
-            let txt = TextBuffer {
-                buf: Graphemes::from("😎😎 "),
-                position: 0,
-            };
-            let expect = vec![
-                Graphemes::from("😎"),
-                Graphemes::from("😎"),
-                Graphemes::from(" "),
-            ];
-            assert_eq!(expect, txt.matrixify(2));
         }
     }
 }
