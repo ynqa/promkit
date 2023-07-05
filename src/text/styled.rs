@@ -36,11 +36,13 @@ impl<'t> StyledTextBuffer<'t> {
                 res += g.width;
                 res
             }) + ch.width;
-            if width < width_with_next_char as u16 {
+            if !row.is_empty() && width < width_with_next_char as u16 {
                 res.push(row);
                 row = Graphemes::default();
             }
-            row.push(ch.clone());
+            if width >= ch.width as u16 {
+                row.push(ch.clone());
+            }
         }
         res.push(row);
         res
@@ -91,6 +93,26 @@ mod test {
                 Graphemes::from(" "),
             ];
             assert_eq!(expect, txt.matrixify(2));
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            let txt = StyledTextBuffer {
+                text_buffer: &TextBuffer {
+                    buf: Graphemes::from("😎😎 "),
+                    position: 0,
+                },
+                label: Graphemes::from(">> "),
+                label_color: Color::Reset,
+                cursor_color: Color::Reset,
+            };
+            let expect = vec![
+                Graphemes::from(">"),
+                Graphemes::from(">"),
+                Graphemes::from(" "),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(expect, txt.matrixify(1));
         }
     }
 }
