@@ -5,15 +5,17 @@
 //! Note that to manage the width of character is
 //! in order to consider how many the positions of cursor should be moved
 //! when e.g. emojis and the special characters are displayed on the terminal.
-use std::fmt::{self, Display, Formatter};
-use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
+use std::{
+    fmt,
+    iter::FromIterator,
+    ops::{Deref, DerefMut},
+};
 
 use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
 
 /// A character and its width.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
     pub ch: char,
     pub width: usize,
@@ -29,7 +31,7 @@ impl From<char> for Grapheme {
 }
 
 /// Characters and their width.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
 
 impl Deref for Graphemes {
@@ -45,9 +47,9 @@ impl DerefMut for Graphemes {
     }
 }
 
-impl<S: Into<String>> From<S> for Graphemes {
-    fn from(s: S) -> Self {
-        s.into().chars().map(Grapheme::from).collect()
+impl<S: AsRef<str>> From<S> for Graphemes {
+    fn from(string: S) -> Self {
+        string.as_ref().chars().map(Grapheme::from).collect()
     }
 }
 
@@ -67,8 +69,8 @@ impl FromIterator<Grapheme> for Graphemes {
     }
 }
 
-impl Display for Graphemes {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+impl fmt::Display for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
@@ -76,49 +78,4 @@ impl Display for Graphemes {
                 .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
         )
     }
-}
-
-impl Graphemes {
-    pub fn width(&self) -> usize {
-        self.iter().fold(0, |mut c, g| {
-            c += g.width;
-            c
-        })
-    }
-
-    pub fn longest_common_prefix(&self, g: &Graphemes) -> Graphemes {
-        self.iter()
-            .zip(g.iter())
-            .take_while(|&(a, b)| a == b)
-            .map(|(a, _)| a.clone())
-            .collect()
-    }
-}
-
-#[test]
-fn longest_common_prefix() {
-    assert_eq!(
-        Graphemes::from("ab"),
-        Graphemes::from("ab").longest_common_prefix(&Graphemes::from("abc")),
-    );
-
-    assert_eq!(
-        Graphemes::from("ab"),
-        Graphemes::from("abc").longest_common_prefix(&Graphemes::from("ab")),
-    );
-
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::from("abc").longest_common_prefix(&Graphemes::default()),
-    );
-
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::default().longest_common_prefix(&Graphemes::from("abc")),
-    );
-
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::default().longest_common_prefix(&Graphemes::default()),
-    );
 }
