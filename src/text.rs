@@ -117,7 +117,11 @@ impl TextBuffer {
         let mut res = vec![];
         let mut row = Graphemes::default();
         for ch in self.buf.iter() {
-            if width <= row.len() as u16 {
+            let current_row_width = row.iter().fold(0, |mut res, g| {
+                res += g.width;
+                res
+            });
+            if width <= current_row_width as u16 {
                 res.push(row);
                 row = Graphemes::default();
             }
@@ -563,6 +567,20 @@ mod test {
                 position: 0,
             };
             let expect = vec![Graphemes::from("aa"), Graphemes::from("a ")];
+            assert_eq!(expect, txt.matrixify(2));
+        }
+
+        #[test]
+        fn test_with_emoji() {
+            let txt = TextBuffer {
+                buf: Graphemes::from("😎😎 "),
+                position: 0,
+            };
+            let expect = vec![
+                Graphemes::from("😎"),
+                Graphemes::from("😎"),
+                Graphemes::from(" "),
+            ];
             assert_eq!(expect, txt.matrixify(2));
         }
     }
