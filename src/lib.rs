@@ -16,7 +16,7 @@
 //!
 //! Readline:
 //!
-//! ```no_run
+//! ```ignore
 //! use promkit::{build::Builder, readline, Result};
 //!
 //! fn main() -> Result<()> {
@@ -30,7 +30,7 @@
 //!
 //! Select:
 //!
-//! ```no_run
+//! ```ignore
 //! use promkit::{build::Builder, crossterm::style, select, Result};
 //!
 //! fn main() -> Result<()> {
@@ -44,143 +44,85 @@
 //! }
 //! ```
 
-#[macro_use(defer)]
 extern crate scopeguard;
 
-/// A module providing the builder of [Prompt](struct.Prompt.html).
-pub mod build {
-    use crate::{Prompt, Result};
+pub use crossterm;
 
-    /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder {
-        fn build(self) -> Result<Prompt>;
-    }
-}
-
-mod error {
-    use std::io;
-
-    /// Result for `prompt`.
-    pub type Result<T> = std::result::Result<T, io::Error>;
-}
-pub use error::Result;
-
-/// A module providing trait to register the item into.
-pub mod register {
-    /// A trait to register the items.
-    pub trait Register<T> {
-        fn register(&mut self, _: T);
-        fn register_all<U: IntoIterator<Item = T>>(&mut self, items: U) {
-            for (_, item) in items.into_iter().enumerate() {
-                self.register(item)
-            }
-        }
-    }
-}
-
-pub(crate) mod internal {
-    /// String buffer representing the user inputs.
-    pub mod buffer;
-    /// A data structure to store the suggestions for the completion.
-    pub mod selector;
-}
-
-/// A module providing the lines to receive and display user inputs.
-pub mod readline;
-
-/// A module providing the selectbox to choose the items from.
-pub mod select;
-
-/// Collection of terminal operations.
-pub mod cmd;
-/// Characters and their width.
-pub mod grapheme;
-/// Register the pairs of
-/// [crossterm event](../crossterm/event/enum.Event.html)
-/// and their handlers.
-pub mod keybind;
-pub mod suggest;
-/// Utilities for the terminal.
-pub mod termutil;
-pub(crate) mod text;
+use event_handler::EventHandler;
+mod engine;
+mod event_handler;
+mod grapheme;
+mod pane;
+mod terminal;
+mod text;
 
 use std::io;
 use std::sync::Once;
 
-pub use crossterm;
-use crossterm::event::Event;
+use anyhow::{bail, Result};
+use scopeguard::defer;
 
-/// A type representing the actions when the events are received.
-pub type Action<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<Option<String>>;
+use crate::{
+    crossterm::{
+        event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        terminal::{disable_raw_mode, enable_raw_mode},
+    },
+    engine::Engine,
+    text::TextBuffer,
+};
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
-    out: io::Stdout,
-    ctr: Box<dyn Controller>,
-}
-
-pub trait Controller {
-    fn can_render(&self) -> Result<()>;
-    fn render_static(&self, _: &mut io::Stdout) -> Result<()>;
-    fn handle_event(&mut self, _: &Event, _: &mut io::Stdout) -> Result<Option<String>>;
-    fn render(&mut self, _: &mut io::Stdout) -> Result<()>;
-    fn finalize(&mut self, _: &mut io::Stdout) -> Result<()>;
+    engine: Engine<io::Stdout>,
+    event_handler: EventHandler,
 }
 
 static ONCE: Once = Once::new();
 
 impl Prompt {
+    pub fn new() -> Self {
+        Self {
+            engine: Engine::new(io::stdout()),
+            event_handler: EventHandler {},
+        }
+    }
+
     /// Loop the steps that receive an event and trigger the handler.
     pub fn run(&mut self) -> Result<String> {
         ONCE.call_once(|| {
-            termutil::clear(&mut self.out).ok();
+            self.engine.clear().ok();
         });
 
-        crossterm::terminal::enable_raw_mode()?;
+        enable_raw_mode()?;
         defer! {{
-            crossterm::terminal::disable_raw_mode().ok();
+            disable_raw_mode().ok();
         }};
 
-        // check whether to be able to render.
-        if let Err(e) = self.ctr.can_render() {
-            self.ctr.finalize(&mut self.out)?;
-            return Err(e);
-        }
-
-        // Render the static contents (e.g. title, label)
-        // which state is not changed after the events are received.
-        if let Err(e) = self.ctr.render_static(&mut self.out) {
-            self.ctr.finalize(&mut self.out)?;
-            return Err(e);
-        }
+        let mut textbuffer = TextBuffer::new();
 
         loop {
-            // check whether to be able to render.
-            if let Err(e) = self.ctr.can_render() {
-                self.ctr.finalize(&mut self.out)?;
-                return Err(e);
+            let ev = event::read()?;
+            match &ev {
+                Event::Key(KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::SHIFT,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }) => break,
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('c'),
+                    modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }) => bail!("ctrl+c interrupted"),
+                _ => (),
             }
-
-            if let Err(e) = self.ctr.render(&mut self.out) {
-                self.ctr.finalize(&mut self.out)?;
-                return Err(e);
-            }
-
-            match self
-                .ctr
-                .handle_event(&crossterm::event::read()?, &mut self.out)
-            {
-                Ok(maybe_ret) => {
-                    if let Some(ret) = maybe_ret {
-                        self.ctr.finalize(&mut self.out)?;
-                        return Ok(ret);
-                    }
-                }
-                Err(e) => {
-                    self.ctr.finalize(&mut self.out)?;
-                    return Err(e);
-                }
+            match self.event_handler.handle_event(&ev, &mut textbuffer) {
+                Some(_diff) => {}
+                None => break,
             }
         }
+
+        Ok(textbuffer.to_string())
     }
 }

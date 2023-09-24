@@ -8,63 +8,20 @@ repository = "https://github.com/ynqa/promkit"
 license = "MIT"
 readme = "README.md"
 
-[[bin]]
-name = "debug_cursor"
-path = "debugs/cursor.rs"
-
 [lib]
 name = "promkit"
 path = "src/lib.rs"
 
 [dependencies]
-crossterm = "0.26.1"
+anyhow = "1.0.75"
+crossterm = "0.27.0"
 radix_trie = "0.2.1"
 scopeguard = "1.1.0"
 unicode-width = "0.1.8"
 
 [dev-dependencies]
-strip-ansi-escapes = "0.1.1"
-
-[[example]]
-name = "custom_keybind"
-path = "examples/advanced/custom_keybind.rs"
-
-[[example]]
-name = "label"
-path = "examples/readline/label.rs"
-
-[[example]]
-name = "masking"
-path = "examples/readline/masking.rs"
-
-[[example]]
-name = "num_lines"
-path = "examples/readline/num_lines.rs"
-
-[[example]]
-name = "overwrite"
-path = "examples/readline/overwrite.rs"
+strip-ansi-escapes = "0.2.0"
 
 [[example]]
 name = "readline"
 path = "examples/readline/readline.rs"
-
-[[example]]
-name = "suggest"
-path = "examples/readline/suggest.rs"
-
-[[example]]
-name = "title"
-path = "examples/readline/title.rs"
-
-[[example]]
-name = "query"
-path = "examples/select/query.rs"
-
-[[example]]
-name = "select"
-path = "examples/select/select.rs"
-
-[[example]]
-name = "window"
-path = "examples/select/window.rs"

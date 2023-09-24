@@ -1,7 +1,8 @@
-use promkit::{build::Builder, readline, Result};
+use anyhow::Result;
+use promkit::Prompt;
 
 fn main() -> Result<()> {
-    let mut p = readline::Builder::default().build()?;
+    let mut p = Prompt::new();
     loop {
         let line = p.run()?;
         println!("result: {:?}", line);
