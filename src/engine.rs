@@ -43,12 +43,12 @@ impl<W: Write> Engine<W> {
         Ok(cursor::position()?.1 + 1 == terminal::size()?.1)
     }
 
-    pub fn move_to_next_line(&mut self, scroll_up: bool) -> Result<()> {
-        execute!(self.out, cursor::MoveToNextLine(1))?;
-        if scroll_up {
-            execute!(self.out, ScrollUp(1))?;
-        }
-        Ok(())
+    pub fn scroll_up(&mut self, times: u16) -> Result<(), std::io::Error> {
+        execute!(self.out, ScrollUp(times))
+    }
+
+    pub fn move_to_next_line(&mut self) -> Result<(), std::io::Error> {
+        execute!(self.out, cursor::MoveToNextLine(1))
     }
 }
 

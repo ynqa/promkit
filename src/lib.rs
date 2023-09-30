@@ -108,6 +108,13 @@ impl Prompt {
         let mut terminal = Terminal::start_session(&mut engine)?;
         let mut textbuffer = TextBuffer::new();
 
+        let pane = Pane::new(
+            engine.size()?.0 as usize,
+            &textbuffer,
+            &Graphemes::from("❯❯ "),
+        );
+        terminal.draw(&mut engine, vec![pane])?;
+
         loop {
             let ev = event::read()?;
             match &ev {
@@ -135,7 +142,7 @@ impl Prompt {
             }
         }
 
-        engine.move_to_next_line(false)?;
+        engine.move_to_next_line()?;
         Ok(textbuffer.to_string())
     }
 }
