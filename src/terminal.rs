@@ -6,12 +6,12 @@ use crate::{engine::Engine, pane::Pane};
 
 // Session
 pub struct Terminal {
-    top_pane_start_position: (u16, u16),
+    offset: (u16, u16),
 }
 
 impl Terminal {
     pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
-        let top_pane_start_position = engine.position()?;
+        let offset = engine.position()?;
 
         // let required_height = panes.iter().fold(0, |mut acc, pane| {
         //     acc += pane.requirement.guaranteed_height;
@@ -24,13 +24,13 @@ impl Terminal {
         // );
 
         Ok(Self {
-            top_pane_start_position,
+            offset,
         })
     }
 
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
-        engine.move_to(self.top_pane_start_position)?;
-        let mut start_height = self.top_pane_start_position.1 as usize;
+        engine.move_to(self.offset)?;
+        let mut start_height = self.offset.1 as usize;
         let terminal_size = engine.size()?;
 
         for pane in panes {
@@ -44,7 +44,7 @@ impl Terminal {
 
             if engine.is_bottom()? {
                 engine.scroll_up(1)?;
-                self.top_pane_start_position.1 = self.top_pane_start_position.1.saturating_sub(1);
+                self.offset.1 = self.offset.1.saturating_sub(1);
                 start_height = start_height.saturating_sub(1);
             }
             start_height += &rows.len();
