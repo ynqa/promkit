@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
 
 use crate::{engine::Engine, pane::Pane};
 
@@ -10,22 +10,19 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
-        let offset = engine.position()?;
+    pub fn start_session<W: Write>(engine: &mut Engine<W>, guaranteed_height: u16) -> Result<Self> {
+        let mut offset = engine.position()?;
 
-        // let required_height = panes.iter().fold(0, |mut acc, pane| {
-        //     acc += pane.requirement.guaranteed_height;
-        //     acc
-        // });
+        if offset.1 < guaranteed_height {
+            engine.clear()?;
+            offset = engine.position()?;
+            ensure!(
+                offset.1 < guaranteed_height,
+                "Terminal window does not have enough vertical space to render UI."
+            );
+        }
 
-        // ensure!(
-        //     size.1 >= required_height,
-        //     "Terminal window does not have enough vertical space to render UI."
-        // );
-
-        Ok(Self {
-            offset,
-        })
+        Ok(Self { offset })
     }
 
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
@@ -49,14 +46,6 @@ impl Terminal {
             }
             start_height += &rows.len();
         }
-        Ok(())
-    }
-
-    /// Update the internal state to match the new screen size,
-    /// allowing it to correctly render content within the new bounds.
-    /// It conducts the screen clear also.
-    pub fn reshape<W: Write>(&mut self, engine: &mut Engine<W>) -> Result<()> {
-        engine.clear()?;
         Ok(())
     }
 }

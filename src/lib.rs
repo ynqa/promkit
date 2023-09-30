@@ -105,7 +105,7 @@ impl Prompt {
             disable_raw_mode().ok();
         }};
 
-        let mut terminal = Terminal::start_session(&mut engine)?;
+        let mut terminal = Terminal::start_session(&mut engine, 2)?;
         let mut textbuffer = TextBuffer::new();
 
         let pane = Pane::new(

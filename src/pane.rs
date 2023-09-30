@@ -1,16 +1,5 @@
 use crate::{grapheme::Graphemes, text::TextBuffer};
 
-pub struct Requirement {
-    /// Determina the order which the panes are drawn.
-    pub priority_to_draw: u16,
-    /// Determine the order which the panes are assigned vertical space
-    /// when the available space is limited.
-    pub priority_to_occupy_height: u16,
-    /// Minimum amount of vertical space that the pane must occupy,
-    /// even if the screen is not large enough to accommodate it fully.
-    pub guaranteed_height: u16,
-}
-
 pub struct Pane {
     // pub requirement: Requirement,
     layout: Vec<Graphemes>,
