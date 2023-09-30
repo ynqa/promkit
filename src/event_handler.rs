@@ -7,11 +7,7 @@ use crate::{
 pub struct EventHandler {}
 
 impl EventHandler {
-    pub fn handle_event(
-        &self,
-        event: &Event,
-        textbuffer: &mut TextBuffer,
-    ) -> Option<[TextBuffer; 2]> {
+    pub fn handle_event(&self, event: &Event, textbuffer: &mut TextBuffer) -> [TextBuffer; 2] {
         match event {
             // Move cursor.
             Event::Key(KeyEvent {
@@ -19,25 +15,25 @@ impl EventHandler {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.prev()),
+            }) => textbuffer.prev(),
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.next()),
+            }) => textbuffer.next(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.to_head()),
+            }) => textbuffer.to_head(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.to_tail()),
+            }) => textbuffer.to_tail(),
 
             // Erase char.
             Event::Key(KeyEvent {
@@ -45,7 +41,7 @@ impl EventHandler {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.erase()),
+            }) => textbuffer.erase(),
 
             // Input char.
             Event::Key(KeyEvent {
@@ -59,9 +55,9 @@ impl EventHandler {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => Some(textbuffer.insert(Grapheme::from(*ch))),
+            }) => textbuffer.insert(Grapheme::from(*ch)),
 
-            _ => None,
+            _ => [textbuffer.clone(), textbuffer.clone()],
         }
     }
 }

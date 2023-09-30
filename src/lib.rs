@@ -120,7 +120,7 @@ impl Prompt {
             match &ev {
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
-                    modifiers: KeyModifiers::SHIFT,
+                    modifiers: KeyModifiers::NONE,
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
                 }) => break,
@@ -130,15 +130,12 @@ impl Prompt {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
                 }) => bail!("ctrl+c interrupted"),
-                _ => (),
-            }
-            match self.event_handler.handle_event(&ev, &mut textbuffer) {
-                Some(diff) => {
+                _ => {
+                    let diff = self.event_handler.handle_event(&ev, &mut textbuffer);
                     let pane =
                         Pane::new(engine.size()?.0 as usize, &diff[1], &Graphemes::from("❯❯ "));
                     terminal.draw(&mut engine, vec![pane])?;
                 }
-                None => break,
             }
         }
 
