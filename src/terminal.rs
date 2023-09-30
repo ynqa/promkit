@@ -1,35 +1,32 @@
 use std::io::Write;
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 
 use crate::{
     crossterm::{cursor, terminal},
     engine::Engine,
     grapheme::Graphemes,
-    pane::Panes,
 };
 
 // Session
-pub struct Terminal {
-    panes: Panes,
-}
+pub struct Terminal {}
 
 impl Terminal {
-    pub fn start_session(panes: Panes) -> Result<Self> {
-        let size = terminal::size()?;
+    pub fn start_session() -> Result<Self> {
+        let _size = terminal::size()?;
         let _start_position = cursor::position()?;
 
-        let required_height = panes.iter().fold(0, |mut acc, pane| {
-            acc += pane.requirement.guaranteed_height;
-            acc
-        });
+        // let required_height = panes.iter().fold(0, |mut acc, pane| {
+        //     acc += pane.requirement.guaranteed_height;
+        //     acc
+        // });
 
-        ensure!(
-            size.1 >= required_height,
-            "Terminal window does not have enough vertical space to render UI."
-        );
+        // ensure!(
+        //     size.1 >= required_height,
+        //     "Terminal window does not have enough vertical space to render UI."
+        // );
 
-        Ok(Self { panes })
+        Ok(Self {})
     }
 
     pub fn render(&mut self, _layout: &Vec<Graphemes>) -> Result<()> {

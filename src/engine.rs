@@ -19,6 +19,10 @@ impl<W: Write> Engine<W> {
         Self { out }
     }
 
+    pub fn size(&self) -> Result<(u16, u16), std::io::Error> {
+        terminal::size()
+    }
+
     pub fn clear(&mut self) -> Result<(), std::io::Error> {
         execute!(self.out, Clear(ClearType::All), MoveTo(0, 0))
     }
@@ -36,7 +40,7 @@ impl<W: Write> Engine<W> {
     }
 
     pub fn move_to_next_line(&mut self, scroll_up: bool) -> Result<()> {
-        crossterm::execute!(self.out, cursor::MoveToNextLine(1))?;
+        execute!(self.out, cursor::MoveToNextLine(1))?;
         if scroll_up {
             execute!(self.out, ScrollUp(1))?;
         }

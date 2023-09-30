@@ -19,25 +19,25 @@ impl EventHandler {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.prev(),
+            }) => Some(textbuffer.prev()),
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.next(),
+            }) => Some(textbuffer.next()),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.to_head(),
+            }) => Some(textbuffer.to_head()),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.to_tail(),
+            }) => Some(textbuffer.to_tail()),
 
             // Erase char.
             Event::Key(KeyEvent {
@@ -45,7 +45,7 @@ impl EventHandler {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.erase(),
+            }) => Some(textbuffer.erase()),
 
             // Input char.
             Event::Key(KeyEvent {
@@ -59,7 +59,7 @@ impl EventHandler {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => textbuffer.insert(Grapheme::from(*ch)),
+            }) => Some(textbuffer.insert(Grapheme::from(*ch))),
 
             _ => None,
         }

@@ -1,9 +1,6 @@
-use std::{
-    fmt::Write,
-    ops::{Deref, DerefMut},
-};
+use anyhow::Ok;
 
-use crate::{grapheme::Graphemes, Result};
+use crate::{grapheme::Graphemes, text::TextBuffer, Result};
 
 pub struct Requirement {
     /// Determina the order which the panes are drawn.
@@ -17,45 +14,111 @@ pub struct Requirement {
 }
 
 pub struct Pane {
-    pub requirement: Requirement,
+    // pub requirement: Requirement,
 }
 
 impl Pane {
-    pub fn new(requirement: Requirement) -> Self {
-        Self { requirement }
+    fn matrixify(&self, width: u16, textbuffer: &TextBuffer, label: &Graphemes) -> Vec<Graphemes> {
+        let mut buf = vec![];
+        buf.append(&mut label.clone());
+        buf.append(&mut textbuffer.buf.clone());
+
+        let mut res = vec![];
+        let mut row = Graphemes::default();
+        for ch in buf.iter() {
+            let width_with_next_char = row.iter().fold(0, |mut res, g| {
+                res += g.width;
+                res
+            }) + ch.width;
+            if !row.is_empty() && width < width_with_next_char as u16 {
+                res.push(row);
+                row = Graphemes::default();
+            }
+            if width >= ch.width as u16 {
+                row.push(ch.clone());
+            }
+        }
+        res.push(row);
+        res
     }
 
-    pub fn render(&mut self, _viewport: (u16, u16), _layout: &Vec<Graphemes>) -> Result<u16> {
-        // // Merge all contents into one object.
-        // let obj = contents
-        //     .iter()
-        //     .fold(Graphemes::default(), |mut acc, content| {
-        //         acc.extend_from_slice(&content);
-        //         acc
-        //     });
-
-        // // Convert to my layout.
-        // self.rows = obj.matrixify(viewport.0 as usize);
-        // Ok(self.rows.len() as u16)
-        Ok(0)
-    }
-
-    fn draw<W: Write>(&mut self, _start_position: (u16, u16), _size: (u16, u16)) -> Result<()> {
-        Ok(())
+    pub fn render(
+        &mut self,
+        viewport: (u16, u16),
+        textbuffer: &TextBuffer,
+        label: &Graphemes,
+    ) -> Result<Vec<Graphemes>> {
+        Ok(self.matrixify(viewport.0, textbuffer, label))
     }
 }
 
-pub struct Panes(pub Vec<Pane>);
+#[cfg(test)]
+mod test {
+    mod matrixify {
+        use super::super::*;
 
-impl Deref for Panes {
-    type Target = Vec<Pane>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+        #[test]
+        fn test() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" a"),
+                Graphemes::from("aa"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                Pane {}.matrixify(
+                    2,
+                    &TextBuffer {
+                        buf: Graphemes::from("aaa "),
+                        position: 0,
+                    },
+                    &Graphemes::from(">> "),
+                )
+            );
+        }
 
-impl DerefMut for Panes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        #[test]
+        fn test_with_emoji() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" "),
+                Graphemes::from("😎"),
+                Graphemes::from("😎"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                Pane {}.matrixify(
+                    2,
+                    &TextBuffer {
+                        buf: Graphemes::from("😎😎 "),
+                        position: 0,
+                    },
+                    &Graphemes::from(">> "),
+                )
+            );
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            let expect = vec![
+                Graphemes::from(">"),
+                Graphemes::from(">"),
+                Graphemes::from(" "),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                Pane {}.matrixify(
+                    1,
+                    &TextBuffer {
+                        buf: Graphemes::from("😎😎 "),
+                        position: 0,
+                    },
+                    &Graphemes::from(">> "),
+                )
+            );
+        }
     }
 }

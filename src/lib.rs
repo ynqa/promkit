@@ -68,6 +68,8 @@ use crate::{
         terminal::{disable_raw_mode, enable_raw_mode},
     },
     engine::Engine,
+    grapheme::Graphemes,
+    pane::Pane,
     text::TextBuffer,
 };
 
@@ -118,11 +120,19 @@ impl Prompt {
                 _ => (),
             }
             match self.event_handler.handle_event(&ev, &mut textbuffer) {
-                Some(_diff) => {}
+                Some(diff) => {
+                    self.engine.clear()?;
+                    let rendered =
+                        Pane {}.render(self.engine.size()?, &diff[1], &Graphemes::from("❯❯ "))?;
+                    for row in rendered {
+                        self.engine.write(&row)?;
+                    }
+                }
                 None => break,
             }
         }
 
+        self.engine.move_to_next_line(false)?;
         Ok(textbuffer.to_string())
     }
 }
