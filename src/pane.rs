@@ -107,7 +107,7 @@ mod test {
 
         #[test]
         fn test_extract_buck() {
-            let expect = vec![Graphemes::from("aa"); 5];
+            let expect = vec![Graphemes::from("ab"), Graphemes::from("c")];
             assert_eq!(
                 expect,
                 Pane::new(

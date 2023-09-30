@@ -38,10 +38,14 @@ impl Terminal {
             for row in &rows {
                 engine.write(row)?;
             }
+
             if engine.is_bottom()? {
-                engine.scroll_up(1)?;
-                self.top_pane_start_position.1 = self.top_pane_start_position.1.saturating_sub(1);
-                start_height = start_height.saturating_sub(1);
+                if start_height > 0 {
+                    engine.scroll_up(1)?;
+                    self.top_pane_start_position.1 =
+                        self.top_pane_start_position.1.saturating_sub(1);
+                    start_height = start_height.saturating_sub(1);
+                }
             }
             start_height += &rows.len();
         }
