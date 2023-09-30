@@ -34,18 +34,18 @@ impl Terminal {
         let terminal_size = engine.size()?;
 
         for pane in panes {
-            let rows = pane.extract(terminal_size.1 as usize - start_height);
+            // When the cursor is at top of terminal,
+            // we must consider the last scrolling up.
+            let rows = pane
+                .extract(terminal_size.1 as usize - vec![start_height, 1].iter().max().unwrap());
             for row in &rows {
                 engine.write(row)?;
             }
 
             if engine.is_bottom()? {
-                if start_height > 0 {
-                    engine.scroll_up(1)?;
-                    self.top_pane_start_position.1 =
-                        self.top_pane_start_position.1.saturating_sub(1);
-                    start_height = start_height.saturating_sub(1);
-                }
+                engine.scroll_up(1)?;
+                self.top_pane_start_position.1 = self.top_pane_start_position.1.saturating_sub(1);
+                start_height = start_height.saturating_sub(1);
             }
             start_height += &rows.len();
         }
