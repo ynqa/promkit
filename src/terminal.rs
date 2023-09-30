@@ -29,8 +29,10 @@ impl Terminal {
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
         engine.move_to(self.start_position)?;
         let mut start_height = self.start_position.1 as usize;
+        let terminal_height = engine.size()?.1;
+
         for pane in panes {
-            let rows = pane.extract(start_height);
+            let rows = pane.extract(terminal_height as usize - start_height);
             for row in &rows {
                 engine.write(row)?;
             }
