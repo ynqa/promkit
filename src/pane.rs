@@ -14,7 +14,7 @@ pub struct Requirement {
 pub struct Pane {
     // pub requirement: Requirement,
     layout: Vec<Graphemes>,
-    start_row_index: usize,
+    offset: usize,
 }
 
 impl Pane {
@@ -41,7 +41,7 @@ impl Pane {
         layout.push(row);
         Self {
             layout,
-            start_row_index: textbuffer.position / width,
+            offset: textbuffer.position / width,
         }
     }
 
@@ -49,12 +49,12 @@ impl Pane {
         if self.layout.len() <= viewport_height {
             return self.layout.clone();
         }
-        let end_row_index = self.start_row_index + viewport_height;
+        let end = self.offset + viewport_height;
         return self
             .layout
             .iter()
             .enumerate()
-            .filter(|(i, _)| self.start_row_index <= *i && *i < end_row_index)
+            .filter(|(i, _)| self.offset <= *i && *i < end)
             .map(|(_i, row)| row.clone())
             .collect::<Vec<_>>();
     }
