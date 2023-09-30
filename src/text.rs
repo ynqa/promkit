@@ -5,7 +5,7 @@ use crate::grapheme::{Grapheme, Graphemes};
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextBuffer {
     pub buf: Graphemes,
-    pub position: u16,
+    pub position: usize,
 }
 
 impl fmt::Display for TextBuffer {
@@ -32,7 +32,7 @@ impl TextBuffer {
     }
 
     fn is_tail(&self) -> bool {
-        self.position == self.buf.len() as u16 - 1
+        self.position == self.buf.len() - 1
     }
 
     pub fn resize(&mut self, _size: (u16, u16)) {
@@ -84,7 +84,7 @@ impl TextBuffer {
 
     pub fn to_tail(&mut self) -> [Self; 2] {
         let prev = self.clone();
-        self.position = self.buf.len() as u16 - 1;
+        self.position = self.buf.len() - 1;
         [prev, self.clone()]
     }
 

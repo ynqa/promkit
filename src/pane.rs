@@ -1,6 +1,4 @@
-use anyhow::Ok;
-
-use crate::{grapheme::Graphemes, text::TextBuffer, Result};
+use crate::{grapheme::Graphemes, text::TextBuffer};
 
 pub struct Requirement {
     /// Determina the order which the panes are drawn.
@@ -15,40 +13,50 @@ pub struct Requirement {
 
 pub struct Pane {
     // pub requirement: Requirement,
+    layout: Vec<Graphemes>,
+    start_row_index: usize,
 }
 
 impl Pane {
-    fn matrixify(&self, width: u16, textbuffer: &TextBuffer, label: &Graphemes) -> Vec<Graphemes> {
+    pub fn new(width: usize, textbuffer: &TextBuffer, label: &Graphemes) -> Self {
         let mut buf = vec![];
         buf.append(&mut label.clone());
         buf.append(&mut textbuffer.buf.clone());
 
-        let mut res = vec![];
+        let mut layout = vec![];
         let mut row = Graphemes::default();
         for ch in buf.iter() {
-            let width_with_next_char = row.iter().fold(0, |mut res, g| {
-                res += g.width;
-                res
+            let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+                layout += g.width;
+                layout
             }) + ch.width;
-            if !row.is_empty() && width < width_with_next_char as u16 {
-                res.push(row);
+            if !row.is_empty() && width < width_with_next_char {
+                layout.push(row);
                 row = Graphemes::default();
             }
-            if width >= ch.width as u16 {
+            if width >= ch.width {
                 row.push(ch.clone());
             }
         }
-        res.push(row);
-        res
+        layout.push(row);
+        Self {
+            layout,
+            start_row_index: textbuffer.position / width,
+        }
     }
 
-    pub fn render(
-        &mut self,
-        viewport: (u16, u16),
-        textbuffer: &TextBuffer,
-        label: &Graphemes,
-    ) -> Result<Vec<Graphemes>> {
-        Ok(self.matrixify(viewport.0, textbuffer, label))
+    pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
+        if self.layout.len() <= viewport_height {
+            return self.layout.clone();
+        }
+        let end_row_index = self.start_row_index + viewport_height;
+        return self
+            .layout
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| self.start_row_index <= *i && *i < end_row_index)
+            .map(|(_i, row)| row.clone())
+            .collect::<Vec<_>>();
     }
 }
 
@@ -67,7 +75,7 @@ mod test {
             ];
             assert_eq!(
                 expect,
-                Pane {}.matrixify(
+                Pane::new(
                     2,
                     &TextBuffer {
                         buf: Graphemes::from("aaa "),
@@ -75,6 +83,7 @@ mod test {
                     },
                     &Graphemes::from(">> "),
                 )
+                .layout
             );
         }
 
@@ -89,7 +98,7 @@ mod test {
             ];
             assert_eq!(
                 expect,
-                Pane {}.matrixify(
+                Pane::new(
                     2,
                     &TextBuffer {
                         buf: Graphemes::from("😎😎 "),
@@ -97,6 +106,7 @@ mod test {
                     },
                     &Graphemes::from(">> "),
                 )
+                .layout
             );
         }
 
@@ -110,7 +120,7 @@ mod test {
             ];
             assert_eq!(
                 expect,
-                Pane {}.matrixify(
+                Pane::new(
                     1,
                     &TextBuffer {
                         buf: Graphemes::from("😎😎 "),
@@ -118,6 +128,7 @@ mod test {
                     },
                     &Graphemes::from(">> "),
                 )
+                .layout
             );
         }
     }

@@ -19,6 +19,10 @@ impl<W: Write> Engine<W> {
         Self { out }
     }
 
+    pub fn position(&self) -> Result<(u16, u16), std::io::Error> {
+        cursor::position()
+    }
+
     pub fn size(&self) -> Result<(u16, u16), std::io::Error> {
         terminal::size()
     }
@@ -35,7 +39,7 @@ impl<W: Write> Engine<W> {
         execute!(self.out, MoveTo(pos.0, pos.1))
     }
 
-    pub fn is_bottom() -> Result<bool> {
+    pub fn is_bottom(&self) -> Result<bool> {
         Ok(cursor::position()?.1 + 1 == terminal::size()?.1)
     }
 
