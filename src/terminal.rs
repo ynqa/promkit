@@ -10,15 +10,15 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn start_session<W: Write>(
-        engine: &mut Engine<W>,
-    ) -> Result<Self> {
-        Ok(Self { offset: engine.position()? })
+    pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
+        Ok(Self {
+            offset: engine.position()?,
+        })
     }
 
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
-        // +1 means not to use the last line.
-        // See the below for the details.
+        // Ensure that there is at least one additional line of space available
+        // below the last pane for UI rendering purposes.
         if (self.offset.1 as usize) < panes.len() + 1 {
             engine.clear()?;
             self.offset = engine.position()?;
