@@ -101,7 +101,7 @@ impl Prompt {
             disable_raw_mode().ok();
         }};
 
-        let mut terminal = Terminal::start_session(&mut engine, self.editors.len())?;
+        let mut terminal = Terminal::start_session(&mut engine)?;
         let size = engine.size()?;
         terminal.draw(
             &mut engine,

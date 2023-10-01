@@ -12,23 +12,22 @@ pub struct Terminal {
 impl Terminal {
     pub fn start_session<W: Write>(
         engine: &mut Engine<W>,
-        guaranteed_height: usize,
     ) -> Result<Self> {
-        let mut offset = engine.position()?;
+        Ok(Self { offset: engine.position()? })
+    }
 
-        if (offset.1 as usize) < guaranteed_height {
+    pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
+        // +1 means not to use the last line.
+        // See the below for the details.
+        if (self.offset.1 as usize) < panes.len() + 1 {
             engine.clear()?;
-            offset = engine.position()?;
+            self.offset = engine.position()?;
             ensure!(
-                (offset.1 as usize) < guaranteed_height,
+                (self.offset.1 as usize) < panes.len() + 1,
                 "Terminal window does not have enough vertical space to render UI."
             );
         }
 
-        Ok(Self { offset })
-    }
-
-    pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
         engine.move_to(self.offset)?;
         engine.clear_from_cursor_down()?;
 
