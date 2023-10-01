@@ -10,14 +10,17 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn start_session<W: Write>(engine: &mut Engine<W>, guaranteed_height: u16) -> Result<Self> {
+    pub fn start_session<W: Write>(
+        engine: &mut Engine<W>,
+        guaranteed_height: usize,
+    ) -> Result<Self> {
         let mut offset = engine.position()?;
 
-        if offset.1 < guaranteed_height {
+        if (offset.1 as usize) < guaranteed_height {
             engine.clear()?;
             offset = engine.position()?;
             ensure!(
-                offset.1 < guaranteed_height,
+                (offset.1 as usize) < guaranteed_height,
                 "Terminal window does not have enough vertical space to render UI."
             );
         }

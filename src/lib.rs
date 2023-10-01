@@ -48,8 +48,8 @@ extern crate scopeguard;
 
 pub use crossterm;
 
+pub mod editor;
 mod engine;
-mod event_handler;
 mod grapheme;
 mod pane;
 mod terminal;
@@ -68,30 +68,25 @@ use crate::{
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
+    editor::Editor,
     engine::Engine,
-    event_handler::EventHandler,
-    grapheme::Graphemes,
-    pane::Pane,
     terminal::Terminal,
-    text::TextBuffer,
 };
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
-    event_handler: EventHandler,
+    editors: Vec<Box<dyn Editor>>,
 }
 
 static ONCE: Once = Once::new();
 
 impl Prompt {
-    pub fn new() -> Self {
-        Self {
-            event_handler: EventHandler {},
-        }
+    pub fn new(editors: Vec<Box<dyn Editor>>) -> Self {
+        Self { editors }
     }
 
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<String> {
+    pub fn run(&mut self) -> Result<Vec<String>> {
         let mut engine = Engine::new(io::stdout());
 
         ONCE.call_once(|| {
@@ -105,15 +100,15 @@ impl Prompt {
             disable_raw_mode().ok();
         }};
 
-        let mut terminal = Terminal::start_session(&mut engine, 2)?;
-        let mut textbuffer = TextBuffer::new();
-
-        let pane = Pane::new(
-            engine.size()?.0 as usize,
-            &textbuffer,
-            &Graphemes::from("❯❯ "),
-        );
-        terminal.draw(&mut engine, vec![pane])?;
+        let mut terminal = Terminal::start_session(&mut engine, self.editors.len())?;
+        let size = engine.size()?;
+        terminal.draw(
+            &mut engine,
+            self.editors
+                .iter()
+                .map(|editor| editor.gen_pane(size))
+                .collect(),
+        )?;
 
         loop {
             let ev = event::read()?;
@@ -131,15 +126,30 @@ impl Prompt {
                     state: KeyEventState::NONE,
                 }) => bail!("ctrl+c interrupted"),
                 _ => {
-                    let diff = self.event_handler.handle_event(&ev, &mut textbuffer);
-                    let pane =
-                        Pane::new(engine.size()?.0 as usize, &diff[1], &Graphemes::from("❯❯ "));
-                    terminal.draw(&mut engine, vec![pane])?;
+                    for editor in &mut self.editors {
+                        editor.handle_event(&ev);
+                    }
+                    let size = engine.size()?;
+                    terminal.draw(
+                        &mut engine,
+                        self.editors
+                            .iter()
+                            .map(|editor| editor.gen_pane(size))
+                            .collect(),
+                    )?;
                 }
             }
         }
 
         engine.move_to_next_line()?;
-        Ok(textbuffer.to_string())
+        let ret = self
+            .editors
+            .iter()
+            .map(|editor| editor.to_string())
+            .collect();
+        self.editors.iter_mut().for_each(|editor| {
+            editor.reset();
+        });
+        Ok(ret)
     }
 }
