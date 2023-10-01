@@ -19,14 +19,10 @@ impl Terminal {
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
         // Ensure that there is at least one additional line of space available
         // below the last pane for UI rendering purposes.
-        if (self.offset.1 as usize) < panes.len() + 1 {
-            engine.clear()?;
-            self.offset = engine.position()?;
-            ensure!(
-                (self.offset.1 as usize) < panes.len() + 1,
-                "Terminal window does not have enough vertical space to render UI."
-            );
-        }
+        ensure!(
+            (engine.size()?.1 as usize) >= panes.len() + 1,
+            "Terminal window does not have enough vertical space to render UI."
+        );
 
         engine.move_to(self.offset)?;
         engine.clear_from_cursor_down()?;
