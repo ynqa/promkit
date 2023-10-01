@@ -31,14 +31,12 @@ impl Terminal {
         engine.move_to(self.offset)?;
         engine.clear_from_cursor_down()?;
 
-        let mut start_height = self.offset.1 as usize;
+        let mut offset_per_pane = self.offset.1 as usize;
         let terminal_size = engine.size()?;
 
         for pane in panes {
-            // When the cursor is at top of terminal,
-            // we must consider the last scrolling up.
             let rows = pane
-                .extract(terminal_size.1 as usize - vec![start_height, 1].iter().max().unwrap());
+                .extract(terminal_size.1 as usize - offset_per_pane);
             for row in &rows {
                 engine.write(row)?;
             }
@@ -49,10 +47,10 @@ impl Terminal {
             if engine.is_bottom()? {
                 engine.scroll_up(1)?;
                 self.offset.1 = self.offset.1.saturating_sub(1);
-                start_height = start_height.saturating_sub(1);
+                offset_per_pane = offset_per_pane.saturating_sub(1);
             }
 
-            start_height += &rows.len();
+            offset_per_pane += &rows.len();
             engine.move_to_next_line()?;
         }
         Ok(())
