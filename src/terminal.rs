@@ -31,8 +31,7 @@ impl Terminal {
         let terminal_size = engine.size()?;
 
         for pane in panes {
-            let rows = pane
-                .extract(terminal_size.1 as usize - offset_per_pane);
+            let rows = pane.extract(terminal_size.1 as usize - offset_per_pane);
             for row in &rows {
                 engine.write(row)?;
             }
