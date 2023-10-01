@@ -27,6 +27,10 @@ impl<W: Write> Engine<W> {
         terminal::size()
     }
 
+    pub fn clear_from_cursor_down(&mut self) -> Result<(), std::io::Error> {
+        execute!(self.out, Clear(ClearType::FromCursorDown))
+    }
+
     pub fn clear(&mut self) -> Result<(), std::io::Error> {
         execute!(self.out, Clear(ClearType::All), MoveTo(0, 0))
     }
@@ -45,6 +49,10 @@ impl<W: Write> Engine<W> {
 
     pub fn scroll_up(&mut self, times: u16) -> Result<(), std::io::Error> {
         execute!(self.out, ScrollUp(times))
+    }
+
+    pub fn move_to_next_line(&mut self) -> Result<(), std::io::Error> {
+        execute!(self.out, cursor::MoveToNextLine(1))
     }
 }
 
