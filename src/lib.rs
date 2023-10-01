@@ -107,7 +107,7 @@ impl Prompt {
             &mut engine,
             self.editors
                 .iter()
-                .map(|editor| editor.gen_pane(size))
+                .map(|editor| editor.gen_pane(size.0))
                 .collect(),
         )?;
 
@@ -135,7 +135,7 @@ impl Prompt {
                         &mut engine,
                         self.editors
                             .iter()
-                            .map(|editor| editor.gen_pane(size))
+                            .map(|editor| editor.gen_pane(size.0))
                             .collect(),
                     )?;
                 }

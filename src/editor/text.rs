@@ -23,7 +23,7 @@ impl TextEditor {
 }
 
 impl Editor for TextEditor {
-    fn gen_pane(&self, size: (u16, u16)) -> Pane {
+    fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = vec![];
         buf.append(&mut self.label.clone());
         buf.append(&mut self.textbuffer.buf.clone());
@@ -35,18 +35,18 @@ impl Editor for TextEditor {
                 layout += g.width;
                 layout
             }) + ch.width;
-            if !row.is_empty() && (size.0 as usize) < width_with_next_char {
+            if !row.is_empty() && (width as usize) < width_with_next_char {
                 layout.push(row);
                 row = Graphemes::default();
             }
-            if (size.0 as usize) >= ch.width {
+            if (width as usize) >= ch.width {
                 row.push(ch.clone());
             }
         }
         layout.push(row);
         Pane {
             layout,
-            offset: self.textbuffer.position / size.0 as usize,
+            offset: self.textbuffer.position / width as usize,
         }
     }
 
@@ -110,5 +110,79 @@ impl Editor for TextEditor {
 
     fn to_string(&self) -> String {
         self.textbuffer.text().to_string()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    mod matrixify {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" a"),
+                Graphemes::from("aa"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                TextEditor {
+                    textbuffer: TextBuffer {
+                        buf: Graphemes::from("aaa "),
+                        position: 0,
+                    },
+                    label: Graphemes::from(">> "),
+                }
+                .gen_pane(2)
+                .layout,
+            );
+        }
+
+        #[test]
+        fn test_with_emoji() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" "),
+                Graphemes::from("😎"),
+                Graphemes::from("😎"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                TextEditor {
+                    textbuffer: TextBuffer {
+                        buf: Graphemes::from("😎😎 "),
+                        position: 0,
+                    },
+                    label: Graphemes::from(">> "),
+                }
+                .gen_pane(2)
+                .layout,
+            );
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            let expect = vec![
+                Graphemes::from(">"),
+                Graphemes::from(">"),
+                Graphemes::from(" "),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(
+                expect,
+                TextEditor {
+                    textbuffer: TextBuffer {
+                        buf: Graphemes::from("😎😎 "),
+                        position: 0,
+                    },
+                    label: Graphemes::from(">> "),
+                }
+                .gen_pane(1)
+                .layout,
+            );
+        }
     }
 }
