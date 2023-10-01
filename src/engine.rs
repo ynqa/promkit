@@ -46,10 +46,6 @@ impl<W: Write> Engine<W> {
     pub fn scroll_up(&mut self, times: u16) -> Result<(), std::io::Error> {
         execute!(self.out, ScrollUp(times))
     }
-
-    pub fn move_to_next_line(&mut self) -> Result<(), std::io::Error> {
-        execute!(self.out, cursor::MoveToNextLine(1))
-    }
 }
 
 #[cfg(test)]

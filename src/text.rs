@@ -23,8 +23,10 @@ impl TextBuffer {
         }
     }
 
-    pub fn text(&self) -> &Graphemes {
-        &self.buf
+    pub fn text(&self) -> Graphemes {
+        let mut ret = self.buf.clone();
+        ret.pop();
+        ret
     }
 
     fn is_head(&self) -> bool {
