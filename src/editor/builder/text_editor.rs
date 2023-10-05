@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{editor::text::TextEditor, grapheme::Graphemes, text::TextBuffer};
+use crate::{editor::text_editor::TextEditor, grapheme::Graphemes, text::TextBuffer};
 
 pub struct TextEditorBuilder {
     label: Graphemes,

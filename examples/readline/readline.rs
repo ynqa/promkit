@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use promkit::{editor::builder::text::TextEditorBuilder, Prompt};
+use promkit::{editor::TextEditorBuilder, Prompt};
 
 fn main() -> Result<()> {
     let mut p = Prompt::new(vec![
