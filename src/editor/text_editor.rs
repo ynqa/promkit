@@ -13,15 +13,6 @@ pub struct TextEditor {
     pub label: Graphemes,
 }
 
-impl TextEditor {
-    pub fn new() -> Self {
-        Self {
-            textbuffer: TextBuffer::new(),
-            label: Graphemes::from("❯❯ "),
-        }
-    }
-}
-
 impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = vec![];
