@@ -7,9 +7,9 @@ use promkit::{
 
 fn main() -> Result<()> {
     let mut p = Prompt::new(vec![
-        Box::new(TextBuilder::new("hello world").build()?),
-        Box::new(TextEditorBuilder::new().build()?),
-        Box::new(TextEditorBuilder::new().build()?),
+        TextBuilder::new("hello world").build()?,
+        TextEditorBuilder::new().build()?,
+        TextEditorBuilder::new().build()?,
     ]);
     loop {
         let line = p.run()?;

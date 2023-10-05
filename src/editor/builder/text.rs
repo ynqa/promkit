@@ -13,7 +13,7 @@ impl TextBuilder {
         }
     }
 
-    pub fn build(self) -> Result<Text> {
-        Ok(Text { text: self.text })
+    pub fn build(self) -> Result<Box<Text>> {
+        Ok(Box::new(Text { text: self.text }))
     }
 }

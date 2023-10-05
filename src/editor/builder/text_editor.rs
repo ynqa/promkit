@@ -18,10 +18,10 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn build(self) -> Result<TextEditor> {
-        Ok(TextEditor {
+    pub fn build(self) -> Result<Box<TextEditor>> {
+        Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::new(),
             label: self.label,
-        })
+        }))
     }
 }
