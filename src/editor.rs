@@ -1,7 +1,8 @@
 use crate::{crossterm::event::Event, pane::Pane};
 
 pub mod builder;
-pub use builder::text_editor::TextEditorBuilder;
+pub use builder::{text::TextBuilder, text_editor::TextEditorBuilder};
+mod text;
 mod text_editor;
 
 pub trait Editor {
