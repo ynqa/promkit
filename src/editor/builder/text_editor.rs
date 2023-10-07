@@ -9,12 +9,12 @@ pub struct TextEditorBuilder {
 impl TextEditorBuilder {
     pub fn new() -> Self {
         Self {
-            label: Graphemes::from("❯❯ "),
+            label: Graphemes::new("❯❯ "),
         }
     }
 
     pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
-        self.label = Graphemes::from(label);
+        self.label = Graphemes::new(label);
         self
     }
 

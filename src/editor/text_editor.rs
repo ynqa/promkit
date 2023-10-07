@@ -73,7 +73,7 @@ impl Editor for TextEditor {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.insert(Grapheme::from(*ch)),
+            }) => self.textbuffer.insert(Grapheme::new(*ch)),
 
             _ => [TextBuffer::new(), TextBuffer::new()],
         };
@@ -84,6 +84,6 @@ impl Editor for TextEditor {
     }
 
     fn to_string(&self) -> String {
-        self.textbuffer.text().to_string()
+        self.textbuffer.text().text()
     }
 }

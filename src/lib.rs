@@ -52,6 +52,7 @@ pub mod editor;
 mod engine;
 mod grapheme;
 mod pane;
+pub mod style;
 mod terminal;
 mod text_buffer;
 

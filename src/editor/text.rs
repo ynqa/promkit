@@ -23,6 +23,6 @@ impl Editor for Text {
     fn reset(&mut self) {}
 
     fn to_string(&self) -> String {
-        self.text.to_string()
+        self.text.text()
     }
 }

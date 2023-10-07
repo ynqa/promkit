@@ -36,7 +36,7 @@ impl<W: Write> Engine<W> {
     }
 
     pub fn write<D: fmt::Display>(&mut self, string: D) -> Result<(), std::io::Error> {
-        execute!(self.out, Print(format!("{}", string)))
+        execute!(self.out, Print(string))
     }
 
     pub fn move_to(&mut self, pos: (u16, u16)) -> Result<(), std::io::Error> {

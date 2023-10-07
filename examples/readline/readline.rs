@@ -1,13 +1,21 @@
 use anyhow::Result;
 
 use promkit::{
+    crossterm::style::Color,
     editor::{TextBuilder, TextEditorBuilder},
+    style::ContentStyleBuilder,
     Prompt,
 };
 
 fn main() -> Result<()> {
     let mut p = Prompt::new(vec![
-        TextBuilder::new("hello world").build()?,
+        TextBuilder::new("Type Here")
+            .style(
+                ContentStyleBuilder::new()
+                    .foreground_color(Color::Green)
+                    .build(),
+            )
+            .build()?,
         TextEditorBuilder::new().build()?,
         TextEditorBuilder::new().build()?,
         TextEditorBuilder::new().build()?,

@@ -38,19 +38,19 @@ mod test {
         #[test]
         fn test() {
             let expect = vec![
-                Graphemes::from("aa"),
-                Graphemes::from("bb"),
-                Graphemes::from("cc"),
+                Graphemes::new("aa"),
+                Graphemes::new("bb"),
+                Graphemes::new("cc"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::from("aa"),
-                        Graphemes::from("bb"),
-                        Graphemes::from("cc"),
-                        Graphemes::from("dd"),
-                        Graphemes::from("ee"),
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
                     ],
                     offset: 0,
                 }
@@ -61,21 +61,21 @@ mod test {
         #[test]
         fn test_to_try_with_size_beyond() {
             let expect = vec![
-                Graphemes::from("aa"),
-                Graphemes::from("bb"),
-                Graphemes::from("cc"),
-                Graphemes::from("dd"),
-                Graphemes::from("ee"),
+                Graphemes::new("aa"),
+                Graphemes::new("bb"),
+                Graphemes::new("cc"),
+                Graphemes::new("dd"),
+                Graphemes::new("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::from("aa"),
-                        Graphemes::from("bb"),
-                        Graphemes::from("cc"),
-                        Graphemes::from("dd"),
-                        Graphemes::from("ee"),
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
                     ],
                     offset: 0,
                 }

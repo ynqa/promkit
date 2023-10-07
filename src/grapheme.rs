@@ -14,25 +14,59 @@ use std::{
 use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
 
+use crate::crossterm::style::ContentStyle;
+
 /// A character and its width.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
-    pub ch: char,
-    pub width: usize,
+    ch: char,
+    width: usize,
+    style: ContentStyle,
 }
 
-impl From<char> for Grapheme {
-    fn from(c: char) -> Self {
+impl Grapheme {
+    pub fn new(ch: char) -> Self {
+        Grapheme::new_with_style(ch, ContentStyle::new())
+    }
+
+    pub fn new_with_style(ch: char, style: ContentStyle) -> Self {
         Self {
-            ch: c,
-            width: UnicodeWidthChar::width(c).unwrap_or(0),
+            ch,
+            width: UnicodeWidthChar::width(ch).unwrap_or(0),
+            style,
         }
+    }
+}
+
+impl fmt::Display for Grapheme {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.style.apply(self.ch),)
     }
 }
 
 /// Characters and their width.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
+
+impl Graphemes {
+    pub fn new<S: AsRef<str>>(string: S) -> Self {
+        Graphemes::new_with_style(string, ContentStyle::new())
+    }
+
+    pub fn new_with_style<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
+        string
+            .as_ref()
+            .chars()
+            .map(|ch| Grapheme::new_with_style(ch, style))
+            .collect()
+    }
+
+    pub fn text(&self) -> String {
+        self.iter().fold(String::new(), |agg, grapheme| {
+            format!("{}{}", agg, grapheme.ch)
+        })
+    }
+}
 
 impl Deref for Graphemes {
     type Target = Vec<Grapheme>;
@@ -44,12 +78,6 @@ impl Deref for Graphemes {
 impl DerefMut for Graphemes {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
-    }
-}
-
-impl<S: AsRef<str>> From<S> for Graphemes {
-    fn from(string: S) -> Self {
-        string.as_ref().chars().map(Grapheme::from).collect()
     }
 }
 
@@ -71,12 +99,10 @@ impl FromIterator<Grapheme> for Graphemes {
 
 impl fmt::Display for Graphemes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.iter()
-                .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
-        )
+        for ch in self.iter() {
+            write!(f, "{}", ch,)?;
+        }
+        Ok(())
     }
 }
 
@@ -108,35 +134,35 @@ mod test {
         #[test]
         fn test() {
             let expect = vec![
-                Graphemes::from(">>"),
-                Graphemes::from(" a"),
-                Graphemes::from("aa"),
-                Graphemes::from(" "),
+                Graphemes::new(">>"),
+                Graphemes::new(" a"),
+                Graphemes::new("aa"),
+                Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(2, Graphemes::from(">> aaa ")),);
+            assert_eq!(expect, matrixify(2, Graphemes::new(">> aaa ")),);
         }
 
         #[test]
         fn test_with_emoji() {
             let expect = vec![
-                Graphemes::from(">>"),
-                Graphemes::from(" "),
-                Graphemes::from("😎"),
-                Graphemes::from("😎"),
-                Graphemes::from(" "),
+                Graphemes::new(">>"),
+                Graphemes::new(" "),
+                Graphemes::new("😎"),
+                Graphemes::new("😎"),
+                Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(2, Graphemes::from(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(2, Graphemes::new(">> 😎😎 ")),);
         }
 
         #[test]
         fn test_with_emoji_at_narrow_terminal() {
             let expect = vec![
-                Graphemes::from(">"),
-                Graphemes::from(">"),
-                Graphemes::from(" "),
-                Graphemes::from(" "),
+                Graphemes::new(">"),
+                Graphemes::new(">"),
+                Graphemes::new(" "),
+                Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(1, Graphemes::from(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(1, Graphemes::new(">> 😎😎 ")),);
         }
     }
 }
