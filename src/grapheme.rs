@@ -38,12 +38,6 @@ impl Grapheme {
     }
 }
 
-impl fmt::Display for Grapheme {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.style.apply(self.ch),)
-    }
-}
-
 /// Characters and their width.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
@@ -61,7 +55,11 @@ impl Graphemes {
             .collect()
     }
 
-    pub fn text(&self) -> String {
+    pub fn display<'a>(&'a self) -> StyledGraphemesDisplay<'a> {
+        StyledGraphemesDisplay { graphemes: self }
+    }
+
+    pub fn to_string(&self) -> String {
         self.iter().fold(String::new(), |agg, grapheme| {
             format!("{}{}", agg, grapheme.ch)
         })
@@ -97,10 +95,14 @@ impl FromIterator<Grapheme> for Graphemes {
     }
 }
 
-impl fmt::Display for Graphemes {
+pub struct StyledGraphemesDisplay<'a> {
+    graphemes: &'a Graphemes,
+}
+
+impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for ch in self.iter() {
-            write!(f, "{}", ch,)?;
+        for grapheme in self.graphemes.iter() {
+            write!(f, "{}", grapheme.style.apply(grapheme.ch))?;
         }
         Ok(())
     }

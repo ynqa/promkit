@@ -84,6 +84,6 @@ impl Editor for TextEditor {
     }
 
     fn to_string(&self) -> String {
-        self.textbuffer.text().text()
+        self.textbuffer.text().to_string()
     }
 }

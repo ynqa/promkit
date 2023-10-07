@@ -40,7 +40,7 @@ impl Terminal {
             );
             used += rows.len();
             for row in &rows {
-                engine.write(row)?;
+                engine.write(row.display())?;
 
                 // Note that the last line is not utilized.
                 // The cursor is positioned at the zero point on the last line
