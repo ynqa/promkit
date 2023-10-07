@@ -8,7 +8,7 @@ use crate::{
 use super::Editor;
 
 pub struct TextEditor {
-    pub(crate) textbuffer: TextBuffer,
+    pub textbuffer: TextBuffer,
 
     pub label: Graphemes,
 }
