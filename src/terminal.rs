@@ -27,11 +27,11 @@ impl Terminal {
         engine.move_to(self.position)?;
         engine.clear_from_cursor_down()?;
 
-        let mut offset_per_pane = self.position.1 as usize;
-        let terminal_size = engine.size()?;
+        let mut used = 0;
 
         for pane in &panes {
-            let rows = pane.extract(terminal_size.1 as usize - offset_per_pane);
+            let rows = pane.extract(engine.size()?.1 as usize - used);
+            used += rows.len();
             for row in &rows {
                 engine.write(row)?;
 
@@ -41,12 +41,9 @@ impl Terminal {
                 if engine.is_bottom()? && self.position.1 != 0 {
                     engine.scroll_up(1)?;
                     self.position.1 -= 1;
-                    offset_per_pane -= 1;
                 }
+                engine.move_to_next_line()?;
             }
-
-            offset_per_pane += &rows.len();
-            engine.move_to_next_line()?;
         }
         Ok(())
     }

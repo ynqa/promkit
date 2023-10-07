@@ -53,5 +53,30 @@ mod test {
                 .extract(3)
             );
         }
+
+        #[test]
+        fn test2() {
+            let expect = vec![
+                Graphemes::from("aa"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
+                Graphemes::from("dd"),
+                Graphemes::from("ee"),
+            ];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
+                    ],
+                    offset: 0,
+                }
+                .extract(10)
+            );
+        }
     }
 }
