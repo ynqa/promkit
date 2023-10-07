@@ -31,7 +31,13 @@ impl Terminal {
         let mut used = 0;
 
         for pane in &panes {
-            let rows = pane.extract(terminal_height - used);
+            let rows = pane.extract(
+                1.max(
+                    terminal_height
+                        // -1 in this context signifies the exclusion of the current pane.
+                        .saturating_sub(used + panes.len() - 1),
+                ),
+            );
             used += rows.len();
             for row in &rows {
                 engine.write(row)?;
