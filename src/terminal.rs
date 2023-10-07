@@ -38,10 +38,10 @@ impl Terminal {
                 // Note that the last line is not utilized.
                 // The cursor is positioned at the zero point on the last line
                 // after writing a row when the cursor is at the bottom.
-                if engine.is_bottom()? {
+                if engine.is_bottom()? && self.position.1 != 0 {
                     engine.scroll_up(1)?;
-                    self.position.1 = self.position.1.saturating_sub(1);
-                    offset_per_pane = offset_per_pane.saturating_sub(1);
+                    self.position.1 -= 1;
+                    offset_per_pane -= 1;
                 }
             }
 
