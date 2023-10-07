@@ -1,11 +1,15 @@
 use crate::grapheme::Graphemes;
 
 pub struct Pane {
-    pub layout: Vec<Graphemes>,
-    pub offset: usize,
+    layout: Vec<Graphemes>,
+    offset: usize,
 }
 
 impl Pane {
+    pub fn new(layout: Vec<Graphemes>, offset: usize) -> Self {
+        Pane { layout, offset }
+    }
+
     pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
         if self.layout.len() <= viewport_height {
             return self.layout.clone();
@@ -55,7 +59,7 @@ mod test {
         }
 
         #[test]
-        fn test2() {
+        fn test_to_try_with_size_beyond() {
             let expect = vec![
                 Graphemes::from("aa"),
                 Graphemes::from("bb"),

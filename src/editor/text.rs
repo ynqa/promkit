@@ -15,10 +15,7 @@ impl Editor for Text {
         let mut buf = Graphemes::default();
         buf.append(&mut self.text.clone());
 
-        Pane {
-            layout: matrixify(width as usize, buf),
-            offset: 0,
-        }
+        Pane::new(matrixify(width as usize, buf), 0)
     }
 
     fn handle_event(&mut self, _event: &Event) {}

@@ -19,10 +19,10 @@ impl Editor for TextEditor {
         buf.append(&mut self.label.clone());
         buf.append(&mut self.textbuffer.buf.clone());
 
-        Pane {
-            layout: matrixify(width as usize, buf),
-            offset: self.textbuffer.position / width as usize,
-        }
+        Pane::new(
+            matrixify(width as usize, buf),
+            self.textbuffer.position / width as usize,
+        )
     }
 
     fn handle_event(&mut self, event: &Event) {
