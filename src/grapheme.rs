@@ -79,3 +79,64 @@ impl fmt::Display for Graphemes {
         )
     }
 }
+
+pub fn matrixify(width: usize, g: Graphemes) -> Vec<Graphemes> {
+    let mut ret = vec![];
+    let mut row = Graphemes::default();
+    for ch in g.iter() {
+        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+            layout += g.width;
+            layout
+        }) + ch.width;
+        if !row.is_empty() && (width as usize) < width_with_next_char {
+            ret.push(row);
+            row = Graphemes::default();
+        }
+        if (width as usize) >= ch.width {
+            row.push(ch.clone());
+        }
+    }
+    ret.push(row);
+    ret
+}
+
+#[cfg(test)]
+mod test {
+    mod matrixify {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" a"),
+                Graphemes::from("aa"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(expect, matrixify(2, Graphemes::from(">> aaa ")),);
+        }
+
+        #[test]
+        fn test_with_emoji() {
+            let expect = vec![
+                Graphemes::from(">>"),
+                Graphemes::from(" "),
+                Graphemes::from("😎"),
+                Graphemes::from("😎"),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(expect, matrixify(2, Graphemes::from(">> 😎😎 ")),);
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            let expect = vec![
+                Graphemes::from(">"),
+                Graphemes::from(">"),
+                Graphemes::from(" "),
+                Graphemes::from(" "),
+            ];
+            assert_eq!(expect, matrixify(1, Graphemes::from(">> 😎😎 ")),);
+        }
+    }
+}

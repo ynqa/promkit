@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{editor::text::Text, grapheme::Graphemes, crossterm::style::ContentStyle};
+use crate::{crossterm::style::ContentStyle, editor::text::Text, grapheme::Graphemes};
 
 pub struct TextBuilder {
     text: Graphemes,
