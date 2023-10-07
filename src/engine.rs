@@ -6,7 +6,7 @@ use crate::crossterm::{
     cursor::{self, MoveTo},
     execute,
     style::Print,
-    terminal::{self, Clear, ClearType, ScrollUp},
+    terminal::{self, Clear, ClearType, ScrollDown, ScrollUp},
 };
 
 #[derive(Clone)]
@@ -49,6 +49,10 @@ impl<W: Write> Engine<W> {
 
     pub fn scroll_up(&mut self, times: u16) -> Result<(), std::io::Error> {
         execute!(self.out, ScrollUp(times))
+    }
+
+    pub fn scroll_down(&mut self, times: u16) -> Result<(), std::io::Error> {
+        execute!(self.out, ScrollDown(times))
     }
 
     pub fn move_to_next_line(&mut self) -> Result<(), std::io::Error> {

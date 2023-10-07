@@ -10,6 +10,8 @@ fn main() -> Result<()> {
         TextBuilder::new("hello world").build()?,
         TextEditorBuilder::new().build()?,
         TextEditorBuilder::new().build()?,
+        TextEditorBuilder::new().build()?,
+        TextEditorBuilder::new().build()?,
     ]);
     loop {
         let line = p.run()?;

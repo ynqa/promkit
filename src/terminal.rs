@@ -30,19 +30,19 @@ impl Terminal {
         let mut offset_per_pane = self.position.1 as usize;
         let terminal_size = engine.size()?;
 
-        for pane in panes {
+        for pane in &panes {
             let rows = pane.extract(terminal_size.1 as usize - offset_per_pane);
             for row in &rows {
                 engine.write(row)?;
-            }
 
-            // Note that the last line is not utilized.
-            // The cursor is positioned at the zero point on the last line
-            // after writing a row when the cursor is at the bottom.
-            if engine.is_bottom()? {
-                engine.scroll_up(1)?;
-                self.position.1 = self.position.1.saturating_sub(1);
-                offset_per_pane = offset_per_pane.saturating_sub(1);
+                // Note that the last line is not utilized.
+                // The cursor is positioned at the zero point on the last line
+                // after writing a row when the cursor is at the bottom.
+                if engine.is_bottom()? {
+                    engine.scroll_up(1)?;
+                    self.position.1 = self.position.1.saturating_sub(1);
+                    offset_per_pane = offset_per_pane.saturating_sub(1);
+                }
             }
 
             offset_per_pane += &rows.len();
