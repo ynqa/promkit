@@ -53,7 +53,7 @@ mod engine;
 mod grapheme;
 mod pane;
 mod terminal;
-mod text;
+mod text_buffer;
 
 use std::io;
 use std::sync::Once;

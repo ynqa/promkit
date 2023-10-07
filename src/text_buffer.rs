@@ -3,7 +3,7 @@ use std::fmt;
 use crate::grapheme::{Grapheme, Graphemes};
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) struct TextBuffer {
+pub struct TextBuffer {
     pub buf: Graphemes,
     pub position: usize,
 }

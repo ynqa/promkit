@@ -2,7 +2,7 @@ use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     grapheme::{matrixify, Grapheme, Graphemes},
     pane::Pane,
-    text::TextBuffer,
+    text_buffer::TextBuffer,
 };
 
 use super::Editor;
