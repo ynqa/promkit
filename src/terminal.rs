@@ -6,13 +6,13 @@ use crate::{engine::Engine, pane::Pane};
 
 // Session
 pub struct Terminal {
-    offset: (u16, u16),
+    position: (u16, u16),
 }
 
 impl Terminal {
     pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
         Ok(Self {
-            offset: engine.position()?,
+            position: engine.position()?,
         })
     }
 
@@ -24,10 +24,10 @@ impl Terminal {
             "Terminal window does not have enough vertical space to render UI."
         );
 
-        engine.move_to(self.offset)?;
+        engine.move_to(self.position)?;
         engine.clear_from_cursor_down()?;
 
-        let mut offset_per_pane = self.offset.1 as usize;
+        let mut offset_per_pane = self.position.1 as usize;
         let terminal_size = engine.size()?;
 
         for pane in panes {
@@ -41,7 +41,7 @@ impl Terminal {
             // after writing a row when the cursor is at the bottom.
             if engine.is_bottom()? {
                 engine.scroll_up(1)?;
-                self.offset.1 = self.offset.1.saturating_sub(1);
+                self.position.1 = self.position.1.saturating_sub(1);
                 offset_per_pane = offset_per_pane.saturating_sub(1);
             }
 
