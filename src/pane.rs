@@ -25,3 +25,33 @@ impl Pane {
             .collect::<Vec<_>>();
     }
 }
+
+#[cfg(test)]
+mod test {
+    mod extract {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let expect = vec![
+                Graphemes::from("aa"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
+            ];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
+                    ],
+                    offset: 0,
+                }
+                .extract(3)
+            );
+        }
+    }
+}
