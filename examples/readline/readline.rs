@@ -38,8 +38,14 @@ fn main() -> Result<()> {
             .suggest(Suggest::from_iter(["promkit", "ynqa"]))
             .build()?,
         TextEditorBuilder::default().mode(Mode::Overwrite).build()?,
-        TextEditorBuilder::default().build()?,
-        TextEditorBuilder::default().build()?,
+        TextEditorBuilder::default()
+            .mask('*')
+            .cursor_style(
+                ContentStyleBuilder::new()
+                    .background_color(Color::Blue)
+                    .build(),
+            )
+            .build()?,
     ]);
     loop {
         let line = p.run()?;

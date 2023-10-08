@@ -1,8 +1,5 @@
-use std::fmt;
-
 use crate::{crossterm::style::ContentStyle, grapheme::Graphemes};
 
-#[derive(Clone, Debug, PartialEq)]
 pub struct TextBuffer {
     buf: String,
     pub position: usize,
@@ -18,17 +15,24 @@ impl Default for TextBuffer {
     }
 }
 
-impl fmt::Display for TextBuffer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl TextBuffer {
+    pub fn to_string_without_cursor(&self) -> String {
         let mut ret = self.buf.clone();
         ret.pop();
-        write!(f, "{}", ret)
+        ret
     }
-}
 
-impl TextBuffer {
-    pub fn graphemes(&self, base: ContentStyle, cursor: ContentStyle) -> Graphemes {
-        Graphemes::new_with_style(&self.buf, base).stylize(self.position, cursor)
+    pub fn graphemes(
+        &self,
+        base: ContentStyle,
+        cursor: ContentStyle,
+        mask: Option<char>,
+    ) -> Graphemes {
+        let text = match mask {
+            Some(mask) => self.buf.chars().map(|_| mask).collect(),
+            None => self.buf.clone(),
+        };
+        Graphemes::new_with_style(text, base).stylize(self.position, cursor)
     }
 
     fn is_head(&self) -> bool {

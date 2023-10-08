@@ -30,6 +30,7 @@ pub struct TextEditor {
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
     pub mode: Mode,
+    pub mask: Option<char>,
 }
 
 impl Editor for TextEditor {
@@ -39,7 +40,11 @@ impl Editor for TextEditor {
             &self.label,
             self.label_style,
         ));
-        buf.append(&mut self.textbuffer.graphemes(self.style, self.cursor_style));
+        buf.append(
+            &mut self
+                .textbuffer
+                .graphemes(self.style, self.cursor_style, self.mask),
+        );
 
         Pane::new(
             matrixify(width as usize, buf),
@@ -72,7 +77,8 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => {
                 // Insert the result to history.
-                self.history.insert(self.textbuffer.to_string())
+                self.history
+                    .insert(self.textbuffer.to_string_without_cursor())
             }
 
             // Move cursor.
@@ -144,7 +150,10 @@ impl Editor for TextEditor {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if let Some(new) = self.suggest.search(self.textbuffer.to_string()) {
+                if let Some(new) = self
+                    .suggest
+                    .search(self.textbuffer.to_string_without_cursor())
+                {
                     self.textbuffer.replace(new)
                 }
             }
@@ -175,6 +184,6 @@ impl Editor for TextEditor {
     }
 
     fn output(&self) -> String {
-        self.textbuffer.to_string()
+        self.textbuffer.to_string_without_cursor()
     }
 }
