@@ -47,10 +47,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut s = Suggest::default();
-            s.insert("abc");
-            s.insert("abd");
-            s.insert("abxyz");
+            let s = Suggest::from_iter(["abc", "abd", "abxyz"]);
             assert_eq!(s.search(""), Some("abc"));
             assert_eq!(s.search("x"), None);
             assert_eq!(s.search("a"), Some("abc"));
