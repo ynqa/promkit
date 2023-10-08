@@ -69,18 +69,6 @@ impl Editor for TextEditor {
     /// | <kbd> TAB </kbd>       | Perform tab completion by searching for suggestions
     fn handle_event(&mut self, event: &Event) {
         match event {
-            // Before finishing on enter event.
-            Event::Key(KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                // Insert the result to history.
-                self.history
-                    .insert(self.textbuffer.to_string_without_cursor())
-            }
-
             // Move cursor.
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
@@ -179,7 +167,9 @@ impl Editor for TextEditor {
         };
     }
 
-    fn reset(&mut self) {
+    fn postrun(&mut self) {
+        self.history
+            .insert(self.textbuffer.to_string_without_cursor());
         self.textbuffer = TextBuffer::default();
     }
 

@@ -24,7 +24,7 @@ impl Editor for Text {
 
     fn handle_event(&mut self, _event: &Event) {}
 
-    fn reset(&mut self) {}
+    fn postrun(&mut self) {}
 
     fn output(&self) -> String {
         self.text.to_string()

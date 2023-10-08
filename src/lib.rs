@@ -148,7 +148,7 @@ impl Prompt {
 
         let ret = self.editors.iter().map(|editor| editor.output()).collect();
         self.editors.iter_mut().for_each(|editor| {
-            editor.reset();
+            editor.postrun();
         });
         Ok(ret)
     }

@@ -9,6 +9,6 @@ pub use text_editor::Mode;
 pub trait Editor {
     fn gen_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
-    fn reset(&mut self);
+    fn postrun(&mut self);
     fn output(&self) -> String;
 }
