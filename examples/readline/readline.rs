@@ -16,7 +16,7 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        TextEditorBuilder::new()
+        TextEditorBuilder::default()
             .style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::DarkYellow)
@@ -33,9 +33,9 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        TextEditorBuilder::new().build()?,
-        TextEditorBuilder::new().build()?,
-        TextEditorBuilder::new().build()?,
+        TextEditorBuilder::default().build()?,
+        TextEditorBuilder::default().build()?,
+        TextEditorBuilder::default().build()?,
     ]);
     loop {
         let line = p.run()?;

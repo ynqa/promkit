@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{crossterm::style::ContentStyle, grapheme::Graphemes};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -6,28 +8,27 @@ pub struct TextBuffer {
     pub position: usize,
 }
 
-impl TextBuffer {
-    pub fn new() -> Self {
+impl Default for TextBuffer {
+    fn default() -> Self {
         Self {
             // Set cursor
             buf: String::from(" "),
             position: 0,
         }
     }
+}
 
-    // fn triplet(&self) -> [String; 3] {
-    // }
-
-    pub fn graphemes(&self, base: ContentStyle, cursor: ContentStyle) -> Graphemes {
-        let ret =
-            Graphemes::new_with_style(self.buf.to_string(), base).stylize(self.position, cursor);
-        ret
-    }
-
-    pub fn text(&self) -> String {
+impl fmt::Display for TextBuffer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = self.buf.clone();
         ret.pop();
-        ret
+        write!(f, "{}", ret)
+    }
+}
+
+impl TextBuffer {
+    pub fn graphemes(&self, base: ContentStyle, cursor: ContentStyle) -> Graphemes {
+        Graphemes::new_with_style(&self.buf, base).stylize(self.position, cursor)
     }
 
     fn is_head(&self) -> bool {
@@ -38,15 +39,15 @@ impl TextBuffer {
         self.position == self.buf.len() - 1
     }
 
-    fn replace(&mut self, new: &String) {
-        self.buf = new.clone();
+    pub fn replace(&mut self, new: &str) {
+        self.buf = new.to_owned();
         self.buf.push(' ');
-        self.to_tail();
+        self.move_to_tail();
     }
 
     pub fn insert(&mut self, ch: char) -> [Self; 2] {
         let prev = self.clone();
-        self.buf.insert(self.position as usize, ch);
+        self.buf.insert(self.position, ch);
         self.next();
         [prev, self.clone()]
     }
@@ -56,10 +57,8 @@ impl TextBuffer {
         if self.is_tail() {
             self.insert(ch)
         } else {
-            self.buf.replace_range(
-                self.position as usize..(self.position + 1) as usize,
-                &ch.to_string(),
-            );
+            self.buf
+                .replace_range(self.position..self.position + 1, &ch.to_string());
             self.next();
             [prev, self.clone()]
         }
@@ -69,19 +68,18 @@ impl TextBuffer {
         let prev = self.clone();
         if !self.is_head() {
             self.prev();
-            self.buf
-                .drain(self.position as usize..(self.position + 1) as usize);
+            self.buf.drain(self.position..self.position + 1);
         }
         [prev, self.clone()]
     }
 
-    pub fn to_head(&mut self) -> [Self; 2] {
+    pub fn move_to_head(&mut self) -> [Self; 2] {
         let prev = self.clone();
         self.position = 0;
         [prev, self.clone()]
     }
 
-    pub fn to_tail(&mut self) -> [Self; 2] {
+    pub fn move_to_tail(&mut self) -> [Self; 2] {
         let prev = self.clone();
         self.position = self.buf.len() - 1;
         [prev, self.clone()]
@@ -111,7 +109,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = TextBuffer::new();
+            let txt = TextBuffer::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
@@ -166,7 +164,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = TextBuffer::new();
+            let mut txt = TextBuffer::default();
             let old = txt.clone();
             let new = TextBuffer {
                 buf: String::from("d "),
@@ -235,7 +233,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = TextBuffer::new();
+            let mut txt = TextBuffer::default();
             let old = txt.clone();
             let new = TextBuffer {
                 buf: String::from("d "),
@@ -304,7 +302,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = TextBuffer::new();
+            let txt = TextBuffer::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
@@ -359,7 +357,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = TextBuffer::new();
+            let txt = TextBuffer::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
@@ -414,7 +412,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = TextBuffer::new();
+            let txt = TextBuffer::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
@@ -430,7 +428,7 @@ mod test {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let diff = txt.to_head();
+            let diff = txt.move_to_head();
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -447,7 +445,7 @@ mod test {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let diff = txt.to_head();
+            let diff = txt.move_to_head();
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -469,7 +467,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = TextBuffer::new();
+            let txt = TextBuffer::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
@@ -485,7 +483,7 @@ mod test {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let diff = txt.to_tail();
+            let diff = txt.move_to_tail();
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -512,7 +510,7 @@ mod test {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let diff = txt.to_tail();
+            let diff = txt.move_to_tail();
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);

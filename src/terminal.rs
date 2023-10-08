@@ -18,10 +18,8 @@ impl Terminal {
 
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
         let terminal_height = engine.size()?.1 as usize;
-        // Ensure that there is at least one additional line of space available
-        // below the last pane for UI rendering purposes.
         ensure!(
-            terminal_height >= panes.len() + 1,
+            terminal_height > panes.len(),
             "Terminal window does not have enough vertical space to render UI."
         );
 
@@ -40,7 +38,7 @@ impl Terminal {
             );
             used += rows.len();
             for row in &rows {
-                engine.write(row.display())?;
+                engine.write(row.styled_display())?;
 
                 // Note that the last line is not utilized.
                 // The cursor is positioned at the zero point on the last line

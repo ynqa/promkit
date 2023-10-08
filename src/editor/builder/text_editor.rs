@@ -12,8 +12,8 @@ pub struct TextEditorBuilder {
     label_style: ContentStyle,
 }
 
-impl TextEditorBuilder {
-    pub fn new() -> Self {
+impl Default for TextEditorBuilder {
+    fn default() -> Self {
         Self {
             label: String::from("❯❯ "),
             style: ContentStyle::new(),
@@ -21,7 +21,9 @@ impl TextEditorBuilder {
             label_style: ContentStyle::new(),
         }
     }
+}
 
+impl TextEditorBuilder {
     pub fn style(mut self, style: ContentStyle) -> Self {
         self.style = style;
         self
@@ -44,7 +46,7 @@ impl TextEditorBuilder {
 
     pub fn build(self) -> Result<Box<TextEditor>> {
         Ok(Box::new(TextEditor {
-            textbuffer: TextBuffer::new(),
+            textbuffer: TextBuffer::default(),
             style: self.style,
             cursor_style: self.cursor_style,
             label: Graphemes::new_with_style(self.label, self.label_style),

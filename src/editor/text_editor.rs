@@ -50,13 +50,13 @@ impl Editor for TextEditor {
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.to_head(),
+            }) => self.textbuffer.move_to_head(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.to_tail(),
+            }) => self.textbuffer.move_to_tail(),
 
             // Erase char.
             Event::Key(KeyEvent {
@@ -80,15 +80,15 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => self.textbuffer.insert(*ch),
 
-            _ => [TextBuffer::new(), TextBuffer::new()],
+            _ => [TextBuffer::default(), TextBuffer::default()],
         };
     }
 
     fn reset(&mut self) {
-        self.textbuffer = TextBuffer::new();
+        self.textbuffer = TextBuffer::default();
     }
 
     fn to_string(&self) -> String {
-        self.textbuffer.text().to_string()
+        self.textbuffer.to_string()
     }
 }

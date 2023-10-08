@@ -11,7 +11,6 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
 
 use crate::crossterm::style::ContentStyle;
@@ -42,6 +41,18 @@ impl Grapheme {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
 
+impl fmt::Display for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.iter().fold(String::new(), |agg, grapheme| {
+                format!("{}{}", agg, grapheme.ch)
+            })
+        )
+    }
+}
+
 impl Graphemes {
     pub fn new<S: AsRef<str>>(string: S) -> Self {
         Graphemes::new_with_style(string, ContentStyle::new())
@@ -56,21 +67,15 @@ impl Graphemes {
     }
 
     pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
-        self.get_mut(idx).and_then(|grapheme| {
+        self.get_mut(idx).map(|grapheme| {
             grapheme.style = style;
-            Some(grapheme)
+            grapheme
         });
         self
     }
 
-    pub fn display<'a>(&'a self) -> StyledGraphemesDisplay<'a> {
+    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
         StyledGraphemesDisplay { graphemes: self }
-    }
-
-    pub fn to_string(&self) -> String {
-        self.iter().fold(String::new(), |agg, grapheme| {
-            format!("{}{}", agg, grapheme.ch)
-        })
     }
 }
 
@@ -84,12 +89,6 @@ impl Deref for Graphemes {
 impl DerefMut for Graphemes {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
-    }
-}
-
-impl TrieKey for Graphemes {
-    fn encode_bytes(&self) -> Vec<u8> {
-        self.to_string().as_bytes().to_vec()
     }
 }
 
@@ -124,11 +123,11 @@ pub fn matrixify(width: usize, g: Graphemes) -> Vec<Graphemes> {
             layout += g.width;
             layout
         }) + ch.width;
-        if !row.is_empty() && (width as usize) < width_with_next_char {
+        if !row.is_empty() && width < width_with_next_char {
             ret.push(row);
             row = Graphemes::default();
         }
-        if (width as usize) >= ch.width {
+        if width >= ch.width {
             row.push(ch.clone());
         }
     }
