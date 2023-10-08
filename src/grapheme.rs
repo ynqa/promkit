@@ -123,6 +123,23 @@ pub fn matrixify(width: usize, g: Graphemes) -> Vec<Graphemes> {
     ret
 }
 
+pub fn trim(width: usize, g: Graphemes) -> Graphemes {
+    let mut row = Graphemes::default();
+    for ch in g.iter() {
+        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+            layout += g.width;
+            layout
+        }) + ch.width;
+        if width < width_with_next_char {
+            break;
+        }
+        if width >= ch.width {
+            row.push(ch.clone());
+        }
+    }
+    row
+}
+
 #[cfg(test)]
 mod test {
     mod matrixify {
@@ -160,6 +177,25 @@ mod test {
                 Graphemes::new(" "),
             ];
             assert_eq!(expect, matrixify(1, Graphemes::new(">> 😎😎 ")),);
+        }
+    }
+
+    mod trim {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            assert_eq!(Graphemes::new(">> a"), trim(4, Graphemes::new(">> aaa ")));
+        }
+
+        #[test]
+        fn test_with_emoji() {
+            assert_eq!(Graphemes::new("😎"), trim(2, Graphemes::new("😎")));
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            assert_eq!(Graphemes::new(""), trim(1, Graphemes::new("😎")));
         }
     }
 }
