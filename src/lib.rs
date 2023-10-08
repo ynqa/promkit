@@ -53,6 +53,7 @@ mod engine;
 mod grapheme;
 mod pane;
 pub mod style;
+pub mod suggest;
 mod terminal;
 mod text_buffer;
 
