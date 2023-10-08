@@ -22,6 +22,14 @@ impl TextBuffer {
         ret
     }
 
+    fn masking(&self, mask: char) -> String {
+        self.buf
+            .chars()
+            .enumerate()
+            .map(|(i, c)| if i == self.buf.len() - 1 { c } else { mask })
+            .collect::<String>()
+    }
+
     pub fn graphemes(
         &self,
         base: ContentStyle,
@@ -29,7 +37,7 @@ impl TextBuffer {
         mask: Option<char>,
     ) -> Graphemes {
         let text = match mask {
-            Some(mask) => self.buf.chars().map(|_| mask).collect(),
+            Some(mask) => self.masking(mask),
             None => self.buf.clone(),
         };
         Graphemes::new_with_style(text, base).stylize(self.position, cursor)
@@ -98,6 +106,19 @@ impl TextBuffer {
 
 #[cfg(test)]
 mod test {
+    mod masking {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let txt = TextBuffer {
+                buf: String::from("abcde "),
+                position: 0,
+            };
+            assert_eq!("***** ", txt.masking('*'))
+        }
+    }
+
     mod erase {
         use super::super::*;
 
