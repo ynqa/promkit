@@ -1,10 +1,12 @@
 use anyhow::Result;
 
 use crate::{
-    crossterm::style::ContentStyle, editor::text_editor::TextEditor, text_buffer::TextBuffer,
+    crossterm::style::ContentStyle, editor::text_editor::TextEditor, suggest::Suggest,
+    text_buffer::TextBuffer,
 };
 
 pub struct TextEditorBuilder {
+    suggest: Suggest,
     label: String,
     label_style: ContentStyle,
     style: ContentStyle,
@@ -14,6 +16,7 @@ pub struct TextEditorBuilder {
 impl Default for TextEditorBuilder {
     fn default() -> Self {
         Self {
+            suggest: Suggest::default(),
             label: String::from("❯❯ "),
             label_style: ContentStyle::new(),
             style: ContentStyle::new(),
@@ -23,6 +26,11 @@ impl Default for TextEditorBuilder {
 }
 
 impl TextEditorBuilder {
+    pub fn suggest(mut self, suggest: Suggest) -> Self {
+        self.suggest = suggest;
+        self
+    }
+
     pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
         self.label = label.as_ref().to_string();
         self
@@ -46,6 +54,7 @@ impl TextEditorBuilder {
     pub fn build(self) -> Result<Box<TextEditor>> {
         Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::default(),
+            suggest: self.suggest,
             label: self.label,
             label_style: self.label_style,
             style: self.style,

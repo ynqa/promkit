@@ -5,6 +5,7 @@ use crate::{
     },
     grapheme::{matrixify, Graphemes},
     pane::Pane,
+    suggest::Suggest,
     text_buffer::TextBuffer,
 };
 
@@ -12,6 +13,7 @@ use super::Editor;
 
 pub struct TextEditor {
     pub textbuffer: TextBuffer,
+    pub suggest: Suggest,
 
     pub label: String,
     pub label_style: ContentStyle,
@@ -69,6 +71,19 @@ impl Editor for TextEditor {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => self.textbuffer.erase(),
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Tab,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => {
+                if let Some(new) = self.suggest.search(self.textbuffer.to_string()) {
+                    self.textbuffer.replace(new)
+                } else {
+                    [TextBuffer::default(), TextBuffer::default()]
+                }
+            }
 
             // Input char.
             Event::Key(KeyEvent {

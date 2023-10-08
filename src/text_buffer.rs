@@ -39,10 +39,12 @@ impl TextBuffer {
         self.position == self.buf.len() - 1
     }
 
-    pub fn replace(&mut self, new: &str) {
+    pub fn replace(&mut self, new: &str) -> [Self; 2] {
+        let prev = self.clone();
         self.buf = new.to_owned();
         self.buf.push(' ');
         self.move_to_tail();
+        [prev, self.clone()]
     }
 
     pub fn insert(&mut self, ch: char) -> [Self; 2] {
