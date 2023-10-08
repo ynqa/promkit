@@ -13,15 +13,19 @@ use super::Editor;
 pub struct TextEditor {
     pub textbuffer: TextBuffer,
 
+    pub label: String,
+    pub label_style: ContentStyle,
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
-    pub label: Graphemes,
 }
 
 impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
-        buf.append(&mut self.label.clone());
+        buf.append(&mut Graphemes::new_with_style(
+            &self.label,
+            self.label_style,
+        ));
         buf.append(&mut self.textbuffer.graphemes(self.style, self.cursor_style));
 
         Pane::new(

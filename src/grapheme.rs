@@ -41,18 +41,6 @@ impl Grapheme {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
 
-impl fmt::Display for Graphemes {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.iter().fold(String::new(), |agg, grapheme| {
-                format!("{}{}", agg, grapheme.ch)
-            })
-        )
-    }
-}
-
 impl Graphemes {
     pub fn new<S: AsRef<str>>(string: S) -> Self {
         Graphemes::new_with_style(string, ContentStyle::new())

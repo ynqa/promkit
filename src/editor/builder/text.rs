@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, editor::text::Text, grapheme::Graphemes};
+use crate::{crossterm::style::ContentStyle, editor::text::Text};
 
 pub struct TextBuilder {
     text: String,
@@ -22,7 +22,8 @@ impl TextBuilder {
 
     pub fn build(self) -> Result<Box<Text>> {
         Ok(Box::new(Text {
-            text: Graphemes::new_with_style(self.text, self.style),
+            text: self.text,
+            style: self.style,
         }))
     }
 }

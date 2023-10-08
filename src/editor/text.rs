@@ -1,5 +1,5 @@
 use crate::{
-    crossterm::event::Event,
+    crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, Graphemes},
     pane::Pane,
 };
@@ -7,15 +7,19 @@ use crate::{
 use super::Editor;
 
 pub struct Text {
-    pub text: Graphemes,
+    pub text: String,
+    pub style: ContentStyle,
 }
 
 impl Editor for Text {
     fn gen_pane(&self, width: u16) -> Pane {
-        let mut buf = Graphemes::default();
-        buf.append(&mut self.text.clone());
-
-        Pane::new(matrixify(width as usize, buf), 0)
+        Pane::new(
+            matrixify(
+                width as usize,
+                Graphemes::new_with_style(&self.text, self.style),
+            ),
+            0,
+        )
     }
 
     fn handle_event(&mut self, _event: &Event) {}
