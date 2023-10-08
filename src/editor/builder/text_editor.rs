@@ -1,8 +1,8 @@
 use anyhow::Result;
 
 use crate::{
-    crossterm::style::ContentStyle, editor::text_editor::TextEditor, suggest::Suggest,
-    text_buffer::TextBuffer,
+    crossterm::style::ContentStyle, editor::text_editor::TextEditor, history::History,
+    suggest::Suggest, text_buffer::TextBuffer,
 };
 
 pub struct TextEditorBuilder {
@@ -54,6 +54,7 @@ impl TextEditorBuilder {
     pub fn build(self) -> Result<Box<TextEditor>> {
         Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::default(),
+            history: History::default(),
             suggest: self.suggest,
             label: self.label,
             label_style: self.label_style,

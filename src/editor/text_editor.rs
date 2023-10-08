@@ -4,6 +4,7 @@ use crate::{
         style::ContentStyle,
     },
     grapheme::{matrixify, Graphemes},
+    history::History,
     pane::Pane,
     suggest::Suggest,
     text_buffer::TextBuffer,
@@ -13,6 +14,7 @@ use super::Editor;
 
 pub struct TextEditor {
     pub textbuffer: TextBuffer,
+    pub history: History,
     pub suggest: Suggest,
 
     pub label: String,
@@ -72,6 +74,34 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => self.textbuffer.erase(),
 
+            // Choose history
+            Event::Key(KeyEvent {
+                code: KeyCode::Up,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => {
+                if self.history.prev() {
+                    self.textbuffer.replace(self.history.get())
+                } else {
+                    [TextBuffer::default(), TextBuffer::default()]
+                }
+            }
+
+            Event::Key(KeyEvent {
+                code: KeyCode::Down,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => {
+                if self.history.next() {
+                    self.textbuffer.replace(self.history.get())
+                } else {
+                    [TextBuffer::default(), TextBuffer::default()]
+                }
+            }
+
+            // Choose suggestion
             Event::Key(KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
