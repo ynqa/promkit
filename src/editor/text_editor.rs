@@ -72,8 +72,7 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => {
                 // Insert the result to history.
-                self.history.insert(self.textbuffer.to_string());
-                [TextBuffer::default(), TextBuffer::default()]
+                self.history.insert(self.textbuffer.to_string())
             }
 
             // Move cursor.
@@ -125,8 +124,6 @@ impl Editor for TextEditor {
             }) => {
                 if self.history.prev() {
                     self.textbuffer.replace(self.history.get())
-                } else {
-                    [TextBuffer::default(), TextBuffer::default()]
                 }
             }
             Event::Key(KeyEvent {
@@ -137,8 +134,6 @@ impl Editor for TextEditor {
             }) => {
                 if self.history.next() {
                     self.textbuffer.replace(self.history.get())
-                } else {
-                    [TextBuffer::default(), TextBuffer::default()]
                 }
             }
 
@@ -151,8 +146,6 @@ impl Editor for TextEditor {
             }) => {
                 if let Some(new) = self.suggest.search(self.textbuffer.to_string()) {
                     self.textbuffer.replace(new)
-                } else {
-                    [TextBuffer::default(), TextBuffer::default()]
                 }
             }
 
@@ -173,7 +166,7 @@ impl Editor for TextEditor {
                 Mode::Overwrite => self.textbuffer.overwrite(*ch),
             },
 
-            _ => [TextBuffer::default(), TextBuffer::default()],
+            _ => (),
         };
     }
 
