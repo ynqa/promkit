@@ -34,13 +34,12 @@ impl History {
                 let tail_idx = self.buf.len() - 1;
                 self.buf.insert(tail_idx, item);
             }
-            let tail_idx = self.buf.len() - 1;
-            self.move_to(tail_idx);
+            self.to_tail();
         }
     }
 
-    pub fn get(&self) -> &str {
-        self.buf.get(self.position).unwrap()
+    pub fn get(&self) -> String {
+        self.buf.get(self.position).unwrap().to_string()
     }
 
     /// Check whether the item exists or not.
@@ -64,13 +63,8 @@ impl History {
         false
     }
 
-    /// Move the cursor to the given position in the history.
-    fn move_to(&mut self, idx: usize) -> bool {
-        if idx < self.buf.len() {
-            self.position = idx;
-            return true;
-        }
-        false
+    pub fn to_tail(&mut self) {
+        self.position = self.buf.len() - 1;
     }
 }
 
@@ -97,22 +91,6 @@ mod test {
             h.insert("existed");
             assert!(h.exists("existed"));
             assert!(!h.exists("not_found"));
-        }
-    }
-
-    mod move_to {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let mut h = History::default();
-            h.insert("a");
-            h.insert("b");
-            h.insert("c");
-            assert!(h.move_to(h.buf.len() - 1));
-            assert!(h.move_to(0));
-            let idx_over_len = h.buf.len() + 20;
-            assert!(!h.move_to(idx_over_len));
         }
     }
 }
