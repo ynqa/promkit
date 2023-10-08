@@ -143,11 +143,7 @@ impl Prompt {
             }
         }
 
-        let ret = self
-            .editors
-            .iter()
-            .map(|editor| editor.to_string())
-            .collect();
+        let ret = self.editors.iter().map(|editor| editor.output()).collect();
         self.editors.iter_mut().for_each(|editor| {
             editor.reset();
         });

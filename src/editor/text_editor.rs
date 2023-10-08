@@ -92,7 +92,7 @@ impl Editor for TextEditor {
         self.textbuffer = TextBuffer::default();
     }
 
-    fn to_string(&self) -> String {
+    fn output(&self) -> String {
         self.textbuffer.to_string()
     }
 }
