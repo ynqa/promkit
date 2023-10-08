@@ -78,13 +78,19 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => self.textbuffer.move_to_tail(),
 
-            // Erase char.
+            // Erase char(s).
             Event::Key(KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => self.textbuffer.erase(),
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('u'),
+                modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => self.textbuffer.erase_all(),
 
             // Choose history
             Event::Key(KeyEvent {
@@ -99,7 +105,6 @@ impl Editor for TextEditor {
                     [TextBuffer::default(), TextBuffer::default()]
                 }
             }
-
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,

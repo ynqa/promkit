@@ -75,6 +75,12 @@ impl TextBuffer {
         [prev, self.clone()]
     }
 
+    pub fn erase_all(&mut self) -> [Self; 2] {
+        let prev = self.clone();
+        *self = Self::default();
+        [prev, self.clone()]
+    }
+
     pub fn move_to_head(&mut self) -> [Self; 2] {
         let prev = self.clone();
         self.position = 0;
