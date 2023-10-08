@@ -38,6 +38,21 @@ impl Editor for TextEditor {
         )
     }
 
+    /// Default key bindings for readline.
+    ///
+    /// | Key                    | Description
+    /// | :--                    | :--
+    /// | <kbd> Enter </kbd>     | Exit the event-loop
+    /// | <kbd> CTRL + C </kbd>  | Exit the event-loop with an error
+    /// | <kbd> ← </kbd>         | Move the cursor backward
+    /// | <kbd> → </kbd>         | Move the cursor forward
+    /// | <kbd> CTRL + A </kbd>  | Move the cursor to the beginning of the input buffer
+    /// | <kbd> CTRL + E </kbd>  | Move the cursor to the end of the input buffer
+    /// | <kbd> ↑ </kbd>         | Retrieve the previous input from history
+    /// | <kbd> ↓ </kbd>         | Retrieve the next input from history
+    /// | <kbd> Backspace </kbd> | Erase a character at the current cursor position
+    /// | <kbd> CTRL + U </kbd>  | Erase all characters on the current line
+    /// | <kbd> TAB </kbd>       | Perform tab completion by searching for suggestions
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Before finishing on enter event.
