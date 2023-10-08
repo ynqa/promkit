@@ -16,7 +16,13 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        TextEditorBuilder::new().build()?,
+        TextEditorBuilder::new()
+            .label_style(
+                ContentStyleBuilder::new()
+                    .foreground_color(Color::DarkGreen)
+                    .build(),
+            )
+            .build()?,
         TextEditorBuilder::new().build()?,
         TextEditorBuilder::new().build()?,
         TextEditorBuilder::new().build()?,
