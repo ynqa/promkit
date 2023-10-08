@@ -34,7 +34,7 @@ impl History {
                 let tail_idx = self.buf.len() - 1;
                 self.buf.insert(tail_idx, item);
             }
-            self.to_tail();
+            self.move_to_tail();
         }
     }
 
@@ -63,7 +63,7 @@ impl History {
         false
     }
 
-    pub fn to_tail(&mut self) {
+    pub fn move_to_tail(&mut self) {
         self.position = self.buf.len() - 1;
     }
 }
