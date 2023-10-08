@@ -40,6 +40,18 @@ impl Editor for TextEditor {
 
     fn handle_event(&mut self, event: &Event) {
         match event {
+            // Before finishing on enter event.
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => {
+                // Insert the result to history.
+                self.history.insert(self.textbuffer.to_string());
+                [TextBuffer::default(), TextBuffer::default()]
+            }
+
             // Move cursor.
             Event::Key(KeyEvent {
                 code: KeyCode::Left,

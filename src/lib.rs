@@ -116,6 +116,19 @@ impl Prompt {
 
         loop {
             let ev = event::read()?;
+
+            for editor in &mut self.editors {
+                editor.handle_event(&ev);
+            }
+            let size = engine.size()?;
+            terminal.draw(
+                &mut engine,
+                self.editors
+                    .iter()
+                    .map(|editor| editor.gen_pane(size.0))
+                    .collect(),
+            )?;
+
             match &ev {
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
@@ -129,19 +142,7 @@ impl Prompt {
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
                 }) => bail!("ctrl+c interrupted"),
-                _ => {
-                    for editor in &mut self.editors {
-                        editor.handle_event(&ev);
-                    }
-                    let size = engine.size()?;
-                    terminal.draw(
-                        &mut engine,
-                        self.editors
-                            .iter()
-                            .map(|editor| editor.gen_pane(size.0))
-                            .collect(),
-                    )?;
-                }
+                _ => (),
             }
         }
 
