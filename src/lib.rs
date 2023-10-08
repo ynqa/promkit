@@ -51,6 +51,7 @@ pub use crossterm;
 pub mod editor;
 mod engine;
 mod grapheme;
+mod history;
 mod pane;
 pub mod style;
 pub mod suggest;
