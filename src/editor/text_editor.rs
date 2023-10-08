@@ -33,6 +33,17 @@ pub struct TextEditor {
     pub mask: Option<char>,
 }
 
+impl TextEditor {
+    fn textbuffer_to_graphemes(&self) -> Graphemes {
+        let text = match self.mask {
+            Some(mask) => self.textbuffer.masking(mask),
+            None => self.textbuffer.content(),
+        };
+        Graphemes::new_with_style(text, self.style)
+            .stylize(self.textbuffer.position, self.cursor_style)
+    }
+}
+
 impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
@@ -40,11 +51,7 @@ impl Editor for TextEditor {
             &self.label,
             self.label_style,
         ));
-        buf.append(
-            &mut self
-                .textbuffer
-                .graphemes(self.style, self.cursor_style, self.mask),
-        );
+        buf.append(&mut self.textbuffer_to_graphemes());
 
         Pane::new(
             matrixify(width as usize, buf),
@@ -140,7 +147,7 @@ impl Editor for TextEditor {
             }) => {
                 if let Some(new) = self
                     .suggest
-                    .search(self.textbuffer.to_string_without_cursor())
+                    .search(self.textbuffer.content_without_cursor())
                 {
                     self.textbuffer.replace(new)
                 }
@@ -169,11 +176,11 @@ impl Editor for TextEditor {
 
     fn postrun(&mut self) {
         self.history
-            .insert(self.textbuffer.to_string_without_cursor());
+            .insert(self.textbuffer.content_without_cursor());
         self.textbuffer = TextBuffer::default();
     }
 
     fn output(&self) -> String {
-        self.textbuffer.to_string_without_cursor()
+        self.textbuffer.content_without_cursor()
     }
 }

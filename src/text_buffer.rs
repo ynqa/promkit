@@ -1,5 +1,3 @@
-use crate::{crossterm::style::ContentStyle, grapheme::Graphemes};
-
 pub struct TextBuffer {
     buf: String,
     pub position: usize,
@@ -16,31 +14,24 @@ impl Default for TextBuffer {
 }
 
 impl TextBuffer {
-    pub fn to_string_without_cursor(&self) -> String {
+    pub fn content(&self) -> String {
         let mut ret = self.buf.clone();
         ret.pop();
         ret
     }
 
-    fn masking(&self, mask: char) -> String {
+    pub fn content_without_cursor(&self) -> String {
+        let mut ret = self.buf.clone();
+        ret.pop();
+        ret
+    }
+
+    pub fn masking(&self, mask: char) -> String {
         self.buf
             .chars()
             .enumerate()
             .map(|(i, c)| if i == self.buf.len() - 1 { c } else { mask })
             .collect::<String>()
-    }
-
-    pub fn graphemes(
-        &self,
-        base: ContentStyle,
-        cursor: ContentStyle,
-        mask: Option<char>,
-    ) -> Graphemes {
-        let text = match mask {
-            Some(mask) => self.masking(mask),
-            None => self.buf.clone(),
-        };
-        Graphemes::new_with_style(text, base).stylize(self.position, cursor)
     }
 
     fn is_head(&self) -> bool {
