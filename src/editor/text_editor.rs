@@ -12,6 +12,14 @@ use crate::{
 
 use super::Editor;
 
+/// Edit mode.
+pub enum Mode {
+    /// Insert a char at the current position.
+    Insert,
+    /// Overwrite a char at the current position.
+    Overwrite,
+}
+
 pub struct TextEditor {
     pub textbuffer: TextBuffer,
     pub history: History,
@@ -21,6 +29,7 @@ pub struct TextEditor {
     pub label_style: ContentStyle,
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
+    pub mode: Mode,
 }
 
 impl Editor for TextEditor {
@@ -159,7 +168,10 @@ impl Editor for TextEditor {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.insert(*ch),
+            }) => match self.mode {
+                Mode::Insert => self.textbuffer.insert(*ch),
+                Mode::Overwrite => self.textbuffer.overwrite(*ch),
+            },
 
             _ => [TextBuffer::default(), TextBuffer::default()],
         };

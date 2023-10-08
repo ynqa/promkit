@@ -1,9 +1,10 @@
 use crate::{crossterm::event::Event, pane::Pane};
 
-pub mod builder;
+mod builder;
 pub use builder::{text::TextBuilder, text_editor::TextEditorBuilder};
 mod text;
 mod text_editor;
+pub use text_editor::Mode;
 
 pub trait Editor {
     fn gen_pane(&self, width: u16) -> Pane;

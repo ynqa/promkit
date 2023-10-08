@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use promkit::{
     crossterm::style::Color,
-    editor::{TextBuilder, TextEditorBuilder},
+    editor::{Mode, TextBuilder, TextEditorBuilder},
     style::ContentStyleBuilder,
     suggest::Suggest,
     Prompt,
@@ -37,7 +37,7 @@ fn main() -> Result<()> {
             )
             .suggest(Suggest::from_iter(["promkit", "ynqa"]))
             .build()?,
-        TextEditorBuilder::default().build()?,
+        TextEditorBuilder::default().mode(Mode::Overwrite).build()?,
         TextEditorBuilder::default().build()?,
         TextEditorBuilder::default().build()?,
     ]);
