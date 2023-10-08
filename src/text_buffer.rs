@@ -18,8 +18,10 @@ impl TextBuffer {
     // fn triplet(&self) -> [String; 3] {
     // }
 
-    pub fn graphemes(&self, base: ContentStyle) -> Graphemes {
-        Graphemes::new_with_style(self.buf.to_string(), base)
+    pub fn graphemes(&self, base: ContentStyle, cursor: ContentStyle) -> Graphemes {
+        let ret =
+            Graphemes::new_with_style(self.buf.to_string(), base).stylize(self.position, cursor);
+        ret
     }
 
     pub fn text(&self) -> String {

@@ -55,6 +55,14 @@ impl Graphemes {
             .collect()
     }
 
+    pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
+        self.get_mut(idx).and_then(|grapheme| {
+            grapheme.style = style;
+            Some(grapheme)
+        });
+        self
+    }
+
     pub fn display<'a>(&'a self) -> StyledGraphemesDisplay<'a> {
         StyledGraphemesDisplay { graphemes: self }
     }

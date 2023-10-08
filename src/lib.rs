@@ -95,7 +95,7 @@ impl Prompt {
         });
 
         enable_raw_mode()?;
-        // execute!(io::stdout(), cursor::Hide)?;
+        execute!(io::stdout(), cursor::Hide)?;
         defer! {{
             execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
             execute!(io::stdout(), cursor::Show).ok();

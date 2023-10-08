@@ -22,6 +22,11 @@ fn main() -> Result<()> {
                     .foreground_color(Color::DarkYellow)
                     .build(),
             )
+            .cursor_style(
+                ContentStyleBuilder::new()
+                    .background_color(Color::DarkBlue)
+                    .build(),
+            )
             .label_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::DarkGreen)

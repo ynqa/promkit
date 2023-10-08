@@ -14,6 +14,7 @@ pub struct TextEditor {
     pub textbuffer: TextBuffer,
 
     pub style: ContentStyle,
+    pub cursor_style: ContentStyle,
     pub label: Graphemes,
 }
 
@@ -21,7 +22,7 @@ impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut self.label.clone());
-        buf.append(&mut self.textbuffer.graphemes(self.style));
+        buf.append(&mut self.textbuffer.graphemes(self.style, self.cursor_style));
 
         Pane::new(
             matrixify(width as usize, buf),
