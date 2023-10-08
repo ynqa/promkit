@@ -129,7 +129,7 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => {
                 if self.history.prev() {
-                    self.textbuffer.replace(self.history.get())
+                    self.textbuffer.replace(&self.history.get())
                 }
             }
             Event::Key(KeyEvent {
@@ -139,7 +139,7 @@ impl Editor for TextEditor {
                 state: KeyEventState::NONE,
             }) => {
                 if self.history.next() {
-                    self.textbuffer.replace(self.history.get())
+                    self.textbuffer.replace(&self.history.get())
                 }
             }
 
