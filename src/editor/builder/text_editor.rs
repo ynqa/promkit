@@ -7,6 +7,7 @@ use crate::{
 
 pub struct TextEditorBuilder {
     label: String,
+    style: ContentStyle,
     label_style: ContentStyle,
 }
 
@@ -14,8 +15,14 @@ impl TextEditorBuilder {
     pub fn new() -> Self {
         Self {
             label: String::from("❯❯ "),
+            style: ContentStyle::new(),
             label_style: ContentStyle::new(),
         }
+    }
+
+    pub fn style(mut self, style: ContentStyle) -> Self {
+        self.style = style;
+        self
     }
 
     pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
@@ -31,6 +38,7 @@ impl TextEditorBuilder {
     pub fn build(self) -> Result<Box<TextEditor>> {
         Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::new(),
+            style: self.style,
             label: Graphemes::new_with_style(self.label, self.label_style),
         }))
     }

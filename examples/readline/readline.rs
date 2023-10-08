@@ -17,6 +17,11 @@ fn main() -> Result<()> {
             )
             .build()?,
         TextEditorBuilder::new()
+            .style(
+                ContentStyleBuilder::new()
+                    .foreground_color(Color::DarkYellow)
+                    .build(),
+            )
             .label_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::DarkGreen)

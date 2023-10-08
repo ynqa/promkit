@@ -1,8 +1,8 @@
-use crate::grapheme::{Grapheme, Graphemes};
+use crate::{crossterm::style::ContentStyle, grapheme::Graphemes};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextBuffer {
-    pub buf: Graphemes,
+    buf: String,
     pub position: usize,
 }
 
@@ -10,12 +10,19 @@ impl TextBuffer {
     pub fn new() -> Self {
         Self {
             // Set cursor
-            buf: Graphemes::new(" "),
+            buf: String::from(" "),
             position: 0,
         }
     }
 
-    pub fn text(&self) -> Graphemes {
+    // fn triplet(&self) -> [String; 3] {
+    // }
+
+    pub fn graphemes(&self, base: ContentStyle) -> Graphemes {
+        Graphemes::new_with_style(self.buf.to_string(), base)
+    }
+
+    pub fn text(&self) -> String {
         let mut ret = self.buf.clone();
         ret.pop();
         ret
@@ -29,27 +36,27 @@ impl TextBuffer {
         self.position == self.buf.len() - 1
     }
 
-    fn replace(&mut self, new: &Graphemes) {
+    fn replace(&mut self, new: &String) {
         self.buf = new.clone();
-        self.buf.push(Grapheme::new(' '));
+        self.buf.push(' ');
         self.to_tail();
     }
 
-    pub fn insert(&mut self, ch: Grapheme) -> [Self; 2] {
+    pub fn insert(&mut self, ch: char) -> [Self; 2] {
         let prev = self.clone();
         self.buf.insert(self.position as usize, ch);
         self.next();
         [prev, self.clone()]
     }
 
-    pub fn overwrite(&mut self, ch: Grapheme) -> [Self; 2] {
+    pub fn overwrite(&mut self, ch: char) -> [Self; 2] {
         let prev = self.clone();
         if self.is_tail() {
             self.insert(ch)
         } else {
-            self.buf.splice(
+            self.buf.replace_range(
                 self.position as usize..(self.position + 1) as usize,
-                vec![ch],
+                &ch.to_string(),
             );
             self.next();
             [prev, self.clone()]
@@ -103,19 +110,19 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextBuffer::new();
-            assert_eq!(Graphemes::new(" "), txt.buf);
+            assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("bc "),
+                buf: String::from("bc "),
                 position: 0, // indicate `b`.
             };
             let diff = txt.erase();
@@ -127,12 +134,12 @@ mod test {
         #[test]
         fn test_at_tail() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("ab "),
+                buf: String::from("ab "),
                 position: 2, // indicate tail.
             };
             let diff = txt.erase();
@@ -144,10 +151,10 @@ mod test {
         #[test]
         fn test_at_head() {
             let txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            assert_eq!(Graphemes::new("abc "), txt.buf);
+            assert_eq!(String::from("abc "), txt.buf);
             assert_eq!(0, txt.position);
         }
     }
@@ -160,10 +167,10 @@ mod test {
             let mut txt = TextBuffer::new();
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("d "),
+                buf: String::from("d "),
                 position: 1, // indicate tail.
             };
-            let diff = txt.insert(Grapheme::new('d'));
+            let diff = txt.insert('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -172,15 +179,15 @@ mod test {
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("adbc "),
+                buf: String::from("adbc "),
                 position: 2, // indicate `b`.
             };
-            let diff = txt.insert(Grapheme::new('d'));
+            let diff = txt.insert('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -189,15 +196,15 @@ mod test {
         #[test]
         fn test_at_tail() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abcd "),
+                buf: String::from("abcd "),
                 position: 4, // indicate tail.
             };
-            let diff = txt.insert(Grapheme::new('d'));
+            let diff = txt.insert('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -206,15 +213,15 @@ mod test {
         #[test]
         fn test_at_head() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("dabc "),
+                buf: String::from("dabc "),
                 position: 1, // indicate `a`.
             };
-            let diff = txt.insert(Grapheme::new('d'));
+            let diff = txt.insert('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -229,10 +236,10 @@ mod test {
             let mut txt = TextBuffer::new();
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("d "),
+                buf: String::from("d "),
                 position: 1, // indicate tail.
             };
-            let diff = txt.overwrite(Grapheme::new('d'));
+            let diff = txt.overwrite('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -241,15 +248,15 @@ mod test {
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("adc "),
+                buf: String::from("adc "),
                 position: 2, // indicate `c`.
             };
-            let diff = txt.overwrite(Grapheme::new('d'));
+            let diff = txt.overwrite('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -258,15 +265,15 @@ mod test {
         #[test]
         fn test_at_tail() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abcd "),
+                buf: String::from("abcd "),
                 position: 4, // indicate tail.
             };
-            let diff = txt.overwrite(Grapheme::new('d'));
+            let diff = txt.overwrite('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -275,15 +282,15 @@ mod test {
         #[test]
         fn test_at_head() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("dbc "),
+                buf: String::from("dbc "),
                 position: 1, // indicate `b`.
             };
-            let diff = txt.overwrite(Grapheme::new('d'));
+            let diff = txt.overwrite('d');
             assert_eq!(new.buf, txt.buf);
             assert_eq!(new.position, txt.position);
             assert_eq!(diff, [old, new]);
@@ -296,19 +303,19 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextBuffer::new();
-            assert_eq!(Graphemes::new(" "), txt.buf);
+            assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let diff = txt.prev();
@@ -320,12 +327,12 @@ mod test {
         #[test]
         fn test_at_tail() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 2, // indicate `c`.
             };
             let diff = txt.prev();
@@ -337,10 +344,10 @@ mod test {
         #[test]
         fn test_at_head() {
             let txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            assert_eq!(Graphemes::new("abc "), txt.buf);
+            assert_eq!(String::from("abc "), txt.buf);
             assert_eq!(0, txt.position);
         }
     }
@@ -351,19 +358,19 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextBuffer::new();
-            assert_eq!(Graphemes::new(" "), txt.buf);
+            assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 2, // indicate `c`.
             };
             let diff = txt.next();
@@ -375,22 +382,22 @@ mod test {
         #[test]
         fn test_at_tail() {
             let txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            assert_eq!(Graphemes::new("abc "), txt.buf);
+            assert_eq!(String::from("abc "), txt.buf);
             assert_eq!(3, txt.position);
         }
 
         #[test]
         fn test_at_head() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let diff = txt.next();
@@ -406,19 +413,19 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextBuffer::new();
-            assert_eq!(Graphemes::new(" "), txt.buf);
+            assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let diff = txt.to_head();
@@ -430,12 +437,12 @@ mod test {
         #[test]
         fn test_at_tail() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let diff = txt.to_head();
@@ -447,10 +454,10 @@ mod test {
         #[test]
         fn test_at_head() {
             let txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            assert_eq!(Graphemes::new("abc "), txt.buf);
+            assert_eq!(String::from("abc "), txt.buf);
             assert_eq!(0, txt.position);
         }
     }
@@ -461,19 +468,19 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextBuffer::new();
-            assert_eq!(Graphemes::new(" "), txt.buf);
+            assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let diff = txt.to_tail();
@@ -485,22 +492,22 @@ mod test {
         #[test]
         fn test_at_tail() {
             let txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            assert_eq!(Graphemes::new("abc "), txt.buf);
+            assert_eq!(String::from("abc "), txt.buf);
             assert_eq!(3, txt.position);
         }
 
         #[test]
         fn test_at_head() {
             let mut txt = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
             let old = txt.clone();
             let new = TextBuffer {
-                buf: Graphemes::new("abc "),
+                buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
             let diff = txt.to_tail();

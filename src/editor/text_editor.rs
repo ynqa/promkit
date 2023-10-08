@@ -1,6 +1,9 @@
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    grapheme::{matrixify, Grapheme, Graphemes},
+    crossterm::{
+        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        style::ContentStyle,
+    },
+    grapheme::{matrixify, Graphemes},
     pane::Pane,
     text_buffer::TextBuffer,
 };
@@ -10,6 +13,7 @@ use super::Editor;
 pub struct TextEditor {
     pub textbuffer: TextBuffer,
 
+    pub style: ContentStyle,
     pub label: Graphemes,
 }
 
@@ -17,7 +21,7 @@ impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut self.label.clone());
-        buf.append(&mut self.textbuffer.buf.clone());
+        buf.append(&mut self.textbuffer.graphemes(self.style));
 
         Pane::new(
             matrixify(width as usize, buf),
@@ -73,7 +77,7 @@ impl Editor for TextEditor {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.insert(Grapheme::new(*ch)),
+            }) => self.textbuffer.insert(*ch),
 
             _ => [TextBuffer::new(), TextBuffer::new()],
         };
