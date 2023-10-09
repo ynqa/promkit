@@ -57,12 +57,12 @@ impl Editor for ItemPicker {
     ///
     /// | Key                    | Description
     /// | :--                    | :--
-    /// | <kbd> Enter </kbd>     | Leave from event-loop with exitcode=0
-    /// | <kbd> CTRL + C </kbd>  | Leave from event-loop with [io::ErrorKind::Interrupted](https://doc.rust-lang.org/stable/std/io/enum.ErrorKind.html#variant.Interrupted)
+    /// | <kbd> Enter </kbd>     | Exit the event-loop
+    /// | <kbd> CTRL + C </kbd>  | Exit the event-loop with an error
     /// | <kbd> ↑ </kbd>         | Move backward
     /// | <kbd> ↓ </kbd>         | Move forward
-    /// | <kbd> CTRL + A </kbd>  | Move to head of selector
-    /// | <kbd> CTRL + E </kbd>  | Move to tail of selector
+    /// | <kbd> CTRL + A </kbd>  | Move to the beginning of the selector
+    /// | <kbd> CTRL + E </kbd>  | Move to the end of the selector
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Move cursor.
