@@ -54,6 +54,10 @@ impl Graphemes {
             .collect()
     }
 
+    pub fn widths(&self) -> usize {
+        self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
     pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
         self.get_mut(idx).map(|grapheme| {
             grapheme.style = style;

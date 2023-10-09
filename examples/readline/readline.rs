@@ -4,7 +4,8 @@ use anyhow::Result;
 
 use promkit::{
     crossterm::style::Color,
-    editor::{Mode, TextBuilder, TextEditorBuilder},
+    editor::{ItemPickerBuilder, Mode, TextBuilder, TextEditorBuilder},
+    item_box::ItemBox,
     style::ContentStyleBuilder,
     suggest::Suggest,
     Prompt,
@@ -43,6 +44,13 @@ fn main() -> Result<()> {
             .cursor_style(
                 ContentStyleBuilder::new()
                     .background_color(Color::Blue)
+                    .build(),
+            )
+            .build()?,
+        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
+            .cursor_style(
+                ContentStyleBuilder::new()
+                    .foreground_color(Color::Magenta)
                     .build(),
             )
             .build()?,

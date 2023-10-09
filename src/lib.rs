@@ -52,6 +52,7 @@ pub mod editor;
 mod engine;
 mod grapheme;
 mod history;
+pub mod item_box;
 mod pane;
 pub mod style;
 pub mod suggest;
