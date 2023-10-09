@@ -59,7 +59,7 @@ impl Editor for TextEditor {
         )
     }
 
-    /// Default key bindings for readline.
+    /// Default key bindings for text editor.
     ///
     /// | Key                    | Description
     /// | :--                    | :--
@@ -171,7 +171,7 @@ impl Editor for TextEditor {
             },
 
             _ => (),
-        };
+        }
     }
 
     fn postrun(&mut self) {
