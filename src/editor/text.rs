@@ -16,7 +16,7 @@ impl Editor for Text {
         Pane::new(
             matrixify(
                 width as usize,
-                Graphemes::new_with_style(&self.text, self.style),
+                &Graphemes::new_with_style(&self.text, self.style),
             ),
             0,
         )

@@ -54,7 +54,7 @@ impl Editor for TextEditor {
         buf.append(&mut self.textbuffer_to_graphemes());
 
         Pane::new(
-            matrixify(width as usize, buf),
+            matrixify(width as usize, &buf),
             self.textbuffer.position / width as usize,
         )
     }

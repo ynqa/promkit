@@ -103,7 +103,7 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
     }
 }
 
-pub fn matrixify(width: usize, g: Graphemes) -> Vec<Graphemes> {
+pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
     let mut ret = vec![];
     let mut row = Graphemes::default();
     for ch in g.iter() {
@@ -123,7 +123,7 @@ pub fn matrixify(width: usize, g: Graphemes) -> Vec<Graphemes> {
     ret
 }
 
-pub fn trim(width: usize, g: Graphemes) -> Graphemes {
+pub fn trim(width: usize, g: &Graphemes) -> Graphemes {
     let mut row = Graphemes::default();
     for ch in g.iter() {
         let width_with_next_char = row.iter().fold(0, |mut layout, g| {
@@ -153,7 +153,7 @@ mod test {
                 Graphemes::new("aa"),
                 Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(2, Graphemes::new(">> aaa ")),);
+            assert_eq!(expect, matrixify(2, &Graphemes::new(">> aaa ")),);
         }
 
         #[test]
@@ -165,7 +165,7 @@ mod test {
                 Graphemes::new("😎"),
                 Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(2, Graphemes::new(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(2, &Graphemes::new(">> 😎😎 ")),);
         }
 
         #[test]
@@ -176,7 +176,7 @@ mod test {
                 Graphemes::new(" "),
                 Graphemes::new(" "),
             ];
-            assert_eq!(expect, matrixify(1, Graphemes::new(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(1, &Graphemes::new(">> 😎😎 ")),);
         }
     }
 
@@ -185,17 +185,17 @@ mod test {
 
         #[test]
         fn test() {
-            assert_eq!(Graphemes::new(">> a"), trim(4, Graphemes::new(">> aaa ")));
+            assert_eq!(Graphemes::new(">> a"), trim(4, &Graphemes::new(">> aaa ")));
         }
 
         #[test]
         fn test_with_emoji() {
-            assert_eq!(Graphemes::new("😎"), trim(2, Graphemes::new("😎")));
+            assert_eq!(Graphemes::new("😎"), trim(2, &Graphemes::new("😎")));
         }
 
         #[test]
         fn test_with_emoji_at_narrow_terminal() {
-            assert_eq!(Graphemes::new(""), trim(1, Graphemes::new("😎")));
+            assert_eq!(Graphemes::new(""), trim(1, &Graphemes::new("😎")));
         }
     }
 }
