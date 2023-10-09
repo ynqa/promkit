@@ -1,4 +1,4 @@
-use std::iter::FromIterator;
+use std::{fmt, iter::FromIterator};
 
 use radix_trie::{Trie, TrieCommon};
 
@@ -6,9 +6,9 @@ use radix_trie::{Trie, TrieCommon};
 #[derive(Default)]
 pub struct Suggest(Trie<String, usize>);
 
-impl<T: AsRef<str>> FromIterator<T> for Suggest {
+impl<T: fmt::Display> FromIterator<T> for Suggest {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let kvs = iter.into_iter().map(|e| (e.as_ref().to_string(), 1));
+        let kvs = iter.into_iter().map(|e| (format!("{}", e), 1));
         Suggest(Trie::from_iter(kvs))
     }
 }
