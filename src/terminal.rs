@@ -28,12 +28,13 @@ impl Terminal {
 
         let mut used = 0;
 
-        for pane in &panes {
+        for (i, pane) in panes.iter().enumerate() {
             let rows = pane.extract(
                 1.max(
                     terminal_height
                         // -1 in this context signifies the exclusion of the current pane.
-                        .saturating_sub(used + panes.len() - 1),
+                        // .saturating_sub(used + panes.len() - 1 - i),
+                        .saturating_sub(used + panes.len() - 1 - i),
                 ),
             );
             used += rows.len();
