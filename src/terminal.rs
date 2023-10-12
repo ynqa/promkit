@@ -41,9 +41,6 @@ impl Terminal {
             for row in &rows {
                 engine.write(row.styled_display())?;
 
-                // Note that the last line is not utilized.
-                // The cursor is positioned at the zero point on the last line
-                // after writing a row when the cursor is at the bottom.
                 if engine.is_bottom()? && self.position.1 != 0 {
                     engine.scroll_up(1)?;
                     self.position.1 -= 1;

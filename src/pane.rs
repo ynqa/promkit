@@ -11,13 +11,12 @@ impl Pane {
     }
 
     pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
-        if self.layout.len() <= viewport_height {
-            return self.layout.clone();
-        }
+        let lines = self.layout.len().min(viewport_height);
+
         let mut start = self.offset;
-        let end = self.offset + viewport_height;
+        let end = self.offset + lines;
         if end > self.layout.len() {
-            start = self.layout.len().saturating_sub(viewport_height);
+            start = self.layout.len().saturating_sub(lines);
         }
 
         return self
@@ -36,7 +35,7 @@ mod test {
         use super::super::*;
 
         #[test]
-        fn test() {
+        fn test_with_less_extraction_size_than_layout() {
             let expect = vec![
                 Graphemes::new("aa"),
                 Graphemes::new("bb"),
@@ -59,7 +58,7 @@ mod test {
         }
 
         #[test]
-        fn test_to_try_with_size_beyond() {
+        fn test_with_much_extraction_size_than_layout() {
             let expect = vec![
                 Graphemes::new("aa"),
                 Graphemes::new("bb"),
@@ -80,6 +79,48 @@ mod test {
                     offset: 0,
                 }
                 .extract(10)
+            );
+        }
+
+        #[test]
+        fn test_with_within_extraction_size_and_offset_non_zero() {
+            let expect = vec![Graphemes::new("cc"), Graphemes::new("dd")];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
+                    ],
+                    offset: 2, // indicate `cc`
+                }
+                .extract(2)
+            );
+        }
+
+        #[test]
+        fn test_with_beyond_extraction_size_and_offset_non_zero() {
+            let expect = vec![
+                Graphemes::new("cc"),
+                Graphemes::new("dd"),
+                Graphemes::new("ee"),
+            ];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
+                    ],
+                    offset: 3, // indicate `dd`
+                }
+                .extract(3)
             );
         }
     }
