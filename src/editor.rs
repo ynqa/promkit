@@ -1,12 +1,10 @@
 use crate::{crossterm::event::Event, pane::Pane};
 
 mod builder;
-pub use builder::{
-    item_picker::ItemPickerBuilder, text::TextBuilder, text_editor::TextEditorBuilder,
-};
+pub use builder::{item_picker::ItemPickerBuilder, readline::ReadlineBuilder, text::TextBuilder};
 mod item_picker;
-mod text_editor;
-pub use text_editor::Mode;
+mod readline;
+pub use readline::Mode;
 mod text;
 
 pub trait Editor {
