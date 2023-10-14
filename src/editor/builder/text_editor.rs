@@ -16,6 +16,7 @@ pub struct TextEditorBuilder {
     cursor_style: ContentStyle,
     mode: Mode,
     mask: Option<char>,
+    lines: Option<usize>,
 }
 
 impl Default for TextEditorBuilder {
@@ -28,6 +29,7 @@ impl Default for TextEditorBuilder {
             cursor_style: ContentStyle::new(),
             mode: Mode::Insert,
             mask: None,
+            lines: None,
         }
     }
 }
@@ -68,6 +70,11 @@ impl TextEditorBuilder {
         self
     }
 
+    pub fn lines(mut self, lines: usize) -> Self {
+        self.lines = Some(lines);
+        self
+    }
+
     pub fn build(self) -> Result<Box<TextEditor>> {
         Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::default(),
@@ -79,6 +86,7 @@ impl TextEditorBuilder {
             cursor_style: self.cursor_style,
             mode: self.mode,
             mask: self.mask,
+            lines: self.lines,
         }))
     }
 }

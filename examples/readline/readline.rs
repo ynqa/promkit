@@ -53,6 +53,14 @@ fn main() -> Result<()> {
                     .foreground_color(Color::Magenta)
                     .build(),
             )
+            .lines(5)
+            .build()?,
+        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
+            .cursor_style(
+                ContentStyleBuilder::new()
+                    .foreground_color(Color::Magenta)
+                    .build(),
+            )
             .build()?,
     ]);
     loop {

@@ -31,6 +31,7 @@ pub struct TextEditor {
     pub cursor_style: ContentStyle,
     pub mode: Mode,
     pub mask: Option<char>,
+    pub lines: Option<usize>,
 }
 
 impl TextEditor {
@@ -56,7 +57,7 @@ impl Editor for TextEditor {
         Pane::new(
             matrixify(width as usize, &buf),
             self.textbuffer.position / width as usize,
-            None,
+            self.lines,
         )
     }
 

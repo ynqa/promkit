@@ -8,6 +8,7 @@ pub struct ItemPickerBuilder {
     label_style: ContentStyle,
     style: ContentStyle,
     cursor_style: ContentStyle,
+    lines: Option<usize>,
 }
 
 impl ItemPickerBuilder {
@@ -18,6 +19,7 @@ impl ItemPickerBuilder {
             label_style: ContentStyle::new(),
             style: ContentStyle::new(),
             cursor_style: ContentStyle::new(),
+            lines: None,
         }
     }
 
@@ -41,6 +43,11 @@ impl ItemPickerBuilder {
         self
     }
 
+    pub fn lines(mut self, lines: usize) -> Self {
+        self.lines = Some(lines);
+        self
+    }
+
     pub fn build(self) -> Result<Box<ItemPicker>> {
         Ok(Box::new(ItemPicker {
             itembox: self.itembox,
@@ -48,6 +55,7 @@ impl ItemPickerBuilder {
             label_style: self.label_style,
             style: self.style,
             cursor_style: self.cursor_style,
+            lines: self.lines,
         }))
     }
 }

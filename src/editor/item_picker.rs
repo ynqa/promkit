@@ -17,6 +17,7 @@ pub struct ItemPicker {
     pub label_style: ContentStyle,
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
+    pub lines: Option<usize>,
 }
 
 impl ItemPicker {
@@ -50,7 +51,7 @@ impl Editor for ItemPicker {
             .iter()
             .map(|row| trim(width as usize, row))
             .collect();
-        Pane::new(trimed, self.itembox.position, None)
+        Pane::new(trimed, self.itembox.position, self.lines)
     }
 
     /// Default key bindings for item picker.
