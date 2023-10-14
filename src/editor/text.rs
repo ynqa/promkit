@@ -19,6 +19,7 @@ impl Editor for Text {
                 &Graphemes::new_with_style(&self.text, self.style),
             ),
             0,
+            None,
         )
     }
 

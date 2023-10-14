@@ -50,7 +50,7 @@ impl Editor for ItemPicker {
             .iter()
             .map(|row| trim(width as usize, row))
             .collect();
-        Pane::new(trimed, self.itembox.position)
+        Pane::new(trimed, self.itembox.position, None)
     }
 
     /// Default key bindings for item picker.

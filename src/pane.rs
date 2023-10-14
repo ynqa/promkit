@@ -3,15 +3,24 @@ use crate::grapheme::Graphemes;
 pub struct Pane {
     layout: Vec<Graphemes>,
     offset: usize,
+    fixed_height: Option<usize>,
 }
 
 impl Pane {
-    pub fn new(layout: Vec<Graphemes>, offset: usize) -> Self {
-        Pane { layout, offset }
+    pub fn new(layout: Vec<Graphemes>, offset: usize, fixed_height: Option<usize>) -> Self {
+        Pane {
+            layout,
+            offset,
+            fixed_height,
+        }
     }
 
     pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
-        let lines = self.layout.len().min(viewport_height);
+        let lines = self.layout.len().min(
+            self.fixed_height
+                .unwrap_or(viewport_height)
+                .min(viewport_height),
+        );
 
         let mut start = self.offset;
         let end = self.offset + lines;
@@ -52,6 +61,7 @@ mod test {
                         Graphemes::new("ee"),
                     ],
                     offset: 0,
+                    fixed_height: None,
                 }
                 .extract(3)
             );
@@ -77,6 +87,7 @@ mod test {
                         Graphemes::new("ee"),
                     ],
                     offset: 0,
+                    fixed_height: None,
                 }
                 .extract(10)
             );
@@ -96,6 +107,7 @@ mod test {
                         Graphemes::new("ee"),
                     ],
                     offset: 2, // indicate `cc`
+                    fixed_height: None,
                 }
                 .extract(2)
             );
@@ -119,6 +131,7 @@ mod test {
                         Graphemes::new("ee"),
                     ],
                     offset: 3, // indicate `dd`
+                    fixed_height: None,
                 }
                 .extract(3)
             );

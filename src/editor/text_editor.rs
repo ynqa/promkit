@@ -56,6 +56,7 @@ impl Editor for TextEditor {
         Pane::new(
             matrixify(width as usize, &buf),
             self.textbuffer.position / width as usize,
+            None,
         )
     }
 
