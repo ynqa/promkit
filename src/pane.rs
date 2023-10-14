@@ -136,5 +136,55 @@ mod test {
                 .extract(3)
             );
         }
+
+        #[test]
+        fn test_with_small_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
+            let expect = vec![
+                Graphemes::new("bb"),
+                Graphemes::new("cc"),
+                Graphemes::new("dd"),
+                Graphemes::new("ee"),
+            ];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
+                    ],
+                    offset: 3, // indicate `dd`
+                    fixed_height: Some(5),
+                }
+                .extract(4)
+            );
+        }
+
+        #[test]
+        fn test_with_large_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
+            let expect = vec![
+                Graphemes::new("bb"),
+                Graphemes::new("cc"),
+                Graphemes::new("dd"),
+                Graphemes::new("ee"),
+            ];
+            assert_eq!(
+                expect,
+                Pane {
+                    layout: vec![
+                        Graphemes::new("aa"),
+                        Graphemes::new("bb"),
+                        Graphemes::new("cc"),
+                        Graphemes::new("dd"),
+                        Graphemes::new("ee"),
+                    ],
+                    offset: 3, // indicate `dd`
+                    fixed_height: Some(4),
+                }
+                .extract(5)
+            );
+        }
     }
 }
