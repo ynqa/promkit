@@ -33,7 +33,6 @@ impl Terminal {
                 1.max(
                     terminal_height
                         // -1 in this context signifies the exclusion of the current pane.
-                        // .saturating_sub(used + panes.len() - 1 - i),
                         .saturating_sub(used + panes.len() - 1 - i),
                 ),
             );

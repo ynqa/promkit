@@ -15,11 +15,11 @@ impl Pane {
         }
     }
 
-    pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
+    pub fn extract(&self, remaining_height: usize) -> Vec<Graphemes> {
         let lines = self.layout.len().min(
             self.fixed_height
-                .unwrap_or(viewport_height)
-                .min(viewport_height),
+                .unwrap_or(remaining_height)
+                .min(remaining_height),
         );
 
         let mut start = self.offset;
