@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use promkit::{
     crossterm::style::Color,
-    editor::{ItemPickerBuilder, Mode, ReadlineBuilder, TextBuilder},
+    editor::{Mode, ReadlineBuilder, SelectBuilder, TextBuilder},
     item_box::ItemBox,
     style::ContentStyleBuilder,
     suggest::Suggest,
@@ -47,7 +47,7 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
+        SelectBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::Magenta)
@@ -55,7 +55,7 @@ fn main() -> Result<()> {
             )
             .lines(5)
             .build()?,
-        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
+        SelectBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::Magenta)

@@ -1,8 +1,8 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, editor::item_picker::ItemPicker, item_box::ItemBox};
+use crate::{crossterm::style::ContentStyle, editor::select::Select, item_box::ItemBox};
 
-pub struct ItemPickerBuilder {
+pub struct SelectBuilder {
     itembox: ItemBox,
     label: String,
     label_style: ContentStyle,
@@ -11,7 +11,7 @@ pub struct ItemPickerBuilder {
     lines: Option<usize>,
 }
 
-impl ItemPickerBuilder {
+impl SelectBuilder {
     pub fn new(itembox: ItemBox) -> Self {
         Self {
             itembox,
@@ -48,8 +48,8 @@ impl ItemPickerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<ItemPicker>> {
-        Ok(Box::new(ItemPicker {
+    pub fn build(self) -> Result<Box<Select>> {
+        Ok(Box::new(Select {
             itembox: self.itembox,
             label: self.label,
             label_style: self.label_style,

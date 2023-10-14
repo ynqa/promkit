@@ -1,9 +1,9 @@
 use crate::{crossterm::event::Event, pane::Pane};
 
 mod builder;
-pub use builder::{item_picker::ItemPickerBuilder, readline::ReadlineBuilder, text::TextBuilder};
-mod item_picker;
+pub use builder::{readline::ReadlineBuilder, select::SelectBuilder, text::TextBuilder};
 mod readline;
+mod select;
 pub use readline::Mode;
 mod text;
 

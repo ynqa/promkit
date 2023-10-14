@@ -10,7 +10,7 @@ use crate::{
 
 use super::Editor;
 
-pub struct ItemPicker {
+pub struct Select {
     pub itembox: ItemBox,
 
     pub label: String,
@@ -20,7 +20,7 @@ pub struct ItemPicker {
     pub lines: Option<usize>,
 }
 
-impl ItemPicker {
+impl Select {
     fn itembox_to_layout(&self) -> Vec<Graphemes> {
         self.itembox
             .content()
@@ -44,7 +44,7 @@ impl ItemPicker {
     }
 }
 
-impl Editor for ItemPicker {
+impl Editor for Select {
     fn gen_pane(&self, width: u16) -> Pane {
         let trimed = self
             .itembox_to_layout()
@@ -54,7 +54,7 @@ impl Editor for ItemPicker {
         Pane::new(trimed, self.itembox.position, self.lines)
     }
 
-    /// Default key bindings for item picker.
+    /// Default key bindings for select.
     ///
     /// | Key                    | Description
     /// | :--                    | :--

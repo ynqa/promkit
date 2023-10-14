@@ -1,3 +1,3 @@
-pub mod item_picker;
 pub mod readline;
+pub mod select;
 pub mod text;
