@@ -15,9 +15,7 @@ impl Default for TextBuffer {
 
 impl TextBuffer {
     pub fn content(&self) -> String {
-        let mut ret = self.buf.clone();
-        ret.pop();
-        ret
+        self.buf.clone()
     }
 
     pub fn content_without_cursor(&self) -> String {
