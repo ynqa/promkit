@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, cell::RefCell};
 
 use crate::{
     crossterm::{event::Event, style::ContentStyle},
@@ -6,11 +6,22 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, Widget};
+use super::{AsAny, State, Widget};
 
+#[derive(Clone)]
 pub struct Text {
     pub text: String,
     pub style: ContentStyle,
+}
+
+impl State<Text> {
+    pub fn new(text: Text) -> Self {
+        Self {
+            init: text.clone(),
+            before: text.clone(),
+            after: RefCell::new(text),
+        }
+    }
 }
 
 impl Widget for Text {

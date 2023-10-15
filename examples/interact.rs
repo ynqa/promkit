@@ -7,7 +7,8 @@ use promkit::{
     item_box::ItemBox,
     style::ContentStyleBuilder,
     widgets::{
-        ItemPicker, ItemPickerBuilder, State, TextBuilder, TextEditor, TextEditorBuilder, Widget,
+        ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor, TextEditorBuilder,
+        Widget,
     },
     PromptBuilder,
 };
@@ -58,6 +59,7 @@ fn main() -> Result<()> {
             .as_any()
             .downcast_ref::<State<ItemPicker>>()
             .unwrap();
+        let hinttext_state = widgets[3].as_any().downcast_ref::<State<Text>>().unwrap();
 
         if texteditor_state.before.textbuffer.content()
             != texteditor_state.after.borrow().textbuffer.content()
@@ -80,7 +82,16 @@ fn main() -> Result<()> {
                 }
             }
         }
-        Ok(!itempucker_state.output().is_empty())
+        let finalizable = !itempucker_state.output().is_empty();
+        if !finalizable {
+            hinttext_state.after.borrow_mut().text = String::from("Put number 99");
+            hinttext_state.after.borrow_mut().style = ContentStyleBuilder::new()
+                .foreground_color(Color::Red)
+                .build();
+        } else {
+            *hinttext_state.after.borrow_mut() = hinttext_state.init.clone();
+        }
+        Ok(finalizable)
     }))
     .build()?;
     loop {

@@ -1,6 +1,9 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, widgets::text::Text};
+use crate::{
+    crossterm::style::ContentStyle,
+    widgets::{text::Text, State},
+};
 
 pub struct TextBuilder {
     text: String,
@@ -27,10 +30,10 @@ impl TextBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<Text>> {
-        Ok(Box::new(Text {
+    pub fn build(self) -> Result<Box<State<Text>>> {
+        Ok(Box::new(State::<Text>::new(Text {
             text: self.text,
             style: self.style,
-        }))
+        })))
     }
 }
