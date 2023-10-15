@@ -37,7 +37,7 @@ impl TextBuilder {
         })
     }
 
-    pub fn make_state(self) -> Result<Box<State<Text>>> {
+    pub fn build_state(self) -> Result<Box<State<Text>>> {
         Ok(Box::new(State::<Text>::new(self.build()?)))
     }
 }

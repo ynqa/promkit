@@ -21,7 +21,7 @@ fn main() -> Result<()> {
                     .foreground_color(Color::Green)
                     .build(),
             )
-            .make_state()?,
+            .build_state()?,
         TextEditorBuilder::default()
             .style(
                 ContentStyleBuilder::new()
@@ -39,7 +39,7 @@ fn main() -> Result<()> {
                     .build(),
             )
             .disable_history()
-            .make_state()?,
+            .build_state()?,
         ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
@@ -47,8 +47,8 @@ fn main() -> Result<()> {
                     .build(),
             )
             .lines(10)
-            .make_state()?,
-        TextBuilder::empty().make_state()?,
+            .build_state()?,
+        TextBuilder::empty().build_state()?,
     ])
     .evaluate(Box::new(|widgets: &Vec<Box<dyn Widget>>| -> Result<bool> {
         let texteditor_state = widgets[1]

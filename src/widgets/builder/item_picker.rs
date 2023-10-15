@@ -63,7 +63,7 @@ impl ItemPickerBuilder {
         })
     }
 
-    pub fn make_state(self) -> Result<Box<State<ItemPicker>>> {
+    pub fn build_state(self) -> Result<Box<State<ItemPicker>>> {
         Ok(Box::new(State::<ItemPicker>::new(self.build()?)))
     }
 }

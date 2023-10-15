@@ -97,7 +97,7 @@ impl TextEditorBuilder {
         })
     }
 
-    pub fn make_state(self) -> Result<Box<State<TextEditor>>> {
+    pub fn build_state(self) -> Result<Box<State<TextEditor>>> {
         Ok(Box::new(State::<TextEditor>::new(self.build()?)))
     }
 }
