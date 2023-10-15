@@ -14,7 +14,7 @@ mod text;
 pub use text::Text;
 
 pub trait Widget: AsAny {
-    fn gen_pane(&self, width: u16) -> Pane;
+    fn make_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);
     fn output(&self) -> String;
@@ -41,8 +41,8 @@ impl<W: Widget + Clone> State<W> {
 }
 
 impl<W: Clone + Widget + 'static> Widget for State<W> {
-    fn gen_pane(&self, width: u16) -> Pane {
-        self.after.borrow().gen_pane(width)
+    fn make_pane(&self, width: u16) -> Pane {
+        self.after.borrow().make_pane(width)
     }
 
     fn handle_event(&mut self, event: &Event) {

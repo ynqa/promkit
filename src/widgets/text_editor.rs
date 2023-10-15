@@ -50,7 +50,7 @@ impl TextEditor {
 }
 
 impl Widget for TextEditor {
-    fn gen_pane(&self, width: u16) -> Pane {
+    fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(
             &self.label,

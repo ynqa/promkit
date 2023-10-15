@@ -15,7 +15,7 @@ pub struct Text {
 }
 
 impl Widget for Text {
-    fn gen_pane(&self, width: u16) -> Pane {
+    fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(
                 width as usize,

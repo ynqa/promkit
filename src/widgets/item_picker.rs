@@ -48,7 +48,7 @@ impl ItemPicker {
 }
 
 impl Widget for ItemPicker {
-    fn gen_pane(&self, width: u16) -> Pane {
+    fn make_pane(&self, width: u16) -> Pane {
         let trimed = self
             .itembox_to_layout()
             .iter()
