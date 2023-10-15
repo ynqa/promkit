@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell};
+use std::any::Any;
 
 use crate::{
     crossterm::{
@@ -10,17 +10,7 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, State, Widget};
-
-impl State<ItemPicker> {
-    pub fn new(itempicker: ItemPicker) -> Self {
-        Self {
-            init: itempicker.clone(),
-            before: itempicker.clone(),
-            after: RefCell::new(itempicker),
-        }
-    }
-}
+use super::{AsAny, Widget};
 
 #[derive(Clone)]
 pub struct ItemPicker {

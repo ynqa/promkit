@@ -30,6 +30,16 @@ pub struct State<W: Widget> {
     pub after: RefCell<W>,
 }
 
+impl<W: Widget + Clone> State<W> {
+    pub fn new(widget: W) -> Self {
+        Self {
+            init: widget.clone(),
+            before: widget.clone(),
+            after: RefCell::new(widget),
+        }
+    }
+}
+
 impl<W: Clone + Widget + 'static> Widget for State<W> {
     fn gen_pane(&self, width: u16) -> Pane {
         self.after.borrow().gen_pane(width)

@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell};
+use std::any::Any;
 
 use crate::{
     crossterm::{
@@ -12,7 +12,7 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::{AsAny, State, Widget};
+use super::{AsAny, Widget};
 
 /// Edit mode.
 #[derive(Clone)]
@@ -21,16 +21,6 @@ pub enum Mode {
     Insert,
     /// Overwrite a char at the current position.
     Overwrite,
-}
-
-impl State<TextEditor> {
-    pub fn new(texteditor: TextEditor) -> Self {
-        Self {
-            init: texteditor.clone(),
-            before: texteditor.clone(),
-            after: RefCell::new(texteditor),
-        }
-    }
 }
 
 #[derive(Clone)]
