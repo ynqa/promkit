@@ -77,30 +77,30 @@ use crate::{
     widgets::Widget,
 };
 
-type PostHandle = dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>;
+type PostHandle = dyn Fn(&Vec<Box<dyn Widget>>) -> Result<bool>;
 
 pub struct PromptBuilder {
     widgets: Vec<Box<dyn Widget>>,
-    posthandle: Option<Box<PostHandle>>,
+    evaluate: Option<Box<PostHandle>>,
 }
 
 impl PromptBuilder {
     pub fn new(widgets: Vec<Box<dyn Widget>>) -> Self {
         Self {
             widgets,
-            posthandle: None,
+            evaluate: None,
         }
     }
 
-    pub fn posthandle(mut self, posthandle: Box<PostHandle>) -> Self {
-        self.posthandle = Some(posthandle);
+    pub fn evaluate(mut self, evaluate: Box<PostHandle>) -> Self {
+        self.evaluate = Some(evaluate);
         self
     }
 
     pub fn build(self) -> Result<Prompt> {
         Ok(Prompt {
             widgets: self.widgets,
-            posthandle: self.posthandle,
+            evaluate: self.evaluate,
         })
     }
 }
@@ -108,7 +108,7 @@ impl PromptBuilder {
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     widgets: Vec<Box<dyn Widget>>,
-    posthandle: Option<Box<PostHandle>>,
+    evaluate: Option<Box<PostHandle>>,
 }
 
 static ONCE: Once = Once::new();
@@ -117,7 +117,7 @@ impl Prompt {
     pub fn new(widgets: Vec<Box<dyn Widget>>) -> Self {
         Self {
             widgets,
-            posthandle: None,
+            evaluate: None,
         }
     }
 
@@ -154,9 +154,11 @@ impl Prompt {
                 editor.handle_event(&ev);
             }
 
-            if let Some(posthandle) = &self.posthandle {
-                posthandle(&self.widgets)?;
-            }
+            let finalizable = if let Some(evaluate) = &self.evaluate {
+                evaluate(&self.widgets)?
+            } else {
+                true
+            };
 
             let size = engine.size()?;
             terminal.draw(
@@ -173,7 +175,11 @@ impl Prompt {
                     modifiers: KeyModifiers::NONE,
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
-                }) => break,
+                }) => {
+                    if finalizable {
+                        break;
+                    }
+                }
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('c'),
                     modifiers: KeyModifiers::CONTROL,

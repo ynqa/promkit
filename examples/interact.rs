@@ -48,31 +48,38 @@ fn main() -> Result<()> {
             .lines(10)
             .build()?,
     ])
-    .posthandle(Box::new(|widgets: &Vec<Box<dyn Widget>>| -> Result<()> {
-        if let Some(state) = widgets[1].as_any().downcast_ref::<State<TextEditor>>() {
-            if state.before.textbuffer.content() != state.after.borrow().textbuffer.content() {
-                let query = state.after.borrow().output();
-                if let Some(state) = widgets[2].as_any().downcast_ref::<State<ItemPicker>>() {
-                    state.after.borrow_mut().itembox.position = 0;
-                    match query.parse::<usize>() {
-                        Ok(query) => {
-                            state.after.borrow_mut().itembox.list = state
-                                .init
-                                .itembox
-                                .list
-                                .iter()
-                                .filter(|num| query <= num.parse::<usize>().unwrap_or_default())
-                                .map(|num| num.to_string())
-                                .collect::<Vec<String>>();
-                        }
-                        Err(_) => {
-                            *state.after.borrow_mut() = state.init.clone();
-                        }
-                    }
+    .evaluate(Box::new(|widgets: &Vec<Box<dyn Widget>>| -> Result<bool> {
+        let texteditor_state = widgets[1]
+            .as_any()
+            .downcast_ref::<State<TextEditor>>()
+            .unwrap();
+        let itempucker_state = widgets[2]
+            .as_any()
+            .downcast_ref::<State<ItemPicker>>()
+            .unwrap();
+
+        if texteditor_state.before.textbuffer.content()
+            != texteditor_state.after.borrow().textbuffer.content()
+        {
+            let query = texteditor_state.after.borrow().output();
+            itempucker_state.after.borrow_mut().itembox.position = 0;
+            match query.parse::<usize>() {
+                Ok(query) => {
+                    itempucker_state.after.borrow_mut().itembox.list = itempucker_state
+                        .init
+                        .itembox
+                        .list
+                        .iter()
+                        .filter(|num| query <= num.parse::<usize>().unwrap_or_default())
+                        .map(|num| num.to_string())
+                        .collect::<Vec<String>>();
+                }
+                Err(_) => {
+                    *itempucker_state.after.borrow_mut() = itempucker_state.init.clone();
                 }
             }
         }
-        Ok(())
+        Ok(!itempucker_state.output().is_empty())
     }))
     .build()?;
     loop {
