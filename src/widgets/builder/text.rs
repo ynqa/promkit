@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, editor::text::Text};
+use crate::{crossterm::style::ContentStyle, widgets::text::Text};
 
 pub struct TextBuilder {
     text: String,

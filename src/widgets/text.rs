@@ -6,14 +6,14 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, Editor};
+use super::{AsAny, Widget};
 
 pub struct Text {
     pub text: String,
     pub style: ContentStyle,
 }
 
-impl Editor for Text {
+impl Widget for Text {
     fn gen_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(

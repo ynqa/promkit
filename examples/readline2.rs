@@ -7,9 +7,9 @@ use promkit::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::Color,
     },
-    editor::{Editor, ItemPicker, ItemPickerBuilder, TextBuilder, TextEditor, TextEditorBuilder},
     item_box::ItemBox,
     style::ContentStyleBuilder,
+    widgets::{ItemPicker, ItemPickerBuilder, TextBuilder, TextEditor, TextEditorBuilder, Widget},
     Prompt,
 };
 
@@ -51,7 +51,7 @@ fn main() -> Result<()> {
                 .build()?,
         ],
         Box::new(
-            |event: &Event, editors: &mut Vec<Box<dyn Editor>>| -> Result<()> {
+            |event: &Event, widgets: &mut Vec<Box<dyn Widget>>| -> Result<()> {
                 match event {
                     Event::Key(KeyEvent {
                         code: KeyCode::Char(_),
@@ -65,11 +65,11 @@ fn main() -> Result<()> {
                         kind: KeyEventKind::Press,
                         state: KeyEventState::NONE,
                     }) => {
-                        if let Some(texteditor) = editors[1].as_any().downcast_ref::<TextEditor>() {
+                        if let Some(texteditor) = widgets[1].as_any().downcast_ref::<TextEditor>() {
                             let query = texteditor.output();
                             if let Ok(query) = query.parse::<usize>() {
                                 if let Some(mut picker) =
-                                    editors[2].as_any_mut().downcast_mut::<ItemPicker>()
+                                    widgets[2].as_any_mut().downcast_mut::<ItemPicker>()
                                 {
                                     picker.itembox.position = 0;
                                     picker.itembox.list = picker

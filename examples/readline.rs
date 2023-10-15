@@ -4,10 +4,10 @@ use anyhow::Result;
 
 use promkit::{
     crossterm::style::Color,
-    editor::{ItemPickerBuilder, Mode, TextBuilder, TextEditorBuilder},
     item_box::ItemBox,
     style::ContentStyleBuilder,
     suggest::Suggest,
+    widgets::{ItemPickerBuilder, Mode, TextBuilder, TextEditorBuilder},
     Prompt,
 };
 

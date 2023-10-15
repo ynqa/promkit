@@ -12,7 +12,7 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::{AsAny, Editor};
+use super::{AsAny, Widget};
 
 /// Edit mode.
 pub enum Mode {
@@ -47,7 +47,7 @@ impl TextEditor {
     }
 }
 
-impl Editor for TextEditor {
+impl Widget for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(

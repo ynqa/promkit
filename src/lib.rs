@@ -48,7 +48,6 @@ extern crate scopeguard;
 
 pub use crossterm;
 
-pub mod editor;
 mod engine;
 mod grapheme;
 mod history;
@@ -58,6 +57,7 @@ pub mod style;
 pub mod suggest;
 mod terminal;
 mod text_buffer;
+pub mod widgets;
 
 use std::io;
 use std::sync::Once;
@@ -72,33 +72,33 @@ use crate::{
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
-    editor::Editor,
     engine::Engine,
     terminal::Terminal,
+    widgets::Widget,
 };
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
-    editors: Vec<Box<dyn Editor>>,
-    posthandle: Option<Box<dyn Fn(&Event, &mut Vec<Box<dyn Editor>>) -> Result<()>>>,
+    widgets: Vec<Box<dyn Widget>>,
+    posthandle: Option<Box<dyn Fn(&Event, &mut Vec<Box<dyn Widget>>) -> Result<()>>>,
 }
 
 static ONCE: Once = Once::new();
 
 impl Prompt {
-    pub fn new(editors: Vec<Box<dyn Editor>>) -> Self {
+    pub fn new(widgets: Vec<Box<dyn Widget>>) -> Self {
         Self {
-            editors,
+            widgets,
             posthandle: None,
         }
     }
 
     pub fn new_with_posthandle(
-        editors: Vec<Box<dyn Editor>>,
-        posthandle: Box<dyn Fn(&Event, &mut Vec<Box<dyn Editor>>) -> Result<()>>,
+        widgets: Vec<Box<dyn Widget>>,
+        posthandle: Box<dyn Fn(&Event, &mut Vec<Box<dyn Widget>>) -> Result<()>>,
     ) -> Self {
         Self {
-            editors,
+            widgets,
             posthandle: Some(posthandle),
         }
     }
@@ -123,7 +123,7 @@ impl Prompt {
         let size = engine.size()?;
         terminal.draw(
             &mut engine,
-            self.editors
+            self.widgets
                 .iter()
                 .map(|editor| editor.gen_pane(size.0))
                 .collect(),
@@ -132,18 +132,18 @@ impl Prompt {
         loop {
             let ev = event::read()?;
 
-            for editor in &mut self.editors {
+            for editor in &mut self.widgets {
                 editor.handle_event(&ev);
             }
 
             if let Some(posthandle) = &self.posthandle {
-                posthandle(&ev, &mut self.editors)?;
+                posthandle(&ev, &mut self.widgets)?;
             }
 
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,
-                self.editors
+                self.widgets
                     .iter()
                     .map(|editor| editor.gen_pane(size.0))
                     .collect(),
@@ -166,8 +166,8 @@ impl Prompt {
             }
         }
 
-        let ret = self.editors.iter().map(|editor| editor.output()).collect();
-        self.editors.iter_mut().for_each(|editor| {
+        let ret = self.widgets.iter().map(|editor| editor.output()).collect();
+        self.widgets.iter_mut().for_each(|editor| {
             editor.postrun();
         });
         Ok(ret)

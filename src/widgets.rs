@@ -12,7 +12,7 @@ mod item_picker;
 pub use item_picker::ItemPicker;
 mod text;
 
-pub trait Editor: AsAny {
+pub trait Widget: AsAny {
     fn gen_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);

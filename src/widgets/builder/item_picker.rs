@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, editor::item_picker::ItemPicker, item_box::ItemBox};
+use crate::{crossterm::style::ContentStyle, item_box::ItemBox, widgets::item_picker::ItemPicker};
 
 pub struct ItemPickerBuilder {
     itembox: ItemBox,

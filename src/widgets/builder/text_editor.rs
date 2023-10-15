@@ -2,10 +2,10 @@ use anyhow::Result;
 
 use crate::{
     crossterm::style::ContentStyle,
-    editor::{text_editor::TextEditor, Mode},
     history::History,
     suggest::Suggest,
     text_buffer::TextBuffer,
+    widgets::{text_editor::TextEditor, Mode},
 };
 
 pub struct TextEditorBuilder {
