@@ -7,7 +7,7 @@ use promkit::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::Color,
     },
-    editor::{Editor, Readline, ReadlineBuilder, Select, SelectBuilder, TextBuilder},
+    editor::{Editor, ItemPicker, ItemPickerBuilder, TextBuilder, TextEditor, TextEditorBuilder},
     item_box::ItemBox,
     style::ContentStyleBuilder,
     Prompt,
@@ -23,7 +23,7 @@ fn main() -> Result<()> {
                         .build(),
                 )
                 .build()?,
-            ReadlineBuilder::default()
+            TextEditorBuilder::default()
                 .style(
                     ContentStyleBuilder::new()
                         .foreground_color(Color::DarkYellow)
@@ -41,7 +41,7 @@ fn main() -> Result<()> {
                 )
                 .disable_history()
                 .build()?,
-            SelectBuilder::new(ItemBox::from_iter(0..100))
+            ItemPickerBuilder::new(ItemBox::from_iter(0..100))
                 .cursor_style(
                     ContentStyleBuilder::new()
                         .foreground_color(Color::Magenta)
@@ -65,14 +65,14 @@ fn main() -> Result<()> {
                         kind: KeyEventKind::Press,
                         state: KeyEventState::NONE,
                     }) => {
-                        if let Some(readline) = editors[1].as_any().downcast_ref::<Readline>() {
-                            let query = readline.output();
+                        if let Some(texteditor) = editors[1].as_any().downcast_ref::<TextEditor>() {
+                            let query = texteditor.output();
                             if let Ok(query) = query.parse::<usize>() {
-                                if let Some(mut select) =
-                                    editors[2].as_any_mut().downcast_mut::<Select>()
+                                if let Some(mut picker) =
+                                    editors[2].as_any_mut().downcast_mut::<ItemPicker>()
                                 {
-                                    select.itembox.position = 0;
-                                    select.itembox.list = select
+                                    picker.itembox.position = 0;
+                                    picker.itembox.list = picker
                                         .itembox
                                         .list
                                         .iter()

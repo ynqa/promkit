@@ -22,7 +22,7 @@ pub enum Mode {
     Overwrite,
 }
 
-pub struct Readline {
+pub struct TextEditor {
     pub textbuffer: TextBuffer,
     pub history: Option<History>,
     pub suggest: Suggest,
@@ -36,7 +36,7 @@ pub struct Readline {
     pub lines: Option<usize>,
 }
 
-impl Readline {
+impl TextEditor {
     fn textbuffer_to_graphemes(&self) -> Graphemes {
         let text = match self.mask {
             Some(mask) => self.textbuffer.masking(mask),
@@ -47,7 +47,7 @@ impl Readline {
     }
 }
 
-impl Editor for Readline {
+impl Editor for TextEditor {
     fn gen_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(
@@ -63,7 +63,7 @@ impl Editor for Readline {
         )
     }
 
-    /// Default key bindings for readline.
+    /// Default key bindings for text editor.
     ///
     /// | Key                    | Description
     /// | :--                    | :--
@@ -194,7 +194,7 @@ impl Editor for Readline {
     }
 }
 
-impl AsAny for Readline {
+impl AsAny for TextEditor {
     fn as_any(&self) -> &dyn Any {
         self
     }

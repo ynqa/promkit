@@ -4,7 +4,7 @@ use anyhow::Result;
 
 use promkit::{
     crossterm::style::Color,
-    editor::{Mode, ReadlineBuilder, SelectBuilder, TextBuilder},
+    editor::{ItemPickerBuilder, Mode, TextBuilder, TextEditorBuilder},
     item_box::ItemBox,
     style::ContentStyleBuilder,
     suggest::Suggest,
@@ -20,7 +20,7 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        ReadlineBuilder::default()
+        TextEditorBuilder::default()
             .style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::DarkYellow)
@@ -38,8 +38,8 @@ fn main() -> Result<()> {
             )
             .suggest(Suggest::from_iter(["promkit", "ynqa"]))
             .build()?,
-        ReadlineBuilder::default().mode(Mode::Overwrite).build()?,
-        ReadlineBuilder::default()
+        TextEditorBuilder::default().mode(Mode::Overwrite).build()?,
+        TextEditorBuilder::default()
             .mask('*')
             .cursor_style(
                 ContentStyleBuilder::new()
@@ -47,7 +47,7 @@ fn main() -> Result<()> {
                     .build(),
             )
             .build()?,
-        SelectBuilder::new(ItemBox::from_iter(0..100))
+        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::Magenta)
@@ -55,7 +55,7 @@ fn main() -> Result<()> {
             )
             .lines(5)
             .build()?,
-        SelectBuilder::new(ItemBox::from_iter(0..100))
+        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::Magenta)

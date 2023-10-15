@@ -12,7 +12,7 @@ use crate::{
 
 use super::{AsAny, Editor};
 
-pub struct Select {
+pub struct ItemPicker {
     pub itembox: ItemBox,
 
     pub label: String,
@@ -22,7 +22,7 @@ pub struct Select {
     pub lines: Option<usize>,
 }
 
-impl Select {
+impl ItemPicker {
     fn itembox_to_layout(&self) -> Vec<Graphemes> {
         self.itembox
             .content()
@@ -46,7 +46,7 @@ impl Select {
     }
 }
 
-impl Editor for Select {
+impl Editor for ItemPicker {
     fn gen_pane(&self, width: u16) -> Pane {
         let trimed = self
             .itembox_to_layout()
@@ -56,7 +56,7 @@ impl Editor for Select {
         Pane::new(trimed, self.itembox.position, self.lines)
     }
 
-    /// Default key bindings for select.
+    /// Default key bindings for item picker.
     ///
     /// | Key                    | Description
     /// | :--                    | :--
@@ -64,8 +64,8 @@ impl Editor for Select {
     /// | <kbd> CTRL + C </kbd>  | Exit the event-loop with an error
     /// | <kbd> ↑ </kbd>         | Move backward
     /// | <kbd> ↓ </kbd>         | Move forward
-    /// | <kbd> CTRL + A </kbd>  | Move to the beginning of the selector
-    /// | <kbd> CTRL + E </kbd>  | Move to the end of the selector
+    /// | <kbd> CTRL + A </kbd>  | Move to the beginning of the items
+    /// | <kbd> CTRL + E </kbd>  | Move to the end of the items
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Move cursor.
@@ -99,7 +99,7 @@ impl Editor for Select {
     }
 }
 
-impl AsAny for Select {
+impl AsAny for ItemPicker {
     fn as_any(&self) -> &dyn Any {
         self
     }

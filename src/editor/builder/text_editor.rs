@@ -2,13 +2,13 @@ use anyhow::Result;
 
 use crate::{
     crossterm::style::ContentStyle,
-    editor::{readline::Readline, Mode},
+    editor::{text_editor::TextEditor, Mode},
     history::History,
     suggest::Suggest,
     text_buffer::TextBuffer,
 };
 
-pub struct ReadlineBuilder {
+pub struct TextEditorBuilder {
     history: Option<History>,
     suggest: Suggest,
     label: String,
@@ -20,7 +20,7 @@ pub struct ReadlineBuilder {
     lines: Option<usize>,
 }
 
-impl Default for ReadlineBuilder {
+impl Default for TextEditorBuilder {
     fn default() -> Self {
         Self {
             history: Some(History::default()),
@@ -36,7 +36,7 @@ impl Default for ReadlineBuilder {
     }
 }
 
-impl ReadlineBuilder {
+impl TextEditorBuilder {
     pub fn suggest(mut self, suggest: Suggest) -> Self {
         self.suggest = suggest;
         self
@@ -82,8 +82,8 @@ impl ReadlineBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<Readline>> {
-        Ok(Box::new(Readline {
+    pub fn build(self) -> Result<Box<TextEditor>> {
+        Ok(Box::new(TextEditor {
             textbuffer: TextBuffer::default(),
             history: self.history,
             suggest: self.suggest,

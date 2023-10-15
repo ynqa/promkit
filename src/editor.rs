@@ -3,11 +3,13 @@ use std::any::Any;
 use crate::{crossterm::event::Event, pane::Pane};
 
 mod builder;
-pub use builder::{readline::ReadlineBuilder, select::SelectBuilder, text::TextBuilder};
-mod readline;
-pub use readline::{Mode, Readline};
-mod select;
-pub use select::Select;
+pub use builder::{
+    item_picker::ItemPickerBuilder, text::TextBuilder, text_editor::TextEditorBuilder,
+};
+mod text_editor;
+pub use text_editor::{Mode, TextEditor};
+mod item_picker;
+pub use item_picker::ItemPicker;
 mod text;
 
 pub trait Editor: AsAny {
