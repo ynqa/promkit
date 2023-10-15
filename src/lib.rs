@@ -77,9 +77,11 @@ use crate::{
     widgets::Widget,
 };
 
+type PostHandle = dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>;
+
 pub struct PromptBuilder {
     widgets: Vec<Box<dyn Widget>>,
-    posthandle: Option<Box<dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>>>,
+    posthandle: Option<Box<PostHandle>>,
 }
 
 impl PromptBuilder {
@@ -90,10 +92,7 @@ impl PromptBuilder {
         }
     }
 
-    pub fn posthandle(
-        mut self,
-        posthandle: Box<dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>>,
-    ) -> Self {
+    pub fn posthandle(mut self, posthandle: Box<PostHandle>) -> Self {
         self.posthandle = Some(posthandle);
         self
     }
@@ -109,7 +108,7 @@ impl PromptBuilder {
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     widgets: Vec<Box<dyn Widget>>,
-    posthandle: Option<Box<dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>>>,
+    posthandle: Option<Box<PostHandle>>,
 }
 
 static ONCE: Once = Once::new();
