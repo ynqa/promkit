@@ -1,6 +1,6 @@
 use std::{fmt, iter::FromIterator};
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ItemBox {
     pub list: Vec<String>,
     pub position: usize,

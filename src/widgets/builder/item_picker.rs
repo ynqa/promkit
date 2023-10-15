@@ -1,6 +1,10 @@
 use anyhow::Result;
 
-use crate::{crossterm::style::ContentStyle, item_box::ItemBox, widgets::item_picker::ItemPicker};
+use crate::{
+    crossterm::style::ContentStyle,
+    item_box::ItemBox,
+    widgets::{item_picker::ItemPicker, State},
+};
 
 pub struct ItemPickerBuilder {
     itembox: ItemBox,
@@ -48,14 +52,14 @@ impl ItemPickerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<ItemPicker>> {
-        Ok(Box::new(ItemPicker {
+    pub fn build(self) -> Result<Box<State<ItemPicker>>> {
+        Ok(Box::new(State::<ItemPicker>::new(ItemPicker {
             itembox: self.itembox,
             label: self.label,
             label_style: self.label_style,
             style: self.style,
             cursor_style: self.cursor_style,
             lines: self.lines,
-        }))
+        })))
     }
 }

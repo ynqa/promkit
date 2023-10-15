@@ -80,7 +80,7 @@ use crate::{
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     widgets: Vec<Box<dyn Widget>>,
-    posthandle: Option<Box<dyn Fn(&Event, &mut Vec<Box<dyn Widget>>) -> Result<()>>>,
+    posthandle: Option<Box<dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>>>,
 }
 
 static ONCE: Once = Once::new();
@@ -95,7 +95,7 @@ impl Prompt {
 
     pub fn new_with_posthandle(
         widgets: Vec<Box<dyn Widget>>,
-        posthandle: Box<dyn Fn(&Event, &mut Vec<Box<dyn Widget>>) -> Result<()>>,
+        posthandle: Box<dyn Fn(&Vec<Box<dyn Widget>>) -> Result<()>>,
     ) -> Self {
         Self {
             widgets,
@@ -137,7 +137,7 @@ impl Prompt {
             }
 
             if let Some(posthandle) = &self.posthandle {
-                posthandle(&ev, &mut self.widgets)?;
+                posthandle(&self.widgets)?;
             }
 
             let size = engine.size()?;

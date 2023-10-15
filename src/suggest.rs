@@ -3,7 +3,7 @@ use std::{fmt, iter::FromIterator};
 use radix_trie::{Trie, TrieCommon};
 
 /// Store the suggestions for completion.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Suggest(Trie<String, usize>);
 
 impl<T: fmt::Display> FromIterator<T> for Suggest {

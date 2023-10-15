@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct TextBuffer {
     pub buf: String,
     pub position: usize,

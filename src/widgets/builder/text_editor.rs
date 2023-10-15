@@ -5,7 +5,7 @@ use crate::{
     history::History,
     suggest::Suggest,
     text_buffer::TextBuffer,
-    widgets::{text_editor::TextEditor, Mode},
+    widgets::{text_editor::TextEditor, Mode, State},
 };
 
 pub struct TextEditorBuilder {
@@ -82,8 +82,8 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<TextEditor>> {
-        Ok(Box::new(TextEditor {
+    pub fn build(self) -> Result<Box<State<TextEditor>>> {
+        Ok(Box::new(State::<TextEditor>::new(TextEditor {
             textbuffer: TextBuffer::default(),
             history: self.history,
             suggest: self.suggest,
@@ -94,6 +94,6 @@ impl TextEditorBuilder {
             mode: self.mode,
             mask: self.mask,
             lines: self.lines,
-        }))
+        })))
     }
 }

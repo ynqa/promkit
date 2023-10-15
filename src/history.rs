@@ -1,4 +1,5 @@
 /// Store the histroy of the past user inputs.
+#[derive(Clone)]
 pub struct History {
     buf: Vec<String>,
     position: usize,
