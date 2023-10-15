@@ -1,10 +1,12 @@
+use std::any::Any;
+
 use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, Graphemes},
     pane::Pane,
 };
 
-use super::Editor;
+use super::{AsAny, Editor};
 
 pub struct Text {
     pub text: String,
@@ -29,5 +31,15 @@ impl Editor for Text {
 
     fn output(&self) -> String {
         self.text.to_string()
+    }
+}
+
+impl AsAny for Text {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

@@ -25,3 +25,7 @@ strip-ansi-escapes = "0.2.0"
 [[example]]
 name = "readline"
 path = "examples/readline/readline.rs"
+
+[[example]]
+name = "readline2"
+path = "examples/readline/readline2.rs"

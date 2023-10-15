@@ -1,5 +1,5 @@
 pub struct TextBuffer {
-    buf: String,
+    pub buf: String,
     pub position: usize,
 }
 

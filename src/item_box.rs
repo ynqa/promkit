@@ -2,7 +2,7 @@ use std::{fmt, iter::FromIterator};
 
 #[derive(Default)]
 pub struct ItemBox {
-    list: Vec<String>,
+    pub list: Vec<String>,
     pub position: usize,
 }
 

@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use crate::{
     crossterm::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
@@ -10,7 +12,7 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::Editor;
+use super::{AsAny, Editor};
 
 /// Edit mode.
 pub enum Mode {
@@ -22,7 +24,7 @@ pub enum Mode {
 
 pub struct Readline {
     pub textbuffer: TextBuffer,
-    pub history: History,
+    pub history: Option<History>,
     pub suggest: Suggest,
 
     pub label: String,
@@ -125,8 +127,10 @@ impl Editor for Readline {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if self.history.prev() {
-                    self.textbuffer.replace(&self.history.get())
+                if let Some(ref mut history) = &mut self.history {
+                    if history.prev() {
+                        self.textbuffer.replace(&history.get())
+                    }
                 }
             }
             Event::Key(KeyEvent {
@@ -135,8 +139,10 @@ impl Editor for Readline {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if self.history.next() {
-                    self.textbuffer.replace(&self.history.get())
+                if let Some(ref mut history) = &mut self.history {
+                    if history.next() {
+                        self.textbuffer.replace(&history.get())
+                    }
                 }
             }
 
@@ -177,12 +183,23 @@ impl Editor for Readline {
     }
 
     fn postrun(&mut self) {
-        self.history
-            .insert(self.textbuffer.content_without_cursor());
+        if let Some(ref mut history) = &mut self.history {
+            history.insert(self.textbuffer.content_without_cursor());
+        }
         self.textbuffer = TextBuffer::default();
     }
 
     fn output(&self) -> String {
         self.textbuffer.content_without_cursor()
+    }
+}
+
+impl AsAny for Readline {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

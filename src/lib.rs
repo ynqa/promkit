@@ -80,13 +80,27 @@ use crate::{
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     editors: Vec<Box<dyn Editor>>,
+    posthandle: Option<Box<dyn Fn(&Event, &mut Vec<Box<dyn Editor>>) -> Result<()>>>,
 }
 
 static ONCE: Once = Once::new();
 
 impl Prompt {
     pub fn new(editors: Vec<Box<dyn Editor>>) -> Self {
-        Self { editors }
+        Self {
+            editors,
+            posthandle: None,
+        }
+    }
+
+    pub fn new_with_posthandle(
+        editors: Vec<Box<dyn Editor>>,
+        posthandle: Box<dyn Fn(&Event, &mut Vec<Box<dyn Editor>>) -> Result<()>>,
+    ) -> Self {
+        Self {
+            editors,
+            posthandle: Some(posthandle),
+        }
     }
 
     /// Loop the steps that receive an event and trigger the handler.
@@ -121,6 +135,11 @@ impl Prompt {
             for editor in &mut self.editors {
                 editor.handle_event(&ev);
             }
+
+            if let Some(posthandle) = &self.posthandle {
+                posthandle(&ev, &mut self.editors)?;
+            }
+
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,

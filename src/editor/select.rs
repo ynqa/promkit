@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use crate::{
     crossterm::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
@@ -8,7 +10,7 @@ use crate::{
     pane::Pane,
 };
 
-use super::Editor;
+use super::{AsAny, Editor};
 
 pub struct Select {
     pub itembox: ItemBox,
@@ -94,5 +96,15 @@ impl Editor for Select {
 
     fn output(&self) -> String {
         self.itembox.get()
+    }
+}
+
+impl AsAny for Select {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

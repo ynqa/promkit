@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub struct ReadlineBuilder {
+    history: Option<History>,
     suggest: Suggest,
     label: String,
     label_style: ContentStyle,
@@ -22,6 +23,7 @@ pub struct ReadlineBuilder {
 impl Default for ReadlineBuilder {
     fn default() -> Self {
         Self {
+            history: Some(History::default()),
             suggest: Suggest::default(),
             label: String::from("❯❯ "),
             label_style: ContentStyle::new(),
@@ -75,10 +77,15 @@ impl ReadlineBuilder {
         self
     }
 
+    pub fn disable_history(mut self) -> Self {
+        self.history = None;
+        self
+    }
+
     pub fn build(self) -> Result<Box<Readline>> {
         Ok(Box::new(Readline {
             textbuffer: TextBuffer::default(),
-            history: History::default(),
+            history: self.history,
             suggest: self.suggest,
             label: self.label,
             label_style: self.label_style,
