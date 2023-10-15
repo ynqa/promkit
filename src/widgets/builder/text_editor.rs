@@ -82,8 +82,8 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<State<TextEditor>>> {
-        Ok(Box::new(State::<TextEditor>::new(TextEditor {
+    pub fn build(self) -> Result<TextEditor> {
+        Ok(TextEditor {
             textbuffer: TextBuffer::default(),
             history: self.history,
             suggest: self.suggest,
@@ -94,6 +94,10 @@ impl TextEditorBuilder {
             mode: self.mode,
             mask: self.mask,
             lines: self.lines,
-        })))
+        })
+    }
+
+    pub fn make_state(self) -> Result<Box<State<TextEditor>>> {
+        Ok(Box::new(State::<TextEditor>::new(self.build()?)))
     }
 }

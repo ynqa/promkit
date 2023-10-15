@@ -30,10 +30,14 @@ impl TextBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<State<Text>>> {
-        Ok(Box::new(State::<Text>::new(Text {
+    pub fn build(self) -> Result<Text> {
+        Ok(Text {
             text: self.text,
             style: self.style,
-        })))
+        })
+    }
+
+    pub fn make_state(self) -> Result<Box<State<Text>>> {
+        Ok(Box::new(State::<Text>::new(self.build()?)))
     }
 }

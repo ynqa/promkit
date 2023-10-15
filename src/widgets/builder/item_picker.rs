@@ -52,14 +52,18 @@ impl ItemPickerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<Box<State<ItemPicker>>> {
-        Ok(Box::new(State::<ItemPicker>::new(ItemPicker {
+    pub fn build(self) -> Result<ItemPicker> {
+        Ok(ItemPicker {
             itembox: self.itembox,
             label: self.label,
             label_style: self.label_style,
             style: self.style,
             cursor_style: self.cursor_style,
             lines: self.lines,
-        })))
+        })
+    }
+
+    pub fn make_state(self) -> Result<Box<State<ItemPicker>>> {
+        Ok(Box::new(State::<ItemPicker>::new(self.build()?)))
     }
 }

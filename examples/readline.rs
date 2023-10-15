@@ -19,7 +19,7 @@ fn main() -> Result<()> {
                     .foreground_color(Color::Green)
                     .build(),
             )
-            .build()?,
+            .make_state()?,
         TextEditorBuilder::default()
             .style(
                 ContentStyleBuilder::new()
@@ -37,8 +37,10 @@ fn main() -> Result<()> {
                     .build(),
             )
             .suggest(Suggest::from_iter(["promkit", "ynqa"]))
-            .build()?,
-        TextEditorBuilder::default().mode(Mode::Overwrite).build()?,
+            .make_state()?,
+        TextEditorBuilder::default()
+            .mode(Mode::Overwrite)
+            .make_state()?,
         TextEditorBuilder::default()
             .mask('*')
             .cursor_style(
@@ -46,7 +48,7 @@ fn main() -> Result<()> {
                     .background_color(Color::Blue)
                     .build(),
             )
-            .build()?,
+            .make_state()?,
         ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
@@ -54,14 +56,14 @@ fn main() -> Result<()> {
                     .build(),
             )
             .lines(5)
-            .build()?,
+            .make_state()?,
         ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(
                 ContentStyleBuilder::new()
                     .foreground_color(Color::Magenta)
                     .build(),
             )
-            .build()?,
+            .make_state()?,
     ]);
     loop {
         let line = p.run()?;
