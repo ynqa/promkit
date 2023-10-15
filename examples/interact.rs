@@ -78,16 +78,23 @@ fn main() -> Result<()> {
                         .collect::<Vec<String>>();
                 }
                 Err(_) => {
-                    *itempucker_state.after.borrow_mut() = itempucker_state.init.clone();
+                    if !query.is_empty() {
+                        itempucker_state.after.borrow_mut().itembox = ItemBox::default();
+                    } else {
+                        *itempucker_state.after.borrow_mut() = itempucker_state.init.clone();
+                    }
                 }
             }
         }
         let finalizable = !itempucker_state.output().is_empty();
         if !finalizable {
-            hinttext_state.after.borrow_mut().text = String::from("Put number 99");
-            hinttext_state.after.borrow_mut().style = ContentStyleBuilder::new()
-                .foreground_color(Color::Red)
-                .build();
+            *hinttext_state.after.borrow_mut() = TextBuilder::new("Put number under 99")
+                .style(
+                    ContentStyleBuilder::new()
+                        .foreground_color(Color::Red)
+                        .build(),
+                )
+                .build()?;
         } else {
             *hinttext_state.after.borrow_mut() = hinttext_state.init.clone();
         }
