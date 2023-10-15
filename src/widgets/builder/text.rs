@@ -8,6 +8,13 @@ pub struct TextBuilder {
 }
 
 impl TextBuilder {
+    pub fn empty() -> Self {
+        Self {
+            text: String::new(),
+            style: ContentStyle::new(),
+        }
+    }
+
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
             text: text.as_ref().to_string(),

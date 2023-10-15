@@ -11,6 +11,7 @@ pub use text_editor::{Mode, TextEditor};
 mod item_picker;
 pub use item_picker::ItemPicker;
 mod text;
+pub use text::Text;
 
 pub trait Widget: AsAny {
     fn gen_pane(&self, width: u16) -> Pane;

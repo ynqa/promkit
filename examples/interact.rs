@@ -47,6 +47,7 @@ fn main() -> Result<()> {
             )
             .lines(10)
             .build()?,
+        TextBuilder::empty().build()?,
     ])
     .evaluate(Box::new(|widgets: &Vec<Box<dyn Widget>>| -> Result<bool> {
         let texteditor_state = widgets[1]

@@ -15,11 +15,15 @@ impl Pane {
         }
     }
 
-    pub fn extract(&self, remaining_height: usize) -> Vec<Graphemes> {
+    pub fn is_empty(&self) -> bool {
+        self.layout.len() == 1 && self.layout[0].widths() == 0
+    }
+
+    pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
         let lines = self.layout.len().min(
             self.fixed_height
-                .unwrap_or(remaining_height)
-                .min(remaining_height),
+                .unwrap_or(viewport_height)
+                .min(viewport_height),
         );
 
         let mut start = self.offset;
@@ -40,6 +44,24 @@ impl Pane {
 
 #[cfg(test)]
 mod test {
+    mod is_empty {
+        use crate::grapheme::matrixify;
+
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            assert_eq!(
+                true,
+                Pane {
+                    layout: matrixify(10, &Graphemes::new("")),
+                    offset: 0,
+                    fixed_height: None,
+                }
+                .is_empty()
+            );
+        }
+    }
     mod extract {
         use super::super::*;
 

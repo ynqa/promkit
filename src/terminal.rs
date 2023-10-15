@@ -18,8 +18,12 @@ impl Terminal {
 
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
         let terminal_height = engine.size()?.1 as usize;
+        let viewable_panes = panes
+            .iter()
+            .filter(|pane| !pane.is_empty())
+            .collect::<Vec<&Pane>>();
         ensure!(
-            terminal_height > panes.len(),
+            terminal_height > viewable_panes.len(),
             "Terminal window does not have enough vertical space to render UI."
         );
 
@@ -28,12 +32,12 @@ impl Terminal {
 
         let mut used = 0;
 
-        for (i, pane) in panes.iter().enumerate() {
+        for (i, pane) in viewable_panes.iter().enumerate() {
             let rows = pane.extract(
                 1.max(
                     terminal_height
                         // -1 in this context signifies the exclusion of the current pane.
-                        .saturating_sub(used + panes.len() - 1 - i),
+                        .saturating_sub(used + viewable_panes.len() - 1 - i),
                 ),
             );
             used += rows.len();
