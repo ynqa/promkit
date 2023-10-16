@@ -53,10 +53,12 @@ mod grapheme;
 mod history;
 pub mod item_box;
 mod pane;
+pub mod preset;
 pub mod style;
 pub mod suggest;
 mod terminal;
 mod text_buffer;
+mod validate;
 pub mod widgets;
 
 use std::io;
@@ -77,11 +79,11 @@ use crate::{
     widgets::Widget,
 };
 
-type PostHandle = dyn Fn(&Vec<Box<dyn Widget>>) -> Result<bool>;
+type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Widget>>) -> Result<bool>;
 
 pub struct PromptBuilder {
     widgets: Vec<Box<dyn Widget>>,
-    evaluate: Option<Box<PostHandle>>,
+    evaluate: Option<Box<Evaluate>>,
 }
 
 impl PromptBuilder {
@@ -92,8 +94,11 @@ impl PromptBuilder {
         }
     }
 
-    pub fn evaluate(mut self, evaluate: Box<PostHandle>) -> Self {
-        self.evaluate = Some(evaluate);
+    pub fn evaluate<F: Fn(&Event, &Vec<Box<dyn Widget>>) -> Result<bool> + 'static>(
+        mut self,
+        evaluate: F,
+    ) -> Self {
+        self.evaluate = Some(Box::new(evaluate));
         self
     }
 
@@ -108,7 +113,7 @@ impl PromptBuilder {
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
     widgets: Vec<Box<dyn Widget>>,
-    evaluate: Option<Box<PostHandle>>,
+    evaluate: Option<Box<Evaluate>>,
 }
 
 static ONCE: Once = Once::new();
@@ -155,7 +160,7 @@ impl Prompt {
             }
 
             let finalizable = if let Some(evaluate) = &self.evaluate {
-                evaluate(&self.widgets)?
+                evaluate(&ev, &self.widgets)?
             } else {
                 true
             };

@@ -1,70 +1,30 @@
-use std::iter::FromIterator;
-
 use anyhow::Result;
 
-use promkit::{
-    crossterm::style::Color,
-    item_box::ItemBox,
-    style::ContentStyleBuilder,
-    suggest::Suggest,
-    widgets::{ItemPickerBuilder, Mode, TextBuilder, TextEditorBuilder},
-    Prompt,
-};
+use promkit::{crossterm::style::Color, preset::ReadlineBuilder, style::ContentStyleBuilder};
 
 fn main() -> Result<()> {
-    let mut p = Prompt::new(vec![
-        TextBuilder::new("Type Here")
-            .style(
+    let mut p = ReadlineBuilder::default()
+        .title(|builder| builder.text("hello"))
+        .text_editor(|builder| {
+            builder.cursor_style(
                 ContentStyleBuilder::new()
-                    .foreground_color(Color::Green)
+                    .background_color(Color::DarkCyan)
                     .build(),
             )
-            .build_state()?,
-        TextEditorBuilder::default()
-            .style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::DarkYellow)
-                    .build(),
-            )
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .background_color(Color::DarkBlue)
-                    .build(),
-            )
-            .label_style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::DarkGreen)
-                    .build(),
-            )
-            .suggest(Suggest::from_iter(["promkit", "ynqa"]))
-            .build_state()?,
-        TextEditorBuilder::default()
-            .mode(Mode::Overwrite)
-            .build_state()?,
-        TextEditorBuilder::default()
-            .mask('*')
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .background_color(Color::Blue)
-                    .build(),
-            )
-            .build_state()?,
-        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::Magenta)
-                    .build(),
-            )
-            .lines(5)
-            .build_state()?,
-        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::Magenta)
-                    .build(),
-            )
-            .build_state()?,
-    ]);
+        })
+        .validator(
+            |text| text.len() > 10,
+            |text, builder| {
+                builder
+                    .text(format!("Length must be over 10 but got {}", text.len()))
+                    .style(
+                        ContentStyleBuilder::new()
+                            .foreground_color(Color::DarkRed)
+                            .build(),
+                    )
+            },
+        )
+        .build()?;
     loop {
         let line = p.run()?;
         println!("result: {:?}", line);
