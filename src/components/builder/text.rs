@@ -1,9 +1,8 @@
 use anyhow::Result;
 
-use crate::{
-    crossterm::style::ContentStyle,
-    widgets::{text::Text, State},
-};
+use crate::crossterm::style::ContentStyle;
+
+use super::super::{text::Text, State};
 
 #[derive(Default)]
 pub struct TextBuilder {

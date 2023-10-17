@@ -3,13 +3,13 @@ use std::iter::FromIterator;
 use anyhow::Result;
 
 use promkit::{
-    crossterm::{event::Event, style::Color},
-    item_box::ItemBox,
-    style::ContentStyleBuilder,
-    widgets::{
+    components::{
         ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor, TextEditorBuilder,
         Widget,
     },
+    crossterm::{event::Event, style::Color},
+    item_box::ItemBox,
+    style::ContentStyleBuilder,
     PromptBuilder,
 };
 

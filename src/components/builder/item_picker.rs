@@ -1,10 +1,8 @@
 use anyhow::Result;
 
-use crate::{
-    crossterm::style::ContentStyle,
-    item_box::ItemBox,
-    widgets::{item_picker::ItemPicker, State},
-};
+use crate::{crossterm::style::ContentStyle, item_box::ItemBox};
+
+use super::super::{item_picker::ItemPicker, State};
 
 pub struct ItemPickerBuilder {
     itembox: ItemBox,

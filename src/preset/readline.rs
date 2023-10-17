@@ -1,9 +1,9 @@
 use anyhow::Result;
 
 use crate::{
+    components::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Widget},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     validate::Validator,
-    widgets::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Widget},
     Prompt, PromptBuilder,
 };
 

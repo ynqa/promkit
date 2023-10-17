@@ -1,12 +1,10 @@
 use anyhow::Result;
 
 use crate::{
-    crossterm::style::ContentStyle,
-    history::History,
-    suggest::Suggest,
-    text_buffer::TextBuffer,
-    widgets::{text_editor::TextEditor, Mode, State},
+    crossterm::style::ContentStyle, history::History, suggest::Suggest, text_buffer::TextBuffer,
 };
+
+use super::super::{text_editor::TextEditor, Mode, State};
 
 pub struct TextEditorBuilder {
     history: Option<History>,

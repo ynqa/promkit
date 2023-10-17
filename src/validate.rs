@@ -1,4 +1,4 @@
-use crate::widgets::TextBuilder;
+use crate::components::TextBuilder;
 
 type ErrorMessageBuilder<T> = dyn Fn(&T, TextBuilder) -> TextBuilder;
 
