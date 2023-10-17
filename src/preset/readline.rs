@@ -78,7 +78,6 @@ impl ReadlineBuilder {
                     },
                     _ => true,
                 };
-                let hint_state = widgets[2].as_any().downcast_ref::<State<Text>>().unwrap();
                 if ret {
                     *hint_state.after.borrow_mut() = hint_state.init.clone();
                 }
