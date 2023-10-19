@@ -1,2 +1,2 @@
 mod readline;
-pub use readline::ReadlineBuilder;
+pub use readline::Readline;

@@ -15,8 +15,9 @@ use crate::{
 use super::{AsAny, Widget};
 
 /// Edit mode.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub enum Mode {
+    #[default]
     /// Insert a char at the current position.
     Insert,
     /// Overwrite a char at the current position.

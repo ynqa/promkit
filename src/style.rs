@@ -1,34 +1,34 @@
 use crate::crossterm::style::{Attributes, Color, ContentStyle};
 
 #[derive(Default)]
-pub struct ContentStyleBuilder {
+pub struct Style {
     foreground_color: Option<Color>,
     background_color: Option<Color>,
     underline_color: Option<Color>,
     attributes: Attributes,
 }
 
-impl ContentStyleBuilder {
+impl Style {
     pub fn new() -> Self {
-        ContentStyleBuilder::default()
+        Style::default()
     }
 
-    pub fn foreground_color(mut self, color: Color) -> Self {
+    pub fn fgc(mut self, color: Color) -> Self {
         self.foreground_color = Some(color);
         self
     }
 
-    pub fn background_color(mut self, color: Color) -> Self {
+    pub fn bgc(mut self, color: Color) -> Self {
         self.background_color = Some(color);
         self
     }
 
-    pub fn underline_color(mut self, color: Color) -> Self {
+    pub fn ulc(mut self, color: Color) -> Self {
         self.underline_color = Some(color);
         self
     }
 
-    pub fn attributes(mut self, attributes: Attributes) -> Self {
+    pub fn attrs(mut self, attributes: Attributes) -> Self {
         self.attributes = attributes;
         self
     }

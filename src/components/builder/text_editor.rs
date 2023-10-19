@@ -6,6 +6,7 @@ use crate::{
 
 use super::super::{text_editor::TextEditor, Mode, State};
 
+#[derive(Clone, Default)]
 pub struct TextEditorBuilder {
     history: Option<History>,
     suggest: Suggest,
@@ -18,28 +19,7 @@ pub struct TextEditorBuilder {
     lines: Option<usize>,
 }
 
-impl Default for TextEditorBuilder {
-    fn default() -> Self {
-        Self {
-            history: Some(History::default()),
-            suggest: Suggest::default(),
-            label: String::from("❯❯ "),
-            label_style: ContentStyle::new(),
-            style: ContentStyle::new(),
-            cursor_style: ContentStyle::new(),
-            mode: Mode::Insert,
-            mask: None,
-            lines: None,
-        }
-    }
-}
-
 impl TextEditorBuilder {
-    pub fn suggest(mut self, suggest: Suggest) -> Self {
-        self.suggest = suggest;
-        self
-    }
-
     pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
         self.label = label.as_ref().to_string();
         self
@@ -72,6 +52,11 @@ impl TextEditorBuilder {
 
     pub fn lines(mut self, lines: usize) -> Self {
         self.lines = Some(lines);
+        self
+    }
+
+    pub fn suggest(mut self, suggest: Suggest) -> Self {
+        self.suggest = suggest;
         self
     }
 

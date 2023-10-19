@@ -1,30 +1,15 @@
 use anyhow::Result;
 
-use promkit::{crossterm::style::Color, preset::ReadlineBuilder, style::ContentStyleBuilder};
+use promkit::preset::Readline;
 
 fn main() -> Result<()> {
-    let mut p = ReadlineBuilder::default()
-        .title(|builder| builder.text("hello"))
-        .text_editor(|builder| {
-            builder.cursor_style(
-                ContentStyleBuilder::new()
-                    .background_color(Color::DarkCyan)
-                    .build(),
-            )
-        })
+    let mut p = Readline::default()
+        .title("Feel free to fill in")
         .validator(
             |text| text.len() > 10,
-            |text, builder| {
-                builder
-                    .text(format!("Length must be over 10 but got {}", text.len()))
-                    .style(
-                        ContentStyleBuilder::new()
-                            .foreground_color(Color::DarkRed)
-                            .build(),
-                    )
-            },
+            |text| format!("Length must be over 10 but got {}", text.len()),
         )
-        .build()?;
+        .prompt()?;
     loop {
         let line = p.run()?;
         println!("result: {:?}", line);

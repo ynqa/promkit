@@ -9,43 +9,23 @@ use promkit::{
     },
     crossterm::{event::Event, style::Color},
     item_box::ItemBox,
-    style::ContentStyleBuilder,
+    style::Style,
     PromptBuilder,
 };
 
 fn main() -> Result<()> {
     let mut p = PromptBuilder::new(vec![
         TextBuilder::new("Type Here")
-            .style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::Green)
-                    .build(),
-            )
+            .style(Style::new().fgc(Color::Green).build())
             .build_state()?,
         TextEditorBuilder::default()
-            .style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::DarkYellow)
-                    .build(),
-            )
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .background_color(Color::DarkBlue)
-                    .build(),
-            )
-            .label_style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::DarkGreen)
-                    .build(),
-            )
+            .style(Style::new().fgc(Color::DarkYellow).build())
+            .cursor_style(Style::new().bgc(Color::DarkBlue).build())
+            .label_style(Style::new().fgc(Color::DarkGreen).build())
             .disable_history()
             .build_state()?,
         ItemPickerBuilder::new(ItemBox::from_iter(0..100))
-            .cursor_style(
-                ContentStyleBuilder::new()
-                    .foreground_color(Color::Magenta)
-                    .build(),
-            )
+            .cursor_style(Style::new().fgc(Color::Magenta).build())
             .lines(10)
             .build_state()?,
         TextBuilder::default().build_state()?,
@@ -90,11 +70,7 @@ fn main() -> Result<()> {
             let finalizable = !itempucker_state.output().is_empty();
             if !finalizable {
                 *hinttext_state.after.borrow_mut() = TextBuilder::new("Put number under 99")
-                    .style(
-                        ContentStyleBuilder::new()
-                            .foreground_color(Color::Red)
-                            .build(),
-                    )
+                    .style(Style::new().fgc(Color::Red).build())
                     .build()?;
             } else {
                 *hinttext_state.after.borrow_mut() = hinttext_state.init.clone();

@@ -1,49 +1,87 @@
 use anyhow::Result;
 
 use crate::{
-    components::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Widget},
+    components::{Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder, Widget},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    suggest::Suggest,
+    theme::readline::Theme,
     validate::Validator,
     Prompt, PromptBuilder,
 };
 
-#[derive(Default)]
-pub struct ReadlineBuilder {
+pub struct Readline {
     title: TextBuilder,
     text_editor: TextEditorBuilder,
-    validator: Option<Validator<String>>,
+    validator: Option<Validator<str>>,
+    error_message: TextBuilder,
 }
 
-impl ReadlineBuilder {
-    pub fn title<F: Fn(TextBuilder) -> TextBuilder>(mut self, configure: F) -> Self {
-        self.title = configure(self.title);
+impl Default for Readline {
+    fn default() -> Self {
+        Self {
+            title: Default::default(),
+            text_editor: Default::default(),
+            validator: Default::default(),
+            error_message: Default::default(),
+        }
+        .theme(Theme::default())
+    }
+}
+
+impl Readline {
+    pub fn theme(mut self, theme: Theme) -> Self {
+        self.title = self.title.style(theme.title_style);
+        self.text_editor = self
+            .text_editor
+            .label(theme.label)
+            .label_style(theme.label_style)
+            .style(theme.text_style)
+            .cursor_style(theme.cursor_style);
+        self.error_message = self.error_message.style(theme.error_message_style);
         self
     }
 
-    pub fn text_editor<F: Fn(TextEditorBuilder) -> TextEditorBuilder>(
-        mut self,
-        configure: F,
-    ) -> Self {
-        self.text_editor = configure(self.text_editor);
+    pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
+        self.title = self.title.text(text);
+        self
+    }
+
+    pub fn mode(mut self, mode: Mode) -> Self {
+        self.text_editor = self.text_editor.mode(mode);
+        self
+    }
+
+    pub fn lines(mut self, lines: usize) -> Self {
+        self.text_editor = self.text_editor.lines(lines);
+        self
+    }
+
+    pub fn suggest(mut self, suggest: Suggest) -> Self {
+        self.text_editor = self.text_editor.suggest(suggest);
+        self
+    }
+
+    pub fn disable_history(mut self) -> Self {
+        self.text_editor = self.text_editor.disable_history();
         self
     }
 
     pub fn validator<V, F>(mut self, validator: V, error_message_configure: F) -> Self
     where
-        V: Fn(&String) -> bool + 'static,
-        F: Fn(&String, TextBuilder) -> TextBuilder + 'static,
+        V: Fn(&str) -> bool + 'static,
+        F: Fn(&str) -> String + 'static,
     {
         self.validator = Some(Validator::new(validator, error_message_configure));
         self
     }
 
-    pub fn build(self) -> Result<Prompt> {
+    pub fn prompt(self) -> Result<Prompt> {
         let validator = self.validator;
 
         PromptBuilder::new(vec![
             self.title.build_state()?,
             self.text_editor.build_state()?,
-            TextBuilder::default().build_state()?,
+            self.error_message.build_state()?,
         ])
         .evaluate(
             move |event: &Event, widgets: &Vec<Box<dyn Widget + 'static>>| -> Result<bool> {
@@ -68,9 +106,7 @@ impl ReadlineBuilder {
                         Some(validator) => {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
-                                let builder =
-                                    validator.error_message_builder(&text, TextBuilder::default());
-                                *hint_state.after.borrow_mut() = builder.build()?;
+                                hint_state.after.borrow_mut().text = validator.error_message(&text);
                             }
                             ret
                         }

@@ -59,6 +59,7 @@ pub mod style;
 pub mod suggest;
 mod terminal;
 mod text_buffer;
+mod theme;
 mod validate;
 
 use std::io;

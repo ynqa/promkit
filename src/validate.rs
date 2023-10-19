@@ -1,17 +1,15 @@
-use crate::components::TextBuilder;
+type ErrorMessageBuilder<T> = dyn Fn(&T) -> String;
 
-type ErrorMessageBuilder<T> = dyn Fn(&T, TextBuilder) -> TextBuilder;
-
-pub struct Validator<T> {
+pub struct Validator<T: ?Sized> {
     validator: Box<dyn Fn(&T) -> bool>,
     error_message_builder: Box<ErrorMessageBuilder<T>>,
 }
 
-impl<T> Validator<T> {
+impl<T: ?Sized> Validator<T> {
     pub fn new<V, S>(validator: V, error_message_builder: S) -> Self
     where
         V: Fn(&T) -> bool + 'static,
-        S: Fn(&T, TextBuilder) -> TextBuilder + 'static,
+        S: Fn(&T) -> String + 'static,
     {
         Self {
             validator: Box::new(validator),
@@ -23,7 +21,7 @@ impl<T> Validator<T> {
         (self.validator)(input)
     }
 
-    pub fn error_message_builder(&self, input: &T, text_builder: TextBuilder) -> TextBuilder {
-        (self.error_message_builder)(input, text_builder)
+    pub fn error_message(&self, input: &T) -> String {
+        (self.error_message_builder)(input)
     }
 }

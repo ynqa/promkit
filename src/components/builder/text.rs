@@ -4,7 +4,7 @@ use crate::crossterm::style::ContentStyle;
 
 use super::super::{text::Text, State};
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct TextBuilder {
     text: String,
     style: ContentStyle,

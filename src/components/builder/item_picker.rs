@@ -4,6 +4,7 @@ use crate::{crossterm::style::ContentStyle, item_box::ItemBox};
 
 use super::super::{item_picker::ItemPicker, State};
 
+#[derive(Clone, Default)]
 pub struct ItemPickerBuilder {
     itembox: ItemBox,
     label: String,
