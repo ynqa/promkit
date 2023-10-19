@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use promkit::{
     components::{
-        ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor, TextEditorBuilder,
-        Widget,
+        Component, ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor,
+        TextEditorBuilder,
     },
     crossterm::{event::Event, style::Color},
     item_box::ItemBox,
@@ -31,16 +31,19 @@ fn main() -> Result<()> {
         TextBuilder::default().build_state()?,
     ])
     .evaluate(
-        |_event: &Event, widgets: &Vec<Box<dyn Widget>>| -> Result<bool> {
-            let texteditor_state = widgets[1]
+        |_event: &Event, components: &Vec<Box<dyn Component>>| -> Result<bool> {
+            let texteditor_state = components[1]
                 .as_any()
                 .downcast_ref::<State<TextEditor>>()
                 .unwrap();
-            let itempucker_state = widgets[2]
+            let itempucker_state = components[2]
                 .as_any()
                 .downcast_ref::<State<ItemPicker>>()
                 .unwrap();
-            let hinttext_state = widgets[3].as_any().downcast_ref::<State<Text>>().unwrap();
+            let hinttext_state = components[3]
+                .as_any()
+                .downcast_ref::<State<Text>>()
+                .unwrap();
 
             if texteditor_state.before.textbuffer.content()
                 != texteditor_state.after.borrow().textbuffer.content()

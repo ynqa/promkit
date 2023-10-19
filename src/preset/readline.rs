@@ -1,7 +1,7 @@
 use anyhow::Result;
 
 use crate::{
-    components::{Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder, Widget},
+    components::{Component, Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     suggest::Suggest,
     theme::readline::Theme,
@@ -84,8 +84,8 @@ impl Readline {
             self.error_message.build_state()?,
         ])
         .evaluate(
-            move |event: &Event, widgets: &Vec<Box<dyn Widget + 'static>>| -> Result<bool> {
-                let text: String = widgets[1]
+            move |event: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
+                let text: String = components[1]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap()
@@ -94,7 +94,10 @@ impl Readline {
                     .textbuffer
                     .content_without_cursor();
 
-                let hint_state = widgets[2].as_any().downcast_ref::<State<Text>>().unwrap();
+                let hint_state = components[2]
+                    .as_any()
+                    .downcast_ref::<State<Text>>()
+                    .unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {

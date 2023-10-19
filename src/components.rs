@@ -13,7 +13,7 @@ pub use item_picker::ItemPicker;
 mod text;
 pub use text::Text;
 
-pub trait Widget: AsAny {
+pub trait Component: AsAny {
     fn make_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);
@@ -24,23 +24,23 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-pub struct State<W: Widget> {
-    pub init: W,
-    pub before: W,
-    pub after: RefCell<W>,
+pub struct State<C: Component> {
+    pub init: C,
+    pub before: C,
+    pub after: RefCell<C>,
 }
 
-impl<W: Widget + Clone> State<W> {
-    pub fn new(widget: W) -> Self {
+impl<C: Component + Clone> State<C> {
+    pub fn new(component: C) -> Self {
         Self {
-            init: widget.clone(),
-            before: widget.clone(),
-            after: RefCell::new(widget),
+            init: component.clone(),
+            before: component.clone(),
+            after: RefCell::new(component),
         }
     }
 }
 
-impl<W: Clone + Widget + 'static> Widget for State<W> {
+impl<C: Clone + Component + 'static> Component for State<C> {
     fn make_pane(&self, width: u16) -> Pane {
         self.after.borrow().make_pane(width)
     }
@@ -60,7 +60,7 @@ impl<W: Clone + Widget + 'static> Widget for State<W> {
     }
 }
 
-impl<W: Widget + 'static> AsAny for State<W> {
+impl<C: Component + 'static> AsAny for State<C> {
     fn as_any(&self) -> &dyn Any {
         self
     }

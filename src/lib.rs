@@ -69,7 +69,7 @@ use anyhow::{bail, Result};
 use scopeguard::defer;
 
 use crate::{
-    components::Widget,
+    components::Component,
     crossterm::{
         cursor,
         event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
@@ -80,22 +80,22 @@ use crate::{
     terminal::Terminal,
 };
 
-type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Widget>>) -> Result<bool>;
+type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool>;
 
 pub struct PromptBuilder {
-    widgets: Vec<Box<dyn Widget>>,
+    components: Vec<Box<dyn Component>>,
     evaluate: Option<Box<Evaluate>>,
 }
 
 impl PromptBuilder {
-    pub fn new(widgets: Vec<Box<dyn Widget>>) -> Self {
+    pub fn new(components: Vec<Box<dyn Component>>) -> Self {
         Self {
-            widgets,
+            components,
             evaluate: None,
         }
     }
 
-    pub fn evaluate<F: Fn(&Event, &Vec<Box<dyn Widget>>) -> Result<bool> + 'static>(
+    pub fn evaluate<F: Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool> + 'static>(
         mut self,
         evaluate: F,
     ) -> Self {
@@ -105,7 +105,7 @@ impl PromptBuilder {
 
     pub fn build(self) -> Result<Prompt> {
         Ok(Prompt {
-            widgets: self.widgets,
+            components: self.components,
             evaluate: self.evaluate,
         })
     }
@@ -113,16 +113,16 @@ impl PromptBuilder {
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt {
-    widgets: Vec<Box<dyn Widget>>,
+    components: Vec<Box<dyn Component>>,
     evaluate: Option<Box<Evaluate>>,
 }
 
 static ONCE: Once = Once::new();
 
 impl Prompt {
-    pub fn new(widgets: Vec<Box<dyn Widget>>) -> Self {
+    pub fn new(components: Vec<Box<dyn Component>>) -> Self {
         Self {
-            widgets,
+            components,
             evaluate: None,
         }
     }
@@ -147,7 +147,7 @@ impl Prompt {
         let size = engine.size()?;
         terminal.draw(
             &mut engine,
-            self.widgets
+            self.components
                 .iter()
                 .map(|editor| editor.make_pane(size.0))
                 .collect(),
@@ -156,12 +156,12 @@ impl Prompt {
         loop {
             let ev = event::read()?;
 
-            for editor in &mut self.widgets {
+            for editor in &mut self.components {
                 editor.handle_event(&ev);
             }
 
             let finalizable = if let Some(evaluate) = &self.evaluate {
-                evaluate(&ev, &self.widgets)?
+                evaluate(&ev, &self.components)?
             } else {
                 true
             };
@@ -169,7 +169,7 @@ impl Prompt {
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,
-                self.widgets
+                self.components
                     .iter()
                     .map(|editor| editor.make_pane(size.0))
                     .collect(),
@@ -196,8 +196,12 @@ impl Prompt {
             }
         }
 
-        let ret = self.widgets.iter().map(|editor| editor.output()).collect();
-        self.widgets.iter_mut().for_each(|editor| {
+        let ret = self
+            .components
+            .iter()
+            .map(|editor| editor.output())
+            .collect();
+        self.components.iter_mut().for_each(|editor| {
             editor.postrun();
         });
         Ok(ret)

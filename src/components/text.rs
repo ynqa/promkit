@@ -6,7 +6,7 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, Widget};
+use super::{AsAny, Component};
 
 #[derive(Clone)]
 pub struct Text {
@@ -14,7 +14,7 @@ pub struct Text {
     pub style: ContentStyle,
 }
 
-impl Widget for Text {
+impl Component for Text {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(
