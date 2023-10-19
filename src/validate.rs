@@ -1,8 +1,6 @@
-type ErrorMessageBuilder<T> = dyn Fn(&T) -> String;
-
 pub struct Validator<T: ?Sized> {
     validator: Box<dyn Fn(&T) -> bool>,
-    error_message_builder: Box<ErrorMessageBuilder<T>>,
+    error_message_builder: Box<dyn Fn(&T) -> String>,
 }
 
 impl<T: ?Sized> Validator<T> {
