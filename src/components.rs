@@ -51,8 +51,9 @@ impl<C: Clone + Component + 'static> Component for State<C> {
     }
 
     fn postrun(&mut self) {
-        self.before = self.init.clone();
-        self.after = RefCell::new(self.init.clone());
+        self.after.borrow_mut().postrun();
+        self.init = self.after.borrow().clone();
+        self.before = self.after.borrow().clone();
     }
 
     fn output(&self) -> String {

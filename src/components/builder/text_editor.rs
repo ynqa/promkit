@@ -60,8 +60,8 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn disable_history(mut self) -> Self {
-        self.history = None;
+    pub fn enable_history(mut self) -> Self {
+        self.history = Some(History::default());
         self
     }
 

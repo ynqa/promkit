@@ -61,8 +61,8 @@ impl Readline {
         self
     }
 
-    pub fn disable_history(mut self) -> Self {
-        self.text_editor = self.text_editor.disable_history();
+    pub fn enable_history(mut self) -> Self {
+        self.text_editor = self.text_editor.enable_history();
         self
     }
 

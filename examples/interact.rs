@@ -22,7 +22,6 @@ fn main() -> Result<()> {
             .style(Style::new().fgc(Color::DarkYellow).build())
             .cursor_style(Style::new().bgc(Color::DarkBlue).build())
             .label_style(Style::new().fgc(Color::DarkGreen).build())
-            .disable_history()
             .build_state()?,
         ItemPickerBuilder::new(ItemBox::from_iter(0..100))
             .cursor_style(Style::new().fgc(Color::Magenta).build())
