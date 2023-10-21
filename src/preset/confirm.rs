@@ -35,7 +35,7 @@ impl Confirm {
     pub fn prompt(self) -> Result<Prompt<String>> {
         let validator = Validator::new(
             |text| -> bool {
-                vec!["yes", "no", "y", "n", "Y", "N"]
+                ["yes", "no", "y", "n", "Y", "N"]
                     .iter()
                     .any(|yn| yn == text)
             },
