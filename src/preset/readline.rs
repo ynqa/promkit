@@ -5,7 +5,7 @@ use crate::{
     suggest::Suggest,
     theme::readline::Theme,
     validate::Validator,
-    Prompt, PromptBuilder,
+    Prompt,
 };
 
 pub struct Readline {
@@ -74,15 +74,15 @@ impl Readline {
         self
     }
 
-    pub fn prompt(self) -> Result<Prompt> {
+    pub fn prompt(self) -> Result<Prompt<String>> {
         let validator = self.validator;
 
-        PromptBuilder::new(vec![
-            self.title.build_state()?,
-            self.text_editor.build_state()?,
-            self.error_message.build_state()?,
-        ])
-        .evaluate(
+        Prompt::try_new(
+            vec![
+                self.title.build_state()?,
+                self.text_editor.build_state()?,
+                self.error_message.build_state()?,
+            ],
             move |event: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
                 let text: String = components[1]
                     .as_any()
@@ -121,7 +121,16 @@ impl Readline {
                 }
                 Ok(ret)
             },
+            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
+                Ok(components[1]
+                    .as_any()
+                    .downcast_ref::<State<TextEditor>>()
+                    .unwrap()
+                    .after
+                    .borrow()
+                    .textbuffer
+                    .content_without_cursor())
+            },
         )
-        .build()
     }
 }

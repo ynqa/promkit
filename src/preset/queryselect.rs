@@ -10,7 +10,7 @@ use crate::{
     item_box::ItemBox,
     suggest::Suggest,
     theme::queryselect::Theme,
-    Prompt, PromptBuilder,
+    Prompt,
 };
 
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
@@ -79,15 +79,15 @@ impl QuerySelect {
         self
     }
 
-    pub fn prompt(self) -> Result<Prompt> {
+    pub fn prompt(self) -> Result<Prompt<String>> {
         let filter = self.filter;
 
-        PromptBuilder::new(vec![
-            self.title.build_state()?,
-            self.text_editor.build_state()?,
-            self.item_picker.build_state()?,
-        ])
-        .evaluate(
+        Prompt::try_new(
+            vec![
+                self.title.build_state()?,
+                self.text_editor.build_state()?,
+                self.item_picker.build_state()?,
+            ],
             move |_: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
                 let texteditor_state = components[1]
                     .as_any()
@@ -106,7 +106,16 @@ impl QuerySelect {
                 }
                 Ok(true)
             },
+            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
+                Ok(components[2]
+                    .as_any()
+                    .downcast_ref::<State<ItemPicker>>()
+                    .unwrap()
+                    .after
+                    .borrow()
+                    .itembox
+                    .get())
+            },
         )
-        .build()
     }
 }

@@ -82,54 +82,36 @@ use crate::{
 };
 
 type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool>;
-
-pub struct PromptBuilder {
-    components: Vec<Box<dyn Component>>,
-    evaluate: Option<Box<Evaluate>>,
-}
-
-impl PromptBuilder {
-    pub fn new(components: Vec<Box<dyn Component>>) -> Self {
-        Self {
-            components,
-            evaluate: None,
-        }
-    }
-
-    pub fn evaluate<F: Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool> + 'static>(
-        mut self,
-        evaluate: F,
-    ) -> Self {
-        self.evaluate = Some(Box::new(evaluate));
-        self
-    }
-
-    pub fn build(self) -> Result<Prompt> {
-        Ok(Prompt {
-            components: self.components,
-            evaluate: self.evaluate,
-        })
-    }
-}
+type Output<T> = dyn Fn(&Vec<Box<dyn Component>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
-pub struct Prompt {
+pub struct Prompt<T> {
     components: Vec<Box<dyn Component>>,
-    evaluate: Option<Box<Evaluate>>,
+    evaluator: Box<Evaluate>,
+    output: Box<Output<T>>,
 }
 
 static ONCE: Once = Once::new();
 
-impl Prompt {
-    pub fn new(components: Vec<Box<dyn Component>>) -> Self {
-        Self {
+impl<T> Prompt<T> {
+    pub fn try_new<E, O>(
+        components: Vec<Box<dyn Component>>,
+        evaluator: E,
+        output: O,
+    ) -> Result<Self>
+    where
+        E: Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool> + 'static,
+        O: Fn(&Vec<Box<dyn Component>>) -> Result<T> + 'static,
+    {
+        Ok(Self {
             components,
-            evaluate: None,
-        }
+            evaluator: Box::new(evaluator),
+            output: Box::new(output),
+        })
     }
 
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<Vec<String>> {
+    pub fn run(&mut self) -> Result<T> {
         let mut engine = Engine::new(io::stdout());
 
         ONCE.call_once(|| {
@@ -161,11 +143,7 @@ impl Prompt {
                 editor.handle_event(&ev);
             }
 
-            let finalizable = if let Some(evaluate) = &self.evaluate {
-                evaluate(&ev, &self.components)?
-            } else {
-                true
-            };
+            let finalizable = (self.evaluator)(&ev, &self.components)?;
 
             let size = engine.size()?;
             terminal.draw(
@@ -197,14 +175,10 @@ impl Prompt {
             }
         }
 
-        let ret = self
-            .components
-            .iter()
-            .map(|editor| editor.output())
-            .collect();
+        let ret = (self.output)(&self.components);
         self.components.iter_mut().for_each(|editor| {
             editor.postrun();
         });
-        Ok(ret)
+        ret
     }
 }
