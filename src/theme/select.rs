@@ -5,8 +5,8 @@ use crate::{
 
 pub struct Theme {
     pub title_style: ContentStyle,
-    pub label: String,
     pub item_style: ContentStyle,
+    pub cursor: String,
     pub cursor_style: ContentStyle,
 }
 
@@ -16,8 +16,8 @@ impl Default for Theme {
             title_style: Style::new()
                 .attrs(Attributes::from(Attribute::Bold))
                 .build(),
-            label: String::from("❯ "),
             item_style: Style::new().build(),
+            cursor: String::from("❯ "),
             cursor_style: Style::new().fgc(Color::DarkCyan).build(),
         }
     }

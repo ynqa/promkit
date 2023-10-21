@@ -16,8 +16,8 @@ use super::{AsAny, Component};
 pub struct ItemPicker {
     pub itembox: ItemBox,
 
-    pub label: String,
     pub style: ContentStyle,
+    pub cursor: String,
     pub cursor_style: ContentStyle,
     pub lines: Option<usize>,
 }
@@ -30,12 +30,12 @@ impl ItemPicker {
             .enumerate()
             .map(|(i, item)| {
                 if i == self.itembox.position {
-                    Graphemes::new_with_style(format!("{}{}", self.label, item), self.cursor_style)
+                    Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
                 } else {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}",
-                            " ".repeat(Graphemes::new(self.label.clone()).widths()),
+                            " ".repeat(Graphemes::new(self.cursor.clone()).widths()),
                             item
                         ),
                         self.style,

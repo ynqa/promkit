@@ -26,7 +26,7 @@ impl Select {
         self.title = self.title.style(theme.title_style);
         self.item_picker = self
             .item_picker
-            .label(theme.label)
+            .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
         self

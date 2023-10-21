@@ -7,8 +7,8 @@ use super::super::{item_picker::ItemPicker, State};
 #[derive(Clone)]
 pub struct ItemPickerBuilder {
     itembox: ItemBox,
-    label: String,
     style: ContentStyle,
+    cursor: String,
     cursor_style: ContentStyle,
     lines: Option<usize>,
 }
@@ -17,15 +17,15 @@ impl ItemPickerBuilder {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             itembox: ItemBox::from_iter(items),
-            label: Default::default(),
             style: Default::default(),
+            cursor: Default::default(),
             cursor_style: Default::default(),
             lines: Default::default(),
         }
     }
 
-    pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
-        self.label = label.as_ref().to_string();
+    pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
+        self.cursor = cursor.as_ref().to_string();
         self
     }
 
@@ -47,7 +47,7 @@ impl ItemPickerBuilder {
     pub fn build(self) -> Result<ItemPicker> {
         Ok(ItemPicker {
             itembox: self.itembox,
-            label: self.label,
+            cursor: self.cursor,
             style: self.style,
             cursor_style: self.cursor_style,
             lines: self.lines,
