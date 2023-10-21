@@ -1,8 +1,6 @@
 use std::io::Write;
 
-use anyhow::{ensure, Result};
-
-use crate::{engine::Engine, pane::Pane};
+use crate::{engine::Engine, error::Result, pane::Pane};
 
 // Session
 pub struct Terminal {
@@ -16,16 +14,16 @@ impl Terminal {
         })
     }
 
-    pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result<()> {
+    pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result {
         let terminal_height = engine.size()?.1 as usize;
         let viewable_panes = panes
             .iter()
             .filter(|pane| !pane.is_empty())
             .collect::<Vec<&Pane>>();
-        ensure!(
-            terminal_height > viewable_panes.len(),
-            "Terminal window does not have enough vertical space to render UI."
-        );
+
+        if terminal_height > viewable_panes.len() {
+            return Ok(());
+        }
 
         engine.move_to(self.position)?;
         engine.clear_from_cursor_down()?;

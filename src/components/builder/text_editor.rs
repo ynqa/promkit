@@ -1,7 +1,6 @@
-use anyhow::Result;
-
 use crate::{
-    crossterm::style::ContentStyle, history::History, suggest::Suggest, text_buffer::TextBuffer,
+    crossterm::style::ContentStyle, error::Result, history::History, suggest::Suggest,
+    text_buffer::TextBuffer,
 };
 
 use super::super::{text_editor::TextEditor, Mode, State};

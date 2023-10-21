@@ -1,6 +1,4 @@
-use anyhow::Result;
-
-use crate::{crossterm::style::ContentStyle, item_box::ItemBox};
+use crate::{crossterm::style::ContentStyle, error::Result, item_box::ItemBox};
 
 use super::super::{item_picker::ItemPicker, State};
 

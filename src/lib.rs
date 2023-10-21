@@ -50,6 +50,7 @@ pub use crossterm;
 
 pub mod components;
 mod engine;
+pub mod error;
 mod grapheme;
 mod history;
 pub mod item_box;
@@ -65,7 +66,6 @@ mod validate;
 use std::io;
 use std::sync::Once;
 
-use anyhow::{bail, Result};
 use scopeguard::defer;
 
 use crate::{
@@ -77,6 +77,7 @@ use crate::{
         terminal::{disable_raw_mode, enable_raw_mode},
     },
     engine::Engine,
+    error::{Error, Result},
     terminal::Terminal,
 };
 
@@ -191,7 +192,11 @@ impl Prompt {
                     modifiers: KeyModifiers::CONTROL,
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
-                }) => bail!("ctrl+c interrupted"),
+                }) => {
+                    return Err(Error::Interrupted {
+                        event: ev,
+                    })
+                }
                 _ => (),
             }
         }

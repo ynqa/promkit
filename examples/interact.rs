@@ -1,19 +1,18 @@
 use std::iter::FromIterator;
 
-use anyhow::Result;
-
 use promkit::{
     components::{
         Component, ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor,
         TextEditorBuilder,
     },
     crossterm::{event::Event, style::Color},
+    error::Result,
     item_box::ItemBox,
     style::Style,
     PromptBuilder,
 };
 
-fn main() -> Result<()> {
+fn main() -> Result {
     let mut p = PromptBuilder::new(vec![
         TextBuilder::new("Type Here")
             .style(Style::new().fgc(Color::Green).build())

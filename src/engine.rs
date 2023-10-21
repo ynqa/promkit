@@ -1,12 +1,13 @@
 use std::{fmt, io::Write};
 
-use anyhow::Result;
-
-use crate::crossterm::{
-    cursor::{self, MoveTo},
-    execute,
-    style::Print,
-    terminal::{self, Clear, ClearType, ScrollUp},
+use crate::{
+    crossterm::{
+        cursor::{self, MoveTo},
+        execute,
+        style::Print,
+        terminal::{self, Clear, ClearType, ScrollUp},
+    },
+    error::{Error, Result},
 };
 
 #[derive(Clone)]
@@ -19,40 +20,40 @@ impl<W: Write> Engine<W> {
         Self { out }
     }
 
-    pub fn position(&self) -> Result<(u16, u16), std::io::Error> {
-        cursor::position()
+    pub fn position(&self) -> Result<(u16, u16)> {
+        cursor::position().map_err(|err| Error::from(err))
     }
 
-    pub fn size(&self) -> Result<(u16, u16), std::io::Error> {
-        terminal::size()
+    pub fn size(&self) -> Result<(u16, u16)> {
+        terminal::size().map_err(|err| Error::from(err))
     }
 
-    pub fn clear_from_cursor_down(&mut self) -> Result<(), std::io::Error> {
-        execute!(self.out, Clear(ClearType::FromCursorDown))
+    pub fn clear_from_cursor_down(&mut self) -> Result {
+        execute!(self.out, Clear(ClearType::FromCursorDown)).map_err(|err| Error::from(err))
     }
 
-    pub fn clear(&mut self) -> Result<(), std::io::Error> {
-        execute!(self.out, Clear(ClearType::All), MoveTo(0, 0))
+    pub fn clear(&mut self) -> Result {
+        execute!(self.out, Clear(ClearType::All), MoveTo(0, 0)).map_err(|err| Error::from(err))
     }
 
-    pub fn write<D: fmt::Display>(&mut self, string: D) -> Result<(), std::io::Error> {
-        execute!(self.out, Print(string))
+    pub fn write<D: fmt::Display>(&mut self, string: D) -> Result {
+        execute!(self.out, Print(string)).map_err(|err| Error::from(err))
     }
 
-    pub fn move_to(&mut self, pos: (u16, u16)) -> Result<(), std::io::Error> {
-        execute!(self.out, MoveTo(pos.0, pos.1))
+    pub fn move_to(&mut self, pos: (u16, u16)) -> Result {
+        execute!(self.out, MoveTo(pos.0, pos.1)).map_err(|err| Error::from(err))
     }
 
     pub fn is_bottom(&self) -> Result<bool> {
         Ok(cursor::position()?.1 + 1 == terminal::size()?.1)
     }
 
-    pub fn scroll_up(&mut self, times: u16) -> Result<(), std::io::Error> {
-        execute!(self.out, ScrollUp(times))
+    pub fn scroll_up(&mut self, times: u16) -> Result {
+        execute!(self.out, ScrollUp(times)).map_err(|err| Error::from(err))
     }
 
-    pub fn move_to_next_line(&mut self) -> Result<(), std::io::Error> {
-        execute!(self.out, cursor::MoveToNextLine(1))
+    pub fn move_to_next_line(&mut self) -> Result {
+        execute!(self.out, cursor::MoveToNextLine(1)).map_err(|err| Error::from(err))
     }
 }
 

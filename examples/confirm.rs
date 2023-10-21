@@ -1,8 +1,6 @@
-use anyhow::Result;
+use promkit::{error::Result, preset::Confirm};
 
-use promkit::preset::Confirm;
-
-fn main() -> Result<()> {
+fn main() -> Result {
     let mut p = Confirm::new("Do you like programming?").prompt()?;
     loop {
         let line = p.run()?;

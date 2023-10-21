@@ -1,8 +1,6 @@
-use anyhow::Result;
+use promkit::{error::Result, preset::Readline};
 
-use promkit::preset::Readline;
-
-fn main() -> Result<()> {
+fn main() -> Result {
     let mut p = Readline::default()
         .title("Feel free to fill in")
         .validator(

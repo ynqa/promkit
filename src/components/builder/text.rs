@@ -1,6 +1,4 @@
-use anyhow::Result;
-
-use crate::crossterm::style::ContentStyle;
+use crate::{crossterm::style::ContentStyle, error::Result};
 
 use super::super::{text::Text, State};
 

@@ -1,8 +1,7 @@
-use anyhow::Result;
-
 use crate::{
     components::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    error::Result,
     theme::confirm::Theme,
     validate::Validator,
     Prompt, PromptBuilder,
