@@ -9,7 +9,6 @@ use crate::{
 
 pub struct Confirm {
     text_editor: TextEditorBuilder,
-    validator: Validator<str>,
     error_message: TextBuilder,
 }
 
@@ -17,14 +16,6 @@ impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
             text_editor: TextEditorBuilder::default().label(format!("{} (y/n) ", text.as_ref())),
-            validator: Validator::new(
-                |text| -> bool {
-                    vec!["yes", "no", "y", "n", "Y", "N"]
-                        .iter()
-                        .any(|yn| yn == &text)
-                },
-                |_| String::from("Please type 'y' or 'n' as an answer"),
-            ),
             error_message: Default::default(),
         }
         .theme(Theme::default())
@@ -41,7 +32,14 @@ impl Confirm {
     }
 
     pub fn prompt(self) -> Result<Prompt> {
-        let validator = self.validator;
+        let validator = Validator::new(
+            |text| -> bool {
+                vec!["yes", "no", "y", "n", "Y", "N"]
+                    .iter()
+                    .any(|yn| yn == text)
+            },
+            |_| String::from("Please type 'y' or 'n' as an answer"),
+        );
 
         PromptBuilder::new(vec![
             self.text_editor.build_state()?,
