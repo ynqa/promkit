@@ -191,10 +191,6 @@ impl Component for TextEditor {
         }
         self.textbuffer = TextBuffer::default();
     }
-
-    fn output(&self) -> String {
-        self.textbuffer.content_without_cursor()
-    }
 }
 
 impl AsAny for TextEditor {

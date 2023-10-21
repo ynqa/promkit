@@ -93,10 +93,6 @@ impl Component for ItemPicker {
     fn postrun(&mut self) {
         self.itembox.position = 0;
     }
-
-    fn output(&self) -> String {
-        self.itembox.get()
-    }
 }
 
 impl AsAny for ItemPicker {

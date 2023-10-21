@@ -29,10 +29,6 @@ impl Component for Text {
     fn handle_event(&mut self, _event: &Event) {}
 
     fn postrun(&mut self) {}
-
-    fn output(&self) -> String {
-        self.text.to_string()
-    }
 }
 
 impl AsAny for Text {

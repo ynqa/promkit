@@ -17,7 +17,6 @@ pub trait Component: AsAny {
     fn make_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);
-    fn output(&self) -> String;
 }
 
 pub trait AsAny {
@@ -54,10 +53,6 @@ impl<C: Clone + Component + 'static> Component for State<C> {
         self.after.borrow_mut().postrun();
         self.init = self.after.borrow().clone();
         self.before = self.after.borrow().clone();
-    }
-
-    fn output(&self) -> String {
-        self.after.borrow().output()
     }
 }
 

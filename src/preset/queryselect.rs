@@ -99,7 +99,11 @@ impl QuerySelect {
                     .unwrap();
 
                 if texteditor_state.text_changed() {
-                    let query = texteditor_state.after.borrow().output();
+                    let query = texteditor_state
+                        .after
+                        .borrow()
+                        .textbuffer
+                        .content_without_cursor();
 
                     let list = filter(&query, &itempicker_state.init.itembox.list);
                     itempicker_state.after.borrow_mut().itembox = ItemBox { list, position: 0 };
