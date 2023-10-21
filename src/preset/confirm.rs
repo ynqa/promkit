@@ -15,7 +15,7 @@ pub struct Confirm {
 impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            text_editor: TextEditorBuilder::default().label(format!("{} (y/n) ", text.as_ref())),
+            text_editor: TextEditorBuilder::default().prefix(format!("{} (y/n) ", text.as_ref())),
             error_message: Default::default(),
         }
         .theme(Theme::default())
@@ -24,7 +24,7 @@ impl Confirm {
     pub fn theme(mut self, theme: Theme) -> Self {
         self.text_editor = self
             .text_editor
-            .label_style(theme.label_style)
+            .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
         self.error_message = self.error_message.style(theme.error_message_style);

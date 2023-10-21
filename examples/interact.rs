@@ -18,7 +18,7 @@ fn main() -> Result {
         TextEditorBuilder::default()
             .style(Style::new().fgc(Color::DarkYellow).build())
             .cursor_style(Style::new().bgc(Color::DarkBlue).build())
-            .label_style(Style::new().fgc(Color::DarkGreen).build())
+            .prefix_style(Style::new().fgc(Color::DarkGreen).build())
             .build_state()?,
         ItemPickerBuilder::new(0..100)
             .cursor_style(Style::new().fgc(Color::Magenta).build())

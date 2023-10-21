@@ -30,8 +30,8 @@ pub struct TextEditor {
     pub history: Option<History>,
     pub suggest: Suggest,
 
-    pub label: String,
-    pub label_style: ContentStyle,
+    pub prefix: String,
+    pub prefix_style: ContentStyle,
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
     pub mode: Mode,
@@ -54,8 +54,8 @@ impl Component for TextEditor {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(
-            &self.label,
-            self.label_style,
+            &self.prefix,
+            self.prefix_style,
         ));
         buf.append(&mut self.textbuffer_to_graphemes());
 

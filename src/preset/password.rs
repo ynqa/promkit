@@ -31,8 +31,8 @@ impl Password {
         self.title = self.title.style(theme.title_style);
         self.text_editor = self
             .text_editor
-            .label(theme.label)
-            .label_style(theme.label_style)
+            .prefix(theme.prefix)
+            .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style)
             .mask(theme.mask);

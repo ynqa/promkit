@@ -9,8 +9,8 @@ use super::super::{text_editor::TextEditor, Mode, State};
 pub struct TextEditorBuilder {
     history: Option<History>,
     suggest: Suggest,
-    label: String,
-    label_style: ContentStyle,
+    prefix: String,
+    prefix_style: ContentStyle,
     style: ContentStyle,
     cursor_style: ContentStyle,
     mode: Mode,
@@ -19,13 +19,13 @@ pub struct TextEditorBuilder {
 }
 
 impl TextEditorBuilder {
-    pub fn label<T: AsRef<str>>(mut self, label: T) -> Self {
-        self.label = label.as_ref().to_string();
+    pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
+        self.prefix = prefix.as_ref().to_string();
         self
     }
 
-    pub fn label_style(mut self, style: ContentStyle) -> Self {
-        self.label_style = style;
+    pub fn prefix_style(mut self, style: ContentStyle) -> Self {
+        self.prefix_style = style;
         self
     }
 
@@ -69,8 +69,8 @@ impl TextEditorBuilder {
             textbuffer: TextBuffer::default(),
             history: self.history,
             suggest: self.suggest,
-            label: self.label,
-            label_style: self.label_style,
+            prefix: self.prefix,
+            prefix_style: self.prefix_style,
             style: self.style,
             cursor_style: self.cursor_style,
             mode: self.mode,
