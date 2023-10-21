@@ -86,7 +86,10 @@ UI from scratch, which can be a time-consuming and less flexible process.
 
 In the provided presets of *promkit*, this mechanism is implemented. If you'd
 like to try it out, you can refer to
-[the implementations of preset](https://github.com/ynqa/promkit/tree/dev-0.2.0/src/preset)
+the implementations of
+[components](https://github.com/ynqa/promkit/tree/v0.2.0/src/components)
+and
+[preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
 for guidance.
 
 In summary, *promkit*'s resilience to terminal resizing and its unified component
