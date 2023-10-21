@@ -2,41 +2,20 @@
 
 ## Readline
 
-![readline](https://user-images.githubusercontent.com/6745370/175757317-94e75ddd-f968-43ba-8a3e-0e1e70191128.gif)
-
-```rust
-use promkit::{error::Result, preset::Readline};
-
-fn main() -> Result {
-    let mut p = Readline::default()
-        .title("Feel free to fill in")
-        .validator(
-            |text| text.len() > 10,
-            |text| format!("Length must be over 10 but got {}", text.len()),
-        )
-        .enable_history()
-        .prompt()?;
-    loop {
-        let line = p.run()?;
-        println!("result: {:?}", line);
-    }
-}
-```
+![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
 
 ## Select
 
-![select](https://user-images.githubusercontent.com/6745370/175757316-8499ace6-e520-465b-a3fe-671182015431.gif)
+![select](https://github.com/ynqa/promkit/assets/6745370/bdf3338a-5647-4e6d-88a6-0c79834992ca)
 
-```rust
-use promkit::{build::Builder, crossterm::style, select, Result};
+## Confirm
 
-fn main() -> Result<()> {
-    let mut p = select::Builder::new(0..100)
-        .title("Q: What number do you like?")
-        .title_color(style::Color::DarkGreen)
-        .build()?;
-    let line = p.run()?;
-    println!("result: {:?}", line);
-    Ok(())
-}
-```
+![confirm](https://github.com/ynqa/promkit/assets/6745370/bcc17774-c516-4961-95dd-13036cec5137)
+
+## Password
+
+![password](https://github.com/ynqa/promkit/assets/6745370/15bc9dc7-8e17-4c57-8634-9dcc55effd60)
+
+## QuerySelect
+
+![queryselect](https://github.com/ynqa/promkit/assets/6745370/1abdd5c0-2c3b-47d3-916e-386fd4f50779)
