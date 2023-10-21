@@ -59,7 +59,7 @@ impl Confirm {
                     .textbuffer
                     .content_without_cursor();
 
-                let hint_state = components[1]
+                let error_message_state = components[1]
                     .as_any()
                     .downcast_ref::<State<Text>>()
                     .unwrap();
@@ -73,7 +73,8 @@ impl Confirm {
                     }) => {
                         let ret = validator.validate(&text);
                         if !ret {
-                            hint_state.after.borrow_mut().text = validator.error_message(&text);
+                            error_message_state.after.borrow_mut().text =
+                                validator.error_message(&text);
                             text_state.after.borrow_mut().textbuffer = TextBuffer::default();
                         }
                         ret
@@ -81,7 +82,7 @@ impl Confirm {
                     _ => true,
                 };
                 if ret {
-                    *hint_state.after.borrow_mut() = hint_state.init.clone();
+                    *error_message_state.after.borrow_mut() = error_message_state.init.clone();
                 }
                 Ok(ret)
             },

@@ -73,7 +73,7 @@ impl Password {
                     .textbuffer
                     .content_without_cursor();
 
-                let hint_state = components[2]
+                let error_message_state = components[2]
                     .as_any()
                     .downcast_ref::<State<Text>>()
                     .unwrap();
@@ -88,7 +88,8 @@ impl Password {
                         Some(validator) => {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
-                                hint_state.after.borrow_mut().text = validator.error_message(&text);
+                                error_message_state.after.borrow_mut().text =
+                                    validator.error_message(&text);
                             }
                             ret
                         }
@@ -97,7 +98,7 @@ impl Password {
                     _ => true,
                 };
                 if ret {
-                    *hint_state.after.borrow_mut() = hint_state.init.clone();
+                    *error_message_state.after.borrow_mut() = error_message_state.init.clone();
                 }
                 Ok(ret)
             },
