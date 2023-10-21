@@ -2,6 +2,7 @@ use crate::{
     components::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
+    text_buffer::TextBuffer,
     theme::confirm::Theme,
     validate::Validator,
     Prompt,
@@ -47,10 +48,12 @@ impl Confirm {
                 self.error_message.build_state()?,
             ],
             move |event: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
-                let text: String = components[0]
+                let text_state = components[0]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
-                    .unwrap()
+                    .unwrap();
+
+                let text = text_state
                     .after
                     .borrow()
                     .textbuffer
@@ -69,8 +72,9 @@ impl Confirm {
                         state: KeyEventState::NONE,
                     }) => {
                         let ret = validator.validate(&text);
-                        if !validator.validate(&text) {
+                        if !ret {
                             hint_state.after.borrow_mut().text = validator.error_message(&text);
+                            text_state.after.borrow_mut().textbuffer = TextBuffer::default();
                         }
                         ret
                     }
