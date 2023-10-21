@@ -45,8 +45,8 @@ impl Readline {
         self
     }
 
-    pub fn mode(mut self, mode: Mode) -> Self {
-        self.text_editor = self.text_editor.mode(mode);
+    pub fn edit_mode(mut self, mode: Mode) -> Self {
+        self.text_editor = self.text_editor.edit_mode(mode);
         self
     }
 

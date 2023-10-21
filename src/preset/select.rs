@@ -7,7 +7,6 @@ use crate::{
     Prompt, PromptBuilder,
 };
 
-#[derive(Clone)]
 pub struct Select {
     title: TextBuilder,
     item_picker: ItemPickerBuilder,

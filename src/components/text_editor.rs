@@ -12,7 +12,7 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::{AsAny, Component};
+use super::{AsAny, Component, State};
 
 /// Edit mode.
 #[derive(Clone, Default)]
@@ -200,5 +200,11 @@ impl Component for TextEditor {
 impl AsAny for TextEditor {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+}
+
+impl State<TextEditor> {
+    pub fn text_changed(&self) -> bool {
+        self.before.textbuffer.content() != self.after.borrow().textbuffer.content()
     }
 }

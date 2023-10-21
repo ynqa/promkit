@@ -39,7 +39,7 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn mode(mut self, mode: Mode) -> Self {
+    pub fn edit_mode(mut self, mode: Mode) -> Self {
         self.mode = mode;
         self
     }

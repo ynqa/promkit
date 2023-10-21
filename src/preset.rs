@@ -6,3 +6,5 @@ mod password;
 pub use password::Password;
 mod select;
 pub use select::Select;
+mod queryselect;
+pub use queryselect::QuerySelect;
