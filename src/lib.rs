@@ -192,11 +192,7 @@ impl Prompt {
                     modifiers: KeyModifiers::CONTROL,
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
-                }) => {
-                    return Err(Error::Interrupted {
-                        event: ev,
-                    })
-                }
+                }) => return Err(Error::Interrupted("ctrl+c".into())),
                 _ => (),
             }
         }

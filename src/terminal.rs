@@ -21,8 +21,9 @@ impl Terminal {
             .filter(|pane| !pane.is_empty())
             .collect::<Vec<&Pane>>();
 
-        if terminal_height > viewable_panes.len() {
-            return Ok(());
+        if terminal_height < viewable_panes.len() {
+            return engine
+                .write("Terminal window does not have enough vertical space to render UI.");
         }
 
         engine.move_to(self.position)?;
