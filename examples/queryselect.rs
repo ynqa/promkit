@@ -15,8 +15,6 @@ fn main() -> Result {
     .title("What number do you like?")
     .item_lines(5)
     .prompt()?;
-    loop {
-        let line = p.run()?;
-        println!("result: {:?}", line);
-    }
+    println!("result: {:?}", p.run()?);
+    Ok(())
 }

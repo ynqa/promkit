@@ -4,12 +4,10 @@ fn main() -> Result {
     let mut p = Password::default()
         .title("Put your password")
         .validator(
-            |text| text.len() > 10,
-            |text| format!("Length must be over 10 but got {}", text.len()),
+            |text| 4 < text.len() && text.len() < 10,
+            |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
         )
         .prompt()?;
-    loop {
-        let line = p.run()?;
-        println!("result: {:?}", line);
-    }
+    println!("result: {:?}", p.run()?);
+    Ok(())
 }

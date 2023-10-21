@@ -5,8 +5,6 @@ fn main() -> Result {
         .title("What number do you like?")
         .lines(5)
         .prompt()?;
-    loop {
-        let line = p.run()?;
-        println!("result: {:?}", line);
-    }
+    println!("result: {:?}", p.run()?);
+    Ok(())
 }

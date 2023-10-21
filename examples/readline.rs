@@ -7,10 +7,7 @@ fn main() -> Result {
             |text| text.len() > 10,
             |text| format!("Length must be over 10 but got {}", text.len()),
         )
-        .enable_history()
         .prompt()?;
-    loop {
-        let line = p.run()?;
-        println!("result: {:?}", line);
-    }
+    println!("result: {:?}", p.run()?);
+    Ok(())
 }
