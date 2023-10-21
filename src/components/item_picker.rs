@@ -17,7 +17,6 @@ pub struct ItemPicker {
     pub itembox: ItemBox,
 
     pub label: String,
-    pub label_style: ContentStyle,
     pub style: ContentStyle,
     pub cursor_style: ContentStyle,
     pub lines: Option<usize>,

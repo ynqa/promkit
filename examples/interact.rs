@@ -1,5 +1,3 @@
-use std::iter::FromIterator;
-
 use promkit::{
     components::{
         Component, ItemPicker, ItemPickerBuilder, State, Text, TextBuilder, TextEditor,
@@ -22,7 +20,7 @@ fn main() -> Result {
             .cursor_style(Style::new().bgc(Color::DarkBlue).build())
             .label_style(Style::new().fgc(Color::DarkGreen).build())
             .build_state()?,
-        ItemPickerBuilder::new(ItemBox::from_iter(0..100))
+        ItemPickerBuilder::new(0..100)
             .cursor_style(Style::new().fgc(Color::Magenta).build())
             .lines(10)
             .build_state()?,
