@@ -8,76 +8,16 @@ repository = "https://github.com/ynqa/promkit"
 license = "MIT"
 readme = "README.md"
 
-[[bin]]
-name = "debug_cursor"
-path = "debugs/cursor.rs"
-
 [lib]
 name = "promkit"
 path = "src/lib.rs"
 
 [dependencies]
-crossterm = "0.23.0"
-downcast-rs = "1.2.0"
+crossterm = "0.27.0"
 radix_trie = "0.2.1"
 scopeguard = "1.1.0"
+thiserror = "1.0.50"
 unicode-width = "0.1.8"
 
 [dev-dependencies]
-strip-ansi-escapes = "0.1.1"
-
-[[example]]
-name = "custom_event_handler"
-path = "examples/advanced/custom_event_handler.rs"
-
-[[example]]
-name = "custom_input_handler"
-path = "examples/advanced/custom_input_handler.rs"
-
-[[example]]
-name = "custom_keybind"
-path = "examples/advanced/custom_keybind.rs"
-
-[[example]]
-name = "label"
-path = "examples/readline/label.rs"
-
-[[example]]
-name = "limit_history_size"
-path = "examples/readline/limit_history_size.rs"
-
-[[example]]
-name = "masking"
-path = "examples/readline/masking.rs"
-
-[[example]]
-name = "num_lines"
-path = "examples/readline/num_lines.rs"
-
-[[example]]
-name = "overwrite"
-path = "examples/readline/overwrite.rs"
-
-[[example]]
-name = "readline"
-path = "examples/readline/readline.rs"
-
-[[example]]
-name = "suggest"
-path = "examples/readline/suggest.rs"
-
-[[example]]
-name = "title"
-path = "examples/readline/title.rs"
-
-[[example]]
-name = "init_down"
-path = "examples/select/init_down.rs"
-
-[[example]]
-name = "select"
-path = "examples/select/select.rs"
-
-[[example]]
-name = "window"
-path = "examples/select/window.rs"
+strip-ansi-escapes = "0.2.0"

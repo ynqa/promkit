@@ -1,107 +1,97 @@
-use std::cell::Cell;
-use std::ops::{Deref, DerefMut};
-
-use crate::{grapheme::Graphemes, register::Register, selectbox::SelectBox};
-
 /// Store the histroy of the past user inputs.
-#[derive(Debug, Clone)]
-pub struct History(pub SelectBox);
-
-impl Deref for History {
-    type Target = SelectBox;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for History {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+#[derive(Clone)]
+pub struct History {
+    buf: Vec<String>,
+    position: usize,
 }
 
 impl Default for History {
     fn default() -> Self {
-        History(SelectBox {
-            data: vec![Graphemes::default()],
-            position: Cell::new(0),
-        })
+        Self {
+            buf: vec![String::new()],
+            position: 0,
+        }
     }
 }
 
-impl Register<Graphemes> for History {
-    /// Register an item.
+impl History {
+    /// Insert an item.
     ///
     /// # NOTE
     ///
-    /// Register the items to the history with the following steps:
+    /// Insert the items to the history with the following steps:
     ///
     /// 1. items = [""]
     /// 1. Input: "abc"
     /// 1. items = ["abc", ""]
     /// 1. Input "xyz"
     /// 1. items = ["abc", "xyz", ""]
-    fn register(&mut self, item: Graphemes) {
-        if self.data.is_empty() {
-            self.data.push(item)
+    pub fn insert<T: AsRef<str>>(&mut self, item: T) {
+        let item = item.as_ref().to_string();
+        if self.buf.is_empty() {
+            self.buf.push(item)
         } else {
             if !self.exists(&item) {
-                let tail_idx = self.data.len() - 1;
-                self.data.insert(tail_idx, item);
+                let tail_idx = self.buf.len() - 1;
+                self.buf.insert(tail_idx, item);
             }
-            let tail_idx = self.data.len() - 1;
-            self.move_to(tail_idx);
+            self.move_to_tail();
         }
     }
-}
 
-impl History {
-    /// Check whether the item exists or not.
-    fn exists(&self, item: &Graphemes) -> bool {
-        self.data.iter().any(|i| i == item)
+    pub fn get(&self) -> String {
+        self.buf.get(self.position).unwrap().to_string()
     }
 
-    /// Move the cursor to the given position in the history.
-    fn move_to(&self, idx: usize) -> bool {
-        if idx < self.data.len() {
-            self.position.set(idx);
+    /// Check whether the item exists or not.
+    fn exists<T: AsRef<str>>(&self, item: T) -> bool {
+        self.buf.iter().any(|i| i == item.as_ref())
+    }
+
+    pub fn prev(&mut self) -> bool {
+        if 0 < self.position {
+            self.position -= 1;
             return true;
         }
         false
+    }
+
+    pub fn next(&mut self) -> bool {
+        if !self.buf.is_empty() && self.position < self.buf.len() - 1 {
+            self.position += 1;
+            return true;
+        }
+        false
+    }
+
+    pub fn move_to_tail(&mut self) {
+        self.position = self.buf.len() - 1;
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Graphemes, History, Register};
+    mod insert {
+        use super::super::*;
 
-    #[test]
-    fn register() {
-        let mut h = History::default();
-        h.register(Graphemes::from("line"));
-        assert_eq!(h.position(), 1);
-        assert_eq!(h.get(), Graphemes::default());
+        #[test]
+        fn test() {
+            let mut h = History::default();
+            h.insert("line");
+            assert_eq!(h.position, 1);
+            assert_eq!(h.get(), "");
+        }
     }
 
-    #[test]
-    fn exists() {
-        let mut h = History::default();
-        h.register(Graphemes::from("existed"));
-        assert!(h.exists(&Graphemes::from("existed")));
-        assert!(!h.exists(&Graphemes::from("not_found")));
-    }
+    mod exists {
+        use super::super::*;
 
-    #[test]
-    fn move_to() {
-        let mut h = History::default();
-        h.register_all(vec![
-            Graphemes::from("a"),
-            Graphemes::from("b"),
-            Graphemes::from("c"),
-        ]);
-        assert!(h.move_to(h.data.len() - 1));
-        assert!(h.move_to(0));
-        let idx_over_len = h.data.len() + 20;
-        assert!(!h.move_to(idx_over_len));
+        #[test]
+        fn test() {
+            let mut h = History::default();
+            h.insert("existed");
+            assert!(h.exists("existed"));
+            assert!(!h.exists("not_found"));
+        }
     }
 }

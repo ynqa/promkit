@@ -5,34 +5,71 @@
 //! Note that to manage the width of character is
 //! in order to consider how many the positions of cursor should be moved
 //! when e.g. emojis and the special characters are displayed on the terminal.
-use std::fmt::{self, Display, Formatter};
-use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
+use std::{
+    fmt,
+    iter::FromIterator,
+    ops::{Deref, DerefMut},
+};
 
-use crate::{crossterm::terminal, error::Result};
-
-use radix_trie::TrieKey;
 use unicode_width::UnicodeWidthChar;
 
+use crate::crossterm::style::ContentStyle;
+
 /// A character and its width.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
-    pub ch: char,
-    pub width: usize,
+    ch: char,
+    width: usize,
+    style: ContentStyle,
 }
 
-impl From<char> for Grapheme {
-    fn from(c: char) -> Self {
+impl Grapheme {
+    pub fn new(ch: char) -> Self {
+        Grapheme::new_with_style(ch, ContentStyle::new())
+    }
+
+    pub fn new_with_style(ch: char, style: ContentStyle) -> Self {
         Self {
-            ch: c,
-            width: UnicodeWidthChar::width(c).unwrap_or(0),
+            ch,
+            width: UnicodeWidthChar::width(ch).unwrap_or(0),
+            style,
         }
     }
 }
 
 /// Characters and their width.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
+
+impl Graphemes {
+    pub fn new<S: AsRef<str>>(string: S) -> Self {
+        Graphemes::new_with_style(string, ContentStyle::new())
+    }
+
+    pub fn new_with_style<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
+        string
+            .as_ref()
+            .chars()
+            .map(|ch| Grapheme::new_with_style(ch, style))
+            .collect()
+    }
+
+    pub fn widths(&self) -> usize {
+        self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
+    pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
+        self.get_mut(idx).map(|grapheme| {
+            grapheme.style = style;
+            grapheme
+        });
+        self
+    }
+
+    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
+        StyledGraphemesDisplay { graphemes: self }
+    }
+}
 
 impl Deref for Graphemes {
     type Target = Vec<Grapheme>;
@@ -47,18 +84,6 @@ impl DerefMut for Graphemes {
     }
 }
 
-impl<S: Into<String>> From<S> for Graphemes {
-    fn from(s: S) -> Self {
-        s.into().chars().map(Grapheme::from).collect()
-    }
-}
-
-impl TrieKey for Graphemes {
-    fn encode_bytes(&self) -> Vec<u8> {
-        self.to_string().as_bytes().to_vec()
-    }
-}
-
 impl FromIterator<Grapheme> for Graphemes {
     fn from_iter<I: IntoIterator<Item = Grapheme>>(iter: I) -> Self {
         let mut g = Graphemes::default();
@@ -69,79 +94,112 @@ impl FromIterator<Grapheme> for Graphemes {
     }
 }
 
-impl Display for Graphemes {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.iter()
-                .fold(String::new(), |s, g| format!("{}{}", s, g.ch))
-        )
+pub struct StyledGraphemesDisplay<'a> {
+    graphemes: &'a Graphemes,
+}
+
+impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for grapheme in self.graphemes.iter() {
+            write!(f, "{}", grapheme.style.apply(grapheme.ch))?;
+        }
+        Ok(())
     }
 }
 
-impl Graphemes {
-    pub fn width(&self) -> usize {
-        self.iter().fold(0, |mut c, g| {
-            c += g.width;
-            c
-        })
+pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
+    let mut ret = vec![];
+    let mut row = Graphemes::default();
+    for ch in g.iter() {
+        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+            layout += g.width;
+            layout
+        }) + ch.width;
+        if !row.is_empty() && width < width_with_next_char {
+            ret.push(row);
+            row = Graphemes::default();
+        }
+        if width >= ch.width {
+            row.push(ch.clone());
+        }
     }
+    ret.push(row);
+    ret
+}
 
-    pub fn longest_common_prefix(&self, g: &Graphemes) -> Graphemes {
-        self.iter()
-            .zip(g.iter())
-            .take_while(|&(a, b)| a == b)
-            .map(|(a, _)| a.clone())
-            .collect()
+pub fn trim(width: usize, g: &Graphemes) -> Graphemes {
+    let mut row = Graphemes::default();
+    for ch in g.iter() {
+        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+            layout += g.width;
+            layout
+        }) + ch.width;
+        if width < width_with_next_char {
+            break;
+        }
+        if width >= ch.width {
+            row.push(ch.clone());
+        }
     }
+    row
+}
 
-    pub fn append_prefix_and_trim_suffix(
-        &self,
-        prefix: &Graphemes,
-        suffix_after_trim: &Graphemes,
-    ) -> Result<String> {
-        let line = prefix.to_string() + &self.to_string();
-        let width_limit = terminal::size()?.0 as usize;
-        if width_limit < suffix_after_trim.width() {
-            return Ok(String::new());
+#[cfg(test)]
+mod test {
+    mod matrixify {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let expect = vec![
+                Graphemes::new(">>"),
+                Graphemes::new(" a"),
+                Graphemes::new("aa"),
+                Graphemes::new(" "),
+            ];
+            assert_eq!(expect, matrixify(2, &Graphemes::new(">> aaa ")),);
         }
 
-        let width_without_suffix = width_limit - suffix_after_trim.width();
-        let res = if width_without_suffix < line.len() {
-            line.chars().take(width_without_suffix).collect::<String>()
-                + &suffix_after_trim.to_string()
-        } else {
-            line
-        };
-        Ok(res)
+        #[test]
+        fn test_with_emoji() {
+            let expect = vec![
+                Graphemes::new(">>"),
+                Graphemes::new(" "),
+                Graphemes::new("😎"),
+                Graphemes::new("😎"),
+                Graphemes::new(" "),
+            ];
+            assert_eq!(expect, matrixify(2, &Graphemes::new(">> 😎😎 ")),);
+        }
+
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            let expect = vec![
+                Graphemes::new(">"),
+                Graphemes::new(">"),
+                Graphemes::new(" "),
+                Graphemes::new(" "),
+            ];
+            assert_eq!(expect, matrixify(1, &Graphemes::new(">> 😎😎 ")),);
+        }
     }
-}
 
-#[test]
-fn longest_common_prefix() {
-    assert_eq!(
-        Graphemes::from("ab"),
-        Graphemes::from("ab").longest_common_prefix(&Graphemes::from("abc")),
-    );
+    mod trim {
+        use super::super::*;
 
-    assert_eq!(
-        Graphemes::from("ab"),
-        Graphemes::from("abc").longest_common_prefix(&Graphemes::from("ab")),
-    );
+        #[test]
+        fn test() {
+            assert_eq!(Graphemes::new(">> a"), trim(4, &Graphemes::new(">> aaa ")));
+        }
 
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::from("abc").longest_common_prefix(&Graphemes::default()),
-    );
+        #[test]
+        fn test_with_emoji() {
+            assert_eq!(Graphemes::new("😎"), trim(2, &Graphemes::new("😎")));
+        }
 
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::default().longest_common_prefix(&Graphemes::from("abc")),
-    );
-
-    assert_eq!(
-        Graphemes::default(),
-        Graphemes::default().longest_common_prefix(&Graphemes::default()),
-    );
+        #[test]
+        fn test_with_emoji_at_narrow_terminal() {
+            assert_eq!(Graphemes::new(""), trim(1, &Graphemes::new("😎")));
+        }
+    }
 }

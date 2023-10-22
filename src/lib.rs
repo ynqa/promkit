@@ -1,7 +1,9 @@
 //! # promkit
 //!
-//! A toolkit for building your own interactive command-line tools in Rust,
-//! utilizing [crossterm](https://github.com/crossterm-rs/crossterm).
+//! [![.github/workflows/promkit.yml](https://github.com/ynqa/promkit/actions/workflows/promkit.yml/badge.svg)](https://github.com/ynqa/promkit/actions/workflows/promkit.yml)
+//! [![docs.rs](https://img.shields.io/docsrs/promkit)](https://docs.rs/promkit)
+//!
+//! A toolkit for building your own interactive command-line tools in Rust.
 //!
 //! ## Getting Started
 //!
@@ -9,249 +11,240 @@
 //!
 //! ```toml
 //! [dependencies]
-//! version = "0.1.2"
+//! promkit = "0.2.0"
 //! ```
+//!
+//! ## Features
+//!
+//! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
+//! - Various building methods
+//!   - Support ranging from presets for easy use to layout building using `Component`s, and even for displaying your own data structures
+//! - Versatile customization capabilities
+//!   - Themes for defining the outer shell style, including text and cursor colors
+//!   - Validation for user input and error message construction
+//!   - and so on...
 //!
 //! ## Examples
 //!
-//! Readline:
+//! *promkit* provides presets so that users can utilize prompts immediately without
+//! having to build complex Components for specific use cases.  
 //!
-//! ```no_run
-//! use promkit::{build::Builder, readline, Result};
-//!
-//! fn main() -> Result<()> {
-//!     let mut p = readline::Builder::default().build()?;
-//!     loop {
-//!         let line = p.run()?;
-//!         println!("result: {:?}", line);
-//!     }
-//! }
+//! ```bash
+//! cargo run --example readline
 //! ```
 //!
-//! Select:
+//! ![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
 //!
-//! ```no_run
-//! use promkit::{
-//!     build::Builder, crossterm::style, register::Register, select, selectbox::SelectBox, Result,
-//! };
+//! See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
+//! for more examples.
 //!
-//! fn main() -> Result<()> {
-//!     let mut selectbox = Box::new(SelectBox::default());
-//!     selectbox.register_all((0..100).map(|v| v.to_string()).collect::<Vec<String>>());
-//!     let mut p = select::Builder::default()
-//!         .title("Q: What number do you like?")
-//!         .title_color(style::Color::DarkGreen)
-//!         .selectbox(selectbox)
-//!         .build()?;
-//!     let line = p.run()?;
-//!     println!("result: {:?}", line);
-//!     Ok(())
-//! }
-//! ```
+//! ## Why *promkit*?
+//!
+//! Similar libraries in this category include the following:
+//! - [console-rs/dialoguer](https://github.com/console-rs/dialoguer)
+//! - [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire)
+//!
+//! *promkit* offers several advantages over these libraries:
+//!
+//! ### Resilience to terminal resizing
+//!
+//! Performing operations that involve executing a command in one pane while
+//! simultaneously opening a new pane is a common occurrence. During such operations,
+//! if UI corruption is caused by resizing the terminal size, it may adversely affect
+//! the user experience.  
+//! Other libraries can struggle when the terminal is resized, making typing and
+//! interaction difficult or impossible. For example:
+//!
+//!  - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
+//!
+//! *promkit* processes the data to fit the screen size, reducing the likelihood of
+//! rendering issues, such as misalignment. This approach ensures that UI elements
+//! remain consistent even when the terminal is resized, providing a smoother user
+//! experience.
+//!
+//! ### Unified component approach
+//!
+//! *promkit* takes a unified approach by having all of its components inherit the
+//! same `Component` trait. This design choice enables users to seamlessly support
+//! their custom data structures for display, similar to the relationships seen in
+//! TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
+//! and
+//! [EdJoPaTo/tui-rs-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget).
+//! In other words, it's straightforward for anyone to display their own data
+//! structures using widgets within promkit.  
+//! In contrast, other libraries tend to treat each prompt as a mostly independent
+//! entity. If you want to display a new data structure, you often have to build the
+//! UI from scratch, which can be a time-consuming and less flexible process.
+//!
+//!   ```ignore
+//!   pub trait Component {
+//!       fn make_pane(&self, width: u16) -> Pane;
+//!       fn handle_event(&mut self, event: &Event);
+//!       fn postrun(&mut self);
+//!   }
+//!   ```
+//!
+//! In the provided presets of *promkit*, this mechanism is implemented. If you'd
+//! like to try it out, you can refer to
+//! the implementations of
+//! [components](https://github.com/ynqa/promkit/tree/v0.2.0/src/components)
+//! and
+//! [preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
+//! for guidance.
+//!
+//! In summary, *promkit*'s resilience to terminal resizing and its unified component
+//! approach make it a compelling choice for interactive command-line applications,
+//! especially when compared to
+//! [console-rs/dialoguer](https://github.com/console-rs/dialoguer) and
+//! [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire).
+//! These features provide a more reliable and extensible experience for developers,
+//! allowing them to focus on building powerful command-line interfaces.
+//!
+//! ## Understanding dataflow and component interactions
+//!
+//! See [here](https://github.com/ynqa/promkit/tree/v0.2.0#understanding-dataflow-and-component-interactions)
+//!
+//! ## License
+//!
+//! This project is licensed under the MIT License.
+//! See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
+//! file for details.
 
-#[macro_use]
-extern crate downcast_rs;
-#[macro_use(defer)]
 extern crate scopeguard;
 
-/// String buffer representing the user inputs.
-pub mod buffer;
-/// A module providing the builder of [Prompt](struct.Prompt.html).
-pub mod build {
-    use super::{state::State, Prompt, Result};
+pub use crossterm;
 
-    /// A trait to build [Prompt](struct.Prompt.html).
-    pub trait Builder<D, S> {
-        fn state(self) -> Result<Box<State<D, S>>>;
-        fn build(self) -> Result<Prompt<State<D, S>>>;
-    }
-}
-/// Characters and their width.
-pub mod grapheme;
-/// Collection of terminal operations.
-pub mod handler;
-/// A data structure to store the history of the user inputs.
-pub mod history;
-/// Register the pairs of
-/// [crossterm event](../crossterm/event/enum.Event.html)
-/// and their handlers.
-pub mod keybind;
-/// A module providing the lines to receive and display user inputs.
-pub mod readline {
-    pub mod handler;
-    mod keybind;
-    mod prompt;
-    pub mod state;
-
-    pub use self::prompt::Builder;
-    pub use self::state::{Mode, State};
-}
-/// A module providing trait to register the item into.
-pub mod register {
-    /// A trait to register the items.
-    pub trait Register<T> {
-        fn register(&mut self, _: T);
-        fn register_all<U: IntoIterator<Item = T>>(&mut self, items: U) {
-            for (_, item) in items.into_iter().enumerate() {
-                self.register(item)
-            }
-        }
-    }
-}
-/// A module providing the selectbox to choose the items from.
-pub mod select {
-    pub mod handler;
-    mod keybind;
-    mod prompt;
-    pub mod state;
-
-    pub use self::prompt::Builder;
-    pub use self::state::State;
-}
-/// List representing the candidate items to be chosen by the users.
-pub mod selectbox;
-/// State of applications.
-pub mod state {
-    use std::io;
-
-    use crate::Result;
-
-    #[derive(Default)]
-    pub struct State<D, S>(pub Inherited<D>, pub S);
-
-    #[derive(Default)]
-    pub struct Inherited<D> {
-        pub prev: Box<D>,
-        pub next: Box<D>,
-        pub editor: Box<D>,
-    }
-
-    /// A trait to render the items into the output stream.
-    pub trait Render<W: io::Write> {
-        fn pre_render(&self, out: &mut W) -> Result<()>;
-        fn render(&mut self, out: &mut W) -> Result<()>;
-    }
-}
-/// A data structure to store the suggestions for the completion.
+pub mod components;
+mod engine;
+pub mod error;
+mod grapheme;
+mod history;
+pub mod item_box;
+mod pane;
+pub mod preset;
+pub mod style;
 pub mod suggest;
-/// Utilities for the terminal.
-pub mod termutil;
+mod terminal;
+mod text_buffer;
+mod theme;
+mod validate;
 
-mod error;
-pub use error::Result;
-
-use std::cell::RefCell;
-use std::fmt::Display;
 use std::io;
-use std::rc::Rc;
 use std::sync::Once;
 
-pub use crossterm;
-use downcast_rs::Downcast;
+use scopeguard::defer;
 
-/// A trait for handling the events.
-pub trait Handler<S>: Downcast {
-    /// Edit the state and show the items on stdout on receiving the events.
-    fn handle(&mut self, _: crossterm::event::Event, _: &mut io::Stdout, _: &mut S)
-        -> Result<bool>;
-}
-impl_downcast!(Handler<S>);
+use crate::{
+    components::Component,
+    crossterm::{
+        cursor,
+        event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode},
+    },
+    engine::Engine,
+    error::{Error, Result},
+    terminal::Terminal,
+};
 
-/// A type representing the hooks that are called in the certain timings.
-pub type HookFn<S> = dyn Fn(&mut io::Stdout, &mut S) -> Result<()>;
+type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool>;
+type Output<T> = dyn Fn(&Vec<Box<dyn Component>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
-pub struct Prompt<S> {
-    pub out: io::Stdout,
-    pub handler: Rc<RefCell<dyn Handler<S>>>,
-    /// Call initially every epoch in event-loop of
-    /// [Prompt.run](struct.Prompt.html#method.run).
-    pub pre_run: Option<Box<HookFn<S>>>,
-    /// Call finally every epoch in event-loop of
-    /// [Prompt.run](struct.Prompt.html#method.run).
-    pub post_run: Option<Box<HookFn<S>>>,
-    /// Call once initially when
-    /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub initialize: Option<Box<HookFn<S>>>,
-    /// Call once finally when
-    /// [Prompt.run](struct.Prompt.html#method.run) is called.
-    pub finalize: Option<Box<HookFn<S>>>,
-    pub state: Box<S>,
-}
-
-/// A type representing the event handlers.
-pub type EventHandleFn<S> =
-    dyn Fn(Option<(u16, u16)>, Option<char>, &mut io::Stdout, &mut S) -> Result<bool>;
-
-/// A trait representing the final results for return.
-pub trait Output {
-    /// Return data type for the edited item.
-    type Output: Display;
-    /// Return the edited item.
-    fn output(&self) -> Self::Output;
+pub struct Prompt<T> {
+    components: Vec<Box<dyn Component>>,
+    evaluator: Box<Evaluate>,
+    output: Box<Output<T>>,
 }
 
 static ONCE: Once = Once::new();
 
-impl<S: 'static + Output> Prompt<S> {
+impl<T> Prompt<T> {
+    pub fn try_new<E, O>(
+        components: Vec<Box<dyn Component>>,
+        evaluator: E,
+        output: O,
+    ) -> Result<Self>
+    where
+        E: Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool> + 'static,
+        O: Fn(&Vec<Box<dyn Component>>) -> Result<T> + 'static,
+    {
+        Ok(Self {
+            components,
+            evaluator: Box::new(evaluator),
+            output: Box::new(output),
+        })
+    }
+
     /// Loop the steps that receive an event and trigger the handler.
-    pub fn run(&mut self) -> Result<S::Output> {
+    pub fn run(&mut self) -> Result<T> {
+        let mut engine = Engine::new(io::stdout());
+
         ONCE.call_once(|| {
-            termutil::clear(&mut self.out).ok();
+            engine.clear().ok();
         });
 
-        crossterm::terminal::enable_raw_mode()?;
+        enable_raw_mode()?;
+        execute!(io::stdout(), cursor::Hide)?;
         defer! {{
-            crossterm::terminal::disable_raw_mode().ok();
+            execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
+            execute!(io::stdout(), cursor::Show).ok();
+            disable_raw_mode().ok();
         }};
 
-        if let Some(initialize) = &self.initialize {
-            if let Err(e) = initialize(&mut self.out, &mut self.state) {
-                if let Some(finalize) = &self.finalize {
-                    finalize(&mut self.out, &mut self.state)?;
+        let mut terminal = Terminal::start_session(&mut engine)?;
+        let size = engine.size()?;
+        terminal.draw(
+            &mut engine,
+            self.components
+                .iter()
+                .map(|editor| editor.make_pane(size.0))
+                .collect(),
+        )?;
+
+        loop {
+            let ev = event::read()?;
+
+            for editor in &mut self.components {
+                editor.handle_event(&ev);
+            }
+
+            let finalizable = (self.evaluator)(&ev, &self.components)?;
+
+            let size = engine.size()?;
+            terminal.draw(
+                &mut engine,
+                self.components
+                    .iter()
+                    .map(|editor| editor.make_pane(size.0))
+                    .collect(),
+            )?;
+
+            match &ev {
+                Event::Key(KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }) => {
+                    if finalizable {
+                        break;
+                    }
                 }
-                return Err(e);
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('c'),
+                    modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }) => return Err(Error::Interrupted("ctrl+c".into())),
+                _ => (),
             }
         }
 
-        loop {
-            if let Some(pre_run) = &self.pre_run {
-                if let Err(e) = pre_run(&mut self.out, &mut self.state) {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Err(e);
-                }
-            }
-            let ev = crossterm::event::read()?;
-            match self
-                .handler
-                .borrow_mut()
-                .handle(ev, &mut self.out, &mut self.state)
-            {
-                Ok(true) => {
-                    let item = self.state.output();
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Ok(item);
-                }
-                Err(e) => {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Err(e);
-                }
-                _ => (),
-            }
-            if let Some(post_run) = &self.post_run {
-                if let Err(e) = post_run(&mut self.out, &mut self.state) {
-                    if let Some(finalize) = &self.finalize {
-                        finalize(&mut self.out, &mut self.state)?;
-                    }
-                    return Err(e);
-                }
-            }
-        }
+        let ret = (self.output)(&self.components);
+        self.components.iter_mut().for_each(|editor| {
+            editor.postrun();
+        });
+        ret
     }
 }

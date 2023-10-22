@@ -1,61 +1,58 @@
-use std::ops::{Deref, DerefMut};
+use std::{fmt, iter::FromIterator};
 
 use radix_trie::{Trie, TrieCommon};
 
-use crate::{grapheme::Graphemes, register::Register};
-
 /// Store the suggestions for completion.
-#[derive(Clone, Debug, Default)]
-pub struct Suggest(pub Trie<Graphemes, usize>);
+#[derive(Clone, Default)]
+pub struct Suggest(Trie<String, usize>);
 
-impl Deref for Suggest {
-    type Target = Trie<Graphemes, usize>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Suggest {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T: Into<String>> Register<T> for Suggest {
-    fn register(&mut self, item: T) {
-        self.insert(Graphemes::from(item.into()), 1);
+impl<T: fmt::Display> FromIterator<T> for Suggest {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let kvs = iter.into_iter().map(|e| (format!("{}", e), 1));
+        Suggest(Trie::from_iter(kvs))
     }
 }
 
 impl Suggest {
+    pub fn insert<T: AsRef<str>>(&mut self, item: T) {
+        self.0.insert(item.as_ref().to_string(), 1);
+    }
+
     /// Search the most appropriate item from the suggestions.
-    pub fn search(&self, query: &Graphemes) -> Option<Graphemes> {
-        match self.get_raw_descendant(query) {
-            Some(subtrie) => subtrie.iter().next().map(|item| item.0.clone()),
+    pub fn search<T: AsRef<str>>(&self, query: T) -> Option<&str> {
+        match self.0.get_raw_descendant(query.as_ref()) {
+            Some(subtrie) => subtrie.iter().next().map(|item| item.0.as_str()),
             None => None,
         }
     }
 }
 
-#[test]
-fn register() {
-    let mut s = Suggest::default();
-    s.register_all(vec!["abc", "abd", "abxyz"]);
-    assert_eq!(s.len(), 3);
-}
+#[cfg(test)]
+mod test {
+    mod insert {
+        use super::super::*;
 
-#[test]
-fn search() {
-    let mut s = Suggest::default();
-    s.register_all(vec!["abc", "abd", "abxyz"]);
-    assert_eq!(s.search(&Graphemes::from("")), Some(Graphemes::from("abc")));
-    assert_eq!(s.search(&Graphemes::from("x")), None);
-    assert_eq!(
-        s.search(&Graphemes::from("ab")),
-        Some(Graphemes::from("abc"))
-    );
-    assert_eq!(
-        s.search(&Graphemes::from("abd")),
-        Some(Graphemes::from("abd"))
-    );
+        #[test]
+        fn test() {
+            let mut s = Suggest::default();
+            s.insert("abc");
+            s.insert("abd");
+            s.insert("abxyz");
+            assert_eq!(s.0.len(), 3);
+        }
+    }
+
+    mod search {
+        use super::super::*;
+
+        #[test]
+        fn test() {
+            let s = Suggest::from_iter(["abc", "abd", "abxyz"]);
+            assert_eq!(s.search(""), Some("abc"));
+            assert_eq!(s.search("x"), None);
+            assert_eq!(s.search("a"), Some("abc"));
+            assert_eq!(s.search("ab"), Some("abc"));
+            assert_eq!(s.search("abd"), Some("abd"));
+        }
+    }
 }
