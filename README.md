@@ -100,7 +100,7 @@ especially when compared to
 These features provide a more reliable and extensible experience for developers,
 allowing them to focus on building powerful command-line interfaces.
 
-## Concept
+## Understanding dataflow and component interactions
 
 ### Dataflow from receiving events to rendering
 
@@ -125,3 +125,33 @@ This `TextBuffer` is used to construct a `Pane`, which is essentially a matrix o
 lines divided by a specific width. The panes are extracted a certain number of
 lines in order to fit within the terminal screen when rendering.
 Finally, these Lines are passed to a `draw` function which renders them on the screen.
+
+### Relationship between TextBuffer, TextEditor, and Readline
+
+A preset is composed of a combination of multiple components.
+Let's take the Readline preset as an example to explain.
+
+- Readline (preset)
+  - Readline is a high-level preset component designed for text input.
+    It provides a convenient interface for soliciting and managing user text
+    input, error message presentation, and validation.
+    Readline leverages the capabilities of TextEditor and State\<TextEditor\> for
+    text editing and state management.
+- TextBuffer
+  - TextBuffer is a low-level component responsible for managing text content.
+    It handles tasks related to storing, editing, and tracking the cursor
+    position of text data.
+- TextEditor, State\<TextEditor\> (component)
+  - TextEditor is a component that operates and displays text data
+    through TextBuffer.
+    It accepts user text input, manages editing, and displays the content
+    while reflecting changes back to TextBuffer.
+  - State\<TextEditor\> represents the state of TextEditor at different stages,
+    including the initial state, the state before editing, and the state after
+    editing. It holds snapshots of the TextEditor at these different stages.
+
+## License
+
+This project is licensed under the MIT License.
+See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
+file for details.

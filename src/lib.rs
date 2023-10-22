@@ -99,6 +99,12 @@
 //! [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire).
 //! These features provide a more reliable and extensible experience for developers,
 //! allowing them to focus on building powerful command-line interfaces.
+//! 
+//! ## License
+//! 
+//! This project is licensed under the MIT License.
+//! See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
+//! file for details.
 
 extern crate scopeguard;
 
