@@ -99,9 +99,13 @@
 //! [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire).
 //! These features provide a more reliable and extensible experience for developers,
 //! allowing them to focus on building powerful command-line interfaces.
-//! 
+//!
+//! ## Understanding dataflow and component interactions
+//!
+//! See [here](https://github.com/ynqa/promkit/tree/v0.2.0#understanding-dataflow-and-component-interactions)
+//!
 //! ## License
-//! 
+//!
 //! This project is licensed under the MIT License.
 //! See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
 //! file for details.
