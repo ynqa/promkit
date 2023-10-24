@@ -3,7 +3,7 @@
 //! [![.github/workflows/promkit.yml](https://github.com/ynqa/promkit/actions/workflows/promkit.yml/badge.svg)](https://github.com/ynqa/promkit/actions/workflows/promkit.yml)
 //! [![docs.rs](https://img.shields.io/docsrs/promkit)](https://docs.rs/promkit)
 //!
-//! A toolkit for building your own interactive command-line tools in Rust.
+//! A toolkit for building your own interactive prompt in Rust.
 //!
 //! ## Getting Started
 //!
@@ -127,6 +127,7 @@ pub mod suggest;
 mod terminal;
 mod text_buffer;
 mod theme;
+mod tree;
 mod validate;
 
 use std::io;
