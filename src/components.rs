@@ -5,6 +5,7 @@ use crate::{crossterm::event::Event, pane::Pane};
 mod builder;
 pub use builder::{
     item_picker::ItemPickerBuilder, text::TextBuilder, text_editor::TextEditorBuilder,
+    tree_viewer::TreeViewerBuilder,
 };
 mod text_editor;
 pub use text_editor::{Mode, TextEditor};
@@ -12,6 +13,8 @@ mod item_picker;
 pub use item_picker::ItemPicker;
 mod text;
 pub use text::Text;
+mod tree_viewer;
+pub use tree_viewer::TreeViewer;
 
 pub trait Component: AsAny {
     fn make_pane(&self, width: u16) -> Pane;

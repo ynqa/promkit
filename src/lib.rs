@@ -127,7 +127,7 @@ pub mod suggest;
 mod terminal;
 mod text_buffer;
 mod theme;
-mod tree;
+pub mod tree;
 mod validate;
 
 use std::io;

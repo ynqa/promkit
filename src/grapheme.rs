@@ -6,7 +6,7 @@
 //! in order to consider how many the positions of cursor should be moved
 //! when e.g. emojis and the special characters are displayed on the terminal.
 use std::{
-    fmt,
+    fmt::{self, Debug},
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
@@ -38,7 +38,7 @@ impl Grapheme {
 }
 
 /// Characters and their width.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
 
 impl Graphemes {
@@ -68,6 +68,15 @@ impl Graphemes {
 
     pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
         StyledGraphemesDisplay { graphemes: self }
+    }
+}
+
+impl Debug for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for grapheme in self.iter() {
+            write!(f, "{}", grapheme.ch)?;
+        }
+        Ok(())
     }
 }
 
