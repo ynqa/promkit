@@ -7,7 +7,7 @@ fn main() -> Result {
         Node::new("c"),
     ]))
     .title("What number do you like?")
-    .lines(5)
+    .lines(10)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
