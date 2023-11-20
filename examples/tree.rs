@@ -2,11 +2,11 @@ use promkit::{error::Result, preset::Tree, tree::Node};
 
 fn main() -> Result {
     let mut p = Tree::new(Node::new("/").add_children([
-        Node::new("a").add_children([Node::new("aa"), Node::new("ab")]),
-        Node::new("b"),
-        Node::new("c"),
+        Node::new("foo").add_children([Node::new("test1.txt"), Node::new("test2.txt")]),
+        Node::new("bar"),
+        Node::new("baz"),
     ]))
-    .title("What number do you like?")
+    .title("Select a directory or file")
     .lines(10)
     .prompt()?;
     println!("result: {:?}", p.run()?);

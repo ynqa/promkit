@@ -31,14 +31,15 @@ impl TreeViewer {
             .map(|(i, item)| {
                 if i == self.tree.position {
                     Graphemes::new_with_style(
-                        format!("{}{}", self.cursor, item.data),
+                        format!("{}{}{}", self.cursor, " ".repeat(item.depth), item.data),
                         self.cursor_style,
                     )
                 } else {
                     Graphemes::new_with_style(
                         format!(
-                            "{}{}",
+                            "{}{}{}",
                             " ".repeat(Graphemes::new(self.cursor.clone()).widths()),
+                            " ".repeat(item.depth),
                             item.data
                         ),
                         self.style,
