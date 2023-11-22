@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
 use crate::{
-    components::{Component, ItemPicker, ItemPickerBuilder, State, TextBuilder},
     error::Result,
     theme::select::Theme,
+    viewer::{Component, ItemPicker, ItemPickerBuilder, State, TextBuilder},
     Prompt,
 };
 

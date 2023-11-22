@@ -1,15 +1,15 @@
 use std::fmt::Display;
 
 use crate::{
-    components::{
-        Component, ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor,
-        TextEditorBuilder,
-    },
     crossterm::event::Event,
     error::Result,
     item_box::ItemBox,
     suggest::Suggest,
     theme::queryselect::Theme,
+    viewer::{
+        Component, ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor,
+        TextEditorBuilder,
+    },
     Prompt,
 };
 

@@ -1,8 +1,8 @@
 use crate::{
-    components::TreeViewer,
     crossterm::style::ContentStyle,
     error::Result,
     tree::{Node, Tree},
+    viewer::TreeViewer,
 };
 
 use super::super::State;

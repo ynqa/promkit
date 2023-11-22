@@ -1,8 +1,8 @@
 use crate::{
-    components::{Component, State, TextBuilder, TreeViewer, TreeViewerBuilder},
     error::Result,
     theme::tree::Theme,
     tree::Node,
+    viewer::{Component, State, TextBuilder, TreeViewer, TreeViewerBuilder},
     Prompt,
 };
 

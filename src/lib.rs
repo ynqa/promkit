@@ -114,7 +114,6 @@ extern crate scopeguard;
 
 pub use crossterm;
 
-pub mod components;
 mod engine;
 pub mod error;
 mod grapheme;
@@ -129,6 +128,7 @@ mod text_buffer;
 mod theme;
 pub mod tree;
 mod validate;
+pub mod viewer;
 
 use std::io;
 use std::sync::Once;
@@ -136,7 +136,6 @@ use std::sync::Once;
 use scopeguard::defer;
 
 use crate::{
-    components::Component,
     crossterm::{
         cursor,
         event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
@@ -146,6 +145,7 @@ use crate::{
     engine::Engine,
     error::{Error, Result},
     terminal::Terminal,
+    viewer::Component,
 };
 
 type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool>;

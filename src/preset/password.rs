@@ -1,9 +1,9 @@
 use crate::{
-    components::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
     theme::password::Theme,
     validate::Validator,
+    viewer::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     Prompt,
 };
 

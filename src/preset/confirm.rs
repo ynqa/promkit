@@ -1,10 +1,10 @@
 use crate::{
-    components::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
     text_buffer::TextBuffer,
     theme::confirm::Theme,
     validate::Validator,
+    viewer::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
     Prompt,
 };
 
