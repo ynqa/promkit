@@ -3,7 +3,7 @@ use crate::{
     error::Result,
     theme::password::Theme,
     validate::Validator,
-    viewer::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
+    viewer::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
     Prompt,
 };
 
@@ -63,8 +63,8 @@ impl Password {
                 self.text_editor.build_state()?,
                 self.error_message.build_state()?,
             ],
-            move |event: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
-                let text: String = components[1]
+            move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
+                let text: String = viewables[1]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap()
@@ -73,10 +73,8 @@ impl Password {
                     .textbuffer
                     .content_without_cursor();
 
-                let error_message_state = components[2]
-                    .as_any()
-                    .downcast_ref::<State<Text>>()
-                    .unwrap();
+                let error_message_state =
+                    viewables[2].as_any().downcast_ref::<State<Text>>().unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -102,8 +100,8 @@ impl Password {
                 }
                 Ok(ret)
             },
-            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
-                Ok(components[1]
+            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
+                Ok(viewables[1]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap()

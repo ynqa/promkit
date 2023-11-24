@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{
     error::Result,
     theme::select::Theme,
-    viewer::{Component, ItemPicker, ItemPickerBuilder, State, TextBuilder},
+    viewer::{ItemPicker, ItemPickerBuilder, State, TextBuilder, Viewable},
     Prompt,
 };
 
@@ -45,8 +45,8 @@ impl Select {
         Prompt::try_new(
             vec![self.title.build_state()?, self.item_picker.build_state()?],
             |_, _| Ok(true),
-            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
-                Ok(components[1]
+            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
+                Ok(viewables[1]
                     .as_any()
                     .downcast_ref::<State<ItemPicker>>()
                     .unwrap()

@@ -4,7 +4,7 @@ use crate::{
     text_buffer::TextBuffer,
     theme::confirm::Theme,
     validate::Validator,
-    viewer::{Component, State, Text, TextBuilder, TextEditor, TextEditorBuilder},
+    viewer::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
     Prompt,
 };
 
@@ -47,8 +47,8 @@ impl Confirm {
                 self.text_editor.build_state()?,
                 self.error_message.build_state()?,
             ],
-            move |event: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
-                let text_state = components[0]
+            move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
+                let text_state = viewables[0]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap();
@@ -59,10 +59,8 @@ impl Confirm {
                     .textbuffer
                     .content_without_cursor();
 
-                let error_message_state = components[1]
-                    .as_any()
-                    .downcast_ref::<State<Text>>()
-                    .unwrap();
+                let error_message_state =
+                    viewables[1].as_any().downcast_ref::<State<Text>>().unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -86,8 +84,8 @@ impl Confirm {
                 }
                 Ok(ret)
             },
-            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
-                Ok(components[0]
+            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
+                Ok(viewables[0]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap()

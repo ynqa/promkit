@@ -18,7 +18,7 @@ promkit = "0.2.0"
 
 - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
-  - Support ranging from presets for easy use to layout building using `Component`s, and even for displaying your own data structures
+  - Support ranging from presets for easy use to layout building using `Viewable`s, and even for displaying your own data structures
 - Versatile customization capabilities
   - Themes for defining the outer shell style, including text and cursor colors
   - Validation for user input and error message construction
@@ -27,13 +27,31 @@ promkit = "0.2.0"
 ## Examples
 
 *promkit* provides presets so that users can utilize prompts immediately without
-having to build complex Components for specific use cases.  
+having to build complex components for specific use cases.  
 
-```
+```bash
 cargo run --example readline
 ```
 
 ![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
+
+The actual codes:
+
+```rust
+use promkit::{error::Result, preset::Readline};
+
+fn main() -> Result {
+    let mut p = Readline::default()
+        .title("Feel free to fill in")
+        .validator(
+            |text| text.len() > 10,
+            |text| format!("Length must be over 10 but got {}", text.len()),
+        )
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
 
 See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
 for more examples.
@@ -65,7 +83,7 @@ experience.
 ### Unified component approach
 
 *promkit* takes a unified approach by having all of its components inherit the
-same `Component` trait. This design choice enables users to seamlessly support
+same `Viewable` trait. This design choice enables users to seamlessly support
 their custom data structures for display, similar to the relationships seen in
 TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
 and
@@ -77,7 +95,7 @@ entity. If you want to display a new data structure, you often have to build the
 UI from scratch, which can be a time-consuming and less flexible process.
 
   ```rust
-  pub trait Component {
+  pub trait Viewable {
       fn make_pane(&self, width: u16) -> Pane;
       fn handle_event(&mut self, event: &Event);
       fn postrun(&mut self);
@@ -87,7 +105,7 @@ UI from scratch, which can be a time-consuming and less flexible process.
 In the provided presets of *promkit*, this mechanism is implemented. If you'd
 like to try it out, you can refer to
 the implementations of
-[components](https://github.com/ynqa/promkit/tree/v0.2.0/src/components)
+[view](https://github.com/ynqa/promkit/tree/v0.2.0/src/view)
 and
 [preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
 for guidance.
@@ -110,7 +128,7 @@ This diagram shows the data flow for `TextEditor` component.
 graph
   subgraph Dataflow
     Event --> EventHandler
-    subgraph TextEditor as Compoent
+    subgraph TextEditor as Viewable
       EventHandler --> |edit| TextBuffer
       TextBuffer --> |matrixify| Pane
     end
@@ -141,7 +159,7 @@ Let's take the Readline preset as an example to explain.
   - TextBuffer is a low-level component responsible for managing text content.
     It handles tasks related to storing, editing, and tracking the cursor
     position of text data.
-- TextEditor, State\<TextEditor\> (component)
+- TextEditor, State\<TextEditor\> (viewable object)
   - TextEditor is a component that operates and displays text data
     through TextBuffer.
     It accepts user text input, manages editing, and displays the content

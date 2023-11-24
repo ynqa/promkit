@@ -10,7 +10,7 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, Component};
+use super::{AsAny, Viewable};
 
 #[derive(Clone)]
 pub struct ItemPicker {
@@ -46,7 +46,7 @@ impl ItemPicker {
     }
 }
 
-impl Component for ItemPicker {
+impl Viewable for ItemPicker {
     fn make_pane(&self, width: u16) -> Pane {
         let trimed = self
             .itembox_to_layout()

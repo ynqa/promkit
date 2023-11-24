@@ -10,7 +10,7 @@ use crate::{
     tree::Tree,
 };
 
-use super::{AsAny, Component};
+use super::{AsAny, Viewable};
 
 #[derive(Clone)]
 pub struct TreeViewer {
@@ -50,7 +50,7 @@ impl TreeViewer {
     }
 }
 
-impl Component for TreeViewer {
+impl Viewable for TreeViewer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
         let trimed = self
             .tree_to_layout()

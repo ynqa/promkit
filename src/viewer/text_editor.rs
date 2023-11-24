@@ -12,7 +12,7 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::{AsAny, Component, State};
+use super::{AsAny, State, Viewable};
 
 /// Edit mode.
 #[derive(Clone, Default)]
@@ -50,7 +50,7 @@ impl TextEditor {
     }
 }
 
-impl Component for TextEditor {
+impl Viewable for TextEditor {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(

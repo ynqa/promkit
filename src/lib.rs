@@ -18,7 +18,7 @@
 //!
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
-//!   - Support ranging from presets for easy use to layout building using `Component`s, and even for displaying your own data structures
+//!   - Support ranging from presets for easy use to layout building using `Viewable`s, and even for displaying your own data structures
 //! - Versatile customization capabilities
 //!   - Themes for defining the outer shell style, including text and cursor colors
 //!   - Validation for user input and error message construction
@@ -27,13 +27,31 @@
 //! ## Examples
 //!
 //! *promkit* provides presets so that users can utilize prompts immediately without
-//! having to build complex Components for specific use cases.  
+//! having to build complex components for specific use cases.  
 //!
 //! ```bash
 //! cargo run --example readline
 //! ```
 //!
 //! ![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
+//!
+//! The actual codes:
+//!
+//! ```ignore
+//! use promkit::{error::Result, preset::Readline};
+//!
+//! fn main() -> Result {
+//!     let mut p = Readline::default()
+//!         .title("Feel free to fill in")
+//!         .validator(
+//!             |text| text.len() > 10,
+//!             |text| format!("Length must be over 10 but got {}", text.len()),
+//!         )
+//!         .prompt()?;
+//!     println!("result: {:?}", p.run()?);
+//!     Ok(())
+//! }
+//! ```
 //!
 //! See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
 //! for more examples.
@@ -65,7 +83,7 @@
 //! ### Unified component approach
 //!
 //! *promkit* takes a unified approach by having all of its components inherit the
-//! same `Component` trait. This design choice enables users to seamlessly support
+//! same `Viewable` trait. This design choice enables users to seamlessly support
 //! their custom data structures for display, similar to the relationships seen in
 //! TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
 //! and
@@ -77,7 +95,7 @@
 //! UI from scratch, which can be a time-consuming and less flexible process.
 //!
 //!   ```ignore
-//!   pub trait Component {
+//!   pub trait Viewable {
 //!       fn make_pane(&self, width: u16) -> Pane;
 //!       fn handle_event(&mut self, event: &Event);
 //!       fn postrun(&mut self);
@@ -87,7 +105,7 @@
 //! In the provided presets of *promkit*, this mechanism is implemented. If you'd
 //! like to try it out, you can refer to
 //! the implementations of
-//! [components](https://github.com/ynqa/promkit/tree/v0.2.0/src/components)
+//! [view](https://github.com/ynqa/promkit/tree/v0.2.0/src/view)
 //! and
 //! [preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
 //! for guidance.
@@ -145,15 +163,15 @@ use crate::{
     engine::Engine,
     error::{Error, Result},
     terminal::Terminal,
-    viewer::Component,
+    viewer::Viewable,
 };
 
-type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool>;
-type Output<T> = dyn Fn(&Vec<Box<dyn Component>>) -> Result<T>;
+type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Viewable>>) -> Result<bool>;
+type Output<T> = dyn Fn(&Vec<Box<dyn Viewable>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
-    components: Vec<Box<dyn Component>>,
+    viewables: Vec<Box<dyn Viewable>>,
     evaluator: Box<Evaluate>,
     output: Box<Output<T>>,
 }
@@ -161,17 +179,13 @@ pub struct Prompt<T> {
 static ONCE: Once = Once::new();
 
 impl<T> Prompt<T> {
-    pub fn try_new<E, O>(
-        components: Vec<Box<dyn Component>>,
-        evaluator: E,
-        output: O,
-    ) -> Result<Self>
+    pub fn try_new<E, O>(viewables: Vec<Box<dyn Viewable>>, evaluator: E, output: O) -> Result<Self>
     where
-        E: Fn(&Event, &Vec<Box<dyn Component>>) -> Result<bool> + 'static,
-        O: Fn(&Vec<Box<dyn Component>>) -> Result<T> + 'static,
+        E: Fn(&Event, &Vec<Box<dyn Viewable>>) -> Result<bool> + 'static,
+        O: Fn(&Vec<Box<dyn Viewable>>) -> Result<T> + 'static,
     {
         Ok(Self {
-            components,
+            viewables,
             evaluator: Box::new(evaluator),
             output: Box::new(output),
         })
@@ -197,7 +211,7 @@ impl<T> Prompt<T> {
         let size = engine.size()?;
         terminal.draw(
             &mut engine,
-            self.components
+            self.viewables
                 .iter()
                 .map(|editor| editor.make_pane(size.0))
                 .collect(),
@@ -206,16 +220,16 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            for editor in &mut self.components {
+            for editor in &mut self.viewables {
                 editor.handle_event(&ev);
             }
 
-            let finalizable = (self.evaluator)(&ev, &self.components)?;
+            let finalizable = (self.evaluator)(&ev, &self.viewables)?;
 
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,
-                self.components
+                self.viewables
                     .iter()
                     .map(|editor| editor.make_pane(size.0))
                     .collect(),
@@ -242,8 +256,8 @@ impl<T> Prompt<T> {
             }
         }
 
-        let ret = (self.output)(&self.components);
-        self.components.iter_mut().for_each(|editor| {
+        let ret = (self.output)(&self.viewables);
+        self.viewables.iter_mut().for_each(|editor| {
             editor.postrun();
         });
         ret

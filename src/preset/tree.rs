@@ -2,7 +2,7 @@ use crate::{
     error::Result,
     theme::tree::Theme,
     tree::Node,
-    viewer::{Component, State, TextBuilder, TreeViewer, TreeViewerBuilder},
+    viewer::{State, TextBuilder, TreeViewer, TreeViewerBuilder, Viewable},
     Prompt,
 };
 
@@ -44,8 +44,8 @@ impl Tree {
         Prompt::try_new(
             vec![self.title.build_state()?, self.tree_viewer.build_state()?],
             |_, _| Ok(true),
-            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
-                Ok(components[1]
+            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
+                Ok(viewables[1]
                     .as_any()
                     .downcast_ref::<State<TreeViewer>>()
                     .unwrap()

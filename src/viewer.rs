@@ -16,7 +16,7 @@ pub use text::Text;
 mod tree_viewer;
 pub use tree_viewer::TreeViewer;
 
-pub trait Component: AsAny {
+pub trait Viewable: AsAny {
     fn make_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);
@@ -26,23 +26,23 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-pub struct State<C: Component> {
-    pub init: C,
-    pub before: C,
-    pub after: RefCell<C>,
+pub struct State<V: Viewable> {
+    pub init: V,
+    pub before: V,
+    pub after: RefCell<V>,
 }
 
-impl<C: Component + Clone> State<C> {
-    pub fn new(component: C) -> Self {
+impl<V: Viewable + Clone> State<V> {
+    pub fn new(viewable: V) -> Self {
         Self {
-            init: component.clone(),
-            before: component.clone(),
-            after: RefCell::new(component),
+            init: viewable.clone(),
+            before: viewable.clone(),
+            after: RefCell::new(viewable),
         }
     }
 }
 
-impl<C: Clone + Component + 'static> Component for State<C> {
+impl<V: Clone + Viewable + 'static> Viewable for State<V> {
     fn make_pane(&self, width: u16) -> Pane {
         self.after.borrow().make_pane(width)
     }
@@ -59,7 +59,7 @@ impl<C: Clone + Component + 'static> Component for State<C> {
     }
 }
 
-impl<C: Component + 'static> AsAny for State<C> {
+impl<V: Viewable + 'static> AsAny for State<V> {
     fn as_any(&self) -> &dyn Any {
         self
     }

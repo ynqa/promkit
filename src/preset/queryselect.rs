@@ -7,8 +7,8 @@ use crate::{
     suggest::Suggest,
     theme::queryselect::Theme,
     viewer::{
-        Component, ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor,
-        TextEditorBuilder,
+        ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor, TextEditorBuilder,
+        Viewable,
     },
     Prompt,
 };
@@ -88,12 +88,12 @@ impl QuerySelect {
                 self.text_editor.build_state()?,
                 self.item_picker.build_state()?,
             ],
-            move |_: &Event, components: &Vec<Box<dyn Component + 'static>>| -> Result<bool> {
-                let texteditor_state = components[1]
+            move |_: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
+                let texteditor_state = viewables[1]
                     .as_any()
                     .downcast_ref::<State<TextEditor>>()
                     .unwrap();
-                let itempicker_state = components[2]
+                let itempicker_state = viewables[2]
                     .as_any()
                     .downcast_ref::<State<ItemPicker>>()
                     .unwrap();
@@ -110,8 +110,8 @@ impl QuerySelect {
                 }
                 Ok(true)
             },
-            |components: &Vec<Box<dyn Component + 'static>>| -> Result<String> {
-                Ok(components[2]
+            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
+                Ok(viewables[2]
                     .as_any()
                     .downcast_ref::<State<ItemPicker>>()
                     .unwrap()

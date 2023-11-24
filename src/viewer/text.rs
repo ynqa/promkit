@@ -6,7 +6,7 @@ use crate::{
     pane::Pane,
 };
 
-use super::{AsAny, Component};
+use super::{AsAny, Viewable};
 
 #[derive(Clone)]
 pub struct Text {
@@ -14,7 +14,7 @@ pub struct Text {
     pub style: ContentStyle,
 }
 
-impl Component for Text {
+impl Viewable for Text {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(
