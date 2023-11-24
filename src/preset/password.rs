@@ -3,7 +3,7 @@ use crate::{
     error::Result,
     theme::password::Theme,
     validate::Validator,
-    viewer::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
+    view::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
     Prompt,
 };
 

@@ -4,7 +4,7 @@ use crate::{
     text_buffer::TextBuffer,
     theme::confirm::Theme,
     validate::Validator,
-    viewer::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
+    view::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
     Prompt,
 };
 

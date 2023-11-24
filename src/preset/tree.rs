@@ -2,7 +2,7 @@ use crate::{
     error::Result,
     theme::tree::Theme,
     tree::Node,
-    viewer::{State, TextBuilder, TreeViewer, TreeViewerBuilder, Viewable},
+    view::{State, TextBuilder, TreeViewer, TreeViewerBuilder, Viewable},
     Prompt,
 };
 

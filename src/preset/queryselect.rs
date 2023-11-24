@@ -6,7 +6,7 @@ use crate::{
     item_box::ItemBox,
     suggest::Suggest,
     theme::queryselect::Theme,
-    viewer::{
+    view::{
         ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor, TextEditorBuilder,
         Viewable,
     },

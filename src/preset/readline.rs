@@ -4,7 +4,7 @@ use crate::{
     suggest::Suggest,
     theme::readline::Theme,
     validate::Validator,
-    viewer::{Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
+    view::{Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
     Prompt,
 };
 

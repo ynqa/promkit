@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{
     error::Result,
     theme::select::Theme,
-    viewer::{ItemPicker, ItemPickerBuilder, State, TextBuilder, Viewable},
+    view::{ItemPicker, ItemPickerBuilder, State, TextBuilder, Viewable},
     Prompt,
 };
 

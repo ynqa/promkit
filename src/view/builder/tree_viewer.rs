@@ -2,10 +2,9 @@ use crate::{
     crossterm::style::ContentStyle,
     error::Result,
     tree::{Node, Tree},
-    viewer::TreeViewer,
 };
 
-use super::super::State;
+use super::super::{tree_viewer::TreeViewer, State};
 
 #[derive(Clone)]
 pub struct TreeViewerBuilder {

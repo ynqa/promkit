@@ -146,7 +146,7 @@ mod text_buffer;
 mod theme;
 pub mod tree;
 mod validate;
-pub mod viewer;
+pub mod view;
 
 use std::io;
 use std::sync::Once;
@@ -163,7 +163,7 @@ use crate::{
     engine::Engine,
     error::{Error, Result},
     terminal::Terminal,
-    viewer::Viewable,
+    view::Viewable,
 };
 
 type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Viewable>>) -> Result<bool>;
