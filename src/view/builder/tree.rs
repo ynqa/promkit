@@ -4,7 +4,7 @@ use crate::{
     tree::{Node, Tree},
 };
 
-use super::super::{tree_viewer::TreeViewer, State};
+use super::super::{tree::TreeViewer, State};
 
 #[derive(Clone)]
 pub struct TreeViewerBuilder {

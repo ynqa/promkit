@@ -13,7 +13,7 @@ use crate::{
 use super::{AsAny, Viewable};
 
 #[derive(Clone)]
-pub struct ItemPicker {
+pub struct SelectViewer {
     pub itembox: ItemBox,
 
     pub style: ContentStyle,
@@ -22,7 +22,7 @@ pub struct ItemPicker {
     pub lines: Option<usize>,
 }
 
-impl ItemPicker {
+impl SelectViewer {
     fn itembox_to_layout(&self) -> Vec<Graphemes> {
         self.itembox
             .content()
@@ -46,7 +46,7 @@ impl ItemPicker {
     }
 }
 
-impl Viewable for ItemPicker {
+impl Viewable for SelectViewer {
     fn make_pane(&self, width: u16) -> Pane {
         let trimed = self
             .itembox_to_layout()
@@ -95,7 +95,7 @@ impl Viewable for ItemPicker {
     }
 }
 
-impl AsAny for ItemPicker {
+impl AsAny for SelectViewer {
     fn as_any(&self) -> &dyn Any {
         self
     }

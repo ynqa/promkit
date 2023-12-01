@@ -122,13 +122,13 @@ allowing them to focus on building powerful command-line interfaces.
 
 ### Dataflow from receiving events to rendering
 
-This diagram shows the data flow for `TextEditor` component.
+This diagram shows the data flow for `TextEditorViewer` component.
 
 ```mermaid
 graph
   subgraph Dataflow
     Event --> EventHandler
-    subgraph TextEditor as Viewable
+    subgraph TextEditorViewer as Viewable
       EventHandler --> |edit| TextBuffer
       TextBuffer --> |matrixify| Pane
     end
@@ -137,14 +137,14 @@ graph
   end
 ```
 
-When an event comes in, it is handled by the handler inside the `TextEditor`
+When an event comes in, it is handled by the handler inside the `TextEditorViewer`
 component. The handler then edits (e.g. insert character) `TextBuffer`.
 This `TextBuffer` is used to construct a `Pane`, which is essentially a matrix of
 lines divided by a specific width. The panes are extracted a certain number of
 lines in order to fit within the terminal screen when rendering.
 Finally, these Lines are passed to a `draw` function which renders them on the screen.
 
-### Relationship between TextBuffer, TextEditor, and Readline
+### Relationship between TextBuffer, TextEditorViewer, and Readline
 
 A preset is composed of a combination of multiple components.
 Let's take the Readline preset as an example to explain.
@@ -153,20 +153,20 @@ Let's take the Readline preset as an example to explain.
   - Readline is a high-level preset component designed for text input.
     It provides a convenient interface for soliciting and managing user text
     input, error message presentation, and validation.
-    Readline leverages the capabilities of TextEditor and State\<TextEditor\> for
+    Readline leverages the capabilities of TextEditorViewer and State\<TextEditorViewer\> for
     text editing and state management.
 - TextBuffer
   - TextBuffer is a low-level component responsible for managing text content.
     It handles tasks related to storing, editing, and tracking the cursor
     position of text data.
-- TextEditor, State\<TextEditor\> (viewable object)
-  - TextEditor is a component that operates and displays text data
+- TextEditorViewer, State\<TextEditorViewer\> (viewable object)
+  - TextEditorViewer is a component that operates and displays text data
     through TextBuffer.
     It accepts user text input, manages editing, and displays the content
     while reflecting changes back to TextBuffer.
-  - State\<TextEditor\> represents the state of TextEditor at different stages,
+  - State\<TextEditorViewer\> represents the state of TextEditorViewer at different stages,
     including the initial state, the state before editing, and the state after
-    editing. It holds snapshots of the TextEditor at these different stages.
+    editing. It holds snapshots of the TextEditorViewer at these different stages.
 
 ## License
 

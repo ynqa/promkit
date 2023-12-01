@@ -4,17 +4,17 @@ use crate::{crossterm::event::Event, pane::Pane};
 
 mod builder;
 pub use builder::{
-    item_picker::ItemPickerBuilder, text::TextBuilder, text_editor::TextEditorBuilder,
-    tree_viewer::TreeViewerBuilder,
+    select::SelectViewerBuilder, text::TextViewerBuilder, text_editor::TextEditorViewerBuilder,
+    tree::TreeViewerBuilder,
 };
 mod text_editor;
-pub use text_editor::{Mode, TextEditor};
-mod item_picker;
-pub use item_picker::ItemPicker;
+pub use text_editor::{Mode, TextEditorViewer};
+mod select;
+pub use select::SelectViewer;
 mod text;
-pub use text::Text;
-mod tree_viewer;
-pub use tree_viewer::TreeViewer;
+pub use text::TextViewer;
+mod tree;
+pub use tree::TreeViewer;
 
 pub trait Viewable: AsAny {
     fn make_pane(&self, width: u16) -> Pane;

@@ -3,10 +3,10 @@ use crate::{
     text_buffer::TextBuffer,
 };
 
-use super::super::{text_editor::TextEditor, Mode, State};
+use super::super::{text_editor::TextEditorViewer, Mode, State};
 
 #[derive(Clone, Default)]
-pub struct TextEditorBuilder {
+pub struct TextEditorViewerBuilder {
     history: Option<History>,
     suggest: Suggest,
     prefix: String,
@@ -18,7 +18,7 @@ pub struct TextEditorBuilder {
     lines: Option<usize>,
 }
 
-impl TextEditorBuilder {
+impl TextEditorViewerBuilder {
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
         self.prefix = prefix.as_ref().to_string();
         self
@@ -64,8 +64,8 @@ impl TextEditorBuilder {
         self
     }
 
-    pub fn build(self) -> Result<TextEditor> {
-        Ok(TextEditor {
+    pub fn build(self) -> Result<TextEditorViewer> {
+        Ok(TextEditorViewer {
             textbuffer: TextBuffer::default(),
             history: self.history,
             suggest: self.suggest,
@@ -79,7 +79,7 @@ impl TextEditorBuilder {
         })
     }
 
-    pub fn build_state(self) -> Result<Box<State<TextEditor>>> {
-        Ok(Box::new(State::<TextEditor>::new(self.build()?)))
+    pub fn build_state(self) -> Result<Box<State<TextEditorViewer>>> {
+        Ok(Box::new(State::<TextEditorViewer>::new(self.build()?)))
     }
 }

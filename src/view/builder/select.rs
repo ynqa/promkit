@@ -2,10 +2,10 @@ use std::{fmt::Display, iter::FromIterator};
 
 use crate::{crossterm::style::ContentStyle, error::Result, item_box::ItemBox};
 
-use super::super::{item_picker::ItemPicker, State};
+use super::super::{select::SelectViewer, State};
 
 #[derive(Clone)]
-pub struct ItemPickerBuilder {
+pub struct SelectViewerBuilder {
     itembox: ItemBox,
     style: ContentStyle,
     cursor: String,
@@ -13,7 +13,7 @@ pub struct ItemPickerBuilder {
     lines: Option<usize>,
 }
 
-impl ItemPickerBuilder {
+impl SelectViewerBuilder {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             itembox: ItemBox::from_iter(items),
@@ -44,8 +44,8 @@ impl ItemPickerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<ItemPicker> {
-        Ok(ItemPicker {
+    pub fn build(self) -> Result<SelectViewer> {
+        Ok(SelectViewer {
             itembox: self.itembox,
             cursor: self.cursor,
             style: self.style,
@@ -54,7 +54,7 @@ impl ItemPickerBuilder {
         })
     }
 
-    pub fn build_state(self) -> Result<Box<State<ItemPicker>>> {
-        Ok(Box::new(State::<ItemPicker>::new(self.build()?)))
+    pub fn build_state(self) -> Result<Box<State<SelectViewer>>> {
+        Ok(Box::new(State::<SelectViewer>::new(self.build()?)))
     }
 }

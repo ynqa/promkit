@@ -7,8 +7,8 @@ use crate::{
     suggest::Suggest,
     theme::queryselect::Theme,
     view::{
-        ItemPicker, ItemPickerBuilder, Mode, State, TextBuilder, TextEditor, TextEditorBuilder,
-        Viewable,
+        Mode, SelectViewer, SelectViewerBuilder, State, TextEditorViewer, TextEditorViewerBuilder,
+        TextViewerBuilder, Viewable,
     },
     Prompt,
 };
@@ -16,9 +16,9 @@ use crate::{
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 
 pub struct QuerySelect {
-    title: TextBuilder,
-    text_editor: TextEditorBuilder,
-    item_picker: ItemPickerBuilder,
+    title: TextViewerBuilder,
+    text_editor: TextEditorViewerBuilder,
+    select_viewer: SelectViewerBuilder,
     filter: Box<Filter>,
 }
 
@@ -32,7 +32,7 @@ impl QuerySelect {
         Self {
             title: Default::default(),
             text_editor: Default::default(),
-            item_picker: ItemPickerBuilder::new(items),
+            select_viewer: SelectViewerBuilder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -46,8 +46,8 @@ impl QuerySelect {
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
-        self.item_picker = self
-            .item_picker
+        self.select_viewer = self
+            .select_viewer
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -70,7 +70,7 @@ impl QuerySelect {
     }
 
     pub fn item_lines(mut self, lines: usize) -> Self {
-        self.item_picker = self.item_picker.lines(lines);
+        self.select_viewer = self.select_viewer.lines(lines);
         self
     }
 
@@ -86,16 +86,16 @@ impl QuerySelect {
             vec![
                 self.title.build_state()?,
                 self.text_editor.build_state()?,
-                self.item_picker.build_state()?,
+                self.select_viewer.build_state()?,
             ],
             move |_: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
                 let texteditor_state = viewables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditor>>()
+                    .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap();
-                let itempicker_state = viewables[2]
+                let select_state = viewables[2]
                     .as_any()
-                    .downcast_ref::<State<ItemPicker>>()
+                    .downcast_ref::<State<SelectViewer>>()
                     .unwrap();
 
                 if texteditor_state.text_changed() {
@@ -105,15 +105,15 @@ impl QuerySelect {
                         .textbuffer
                         .content_without_cursor();
 
-                    let list = filter(&query, &itempicker_state.init.itembox.list);
-                    itempicker_state.after.borrow_mut().itembox = ItemBox { list, position: 0 };
+                    let list = filter(&query, &select_state.init.itembox.list);
+                    select_state.after.borrow_mut().itembox = ItemBox { list, position: 0 };
                 }
                 Ok(true)
             },
             |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
                 Ok(viewables[2]
                     .as_any()
-                    .downcast_ref::<State<ItemPicker>>()
+                    .downcast_ref::<State<SelectViewer>>()
                     .unwrap()
                     .after
                     .borrow()

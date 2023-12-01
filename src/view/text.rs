@@ -9,12 +9,12 @@ use crate::{
 use super::{AsAny, Viewable};
 
 #[derive(Clone)]
-pub struct Text {
+pub struct TextViewer {
     pub text: String,
     pub style: ContentStyle,
 }
 
-impl Viewable for Text {
+impl Viewable for TextViewer {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(
@@ -31,7 +31,7 @@ impl Viewable for Text {
     fn postrun(&mut self) {}
 }
 
-impl AsAny for Text {
+impl AsAny for TextViewer {
     fn as_any(&self) -> &dyn Any {
         self
     }

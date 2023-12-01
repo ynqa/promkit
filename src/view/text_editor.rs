@@ -25,7 +25,7 @@ pub enum Mode {
 }
 
 #[derive(Clone)]
-pub struct TextEditor {
+pub struct TextEditorViewer {
     pub textbuffer: TextBuffer,
     pub history: Option<History>,
     pub suggest: Suggest,
@@ -39,7 +39,7 @@ pub struct TextEditor {
     pub lines: Option<usize>,
 }
 
-impl TextEditor {
+impl TextEditorViewer {
     fn textbuffer_to_graphemes(&self) -> Graphemes {
         let text = match self.mask {
             Some(mask) => self.textbuffer.masking(mask),
@@ -50,7 +50,7 @@ impl TextEditor {
     }
 }
 
-impl Viewable for TextEditor {
+impl Viewable for TextEditorViewer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(
@@ -193,13 +193,13 @@ impl Viewable for TextEditor {
     }
 }
 
-impl AsAny for TextEditor {
+impl AsAny for TextEditorViewer {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl State<TextEditor> {
+impl State<TextEditorViewer> {
     pub fn text_changed(&self) -> bool {
         self.before.textbuffer.content() != self.after.borrow().textbuffer.content()
     }

@@ -2,12 +2,12 @@ use crate::{
     error::Result,
     theme::tree::Theme,
     tree::Node,
-    view::{State, TextBuilder, TreeViewer, TreeViewerBuilder, Viewable},
+    view::{State, TextViewerBuilder, TreeViewer, TreeViewerBuilder, Viewable},
     Prompt,
 };
 
 pub struct Tree {
-    title: TextBuilder,
+    title: TextViewerBuilder,
     tree_viewer: TreeViewerBuilder,
 }
 

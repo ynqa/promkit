@@ -4,15 +4,18 @@ use crate::{
     suggest::Suggest,
     theme::readline::Theme,
     validate::Validator,
-    view::{Mode, State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
+    view::{
+        Mode, State, TextEditorViewer, TextEditorViewerBuilder, TextViewer, TextViewerBuilder,
+        Viewable,
+    },
     Prompt,
 };
 
 pub struct Readline {
-    title: TextBuilder,
-    text_editor: TextEditorBuilder,
+    title: TextViewerBuilder,
+    text_editor: TextEditorViewerBuilder,
     validator: Option<Validator<str>>,
-    error_message: TextBuilder,
+    error_message: TextViewerBuilder,
 }
 
 impl Default for Readline {
@@ -86,15 +89,17 @@ impl Readline {
             move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
                 let text: String = viewables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditor>>()
+                    .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap()
                     .after
                     .borrow()
                     .textbuffer
                     .content_without_cursor();
 
-                let error_message_state =
-                    viewables[2].as_any().downcast_ref::<State<Text>>().unwrap();
+                let error_message_state = viewables[2]
+                    .as_any()
+                    .downcast_ref::<State<TextViewer>>()
+                    .unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -123,7 +128,7 @@ impl Readline {
             |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
                 Ok(viewables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditor>>()
+                    .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap()
                     .after
                     .borrow()

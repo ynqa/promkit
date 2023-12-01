@@ -4,19 +4,22 @@ use crate::{
     text_buffer::TextBuffer,
     theme::confirm::Theme,
     validate::Validator,
-    view::{State, Text, TextBuilder, TextEditor, TextEditorBuilder, Viewable},
+    view::{
+        State, TextEditorViewer, TextEditorViewerBuilder, TextViewer, TextViewerBuilder, Viewable,
+    },
     Prompt,
 };
 
 pub struct Confirm {
-    text_editor: TextEditorBuilder,
-    error_message: TextBuilder,
+    text_editor: TextEditorViewerBuilder,
+    error_message: TextViewerBuilder,
 }
 
 impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            text_editor: TextEditorBuilder::default().prefix(format!("{} (y/n) ", text.as_ref())),
+            text_editor: TextEditorViewerBuilder::default()
+                .prefix(format!("{} (y/n) ", text.as_ref())),
             error_message: Default::default(),
         }
         .theme(Theme::default())
@@ -50,7 +53,7 @@ impl Confirm {
             move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
                 let text_state = viewables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditor>>()
+                    .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap();
 
                 let text = text_state
@@ -59,8 +62,10 @@ impl Confirm {
                     .textbuffer
                     .content_without_cursor();
 
-                let error_message_state =
-                    viewables[1].as_any().downcast_ref::<State<Text>>().unwrap();
+                let error_message_state = viewables[1]
+                    .as_any()
+                    .downcast_ref::<State<TextViewer>>()
+                    .unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -87,7 +92,7 @@ impl Confirm {
             |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
                 Ok(viewables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditor>>()
+                    .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap()
                     .after
                     .borrow()
