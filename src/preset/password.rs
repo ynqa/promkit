@@ -10,19 +10,19 @@ use crate::{
 };
 
 pub struct Password {
-    title: TextViewerBuilder,
-    text_editor: TextEditorViewerBuilder,
+    title_builder: TextViewerBuilder,
+    text_editor_builder: TextEditorViewerBuilder,
     validator: Option<Validator<str>>,
-    error_message: TextViewerBuilder,
+    error_message_builder: TextViewerBuilder,
 }
 
 impl Default for Password {
     fn default() -> Self {
         Self {
-            title: Default::default(),
-            text_editor: Default::default(),
+            title_builder: Default::default(),
+            text_editor_builder: Default::default(),
             validator: Default::default(),
-            error_message: Default::default(),
+            error_message_builder: Default::default(),
         }
         .theme(Theme::default())
     }
@@ -30,20 +30,20 @@ impl Default for Password {
 
 impl Password {
     pub fn theme(mut self, theme: Theme) -> Self {
-        self.title = self.title.style(theme.title_style);
-        self.text_editor = self
-            .text_editor
+        self.title_builder = self.title_builder.style(theme.title_style);
+        self.text_editor_builder = self
+            .text_editor_builder
             .prefix(theme.prefix)
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style)
             .mask(theme.mask);
-        self.error_message = self.error_message.style(theme.error_message_style);
+        self.error_message_builder = self.error_message_builder.style(theme.error_message_style);
         self
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title = self.title.text(text);
+        self.title_builder = self.title_builder.text(text);
         self
     }
 
@@ -61,9 +61,9 @@ impl Password {
 
         Prompt::try_new(
             vec![
-                self.title.build_state()?,
-                self.text_editor.build_state()?,
-                self.error_message.build_state()?,
+                self.title_builder.build_state()?,
+                self.text_editor_builder.build_state()?,
+                self.error_message_builder.build_state()?,
             ],
             move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
                 let text: String = viewables[1]

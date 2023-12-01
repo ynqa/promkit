@@ -7,23 +7,23 @@ use crate::{
 };
 
 pub struct Tree {
-    title: TextViewerBuilder,
-    tree_viewer: TreeViewerBuilder,
+    title_builder: TextViewerBuilder,
+    tree_builder: TreeViewerBuilder,
 }
 
 impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
-            title: Default::default(),
-            tree_viewer: TreeViewerBuilder::new(root),
+            title_builder: Default::default(),
+            tree_builder: TreeViewerBuilder::new(root),
         }
         .theme(Theme::default())
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
-        self.title = self.title.style(theme.title_style);
-        self.tree_viewer = self
-            .tree_viewer
+        self.title_builder = self.title_builder.style(theme.title_style);
+        self.tree_builder = self
+            .tree_builder
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -31,18 +31,21 @@ impl Tree {
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title = self.title.text(text);
+        self.title_builder = self.title_builder.text(text);
         self
     }
 
     pub fn lines(mut self, lines: usize) -> Self {
-        self.tree_viewer = self.tree_viewer.lines(lines);
+        self.tree_builder = self.tree_builder.lines(lines);
         self
     }
 
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
-            vec![self.title.build_state()?, self.tree_viewer.build_state()?],
+            vec![
+                self.title_builder.build_state()?,
+                self.tree_builder.build_state()?,
+            ],
             |_, _| Ok(true),
             |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
                 Ok(viewables[1]

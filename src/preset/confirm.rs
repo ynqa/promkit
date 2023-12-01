@@ -11,27 +11,27 @@ use crate::{
 };
 
 pub struct Confirm {
-    text_editor: TextEditorViewerBuilder,
-    error_message: TextViewerBuilder,
+    text_editor_builder: TextEditorViewerBuilder,
+    error_message_builder: TextViewerBuilder,
 }
 
 impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            text_editor: TextEditorViewerBuilder::default()
+            text_editor_builder: TextEditorViewerBuilder::default()
                 .prefix(format!("{} (y/n) ", text.as_ref())),
-            error_message: Default::default(),
+            error_message_builder: Default::default(),
         }
         .theme(Theme::default())
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
-        self.text_editor = self
-            .text_editor
+        self.text_editor_builder = self
+            .text_editor_builder
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
-        self.error_message = self.error_message.style(theme.error_message_style);
+        self.error_message_builder = self.error_message_builder.style(theme.error_message_style);
         self
     }
 
@@ -47,16 +47,16 @@ impl Confirm {
 
         Prompt::try_new(
             vec![
-                self.text_editor.build_state()?,
-                self.error_message.build_state()?,
+                self.text_editor_builder.build_state()?,
+                self.error_message_builder.build_state()?,
             ],
             move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
-                let text_state = viewables[0]
+                let text_editor_state = viewables[0]
                     .as_any()
                     .downcast_ref::<State<TextEditorViewer>>()
                     .unwrap();
 
-                let text = text_state
+                let text = text_editor_state
                     .after
                     .borrow()
                     .textbuffer
@@ -78,7 +78,7 @@ impl Confirm {
                         if !ret {
                             error_message_state.after.borrow_mut().text =
                                 validator.error_message(&text);
-                            text_state.after.borrow_mut().textbuffer = TextBuffer::default();
+                            text_editor_state.after.borrow_mut().textbuffer = TextBuffer::default();
                         }
                         ret
                     }

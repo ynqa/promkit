@@ -12,19 +12,19 @@ use crate::{
 };
 
 pub struct Readline {
-    title: TextViewerBuilder,
-    text_editor: TextEditorViewerBuilder,
+    title_builder: TextViewerBuilder,
+    text_editor_builder: TextEditorViewerBuilder,
     validator: Option<Validator<str>>,
-    error_message: TextViewerBuilder,
+    error_message_builder: TextViewerBuilder,
 }
 
 impl Default for Readline {
     fn default() -> Self {
         Self {
-            title: Default::default(),
-            text_editor: Default::default(),
+            title_builder: Default::default(),
+            text_editor_builder: Default::default(),
             validator: Default::default(),
-            error_message: Default::default(),
+            error_message_builder: Default::default(),
         }
         .theme(Theme::default())
     }
@@ -32,39 +32,39 @@ impl Default for Readline {
 
 impl Readline {
     pub fn theme(mut self, theme: Theme) -> Self {
-        self.title = self.title.style(theme.title_style);
-        self.text_editor = self
-            .text_editor
+        self.title_builder = self.title_builder.style(theme.title_style);
+        self.text_editor_builder = self
+            .text_editor_builder
             .prefix(theme.prefix)
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
-        self.error_message = self.error_message.style(theme.error_message_style);
+        self.error_message_builder = self.error_message_builder.style(theme.error_message_style);
         self
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title = self.title.text(text);
+        self.title_builder = self.title_builder.text(text);
         self
     }
 
     pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.text_editor = self.text_editor.edit_mode(mode);
+        self.text_editor_builder = self.text_editor_builder.edit_mode(mode);
         self
     }
 
     pub fn lines(mut self, lines: usize) -> Self {
-        self.text_editor = self.text_editor.lines(lines);
+        self.text_editor_builder = self.text_editor_builder.lines(lines);
         self
     }
 
     pub fn suggest(mut self, suggest: Suggest) -> Self {
-        self.text_editor = self.text_editor.suggest(suggest);
+        self.text_editor_builder = self.text_editor_builder.suggest(suggest);
         self
     }
 
     pub fn enable_history(mut self) -> Self {
-        self.text_editor = self.text_editor.enable_history();
+        self.text_editor_builder = self.text_editor_builder.enable_history();
         self
     }
 
@@ -82,9 +82,9 @@ impl Readline {
 
         Prompt::try_new(
             vec![
-                self.title.build_state()?,
-                self.text_editor.build_state()?,
-                self.error_message.build_state()?,
+                self.title_builder.build_state()?,
+                self.text_editor_builder.build_state()?,
+                self.error_message_builder.build_state()?,
             ],
             move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
                 let text: String = viewables[1]
