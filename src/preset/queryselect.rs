@@ -19,7 +19,7 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 pub struct QuerySelect {
     title_builder: TextRendererBuilder,
     text_editor_builder: TextEditorRendererBuilder,
-    select_builder: SelectBoxRendererBuilder,
+    selectbox_builder: SelectBoxRendererBuilder,
     filter: Box<Filter>,
 }
 
@@ -33,7 +33,7 @@ impl QuerySelect {
         Self {
             title_builder: Default::default(),
             text_editor_builder: Default::default(),
-            select_builder: SelectBoxRendererBuilder::new(items),
+            selectbox_builder: SelectBoxRendererBuilder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -47,8 +47,8 @@ impl QuerySelect {
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
-        self.select_builder = self
-            .select_builder
+        self.selectbox_builder = self
+            .selectbox_builder
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -70,8 +70,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn item_lines(mut self, lines: usize) -> Self {
-        self.select_builder = self.select_builder.lines(lines);
+    pub fn selectbox_lines(mut self, lines: usize) -> Self {
+        self.selectbox_builder = self.selectbox_builder.lines(lines);
         self
     }
 
@@ -87,7 +87,7 @@ impl QuerySelect {
             vec![
                 self.title_builder.build_state()?,
                 self.text_editor_builder.build_state()?,
-                self.select_builder.build_state()?,
+                self.selectbox_builder.build_state()?,
             ],
             move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
                 let text_editor_state = renderables[1]
