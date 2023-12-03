@@ -1,14 +1,14 @@
-use crate::{crossterm::style::ContentStyle, error::Result};
+use crate::{crossterm::style::ContentStyle, error::Result, render::State};
 
-use super::super::{text::TextViewer, State};
+use super::Renderer;
 
 #[derive(Clone, Default)]
-pub struct TextViewerBuilder {
+pub struct Builder {
     text: String,
     style: ContentStyle,
 }
 
-impl TextViewerBuilder {
+impl Builder {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
             text: text.as_ref().to_string(),
@@ -26,14 +26,14 @@ impl TextViewerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<TextViewer> {
-        Ok(TextViewer {
+    pub fn build(self) -> Result<Renderer> {
+        Ok(Renderer {
             text: self.text,
             style: self.style,
         })
     }
 
-    pub fn build_state(self) -> Result<Box<State<TextViewer>>> {
-        Ok(Box::new(State::<TextViewer>::new(self.build()?)))
+    pub fn build_state(self) -> Result<Box<State<Renderer>>> {
+        Ok(Box::new(State::<Renderer>::new(self.build()?)))
     }
 }

@@ -2,23 +2,24 @@ use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
     preset::theme::confirm::Theme,
-    text::Text,
-    validate::Validator,
-    view::{
-        State, TextEditorViewer, TextEditorViewerBuilder, TextViewer, TextViewerBuilder, Viewable,
+    render::{Renderable, State},
+    text::{Builder as TextRendererBuilder, Renderer as TextRenderer},
+    text_editor::{
+        Builder as TextEditorRendererBuilder, Renderer as TextEditorRenderer, TextEditor,
     },
+    validate::Validator,
     Prompt,
 };
 
 pub struct Confirm {
-    text_editor_builder: TextEditorViewerBuilder,
-    error_message_builder: TextViewerBuilder,
+    text_editor_builder: TextEditorRendererBuilder,
+    error_message_builder: TextRendererBuilder,
 }
 
 impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            text_editor_builder: TextEditorViewerBuilder::default()
+            text_editor_builder: TextEditorRendererBuilder::default()
                 .prefix(format!("{} (y/n) ", text.as_ref())),
             error_message_builder: Default::default(),
         }
@@ -50,21 +51,23 @@ impl Confirm {
                 self.text_editor_builder.build_state()?,
                 self.error_message_builder.build_state()?,
             ],
-            move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
-                let text_editor_state = viewables[0]
+            move |event: &Event,
+                  renderables: &Vec<Box<dyn Renderable + 'static>>|
+                  -> Result<bool> {
+                let text_editor_state = renderables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditorViewer>>()
+                    .downcast_ref::<State<TextEditorRenderer>>()
                     .unwrap();
 
                 let text = text_editor_state
                     .after
                     .borrow()
-                    .text
+                    .texteditor
                     .content_without_cursor();
 
-                let error_message_state = viewables[1]
+                let error_message_state = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextViewer>>()
+                    .downcast_ref::<State<TextRenderer>>()
                     .unwrap();
 
                 let ret = match event {
@@ -78,7 +81,7 @@ impl Confirm {
                         if !ret {
                             error_message_state.after.borrow_mut().text =
                                 validator.error_message(&text);
-                            text_editor_state.after.borrow_mut().text = Text::default();
+                            text_editor_state.after.borrow_mut().texteditor = TextEditor::default();
                         }
                         ret
                     }
@@ -89,14 +92,14 @@ impl Confirm {
                 }
                 Ok(ret)
             },
-            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
-                Ok(viewables[0]
+            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
+                Ok(renderables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditorViewer>>()
+                    .downcast_ref::<State<TextEditorRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .text
+                    .texteditor
                     .content_without_cursor())
             },
         )

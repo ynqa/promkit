@@ -1,21 +1,22 @@
 use crate::{
     error::Result,
     preset::theme::tree::Theme,
-    tree::Node,
-    view::{State, TextViewerBuilder, TreeViewer, TreeViewerBuilder, Viewable},
+    render::{Renderable, State},
+    text::Builder as TextRendererBuilder,
+    tree::{Builder as TreeRendererBuilder, Node, Renderer as TreeRenderer},
     Prompt,
 };
 
 pub struct Tree {
-    title_builder: TextViewerBuilder,
-    tree_builder: TreeViewerBuilder,
+    title_builder: TextRendererBuilder,
+    tree_builder: TreeRendererBuilder,
 }
 
 impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             title_builder: Default::default(),
-            tree_builder: TreeViewerBuilder::new(root),
+            tree_builder: TreeRendererBuilder::new(root),
         }
         .theme(Theme::default())
     }
@@ -47,10 +48,10 @@ impl Tree {
                 self.tree_builder.build_state()?,
             ],
             |_, _| Ok(true),
-            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
-                Ok(viewables[1]
+            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
+                Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TreeViewer>>()
+                    .downcast_ref::<State<TreeRenderer>>()
                     .unwrap()
                     .after
                     .borrow()

@@ -1,5 +1,10 @@
 use std::{fmt, iter::FromIterator};
 
+mod render;
+pub use render::Renderer;
+mod build;
+pub use build::Builder;
+
 #[derive(Clone, Default)]
 pub struct SelectBox {
     pub list: Vec<String>,

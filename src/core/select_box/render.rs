@@ -7,13 +7,13 @@ use crate::{
     },
     grapheme::{trim, Graphemes},
     pane::Pane,
-    select_box::SelectBox,
+    render::{AsAny, Renderable},
 };
 
-use super::{AsAny, Viewable};
+use super::SelectBox;
 
 #[derive(Clone)]
-pub struct SelectViewer {
+pub struct Renderer {
     pub selectbox: SelectBox,
 
     pub style: ContentStyle,
@@ -22,7 +22,7 @@ pub struct SelectViewer {
     pub lines: Option<usize>,
 }
 
-impl SelectViewer {
+impl Renderer {
     fn selectbox_to_layout(&self) -> Vec<Graphemes> {
         self.selectbox
             .content()
@@ -46,7 +46,7 @@ impl SelectViewer {
     }
 }
 
-impl Viewable for SelectViewer {
+impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let trimed = self
             .selectbox_to_layout()
@@ -95,7 +95,7 @@ impl Viewable for SelectViewer {
     }
 }
 
-impl AsAny for SelectViewer {
+impl AsAny for Renderer {
     fn as_any(&self) -> &dyn Any {
         self
     }

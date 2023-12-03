@@ -4,10 +4,12 @@ use crate::{
     crossterm::event::Event,
     error::Result,
     preset::theme::queryselect::Theme,
+    render::{Renderable, State},
     select_box::SelectBox,
-    view::{
-        Mode, SelectViewer, SelectViewerBuilder, State, Suggest, TextEditorViewer,
-        TextEditorViewerBuilder, TextViewerBuilder, Viewable,
+    select_box::{Builder as SelectBoxRendererBuilder, Renderer as SelectBoxRenderer},
+    text::Builder as TextRendererBuilder,
+    text_editor::{
+        Builder as TextEditorRendererBuilder, Mode, Renderer as TextEditorRenderer, Suggest,
     },
     Prompt,
 };
@@ -15,9 +17,9 @@ use crate::{
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 
 pub struct QuerySelect {
-    title_builder: TextViewerBuilder,
-    text_editor_builder: TextEditorViewerBuilder,
-    select_builder: SelectViewerBuilder,
+    title_builder: TextRendererBuilder,
+    text_editor_builder: TextEditorRendererBuilder,
+    select_builder: SelectBoxRendererBuilder,
     filter: Box<Filter>,
 }
 
@@ -31,7 +33,7 @@ impl QuerySelect {
         Self {
             title_builder: Default::default(),
             text_editor_builder: Default::default(),
-            select_builder: SelectViewerBuilder::new(items),
+            select_builder: SelectBoxRendererBuilder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -87,21 +89,21 @@ impl QuerySelect {
                 self.text_editor_builder.build_state()?,
                 self.select_builder.build_state()?,
             ],
-            move |_: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
-                let text_editor_state = viewables[1]
+            move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
+                let text_editor_state = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorViewer>>()
+                    .downcast_ref::<State<TextEditorRenderer>>()
                     .unwrap();
-                let select_state = viewables[2]
+                let select_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<SelectViewer>>()
+                    .downcast_ref::<State<SelectBoxRenderer>>()
                     .unwrap();
 
                 if text_editor_state.text_changed() {
                     let query = text_editor_state
                         .after
                         .borrow()
-                        .text
+                        .texteditor
                         .content_without_cursor();
 
                     let list = filter(&query, &select_state.init.selectbox.list);
@@ -109,10 +111,10 @@ impl QuerySelect {
                 }
                 Ok(true)
             },
-            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
-                Ok(viewables[2]
+            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
+                Ok(renderables[2]
                     .as_any()
-                    .downcast_ref::<State<SelectViewer>>()
+                    .downcast_ref::<State<SelectBoxRenderer>>()
                     .unwrap()
                     .after
                     .borrow()

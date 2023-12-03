@@ -2,19 +2,20 @@ use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
     preset::theme::readline::Theme,
-    validate::Validator,
-    view::{
-        Mode, State, Suggest, TextEditorViewer, TextEditorViewerBuilder, TextViewer,
-        TextViewerBuilder, Viewable,
+    render::{Renderable, State},
+    text::{Builder as TextRendererBuilder, Renderer as TextRenderer},
+    text_editor::{
+        Builder as TextEditorRendererBuilder, Mode, Renderer as TextEditorRenderer, Suggest,
     },
+    validate::Validator,
     Prompt,
 };
 
 pub struct Readline {
-    title_builder: TextViewerBuilder,
-    text_editor_builder: TextEditorViewerBuilder,
+    title_builder: TextRendererBuilder,
+    text_editor_builder: TextEditorRendererBuilder,
     validator: Option<Validator<str>>,
-    error_message_builder: TextViewerBuilder,
+    error_message_builder: TextRendererBuilder,
 }
 
 impl Default for Readline {
@@ -85,19 +86,21 @@ impl Readline {
                 self.text_editor_builder.build_state()?,
                 self.error_message_builder.build_state()?,
             ],
-            move |event: &Event, viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<bool> {
-                let text: String = viewables[1]
+            move |event: &Event,
+                  renderables: &Vec<Box<dyn Renderable + 'static>>|
+                  -> Result<bool> {
+                let text: String = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorViewer>>()
+                    .downcast_ref::<State<TextEditorRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .text
+                    .texteditor
                     .content_without_cursor();
 
-                let error_message_state = viewables[2]
+                let error_message_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<TextViewer>>()
+                    .downcast_ref::<State<TextRenderer>>()
                     .unwrap();
 
                 let ret = match event {
@@ -124,14 +127,14 @@ impl Readline {
                 }
                 Ok(ret)
             },
-            |viewables: &Vec<Box<dyn Viewable + 'static>>| -> Result<String> {
-                Ok(viewables[1]
+            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
+                Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorViewer>>()
+                    .downcast_ref::<State<TextEditorRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .text
+                    .texteditor
                     .content_without_cursor())
             },
         )

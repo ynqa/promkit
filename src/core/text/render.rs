@@ -4,17 +4,16 @@ use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, Graphemes},
     pane::Pane,
+    render::{AsAny, Renderable},
 };
 
-use super::{AsAny, Viewable};
-
 #[derive(Clone)]
-pub struct TextViewer {
+pub struct Renderer {
     pub text: String,
     pub style: ContentStyle,
 }
 
-impl Viewable for TextViewer {
+impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(
@@ -31,7 +30,7 @@ impl Viewable for TextViewer {
     fn postrun(&mut self) {}
 }
 
-impl AsAny for TextViewer {
+impl AsAny for Renderer {
     fn as_any(&self) -> &dyn Any {
         self
     }

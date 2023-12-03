@@ -1,22 +1,23 @@
-use std::{fmt::Display, iter::FromIterator};
-
-use crate::{crossterm::style::ContentStyle, error::Result, select_box::SelectBox};
-
-use super::super::{select::SelectViewer, State};
+use crate::{
+    crossterm::style::ContentStyle,
+    error::Result,
+    render::State,
+    tree::{Node, Renderer, Tree},
+};
 
 #[derive(Clone)]
-pub struct SelectViewerBuilder {
-    selectbox: SelectBox,
+pub struct Builder {
+    tree: Tree,
     style: ContentStyle,
     cursor: String,
     cursor_style: ContentStyle,
     lines: Option<usize>,
 }
 
-impl SelectViewerBuilder {
-    pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
+impl Builder {
+    pub fn new(root: Node) -> Self {
         Self {
-            selectbox: SelectBox::from_iter(items),
+            tree: Tree::new(root),
             style: Default::default(),
             cursor: Default::default(),
             cursor_style: Default::default(),
@@ -44,9 +45,9 @@ impl SelectViewerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<SelectViewer> {
-        Ok(SelectViewer {
-            selectbox: self.selectbox,
+    pub fn build(self) -> Result<Renderer> {
+        Ok(Renderer {
+            tree: self.tree,
             cursor: self.cursor,
             style: self.style,
             cursor_style: self.cursor_style,
@@ -54,7 +55,7 @@ impl SelectViewerBuilder {
         })
     }
 
-    pub fn build_state(self) -> Result<Box<State<SelectViewer>>> {
-        Ok(Box::new(State::<SelectViewer>::new(self.build()?)))
+    pub fn build_state(self) -> Result<Box<State<Renderer>>> {
+        Ok(Box::new(State::<Renderer>::new(self.build()?)))
     }
 }

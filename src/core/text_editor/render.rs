@@ -7,11 +7,10 @@ use crate::{
     },
     grapheme::{matrixify, Graphemes},
     pane::Pane,
-    text::Text,
+    render::{AsAny, Renderable, State},
 };
 
-use super::{AsAny, State, Viewable};
-
+use super::TextEditor;
 mod history;
 pub use history::History;
 mod suggest;
@@ -28,8 +27,8 @@ pub enum Mode {
 }
 
 #[derive(Clone)]
-pub struct TextEditorViewer {
-    pub text: Text,
+pub struct Renderer {
+    pub texteditor: TextEditor,
     pub history: Option<History>,
     pub suggest: Suggest,
 
@@ -42,28 +41,29 @@ pub struct TextEditorViewer {
     pub lines: Option<usize>,
 }
 
-impl TextEditorViewer {
-    fn text_to_graphemes(&self) -> Graphemes {
+impl Renderer {
+    fn texteditor_to_graphemes(&self) -> Graphemes {
         let text = match self.mask {
-            Some(mask) => self.text.masking(mask),
-            None => self.text.content(),
+            Some(mask) => self.texteditor.masking(mask),
+            None => self.texteditor.content(),
         };
-        Graphemes::new_with_style(text, self.style).stylize(self.text.position, self.cursor_style)
+        Graphemes::new_with_style(text, self.style)
+            .stylize(self.texteditor.position, self.cursor_style)
     }
 }
 
-impl Viewable for TextEditorViewer {
+impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
         buf.append(&mut Graphemes::new_with_style(
             &self.prefix,
             self.prefix_style,
         ));
-        buf.append(&mut self.text_to_graphemes());
+        buf.append(&mut self.texteditor_to_graphemes());
 
         Pane::new(
             matrixify(width as usize, &buf),
-            self.text.position / width as usize,
+            self.texteditor.position / width as usize,
             self.lines,
         )
     }
@@ -91,25 +91,25 @@ impl Viewable for TextEditorViewer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.backward(),
+            }) => self.texteditor.backward(),
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.forward(),
+            }) => self.texteditor.forward(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.move_to_head(),
+            }) => self.texteditor.move_to_head(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.move_to_tail(),
+            }) => self.texteditor.move_to_tail(),
 
             // Erase char(s).
             Event::Key(KeyEvent {
@@ -117,13 +117,13 @@ impl Viewable for TextEditorViewer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.erase(),
+            }) => self.texteditor.erase(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('u'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.text.erase_all(),
+            }) => self.texteditor.erase_all(),
 
             // Choose history
             Event::Key(KeyEvent {
@@ -134,7 +134,7 @@ impl Viewable for TextEditorViewer {
             }) => {
                 if let Some(ref mut history) = &mut self.history {
                     if history.backward() {
-                        self.text.replace(&history.get())
+                        self.texteditor.replace(&history.get())
                     }
                 }
             }
@@ -146,7 +146,7 @@ impl Viewable for TextEditorViewer {
             }) => {
                 if let Some(ref mut history) = &mut self.history {
                     if history.forward() {
-                        self.text.replace(&history.get())
+                        self.texteditor.replace(&history.get())
                     }
                 }
             }
@@ -158,8 +158,11 @@ impl Viewable for TextEditorViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if let Some(new) = self.suggest.search(self.text.content_without_cursor()) {
-                    self.text.replace(new)
+                if let Some(new) = self
+                    .suggest
+                    .search(self.texteditor.content_without_cursor())
+                {
+                    self.texteditor.replace(new)
                 }
             }
 
@@ -176,8 +179,8 @@ impl Viewable for TextEditorViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => match self.mode {
-                Mode::Insert => self.text.insert(*ch),
-                Mode::Overwrite => self.text.overwrite(*ch),
+                Mode::Insert => self.texteditor.insert(*ch),
+                Mode::Overwrite => self.texteditor.overwrite(*ch),
             },
 
             _ => (),
@@ -186,20 +189,20 @@ impl Viewable for TextEditorViewer {
 
     fn postrun(&mut self) {
         if let Some(ref mut history) = &mut self.history {
-            history.insert(self.text.content_without_cursor());
+            history.insert(self.texteditor.content_without_cursor());
         }
-        self.text = Text::default();
+        self.texteditor = TextEditor::default();
     }
 }
 
-impl AsAny for TextEditorViewer {
+impl AsAny for Renderer {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl State<TextEditorViewer> {
+impl State<Renderer> {
     pub fn text_changed(&self) -> bool {
-        self.before.text.content() != self.after.borrow().text.content()
+        self.before.texteditor.content() != self.after.borrow().texteditor.content()
     }
 }

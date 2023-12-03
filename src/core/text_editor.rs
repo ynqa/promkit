@@ -1,10 +1,15 @@
+mod render;
+pub use render::{History, Mode, Renderer, Suggest};
+mod build;
+pub use build::Builder;
+
 #[derive(Clone)]
-pub struct Text {
+pub struct TextEditor {
     pub buf: String,
     pub position: usize,
 }
 
-impl Default for Text {
+impl Default for TextEditor {
     fn default() -> Self {
         Self {
             // Set cursor
@@ -14,7 +19,7 @@ impl Default for Text {
     }
 }
 
-impl Text {
+impl TextEditor {
     pub fn content(&self) -> String {
         self.buf.clone()
     }
@@ -101,7 +106,7 @@ mod test {
 
         #[test]
         fn test() {
-            let txt = Text {
+            let txt = TextEditor {
                 buf: String::from("abcde "),
                 position: 0,
             };
@@ -114,18 +119,18 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let txt = Text::default();
+            let txt = TextEditor::default();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("bc "),
                 position: 0, // indicate `b`.
             };
@@ -136,11 +141,11 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("ab "),
                 position: 2, // indicate tail.
             };
@@ -151,7 +156,7 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let txt = Text {
+            let txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -165,8 +170,8 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
-            let new = Text {
+            let mut txt = TextEditor::default();
+            let new = TextEditor {
                 buf: String::from("d "),
                 position: 1, // indicate tail.
             };
@@ -177,11 +182,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("adbc "),
                 position: 2, // indicate `b`.
             };
@@ -192,11 +197,11 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abcd "),
                 position: 4, // indicate tail.
             };
@@ -207,11 +212,11 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("dabc "),
                 position: 1, // indicate `a`.
             };
@@ -226,8 +231,8 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
-            let new = Text {
+            let mut txt = TextEditor::default();
+            let new = TextEditor {
                 buf: String::from("d "),
                 position: 1, // indicate tail.
             };
@@ -238,11 +243,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("adc "),
                 position: 2, // indicate `c`.
             };
@@ -253,11 +258,11 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abcd "),
                 position: 4, // indicate tail.
             };
@@ -268,11 +273,11 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("dbc "),
                 position: 1, // indicate `b`.
             };
@@ -287,7 +292,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
+            let mut txt = TextEditor::default();
             txt.backward();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
@@ -295,11 +300,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -310,11 +315,11 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 2, // indicate `c`.
             };
@@ -325,7 +330,7 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -340,7 +345,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
+            let mut txt = TextEditor::default();
             txt.forward();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
@@ -348,11 +353,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 2, // indicate `c`.
             };
@@ -363,7 +368,7 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
@@ -374,11 +379,11 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
@@ -393,7 +398,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
+            let mut txt = TextEditor::default();
             txt.move_to_head();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
@@ -401,11 +406,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -416,11 +421,11 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -431,7 +436,7 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
@@ -446,7 +451,7 @@ mod test {
 
         #[test]
         fn test_for_empty() {
-            let mut txt = Text::default();
+            let mut txt = TextEditor::default();
             txt.move_to_tail();
             assert_eq!(String::from(" "), txt.buf);
             assert_eq!(0, txt.position);
@@ -454,11 +459,11 @@ mod test {
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 1, // indicate `b`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
@@ -469,7 +474,7 @@ mod test {
 
         #[test]
         fn test_at_tail() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };
@@ -480,11 +485,11 @@ mod test {
 
         #[test]
         fn test_at_head() {
-            let mut txt = Text {
+            let mut txt = TextEditor {
                 buf: String::from("abc "),
                 position: 0, // indicate `a`.
             };
-            let new = Text {
+            let new = TextEditor {
                 buf: String::from("abc "),
                 position: 3, // indicate tail.
             };

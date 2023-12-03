@@ -7,13 +7,13 @@ use crate::{
     },
     grapheme::{trim, Graphemes},
     pane::Pane,
-    tree::Tree,
+    render::{AsAny, Renderable},
 };
 
-use super::{AsAny, Viewable};
+use super::Tree;
 
 #[derive(Clone)]
-pub struct TreeViewer {
+pub struct Renderer {
     pub tree: Tree,
 
     pub style: ContentStyle,
@@ -22,7 +22,7 @@ pub struct TreeViewer {
     pub lines: Option<usize>,
 }
 
-impl TreeViewer {
+impl Renderer {
     fn tree_to_layout(&self) -> Vec<Graphemes> {
         self.tree
             .content()
@@ -50,7 +50,7 @@ impl TreeViewer {
     }
 }
 
-impl Viewable for TreeViewer {
+impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
         let trimed = self
             .tree_to_layout()
@@ -99,7 +99,7 @@ impl Viewable for TreeViewer {
     }
 }
 
-impl AsAny for TreeViewer {
+impl AsAny for Renderer {
     fn as_any(&self) -> &dyn Any {
         self
     }

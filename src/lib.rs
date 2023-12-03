@@ -132,18 +132,17 @@ extern crate scopeguard;
 
 pub use crossterm;
 
+mod core;
+pub use core::*;
 mod engine;
 pub mod error;
 mod grapheme;
 mod pane;
 pub mod preset;
-pub mod select_box;
+pub mod render;
 pub mod style;
 mod terminal;
-pub mod text;
-pub mod tree;
 pub mod validate;
-pub mod view;
 
 use std::io;
 use std::sync::Once;
@@ -159,16 +158,16 @@ use crate::{
     },
     engine::Engine,
     error::{Error, Result},
+    render::Renderable,
     terminal::Terminal,
-    view::Viewable,
 };
 
-type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Viewable>>) -> Result<bool>;
-type Output<T> = dyn Fn(&Vec<Box<dyn Viewable>>) -> Result<T>;
+type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
+type Output<T> = dyn Fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
-    viewables: Vec<Box<dyn Viewable>>,
+    renderables: Vec<Box<dyn Renderable>>,
     evaluator: Box<Evaluate>,
     output: Box<Output<T>>,
 }
@@ -176,13 +175,17 @@ pub struct Prompt<T> {
 static ONCE: Once = Once::new();
 
 impl<T> Prompt<T> {
-    pub fn try_new<E, O>(viewables: Vec<Box<dyn Viewable>>, evaluator: E, output: O) -> Result<Self>
+    pub fn try_new<E, O>(
+        renderables: Vec<Box<dyn Renderable>>,
+        evaluator: E,
+        output: O,
+    ) -> Result<Self>
     where
-        E: Fn(&Event, &Vec<Box<dyn Viewable>>) -> Result<bool> + 'static,
-        O: Fn(&Vec<Box<dyn Viewable>>) -> Result<T> + 'static,
+        E: Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool> + 'static,
+        O: Fn(&Vec<Box<dyn Renderable>>) -> Result<T> + 'static,
     {
         Ok(Self {
-            viewables,
+            renderables,
             evaluator: Box::new(evaluator),
             output: Box::new(output),
         })
@@ -208,7 +211,7 @@ impl<T> Prompt<T> {
         let size = engine.size()?;
         terminal.draw(
             &mut engine,
-            self.viewables
+            self.renderables
                 .iter()
                 .map(|editor| editor.make_pane(size.0))
                 .collect(),
@@ -217,16 +220,16 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            for editor in &mut self.viewables {
+            for editor in &mut self.renderables {
                 editor.handle_event(&ev);
             }
 
-            let finalizable = (self.evaluator)(&ev, &self.viewables)?;
+            let finalizable = (self.evaluator)(&ev, &self.renderables)?;
 
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,
-                self.viewables
+                self.renderables
                     .iter()
                     .map(|editor| editor.make_pane(size.0))
                     .collect(),
@@ -253,8 +256,8 @@ impl<T> Prompt<T> {
             }
         }
 
-        let ret = (self.output)(&self.viewables);
-        self.viewables.iter_mut().for_each(|editor| {
+        let ret = (self.output)(&self.renderables);
+        self.renderables.iter_mut().for_each(|editor| {
             editor.postrun();
         });
         ret

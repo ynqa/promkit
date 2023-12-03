@@ -1,7 +1,9 @@
 mod node;
-pub use node::Node;
-
-use self::node::NodeWithDepth;
+pub use node::{Node, NodeWithDepth};
+mod render;
+pub use render::Renderer;
+mod build;
+pub use build::Builder;
 
 #[derive(Clone, Default)]
 pub struct Tree {

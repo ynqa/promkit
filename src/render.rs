@@ -2,21 +2,7 @@ use std::{any::Any, cell::RefCell};
 
 use crate::{crossterm::event::Event, pane::Pane};
 
-mod builder;
-pub use builder::{
-    select::SelectViewerBuilder, text::TextViewerBuilder, text_editor::TextEditorViewerBuilder,
-    tree::TreeViewerBuilder,
-};
-mod text_editor;
-pub use text_editor::{History, Mode, Suggest, TextEditorViewer};
-mod select;
-pub use select::SelectViewer;
-mod text;
-pub use text::TextViewer;
-mod tree;
-pub use tree::TreeViewer;
-
-pub trait Viewable: AsAny {
+pub trait Renderable: AsAny {
     fn make_pane(&self, width: u16) -> Pane;
     fn handle_event(&mut self, event: &Event);
     fn postrun(&mut self);
@@ -26,23 +12,23 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-pub struct State<V: Viewable> {
-    pub init: V,
-    pub before: V,
-    pub after: RefCell<V>,
+pub struct State<R: Renderable> {
+    pub init: R,
+    pub before: R,
+    pub after: RefCell<R>,
 }
 
-impl<V: Viewable + Clone> State<V> {
-    pub fn new(viewable: V) -> Self {
+impl<R: Renderable + Clone> State<R> {
+    pub fn new(renderable: R) -> Self {
         Self {
-            init: viewable.clone(),
-            before: viewable.clone(),
-            after: RefCell::new(viewable),
+            init: renderable.clone(),
+            before: renderable.clone(),
+            after: RefCell::new(renderable),
         }
     }
 }
 
-impl<V: Clone + Viewable + 'static> Viewable for State<V> {
+impl<R: Clone + Renderable + 'static> Renderable for State<R> {
     fn make_pane(&self, width: u16) -> Pane {
         self.after.borrow().make_pane(width)
     }
@@ -59,7 +45,7 @@ impl<V: Clone + Viewable + 'static> Viewable for State<V> {
     }
 }
 
-impl<V: Viewable + 'static> AsAny for State<V> {
+impl<R: Renderable + 'static> AsAny for State<R> {
     fn as_any(&self) -> &dyn Any {
         self
     }

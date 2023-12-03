@@ -1,14 +1,9 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    error::Result,
-    text::Text,
-    view::{History, Suggest},
-};
+use crate::{crossterm::style::ContentStyle, error::Result, render::State};
 
-use super::super::{text_editor::TextEditorViewer, Mode, State};
+use super::{History, Mode, Renderer, Suggest, TextEditor};
 
 #[derive(Clone, Default)]
-pub struct TextEditorViewerBuilder {
+pub struct Builder {
     history: Option<History>,
     suggest: Suggest,
     prefix: String,
@@ -20,7 +15,7 @@ pub struct TextEditorViewerBuilder {
     lines: Option<usize>,
 }
 
-impl TextEditorViewerBuilder {
+impl Builder {
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
         self.prefix = prefix.as_ref().to_string();
         self
@@ -66,9 +61,9 @@ impl TextEditorViewerBuilder {
         self
     }
 
-    pub fn build(self) -> Result<TextEditorViewer> {
-        Ok(TextEditorViewer {
-            text: Text::default(),
+    pub fn build(self) -> Result<Renderer> {
+        Ok(Renderer {
+            texteditor: TextEditor::default(),
             history: self.history,
             suggest: self.suggest,
             prefix: self.prefix,
@@ -81,7 +76,7 @@ impl TextEditorViewerBuilder {
         })
     }
 
-    pub fn build_state(self) -> Result<Box<State<TextEditorViewer>>> {
-        Ok(Box::new(State::<TextEditorViewer>::new(self.build()?)))
+    pub fn build_state(self) -> Result<Box<State<Renderer>>> {
+        Ok(Box::new(State::<Renderer>::new(self.build()?)))
     }
 }
