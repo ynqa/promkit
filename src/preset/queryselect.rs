@@ -3,8 +3,8 @@ use std::fmt::Display;
 use crate::{
     crossterm::event::Event,
     error::Result,
+    preset::theme::queryselect::Theme,
     select_box::SelectBox,
-    theme::queryselect::Theme,
     view::{
         Mode, SelectViewer, SelectViewerBuilder, State, Suggest, TextEditorViewer,
         TextEditorViewerBuilder, TextViewerBuilder, Viewable,

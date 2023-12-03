@@ -141,7 +141,6 @@ pub mod select_box;
 pub mod style;
 mod terminal;
 pub mod text;
-pub mod theme;
 pub mod tree;
 pub mod validate;
 pub mod view;

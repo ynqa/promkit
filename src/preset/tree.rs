@@ -1,6 +1,6 @@
 use crate::{
     error::Result,
-    theme::tree::Theme,
+    preset::theme::tree::Theme,
     tree::Node,
     view::{State, TextViewerBuilder, TreeViewer, TreeViewerBuilder, Viewable},
     Prompt,

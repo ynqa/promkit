@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     error::Result,
-    theme::select::Theme,
+    preset::theme::select::Theme,
     view::{SelectViewer, SelectViewerBuilder, State, TextViewerBuilder, Viewable},
     Prompt,
 };

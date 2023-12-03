@@ -1,7 +1,7 @@
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
-    theme::readline::Theme,
+    preset::theme::readline::Theme,
     validate::Validator,
     view::{
         Mode, State, Suggest, TextEditorViewer, TextEditorViewerBuilder, TextViewer,
