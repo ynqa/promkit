@@ -1,6 +1,4 @@
-use crate::{crossterm::style::ContentStyle, error::Result, render::State};
-
-use super::Renderer;
+use crate::{crossterm::style::ContentStyle, error::Result, render::State, text::Renderer};
 
 #[derive(Clone, Default)]
 pub struct Builder {

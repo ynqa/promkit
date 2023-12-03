@@ -8,9 +8,9 @@ use crate::{
     grapheme::{matrixify, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
+    text_editor::TextEditor,
 };
 
-use super::TextEditor;
 mod history;
 pub use history::History;
 mod suggest;

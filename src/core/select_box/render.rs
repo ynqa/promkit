@@ -8,9 +8,8 @@ use crate::{
     grapheme::{trim, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable},
+    select_box::SelectBox,
 };
-
-use super::SelectBox;
 
 #[derive(Clone)]
 pub struct Renderer {

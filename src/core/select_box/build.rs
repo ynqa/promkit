@@ -1,8 +1,11 @@
 use std::{fmt::Display, iter::FromIterator};
 
-use crate::{crossterm::style::ContentStyle, error::Result, render::State};
-
-use super::{Renderer, SelectBox};
+use crate::{
+    crossterm::style::ContentStyle,
+    error::Result,
+    render::State,
+    select_box::{Renderer, SelectBox},
+};
 
 #[derive(Clone)]
 pub struct Builder {

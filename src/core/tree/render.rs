@@ -8,9 +8,8 @@ use crate::{
     grapheme::{trim, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable},
+    tree::Tree,
 };
-
-use super::Tree;
 
 #[derive(Clone)]
 pub struct Renderer {
