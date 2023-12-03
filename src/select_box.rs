@@ -1,12 +1,12 @@
 use std::{fmt, iter::FromIterator};
 
 #[derive(Clone, Default)]
-pub struct ItemBox {
+pub struct SelectBox {
     pub list: Vec<String>,
     pub position: usize,
 }
 
-impl<T: fmt::Display> FromIterator<T> for ItemBox {
+impl<T: fmt::Display> FromIterator<T> for SelectBox {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
             list: iter.into_iter().map(|e| format!("{}", e)).collect(),
@@ -15,7 +15,7 @@ impl<T: fmt::Display> FromIterator<T> for ItemBox {
     }
 }
 
-impl ItemBox {
+impl SelectBox {
     pub fn content(&self) -> Vec<String> {
         self.list.clone()
     }
@@ -59,10 +59,10 @@ mod test {
 
         #[test]
         fn test() {
-            let mut ib = ItemBox::from_iter(["a", "b", "c"]);
-            assert!(!ib.backward());
-            ib.position = 1;
-            assert!(ib.backward());
+            let mut b = SelectBox::from_iter(["a", "b", "c"]);
+            assert!(!b.backward());
+            b.position = 1;
+            assert!(b.backward());
         }
     }
 
@@ -71,10 +71,10 @@ mod test {
 
         #[test]
         fn test() {
-            let mut ib = ItemBox::from_iter(["a", "b", "c"]);
-            assert!(ib.forward());
-            ib.position = ib.list.len() - 1;
-            assert!(!ib.forward());
+            let mut b = SelectBox::from_iter(["a", "b", "c"]);
+            assert!(b.forward());
+            b.position = b.list.len() - 1;
+            assert!(!b.forward());
         }
     }
 }

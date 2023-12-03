@@ -72,7 +72,7 @@ impl Password {
                     .unwrap()
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor();
 
                 let error_message_state = viewables[2]
@@ -111,7 +111,7 @@ impl Password {
                     .unwrap()
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor())
             },
         )

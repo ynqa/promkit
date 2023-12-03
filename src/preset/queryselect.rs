@@ -3,12 +3,11 @@ use std::fmt::Display;
 use crate::{
     crossterm::event::Event,
     error::Result,
-    item_box::ItemBox,
-    suggest::Suggest,
+    select_box::SelectBox,
     theme::queryselect::Theme,
     view::{
-        Mode, SelectViewer, SelectViewerBuilder, State, TextEditorViewer, TextEditorViewerBuilder,
-        TextViewerBuilder, Viewable,
+        Mode, SelectViewer, SelectViewerBuilder, State, Suggest, TextEditorViewer,
+        TextEditorViewerBuilder, TextViewerBuilder, Viewable,
     },
     Prompt,
 };
@@ -102,11 +101,11 @@ impl QuerySelect {
                     let query = text_editor_state
                         .after
                         .borrow()
-                        .textbuffer
+                        .text
                         .content_without_cursor();
 
-                    let list = filter(&query, &select_state.init.itembox.list);
-                    select_state.after.borrow_mut().itembox = ItemBox { list, position: 0 };
+                    let list = filter(&query, &select_state.init.selectbox.list);
+                    select_state.after.borrow_mut().selectbox = SelectBox { list, position: 0 };
                 }
                 Ok(true)
             },
@@ -117,7 +116,7 @@ impl QuerySelect {
                     .unwrap()
                     .after
                     .borrow()
-                    .itembox
+                    .selectbox
                     .get())
             },
         )

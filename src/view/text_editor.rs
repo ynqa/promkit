@@ -6,13 +6,16 @@ use crate::{
         style::ContentStyle,
     },
     grapheme::{matrixify, Graphemes},
-    history::History,
     pane::Pane,
-    suggest::Suggest,
-    text_buffer::TextBuffer,
+    text::Text,
 };
 
 use super::{AsAny, State, Viewable};
+
+mod history;
+pub use history::History;
+mod suggest;
+pub use suggest::Suggest;
 
 /// Edit mode.
 #[derive(Clone, Default)]
@@ -26,7 +29,7 @@ pub enum Mode {
 
 #[derive(Clone)]
 pub struct TextEditorViewer {
-    pub textbuffer: TextBuffer,
+    pub text: Text,
     pub history: Option<History>,
     pub suggest: Suggest,
 
@@ -40,13 +43,12 @@ pub struct TextEditorViewer {
 }
 
 impl TextEditorViewer {
-    fn textbuffer_to_graphemes(&self) -> Graphemes {
+    fn text_to_graphemes(&self) -> Graphemes {
         let text = match self.mask {
-            Some(mask) => self.textbuffer.masking(mask),
-            None => self.textbuffer.content(),
+            Some(mask) => self.text.masking(mask),
+            None => self.text.content(),
         };
-        Graphemes::new_with_style(text, self.style)
-            .stylize(self.textbuffer.position, self.cursor_style)
+        Graphemes::new_with_style(text, self.style).stylize(self.text.position, self.cursor_style)
     }
 }
 
@@ -57,11 +59,11 @@ impl Viewable for TextEditorViewer {
             &self.prefix,
             self.prefix_style,
         ));
-        buf.append(&mut self.textbuffer_to_graphemes());
+        buf.append(&mut self.text_to_graphemes());
 
         Pane::new(
             matrixify(width as usize, &buf),
-            self.textbuffer.position / width as usize,
+            self.text.position / width as usize,
             self.lines,
         )
     }
@@ -89,25 +91,25 @@ impl Viewable for TextEditorViewer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.prev(),
+            }) => self.text.backward(),
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.next(),
+            }) => self.text.forward(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.move_to_head(),
+            }) => self.text.move_to_head(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.move_to_tail(),
+            }) => self.text.move_to_tail(),
 
             // Erase char(s).
             Event::Key(KeyEvent {
@@ -115,13 +117,13 @@ impl Viewable for TextEditorViewer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.erase(),
+            }) => self.text.erase(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('u'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.textbuffer.erase_all(),
+            }) => self.text.erase_all(),
 
             // Choose history
             Event::Key(KeyEvent {
@@ -131,8 +133,8 @@ impl Viewable for TextEditorViewer {
                 state: KeyEventState::NONE,
             }) => {
                 if let Some(ref mut history) = &mut self.history {
-                    if history.prev() {
-                        self.textbuffer.replace(&history.get())
+                    if history.backward() {
+                        self.text.replace(&history.get())
                     }
                 }
             }
@@ -143,8 +145,8 @@ impl Viewable for TextEditorViewer {
                 state: KeyEventState::NONE,
             }) => {
                 if let Some(ref mut history) = &mut self.history {
-                    if history.next() {
-                        self.textbuffer.replace(&history.get())
+                    if history.forward() {
+                        self.text.replace(&history.get())
                     }
                 }
             }
@@ -156,11 +158,8 @@ impl Viewable for TextEditorViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if let Some(new) = self
-                    .suggest
-                    .search(self.textbuffer.content_without_cursor())
-                {
-                    self.textbuffer.replace(new)
+                if let Some(new) = self.suggest.search(self.text.content_without_cursor()) {
+                    self.text.replace(new)
                 }
             }
 
@@ -177,8 +176,8 @@ impl Viewable for TextEditorViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => match self.mode {
-                Mode::Insert => self.textbuffer.insert(*ch),
-                Mode::Overwrite => self.textbuffer.overwrite(*ch),
+                Mode::Insert => self.text.insert(*ch),
+                Mode::Overwrite => self.text.overwrite(*ch),
             },
 
             _ => (),
@@ -187,9 +186,9 @@ impl Viewable for TextEditorViewer {
 
     fn postrun(&mut self) {
         if let Some(ref mut history) = &mut self.history {
-            history.insert(self.textbuffer.content_without_cursor());
+            history.insert(self.text.content_without_cursor());
         }
-        self.textbuffer = TextBuffer::default();
+        self.text = Text::default();
     }
 }
 
@@ -201,6 +200,6 @@ impl AsAny for TextEditorViewer {
 
 impl State<TextEditorViewer> {
     pub fn text_changed(&self) -> bool {
-        self.before.textbuffer.content() != self.after.borrow().textbuffer.content()
+        self.before.text.content() != self.after.borrow().text.content()
     }
 }

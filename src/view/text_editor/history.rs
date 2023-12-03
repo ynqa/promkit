@@ -48,7 +48,7 @@ impl History {
         self.buf.iter().any(|i| i == item.as_ref())
     }
 
-    pub fn prev(&mut self) -> bool {
+    pub fn backward(&mut self) -> bool {
         if 0 < self.position {
             self.position -= 1;
             return true;
@@ -56,7 +56,7 @@ impl History {
         false
     }
 
-    pub fn next(&mut self) -> bool {
+    pub fn forward(&mut self) -> bool {
         if !self.buf.is_empty() && self.position < self.buf.len() - 1 {
             self.position += 1;
             return true;

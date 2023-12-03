@@ -1,6 +1,8 @@
 use crate::{
-    crossterm::style::ContentStyle, error::Result, history::History, suggest::Suggest,
-    text_buffer::TextBuffer,
+    crossterm::style::ContentStyle,
+    error::Result,
+    text::Text,
+    view::{History, Suggest},
 };
 
 use super::super::{text_editor::TextEditorViewer, Mode, State};
@@ -66,7 +68,7 @@ impl TextEditorViewerBuilder {
 
     pub fn build(self) -> Result<TextEditorViewer> {
         Ok(TextEditorViewer {
-            textbuffer: TextBuffer::default(),
+            text: Text::default(),
             history: self.history,
             suggest: self.suggest,
             prefix: self.prefix,

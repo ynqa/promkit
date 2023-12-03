@@ -6,15 +6,15 @@ use crate::{
         style::ContentStyle,
     },
     grapheme::{trim, Graphemes},
-    item_box::ItemBox,
     pane::Pane,
+    select_box::SelectBox,
 };
 
 use super::{AsAny, Viewable};
 
 #[derive(Clone)]
 pub struct SelectViewer {
-    pub itembox: ItemBox,
+    pub selectbox: SelectBox,
 
     pub style: ContentStyle,
     pub cursor: String,
@@ -23,13 +23,13 @@ pub struct SelectViewer {
 }
 
 impl SelectViewer {
-    fn itembox_to_layout(&self) -> Vec<Graphemes> {
-        self.itembox
+    fn selectbox_to_layout(&self) -> Vec<Graphemes> {
+        self.selectbox
             .content()
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                if i == self.itembox.position {
+                if i == self.selectbox.position {
                     Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
                 } else {
                     Graphemes::new_with_style(
@@ -49,11 +49,11 @@ impl SelectViewer {
 impl Viewable for SelectViewer {
     fn make_pane(&self, width: u16) -> Pane {
         let trimed = self
-            .itembox_to_layout()
+            .selectbox_to_layout()
             .iter()
             .map(|row| trim(width as usize, row))
             .collect();
-        Pane::new(trimed, self.itembox.position, self.lines)
+        Pane::new(trimed, self.selectbox.position, self.lines)
     }
 
     /// Default key bindings for item picker.
@@ -75,7 +75,7 @@ impl Viewable for SelectViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.itembox.backward();
+                self.selectbox.backward();
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
@@ -83,7 +83,7 @@ impl Viewable for SelectViewer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.itembox.forward();
+                self.selectbox.forward();
             }
 
             _ => (),
@@ -91,7 +91,7 @@ impl Viewable for SelectViewer {
     }
 
     fn postrun(&mut self) {
-        self.itembox.position = 0;
+        self.selectbox.position = 0;
     }
 }
 

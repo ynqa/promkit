@@ -1,7 +1,7 @@
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
-    text_buffer::TextBuffer,
+    text::Text,
     theme::confirm::Theme,
     validate::Validator,
     view::{
@@ -59,7 +59,7 @@ impl Confirm {
                 let text = text_editor_state
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor();
 
                 let error_message_state = viewables[1]
@@ -78,7 +78,7 @@ impl Confirm {
                         if !ret {
                             error_message_state.after.borrow_mut().text =
                                 validator.error_message(&text);
-                            text_editor_state.after.borrow_mut().textbuffer = TextBuffer::default();
+                            text_editor_state.after.borrow_mut().text = Text::default();
                         }
                         ret
                     }
@@ -96,7 +96,7 @@ impl Confirm {
                     .unwrap()
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor())
             },
         )

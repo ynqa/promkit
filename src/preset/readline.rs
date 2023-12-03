@@ -1,12 +1,11 @@
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     error::Result,
-    suggest::Suggest,
     theme::readline::Theme,
     validate::Validator,
     view::{
-        Mode, State, TextEditorViewer, TextEditorViewerBuilder, TextViewer, TextViewerBuilder,
-        Viewable,
+        Mode, State, Suggest, TextEditorViewer, TextEditorViewerBuilder, TextViewer,
+        TextViewerBuilder, Viewable,
     },
     Prompt,
 };
@@ -93,7 +92,7 @@ impl Readline {
                     .unwrap()
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor();
 
                 let error_message_state = viewables[2]
@@ -132,7 +131,7 @@ impl Readline {
                     .unwrap()
                     .after
                     .borrow()
-                    .textbuffer
+                    .text
                     .content_without_cursor())
             },
         )

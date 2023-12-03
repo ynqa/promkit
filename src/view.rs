@@ -8,7 +8,7 @@ pub use builder::{
     tree::TreeViewerBuilder,
 };
 mod text_editor;
-pub use text_editor::{Mode, TextEditorViewer};
+pub use text_editor::{History, Mode, Suggest, TextEditorViewer};
 mod select;
 pub use select::SelectViewer;
 mod text;
