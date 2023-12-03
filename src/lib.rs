@@ -11,14 +11,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.2.0"
+//! promkit = "0.3.0"
 //! ```
 //!
 //! ## Features
 //!
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
-//!   - Support ranging from presets for easy use to layout building using `Viewable`s, and even for displaying your own data structures
+//!   - Support ranging from presets for easy use to layout building using renderable objects, and even for displaying your own data structures
 //! - Versatile customization capabilities
 //!   - Themes for defining the outer shell style, including text and cursor colors
 //!   - Validation for user input and error message construction
@@ -83,7 +83,7 @@
 //! ### Unified component approach
 //!
 //! *promkit* takes a unified approach by having all of its components inherit the
-//! same `Viewable` trait. This design choice enables users to seamlessly support
+//! same `Renderable` trait. This design choice enables users to seamlessly support
 //! their custom data structures for display, similar to the relationships seen in
 //! TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
 //! and
@@ -95,7 +95,7 @@
 //! UI from scratch, which can be a time-consuming and less flexible process.
 //!
 //!   ```ignore
-//!   pub trait Viewable {
+//!   pub trait Renderable {
 //!       fn make_pane(&self, width: u16) -> Pane;
 //!       fn handle_event(&mut self, event: &Event);
 //!       fn postrun(&mut self);
