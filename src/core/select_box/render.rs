@@ -84,6 +84,18 @@ impl Renderable for Renderer {
             }) => {
                 self.selectbox.forward();
             }
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('a'),
+                modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => self.selectbox.move_to_head(),
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => self.selectbox.move_to_tail(),
 
             _ => (),
         }

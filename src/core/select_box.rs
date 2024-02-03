@@ -48,11 +48,11 @@ impl SelectBox {
         false
     }
 
-    pub fn to_head(&mut self) {
+    pub fn move_to_head(&mut self) {
         self.position = 0
     }
 
-    pub fn to_tail(&mut self) {
+    pub fn move_to_tail(&mut self) {
         self.position = self.list.len() - 1;
     }
 }
