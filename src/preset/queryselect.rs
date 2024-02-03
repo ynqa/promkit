@@ -1,12 +1,12 @@
-use std::fmt::Display;
+use std::{fmt::Display, iter::FromIterator};
 
 use crate::{
     crossterm::event::Event,
     error::Result,
+    menu::Menu,
+    menu::{Builder as MenuRendererBuilder, Renderer as MenuRenderer},
     preset::theme::queryselect::Theme,
     render::{Renderable, State},
-    select_box::SelectBox,
-    select_box::{Builder as SelectBoxRendererBuilder, Renderer as SelectBoxRenderer},
     text::Builder as TextRendererBuilder,
     text_editor::{
         Builder as TextEditorRendererBuilder, Mode, Renderer as TextEditorRenderer, Suggest,
@@ -19,7 +19,7 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 pub struct QuerySelect {
     title_builder: TextRendererBuilder,
     text_editor_builder: TextEditorRendererBuilder,
-    selectbox_builder: SelectBoxRendererBuilder,
+    menu_builder: MenuRendererBuilder,
     filter: Box<Filter>,
 }
 
@@ -33,7 +33,7 @@ impl QuerySelect {
         Self {
             title_builder: Default::default(),
             text_editor_builder: Default::default(),
-            selectbox_builder: SelectBoxRendererBuilder::new(items),
+            menu_builder: MenuRendererBuilder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -47,8 +47,8 @@ impl QuerySelect {
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.cursor_style);
-        self.selectbox_builder = self
-            .selectbox_builder
+        self.menu_builder = self
+            .menu_builder
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -70,8 +70,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn selectbox_lines(mut self, lines: usize) -> Self {
-        self.selectbox_builder = self.selectbox_builder.lines(lines);
+    pub fn menu_lines(mut self, lines: usize) -> Self {
+        self.menu_builder = self.menu_builder.lines(lines);
         self
     }
 
@@ -87,7 +87,7 @@ impl QuerySelect {
             vec![
                 self.title_builder.build_state()?,
                 self.text_editor_builder.build_state()?,
-                self.selectbox_builder.build_state()?,
+                self.menu_builder.build_state()?,
             ],
             move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
                 let text_editor_state = renderables[1]
@@ -96,7 +96,7 @@ impl QuerySelect {
                     .unwrap();
                 let select_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<SelectBoxRenderer>>()
+                    .downcast_ref::<State<MenuRenderer>>()
                     .unwrap();
 
                 if text_editor_state.text_changed() {
@@ -106,19 +106,19 @@ impl QuerySelect {
                         .texteditor
                         .content_without_cursor();
 
-                    let list = filter(&query, &select_state.init.selectbox.list);
-                    select_state.after.borrow_mut().selectbox = SelectBox { list, position: 0 };
+                    let list = filter(&query, &select_state.init.menu.list);
+                    select_state.after.borrow_mut().menu = Menu::from_iter(list);
                 }
                 Ok(true)
             },
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[2]
                     .as_any()
-                    .downcast_ref::<State<SelectBoxRenderer>>()
+                    .downcast_ref::<State<MenuRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .selectbox
+                    .menu
                     .get())
             },
         )

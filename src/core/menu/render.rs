@@ -6,14 +6,14 @@ use crate::{
         style::ContentStyle,
     },
     grapheme::{trim, Graphemes},
+    menu::Menu,
     pane::Pane,
     render::{AsAny, Renderable},
-    select_box::SelectBox,
 };
 
 #[derive(Clone)]
 pub struct Renderer {
-    pub selectbox: SelectBox,
+    pub menu: Menu,
 
     pub style: ContentStyle,
     pub cursor: String,
@@ -23,12 +23,12 @@ pub struct Renderer {
 
 impl Renderer {
     fn selectbox_to_layout(&self) -> Vec<Graphemes> {
-        self.selectbox
+        self.menu
             .content()
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                if i == self.selectbox.position {
+                if i == self.menu.position {
                     Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
                 } else {
                     Graphemes::new_with_style(
@@ -52,7 +52,7 @@ impl Renderable for Renderer {
             .iter()
             .map(|row| trim(width as usize, row))
             .collect();
-        Pane::new(trimed, self.selectbox.position, self.lines)
+        Pane::new(trimed, self.menu.position, self.lines)
     }
 
     /// Default key bindings for item picker.
@@ -74,7 +74,7 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.selectbox.backward();
+                self.menu.backward();
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
@@ -82,27 +82,27 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.selectbox.forward();
+                self.menu.forward();
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.selectbox.move_to_head(),
+            }) => self.menu.move_to_head(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.selectbox.move_to_tail(),
+            }) => self.menu.move_to_tail(),
 
             _ => (),
         }
     }
 
     fn postrun(&mut self) {
-        self.selectbox.position = 0;
+        self.menu.position = 0;
     }
 }
 

@@ -2,31 +2,31 @@ use std::fmt::Display;
 
 use crate::{
     error::Result,
+    menu::{Builder as MenuRendererBuilder, Renderer as MenuRenderer},
     preset::theme::select::Theme,
     render::{Renderable, State},
-    select_box::{Builder as SelectBoxRendererBuilder, Renderer as SelectBoxRenderer},
     text::Builder as TextRendererBuilder,
     Prompt,
 };
 
 pub struct Select {
     title_builder: TextRendererBuilder,
-    selectbox_builder: SelectBoxRendererBuilder,
+    menu_builder: MenuRendererBuilder,
 }
 
 impl Select {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_builder: Default::default(),
-            selectbox_builder: SelectBoxRendererBuilder::new(items),
+            menu_builder: MenuRendererBuilder::new(items),
         }
         .theme(Theme::default())
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
         self.title_builder = self.title_builder.style(theme.title_style);
-        self.selectbox_builder = self
-            .selectbox_builder
+        self.menu_builder = self
+            .menu_builder
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -39,7 +39,7 @@ impl Select {
     }
 
     pub fn lines(mut self, lines: usize) -> Self {
-        self.selectbox_builder = self.selectbox_builder.lines(lines);
+        self.menu_builder = self.menu_builder.lines(lines);
         self
     }
 
@@ -47,17 +47,17 @@ impl Select {
         Prompt::try_new(
             vec![
                 self.title_builder.build_state()?,
-                self.selectbox_builder.build_state()?,
+                self.menu_builder.build_state()?,
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<SelectBoxRenderer>>()
+                    .downcast_ref::<State<MenuRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .selectbox
+                    .menu
                     .get())
             },
         )

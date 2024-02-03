@@ -6,12 +6,12 @@ mod build;
 pub use build::Builder;
 
 #[derive(Clone, Default)]
-pub struct SelectBox {
+pub struct Menu {
     pub list: Vec<String>,
     pub position: usize,
 }
 
-impl<T: fmt::Display> FromIterator<T> for SelectBox {
+impl<T: fmt::Display> FromIterator<T> for Menu {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
             list: iter.into_iter().map(|e| format!("{}", e)).collect(),
@@ -20,7 +20,7 @@ impl<T: fmt::Display> FromIterator<T> for SelectBox {
     }
 }
 
-impl SelectBox {
+impl Menu {
     pub fn content(&self) -> Vec<String> {
         self.list.clone()
     }
@@ -64,7 +64,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = SelectBox::from_iter(["a", "b", "c"]);
+            let mut b = Menu::from_iter(["a", "b", "c"]);
             assert!(!b.backward());
             b.position = 1;
             assert!(b.backward());
@@ -76,7 +76,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = SelectBox::from_iter(["a", "b", "c"]);
+            let mut b = Menu::from_iter(["a", "b", "c"]);
             assert!(b.forward());
             b.position = b.list.len() - 1;
             assert!(!b.forward());

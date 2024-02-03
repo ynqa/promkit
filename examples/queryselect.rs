@@ -13,7 +13,7 @@ fn main() -> Result {
             .unwrap_or(items.clone())
     })
     .title("What number do you like?")
-    .selectbox_lines(5)
+    .menu_lines(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())

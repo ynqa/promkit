@@ -3,13 +3,13 @@ use std::{fmt::Display, iter::FromIterator};
 use crate::{
     crossterm::style::ContentStyle,
     error::Result,
+    menu::{Menu, Renderer},
     render::State,
-    select_box::{Renderer, SelectBox},
 };
 
 #[derive(Clone)]
 pub struct Builder {
-    selectbox: SelectBox,
+    menu: Menu,
     style: ContentStyle,
     cursor: String,
     cursor_style: ContentStyle,
@@ -19,7 +19,7 @@ pub struct Builder {
 impl Builder {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
-            selectbox: SelectBox::from_iter(items),
+            menu: Menu::from_iter(items),
             style: Default::default(),
             cursor: Default::default(),
             cursor_style: Default::default(),
@@ -49,7 +49,7 @@ impl Builder {
 
     pub fn build(self) -> Result<Renderer> {
         Ok(Renderer {
-            selectbox: self.selectbox,
+            menu: self.menu,
             cursor: self.cursor,
             style: self.style,
             cursor_style: self.cursor_style,
