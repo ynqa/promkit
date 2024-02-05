@@ -25,7 +25,7 @@ impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let matrix = self
             .menu
-            .content()
+            .items()
             .iter()
             .enumerate()
             .map(|(i, item)| {
