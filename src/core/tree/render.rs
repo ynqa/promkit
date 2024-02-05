@@ -21,9 +21,10 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderer {
-    fn tree_to_layout(&self) -> Vec<Graphemes> {
-        self.tree
+impl Renderable for Renderer {
+    fn make_pane(&self, width: u16) -> crate::pane::Pane {
+        let matrix = self
+            .tree
             .content()
             .iter()
             .enumerate()
@@ -45,17 +46,9 @@ impl Renderer {
                     )
                 }
             })
-            .collect()
-    }
-}
+            .collect::<Vec<Graphemes>>();
 
-impl Renderable for Renderer {
-    fn make_pane(&self, width: u16) -> crate::pane::Pane {
-        let trimed = self
-            .tree_to_layout()
-            .iter()
-            .map(|row| trim(width as usize, row))
-            .collect();
+        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
         Pane::new(trimed, self.tree.position, self.lines)
     }
 

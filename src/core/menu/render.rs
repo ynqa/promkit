@@ -21,9 +21,10 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderer {
-    fn selectbox_to_layout(&self) -> Vec<Graphemes> {
-        self.menu
+impl Renderable for Renderer {
+    fn make_pane(&self, width: u16) -> Pane {
+        let matrix = self
+            .menu
             .content()
             .iter()
             .enumerate()
@@ -41,17 +42,10 @@ impl Renderer {
                     )
                 }
             })
-            .collect()
-    }
-}
+            .collect::<Vec<Graphemes>>();
 
-impl Renderable for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
-        let trimed = self
-            .selectbox_to_layout()
-            .iter()
-            .map(|row| trim(width as usize, row))
-            .collect();
+        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
+
         Pane::new(trimed, self.menu.position, self.lines)
     }
 

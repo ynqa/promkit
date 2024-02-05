@@ -41,17 +41,6 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderer {
-    fn texteditor_to_graphemes(&self) -> Graphemes {
-        let text = match self.mask {
-            Some(mask) => self.texteditor.masking(mask),
-            None => self.texteditor.content(),
-        };
-        Graphemes::new_with_style(text, self.style)
-            .stylize(self.texteditor.position, self.cursor_style)
-    }
-}
-
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
@@ -59,7 +48,16 @@ impl Renderable for Renderer {
             &self.prefix,
             self.prefix_style,
         ));
-        buf.append(&mut self.texteditor_to_graphemes());
+
+        let text = match self.mask {
+            Some(mask) => self.texteditor.masking(mask),
+            None => self.texteditor.content(),
+        };
+
+        let mut styled = Graphemes::new_with_style(text, self.style)
+            .stylize(self.texteditor.position, self.cursor_style);
+
+        buf.append(&mut styled);
 
         Pane::new(
             matrixify(width as usize, &buf),
