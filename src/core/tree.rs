@@ -21,7 +21,7 @@ impl Tree {
         }
     }
 
-    pub fn content(&self) -> Vec<NodeWithDepth> {
+    pub fn nodes_with_depth(&self) -> Vec<NodeWithDepth> {
         self.cache.clone()
     }
 

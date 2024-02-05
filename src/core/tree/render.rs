@@ -25,7 +25,7 @@ impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
         let matrix = self
             .tree
-            .content()
+            .nodes_with_depth()
             .iter()
             .enumerate()
             .map(|(i, item)| {
