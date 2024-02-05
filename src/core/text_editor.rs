@@ -5,8 +5,8 @@ pub use build::Builder;
 
 #[derive(Clone)]
 pub struct TextEditor {
-    pub buf: String,
-    pub position: usize,
+    buf: String,
+    position: usize,
 }
 
 impl Default for TextEditor {
@@ -20,11 +20,11 @@ impl Default for TextEditor {
 }
 
 impl TextEditor {
-    pub fn content(&self) -> String {
+    pub fn text(&self) -> String {
         self.buf.clone()
     }
 
-    pub fn content_without_cursor(&self) -> String {
+    pub fn text_without_cursor(&self) -> String {
         let mut ret = self.buf.clone();
         ret.pop();
         ret

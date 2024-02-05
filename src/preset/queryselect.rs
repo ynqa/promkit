@@ -104,7 +104,7 @@ impl QuerySelect {
                         .after
                         .borrow()
                         .texteditor
-                        .content_without_cursor();
+                        .text_without_cursor();
 
                     let list = filter(&query, select_state.init.menu.items());
                     select_state.after.borrow_mut().menu = Menu::from_iter(list);

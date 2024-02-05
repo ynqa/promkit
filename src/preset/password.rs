@@ -75,7 +75,7 @@ impl Password {
                     .after
                     .borrow()
                     .texteditor
-                    .content_without_cursor();
+                    .text_without_cursor();
 
                 let error_message_state = renderables[2]
                     .as_any()
@@ -114,7 +114,7 @@ impl Password {
                     .after
                     .borrow()
                     .texteditor
-                    .content_without_cursor())
+                    .text_without_cursor())
             },
         )
     }

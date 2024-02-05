@@ -51,7 +51,7 @@ impl Renderable for Renderer {
 
         let text = match self.mask {
             Some(mask) => self.texteditor.masking(mask),
-            None => self.texteditor.content(),
+            None => self.texteditor.text(),
         };
 
         let mut styled = Graphemes::new_with_style(text, self.style)
@@ -156,10 +156,7 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if let Some(new) = self
-                    .suggest
-                    .search(self.texteditor.content_without_cursor())
-                {
+                if let Some(new) = self.suggest.search(self.texteditor.text_without_cursor()) {
                     self.texteditor.replace(new)
                 }
             }
@@ -187,7 +184,7 @@ impl Renderable for Renderer {
 
     fn postrun(&mut self) {
         if let Some(ref mut history) = &mut self.history {
-            history.insert(self.texteditor.content_without_cursor());
+            history.insert(self.texteditor.text_without_cursor());
         }
         self.texteditor = TextEditor::default();
     }
@@ -201,6 +198,6 @@ impl AsAny for Renderer {
 
 impl State<Renderer> {
     pub fn text_changed(&self) -> bool {
-        self.before.texteditor.content() != self.after.borrow().texteditor.content()
+        self.before.texteditor.text() != self.after.borrow().texteditor.text()
     }
 }
