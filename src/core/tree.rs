@@ -7,9 +7,9 @@ pub use build::Builder;
 
 #[derive(Clone, Default)]
 pub struct Tree {
-    pub root: Node,
-    pub cache: Vec<NodeWithDepth>,
-    pub position: usize,
+    root: Node,
+    cache: Vec<NodeWithDepth>,
+    position: usize,
 }
 
 impl Tree {
