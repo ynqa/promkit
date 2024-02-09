@@ -3,74 +3,72 @@ pub use render::{History, Mode, Renderer, Suggest};
 mod build;
 pub use build::Builder;
 
+use crate::core::cursor::Cursor;
+
 #[derive(Clone)]
-pub struct TextEditor {
-    buf: String,
-    position: usize,
-}
+pub struct TextEditor(Cursor<String>);
 
 impl Default for TextEditor {
     fn default() -> Self {
-        Self {
+        Self(Cursor::new(
             // Set cursor
-            buf: String::from(" "),
-            position: 0,
-        }
+            String::from(" "),
+        ))
     }
 }
 
 impl TextEditor {
     pub fn text(&self) -> String {
-        self.buf.clone()
+        self.0.contents().clone()
     }
 
     pub fn text_without_cursor(&self) -> String {
-        let mut ret = self.buf.clone();
+        let mut ret = self.text();
         ret.pop();
         ret
     }
 
+    pub fn position(&self) -> usize {
+        self.0.position()
+    }
     pub fn masking(&self, mask: char) -> String {
-        self.buf
+        self.text()
             .chars()
             .enumerate()
-            .map(|(i, c)| if i == self.buf.len() - 1 { c } else { mask })
+            .map(|(i, c)| if i == self.text().len() - 1 { c } else { mask })
             .collect::<String>()
     }
 
-    fn is_head(&self) -> bool {
-        self.position == 0
-    }
-
-    fn is_tail(&self) -> bool {
-        self.position == self.buf.len() - 1
-    }
-
     pub fn replace(&mut self, new: &str) {
-        self.buf = new.to_owned();
-        self.buf.push(' ');
-        self.move_to_tail();
+        let mut buf = new.to_owned();
+        buf.push(' ');
+        let pos = buf.len() - 1;
+        *self = Self(Cursor::new_with_position(buf, pos));
     }
 
     pub fn insert(&mut self, ch: char) {
-        self.buf.insert(self.position, ch);
+        let pos = self.position();
+        self.0.contents_mut().insert(pos, ch);
         self.forward();
     }
 
     pub fn overwrite(&mut self, ch: char) {
-        if self.is_tail() {
+        if self.0.is_tail() {
             self.insert(ch)
         } else {
-            self.buf
-                .replace_range(self.position..self.position + 1, &ch.to_string());
+            let pos = self.position();
+            self.0
+                .contents_mut()
+                .replace_range(pos..pos + 1, &ch.to_string());
             self.forward();
         }
     }
 
     pub fn erase(&mut self) {
-        if !self.is_head() {
+        if !self.0.is_head() {
             self.backward();
-            self.buf.drain(self.position..self.position + 1);
+            let pos = self.position();
+            self.0.contents_mut().drain(pos..pos + 1);
         }
     }
 
@@ -79,423 +77,438 @@ impl TextEditor {
     }
 
     pub fn move_to_head(&mut self) {
-        self.position = 0;
+        self.0.move_to_head()
     }
 
     pub fn move_to_tail(&mut self) {
-        self.position = self.buf.len() - 1;
+        self.0.move_to_tail()
     }
 
-    pub fn backward(&mut self) {
-        if !self.is_head() {
-            self.position -= 1;
-        }
+    pub fn backward(&mut self) -> bool {
+        self.0.backward()
     }
 
-    pub fn forward(&mut self) {
-        if !self.is_tail() {
-            self.position += 1;
-        }
+    pub fn forward(&mut self) -> bool {
+        self.0.forward()
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::core::cursor::Cursor;
+
+    use super::TextEditor;
+
+    fn new_with_position(s: String, p: usize) -> TextEditor {
+        TextEditor(Cursor::new_with_position(s, p))
+    }
+
     mod masking {
-        use super::super::*;
+        use crate::text_editor::test::new_with_position;
 
         #[test]
         fn test() {
-            let txt = TextEditor {
-                buf: String::from("abcde "),
-                position: 0,
-            };
+            let txt = new_with_position(String::from("abcde "), 0);
             assert_eq!("***** ", txt.masking('*'))
         }
     }
 
     mod erase {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let txt = TextEditor::default();
-            assert_eq!(String::from(" "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from(" "), txt.text());
+            assert_eq!(0, txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("bc "),
-                position: 0, // indicate `b`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("bc "),
+                0, // indicate `b`.
+            );
             txt.erase();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
-            let new = TextEditor {
-                buf: String::from("ab "),
-                position: 2, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
+            let new = new_with_position(
+                String::from("ab "),
+                2, // indicate tail.
+            );
             txt.erase();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
-            assert_eq!(String::from("abc "), txt.buf);
-            assert_eq!(0, txt.position);
+            let txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
+            assert_eq!(String::from("abc "), txt.text());
+            assert_eq!(0, txt.position());
         }
     }
 
     mod insert {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
-            let new = TextEditor {
-                buf: String::from("d "),
-                position: 1, // indicate tail.
-            };
+            let new = new_with_position(
+                String::from("d "),
+                1, // indicate tail.
+            );
             txt.insert('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("adbc "),
-                position: 2, // indicate `b`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("adbc "),
+                2, // indicate `b`.
+            );
             txt.insert('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
-            let new = TextEditor {
-                buf: String::from("abcd "),
-                position: 4, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
+            let new = new_with_position(
+                String::from("abcd "),
+                4, // indicate tail.
+            );
             txt.insert('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
-            let new = TextEditor {
-                buf: String::from("dabc "),
-                position: 1, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
+            let new = new_with_position(
+                String::from("dabc "),
+                1, // indicate `a`.
+            );
             txt.insert('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
     }
 
     mod overwrite {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
-            let new = TextEditor {
-                buf: String::from("d "),
-                position: 1, // indicate tail.
-            };
+            let new = new_with_position(
+                String::from("d "),
+                1, // indicate tail.
+            );
             txt.overwrite('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("adc "),
-                position: 2, // indicate `c`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("adc "),
+                2, // indicate `c`.
+            );
             txt.overwrite('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
-            let new = TextEditor {
-                buf: String::from("abcd "),
-                position: 4, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
+            let new = new_with_position(
+                String::from("abcd "),
+                4, // indicate tail.
+            );
             txt.overwrite('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
-            let new = TextEditor {
-                buf: String::from("dbc "),
-                position: 1, // indicate `b`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
+            let new = new_with_position(
+                String::from("dbc "),
+                1, // indicate `b`.
+            );
             txt.overwrite('d');
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
     }
 
     mod backward {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.backward();
-            assert_eq!(String::from(" "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from(" "), txt.text());
+            assert_eq!(0, txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
             txt.backward();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 2, // indicate `c`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                2, // indicate `c`.
+            );
             txt.backward();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
             txt.backward();
-            assert_eq!(String::from("abc "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from("abc "), txt.text());
+            assert_eq!(0, txt.position());
         }
     }
 
     mod forward {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.forward();
-            assert_eq!(String::from(" "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from(" "), txt.text());
+            assert_eq!(0, txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 2, // indicate `c`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                2, // indicate `c`.
+            );
             txt.forward();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
             txt.forward();
-            assert_eq!(String::from("abc "), txt.buf);
-            assert_eq!(3, txt.position);
+            assert_eq!(String::from("abc "), txt.text());
+            assert_eq!(3, txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
             txt.forward();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
     }
 
     mod to_head {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.move_to_head();
-            assert_eq!(String::from(" "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from(" "), txt.text());
+            assert_eq!(0, txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
             txt.move_to_head();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
             txt.move_to_head();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
             txt.move_to_head();
-            assert_eq!(String::from("abc "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from("abc "), txt.text());
+            assert_eq!(0, txt.position());
         }
     }
 
     mod to_tail {
+        use crate::text_editor::test::new_with_position;
+
         use super::super::*;
 
         #[test]
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.move_to_tail();
-            assert_eq!(String::from(" "), txt.buf);
-            assert_eq!(0, txt.position);
+            assert_eq!(String::from(" "), txt.text());
+            assert_eq!(0, txt.position());
         }
 
         #[test]
         fn test_at_non_edge() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 1, // indicate `b`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                1, // indicate `b`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
             txt.move_to_tail();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
 
         #[test]
         fn test_at_tail() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
             txt.move_to_tail();
-            assert_eq!(String::from("abc "), txt.buf);
-            assert_eq!(3, txt.position);
+            assert_eq!(String::from("abc "), txt.text());
+            assert_eq!(3, txt.position());
         }
 
         #[test]
         fn test_at_head() {
-            let mut txt = TextEditor {
-                buf: String::from("abc "),
-                position: 0, // indicate `a`.
-            };
-            let new = TextEditor {
-                buf: String::from("abc "),
-                position: 3, // indicate tail.
-            };
+            let mut txt = new_with_position(
+                String::from("abc "),
+                0, // indicate `a`.
+            );
+            let new = new_with_position(
+                String::from("abc "),
+                3, // indicate tail.
+            );
             txt.move_to_tail();
-            assert_eq!(new.buf, txt.buf);
-            assert_eq!(new.position, txt.position);
+            assert_eq!(new.text(), txt.text());
+            assert_eq!(new.position(), txt.position());
         }
     }
 }

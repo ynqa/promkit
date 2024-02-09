@@ -14,8 +14,16 @@ impl<C: Len> Cursor<C> {
         }
     }
 
+    pub fn new_with_position(contents: C, position: usize) -> Self {
+        Self { contents, position }
+    }
+
     pub fn contents(&self) -> &C {
         &self.contents
+    }
+
+    pub fn contents_mut(&mut self) -> &mut C {
+        &mut self.contents
     }
 
     pub fn position(&self) -> usize {
@@ -43,6 +51,10 @@ impl<C: Len> Cursor<C> {
         self.position = 0
     }
 
+    pub fn is_head(&self) -> bool {
+        self.position == 0
+    }
+
     pub fn move_to_tail(&mut self) {
         let l = self.contents.len();
         if l == 0 {
@@ -50,6 +62,10 @@ impl<C: Len> Cursor<C> {
         } else {
             self.position = l - 1;
         }
+    }
+
+    pub fn is_tail(&self) -> bool {
+        self.position == self.contents.len() - 1
     }
 }
 

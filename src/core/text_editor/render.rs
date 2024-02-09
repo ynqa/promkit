@@ -55,13 +55,13 @@ impl Renderable for Renderer {
         };
 
         let mut styled = Graphemes::new_with_style(text, self.style)
-            .stylize(self.texteditor.position, self.cursor_style);
+            .stylize(self.texteditor.position(), self.cursor_style);
 
         buf.append(&mut styled);
 
         Pane::new(
             matrixify(width as usize, &buf),
-            self.texteditor.position / width as usize,
+            self.texteditor.position() / width as usize,
             self.lines,
         )
     }
@@ -89,13 +89,17 @@ impl Renderable for Renderer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.texteditor.backward(),
+            }) => {
+                self.texteditor.backward();
+            }
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => self.texteditor.forward(),
+            }) => {
+                self.texteditor.forward();
+            }
             Event::Key(KeyEvent {
                 code: KeyCode::Char('a'),
                 modifiers: KeyModifiers::CONTROL,
