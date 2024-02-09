@@ -20,7 +20,7 @@ impl<T: fmt::Display> FromIterator<T> for Menu {
 
 impl Menu {
     pub fn items(&self) -> &Vec<String> {
-        self.0.items()
+        self.0.contents()
     }
 
     pub fn position(&self) -> usize {
@@ -28,7 +28,10 @@ impl Menu {
     }
 
     pub fn get(&self) -> String {
-        self.0.get().unwrap_or(&String::new()).to_string()
+        self.items()
+            .get(self.position())
+            .unwrap_or(&String::new())
+            .to_string()
     }
 
     pub fn backward(&mut self) -> bool {
