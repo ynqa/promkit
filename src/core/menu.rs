@@ -5,81 +5,45 @@ pub use render::Renderer;
 mod build;
 pub use build::Builder;
 
-#[derive(Clone, Default)]
-pub struct Menu {
-    items: Vec<String>,
-    position: usize,
-}
+use crate::core::cursor::Cursor;
+
+#[derive(Clone)]
+pub struct Menu(Cursor<Vec<String>>);
 
 impl<T: fmt::Display> FromIterator<T> for Menu {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Self {
-            items: iter.into_iter().map(|e| format!("{}", e)).collect(),
-            position: 0,
-        }
+        Self(Cursor::new(
+            iter.into_iter().map(|e| format!("{}", e)).collect(),
+        ))
     }
 }
 
 impl Menu {
     pub fn items(&self) -> &Vec<String> {
-        &self.items
+        self.0.items()
+    }
+
+    pub fn position(&self) -> usize {
+        self.0.position()
     }
 
     pub fn get(&self) -> String {
-        self.items
-            .get(self.position)
-            .unwrap_or(&String::new())
-            .to_string()
+        self.0.get().unwrap_or(&String::new()).to_string()
     }
 
     pub fn backward(&mut self) -> bool {
-        if 0 < self.position {
-            self.position -= 1;
-            return true;
-        }
-        false
+        self.0.backward()
     }
 
     pub fn forward(&mut self) -> bool {
-        if !self.items.is_empty() && self.position < self.items.len() - 1 {
-            self.position += 1;
-            return true;
-        }
-        false
+        self.0.forward()
     }
 
     pub fn move_to_head(&mut self) {
-        self.position = 0
+        self.0.move_to_head()
     }
 
     pub fn move_to_tail(&mut self) {
-        self.position = self.items.len() - 1;
-    }
-}
-
-#[cfg(test)]
-mod test {
-    mod backward {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let mut b = Menu::from_iter(["a", "b", "c"]);
-            assert!(!b.backward());
-            b.position = 1;
-            assert!(b.backward());
-        }
-    }
-
-    mod forward {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let mut b = Menu::from_iter(["a", "b", "c"]);
-            assert!(b.forward());
-            b.position = b.items.len() - 1;
-            assert!(!b.forward());
-        }
+        self.0.move_to_tail()
     }
 }

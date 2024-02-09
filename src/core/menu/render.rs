@@ -29,7 +29,7 @@ impl Renderable for Renderer {
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                if i == self.menu.position {
+                if i == self.menu.position() {
                     Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
                 } else {
                     Graphemes::new_with_style(
@@ -46,7 +46,7 @@ impl Renderable for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.menu.position, self.lines)
+        Pane::new(trimed, self.menu.position(), self.lines)
     }
 
     /// Default key bindings for item picker.
@@ -96,7 +96,7 @@ impl Renderable for Renderer {
     }
 
     fn postrun(&mut self) {
-        self.menu.position = 0;
+        self.menu.move_to_head()
     }
 }
 
