@@ -74,8 +74,6 @@ impl Renderable for Renderer {
     /// | <kbd> CTRL + C </kbd>  | Exit the event-loop with an error
     /// | <kbd> ↑ </kbd>         | Move backward
     /// | <kbd> ↓ </kbd>         | Move forward
-    /// | <kbd> CTRL + A </kbd>  | Move to the beginning of the items
-    /// | <kbd> CTRL + E </kbd>  | Move to the end of the items
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Move cursor.
@@ -95,18 +93,6 @@ impl Renderable for Renderer {
             }) => {
                 self.checkbox.forward();
             }
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('a'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.checkbox.move_to_head(),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('e'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.checkbox.move_to_tail(),
             Event::Key(KeyEvent {
                 code: KeyCode::Char(' '),
                 modifiers: KeyModifiers::NONE,

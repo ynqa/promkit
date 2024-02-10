@@ -45,8 +45,4 @@ impl Menu {
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()
     }
-
-    pub fn move_to_tail(&mut self) {
-        self.0.move_to_tail()
-    }
 }

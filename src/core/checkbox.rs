@@ -63,8 +63,4 @@ impl Checkbox {
     pub fn move_to_head(&mut self) {
         self.menu.move_to_head()
     }
-
-    pub fn move_to_tail(&mut self) {
-        self.menu.move_to_tail()
-    }
 }
