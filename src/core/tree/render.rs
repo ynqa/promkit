@@ -25,11 +25,11 @@ impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
         let matrix = self
             .tree
-            .nodes_with_depth()
+            .nodes()
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                if i == self.tree.position {
+                if i == self.tree.position() {
                     Graphemes::new_with_style(
                         format!("{}{}{}", self.cursor, " ".repeat(item.depth), item.data),
                         self.cursor_style,
@@ -49,7 +49,7 @@ impl Renderable for Renderer {
             .collect::<Vec<Graphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed, self.tree.position, self.lines)
+        Pane::new(trimed, self.tree.position(), self.lines)
     }
 
     fn handle_event(&mut self, event: &Event) {
@@ -87,7 +87,7 @@ impl Renderable for Renderer {
     }
 
     fn postrun(&mut self) {
-        self.tree.position = 0;
+        self.tree.move_to_head()
     }
 }
 
