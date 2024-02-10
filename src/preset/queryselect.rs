@@ -46,12 +46,12 @@ impl QuerySelect {
             .prefix(theme.prefix)
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
-            .cursor_style(theme.cursor_style);
+            .cursor_style(theme.text_editor_cursor_style);
         self.menu_builder = self
             .menu_builder
-            .cursor(theme.cursor)
+            .cursor(theme.menu_cursor)
             .style(theme.item_style)
-            .cursor_style(theme.cursor_style);
+            .cursor_style(theme.menu_cursor_style);
         self
     }
 
