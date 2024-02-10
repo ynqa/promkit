@@ -28,6 +28,10 @@ impl Grapheme {
         Grapheme::new_with_style(ch, ContentStyle::new())
     }
 
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
     pub fn new_with_style(ch: char, style: ContentStyle) -> Self {
         Self {
             ch,

@@ -1,3 +1,4 @@
+pub mod checkbox;
 mod cursor;
 pub mod menu;
 pub mod text;

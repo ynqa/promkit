@@ -1,3 +1,5 @@
+mod checkbox;
+pub use checkbox::Checkbox;
 mod confirm;
 pub use confirm::Confirm;
 mod readline;

@@ -1,3 +1,4 @@
+pub mod checkbox;
 pub mod confirm;
 pub mod password;
 pub mod queryselect;
