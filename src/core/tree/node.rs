@@ -10,6 +10,7 @@ pub struct NodeWithDepth {
     pub data: String,
     pub depth: usize,
     pub children_visible: bool,
+    pub is_leaf: bool,
 }
 
 impl Node {
@@ -38,6 +39,7 @@ impl Node {
             data: self.data.clone(),
             depth,
             children_visible: self.children_visible,
+            is_leaf: self.children.is_empty(),
         });
 
         if self.children_visible && !self.children.is_empty() {
@@ -89,6 +91,7 @@ mod test {
                     data: String::from("/"),
                     depth: 0,
                     children_visible: false,
+                    is_leaf: false,
                 }],
                 create_test_node().flatten()
             );
@@ -121,21 +124,25 @@ mod test {
                     data: String::from("/"),
                     depth: 0,
                     children_visible: true,
+                    is_leaf: false,
                 },
                 NodeWithDepth {
                     data: String::from("a"),
                     depth: 1,
                     children_visible: false,
+                    is_leaf: false,
                 },
                 NodeWithDepth {
                     data: String::from("b"),
                     depth: 1,
                     children_visible: false,
+                    is_leaf: true,
                 },
                 NodeWithDepth {
                     data: String::from("c"),
                     depth: 1,
                     children_visible: false,
+                    is_leaf: true,
                 },
             ];
             assert_eq!(expect, root.flatten());
