@@ -8,7 +8,7 @@ use crate::{
     grapheme::{trim, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable},
-    tree::Tree,
+    tree::{NodeWithDepth, Tree},
 };
 
 #[derive(Clone)]
@@ -16,13 +16,22 @@ pub struct Renderer {
     pub tree: Tree,
 
     pub style: ContentStyle,
-    pub cursor: String,
+    pub folded_cursor: String,
+    pub unfolded_cursor: String,
     pub cursor_style: ContentStyle,
     pub lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
+        let cursor = |item: &NodeWithDepth| -> &str {
+            if item.children_visible {
+                &self.unfolded_cursor
+            } else {
+                &self.folded_cursor
+            }
+        };
+
         let matrix = self
             .tree
             .nodes()
@@ -31,14 +40,14 @@ impl Renderable for Renderer {
             .map(|(i, item)| {
                 if i == self.tree.position() {
                     Graphemes::new_with_style(
-                        format!("{}{}{}", self.cursor, " ".repeat(item.depth), item.data),
+                        format!("{}{}{}", cursor(item), " ".repeat(item.depth), item.data),
                         self.cursor_style,
                     )
                 } else {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::new(self.cursor.clone()).widths()),
+                            " ".repeat(Graphemes::new(cursor(item)).widths()),
                             " ".repeat(item.depth),
                             item.data
                         ),

@@ -9,7 +9,8 @@ use crate::{
 pub struct Builder {
     tree: Tree,
     style: ContentStyle,
-    cursor: String,
+    folded_cursor: String,
+    unfolded_cursor: String,
     cursor_style: ContentStyle,
     lines: Option<usize>,
 }
@@ -19,14 +20,20 @@ impl Builder {
         Self {
             tree: Tree::new(root),
             style: Default::default(),
-            cursor: Default::default(),
+            folded_cursor: Default::default(),
+            unfolded_cursor: Default::default(),
             cursor_style: Default::default(),
             lines: Default::default(),
         }
     }
 
-    pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.cursor = cursor.as_ref().to_string();
+    pub fn folded_cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
+        self.folded_cursor = cursor.as_ref().to_string();
+        self
+    }
+
+    pub fn unfolded_cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
+        self.unfolded_cursor = cursor.as_ref().to_string();
         self
     }
 
@@ -48,7 +55,8 @@ impl Builder {
     pub fn build(self) -> Result<Renderer> {
         Ok(Renderer {
             tree: self.tree,
-            cursor: self.cursor,
+            folded_cursor: self.folded_cursor,
+            unfolded_cursor: self.unfolded_cursor,
             style: self.style,
             cursor_style: self.cursor_style,
             lines: self.lines,
