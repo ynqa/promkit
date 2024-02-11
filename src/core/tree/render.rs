@@ -25,10 +25,10 @@ pub struct Renderer {
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
         let cursor = |item: &NodeWithDepth| -> &str {
-            if item.children_visible {
-                &self.unfolded_cursor
-            } else {
+            if item.is_leaf || !item.children_visible {
                 &self.folded_cursor
+            } else {
+                &self.unfolded_cursor
             }
         };
 
