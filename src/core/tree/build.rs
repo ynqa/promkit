@@ -9,8 +9,8 @@ use crate::{
 pub struct Builder {
     tree: Tree,
     style: ContentStyle,
-    folded_cursor: String,
-    unfolded_cursor: String,
+    folded_symbol: String,
+    unfolded_symbol: String,
     cursor_style: ContentStyle,
     lines: Option<usize>,
 }
@@ -20,20 +20,20 @@ impl Builder {
         Self {
             tree: Tree::new(root),
             style: Default::default(),
-            folded_cursor: Default::default(),
-            unfolded_cursor: Default::default(),
+            folded_symbol: Default::default(),
+            unfolded_symbol: Default::default(),
             cursor_style: Default::default(),
             lines: Default::default(),
         }
     }
 
-    pub fn folded_cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.folded_cursor = cursor.as_ref().to_string();
+    pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
+        self.folded_symbol = symbol.as_ref().to_string();
         self
     }
 
-    pub fn unfolded_cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.unfolded_cursor = cursor.as_ref().to_string();
+    pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
+        self.unfolded_symbol = symbol.as_ref().to_string();
         self
     }
 
@@ -55,8 +55,8 @@ impl Builder {
     pub fn build(self) -> Result<Renderer> {
         Ok(Renderer {
             tree: self.tree,
-            folded_cursor: self.folded_cursor,
-            unfolded_cursor: self.unfolded_cursor,
+            folded_symbol: self.folded_symbol,
+            unfolded_symbol: self.unfolded_symbol,
             style: self.style,
             cursor_style: self.cursor_style,
             lines: self.lines,

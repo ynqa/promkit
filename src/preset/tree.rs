@@ -25,8 +25,8 @@ impl Tree {
         self.title_builder = self.title_builder.style(theme.title_style);
         self.tree_builder = self
             .tree_builder
-            .folded_cursor(theme.folded_cursor)
-            .unfolded_cursor(theme.unfolded_cursor)
+            .folded_symbol(theme.folded_symbol)
+            .unfolded_symbol(theme.unfolded_symbol)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
         self

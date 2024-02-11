@@ -16,19 +16,19 @@ pub struct Renderer {
     pub tree: Tree,
 
     pub style: ContentStyle,
-    pub folded_cursor: String,
-    pub unfolded_cursor: String,
+    pub folded_symbol: String,
+    pub unfolded_symbol: String,
     pub cursor_style: ContentStyle,
     pub lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> crate::pane::Pane {
-        let cursor = |item: &NodeWithDepth| -> &str {
+        let symbol = |item: &NodeWithDepth| -> &str {
             if item.is_leaf || !item.children_visible {
-                &self.folded_cursor
+                &self.folded_symbol
             } else {
-                &self.unfolded_cursor
+                &self.unfolded_symbol
             }
         };
 
@@ -40,14 +40,14 @@ impl Renderable for Renderer {
             .map(|(i, item)| {
                 if i == self.tree.position() {
                     Graphemes::new_with_style(
-                        format!("{}{}{}", cursor(item), " ".repeat(item.depth), item.data),
+                        format!("{}{}{}", symbol(item), " ".repeat(item.depth), item.data),
                         self.cursor_style,
                     )
                 } else {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::new(cursor(item)).widths()),
+                            " ".repeat(Graphemes::new(symbol(item)).widths()),
                             " ".repeat(item.depth),
                             item.data
                         ),
