@@ -3,8 +3,7 @@ use std::{fmt::Display, iter::FromIterator};
 use crate::{
     crossterm::event::Event,
     error::Result,
-    menu::Menu,
-    menu::{Builder as MenuRendererBuilder, Renderer as MenuRenderer},
+    listbox::{Builder as ListboxRendererBuilder, Listbox, Renderer as ListboxRenderer},
     preset::theme::queryselect::Theme,
     render::{Renderable, State},
     text::Builder as TextRendererBuilder,
@@ -19,7 +18,7 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 pub struct QuerySelect {
     title_builder: TextRendererBuilder,
     text_editor_builder: TextEditorRendererBuilder,
-    menu_builder: MenuRendererBuilder,
+    listbox_builder: ListboxRendererBuilder,
     filter: Box<Filter>,
 }
 
@@ -33,7 +32,7 @@ impl QuerySelect {
         Self {
             title_builder: Default::default(),
             text_editor_builder: Default::default(),
-            menu_builder: MenuRendererBuilder::new(items),
+            listbox_builder: ListboxRendererBuilder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -47,11 +46,11 @@ impl QuerySelect {
             .prefix_style(theme.prefix_style)
             .style(theme.text_style)
             .cursor_style(theme.text_editor_cursor_style);
-        self.menu_builder = self
-            .menu_builder
-            .cursor(theme.menu_cursor)
+        self.listbox_builder = self
+            .listbox_builder
+            .cursor(theme.listbox_cursor)
             .style(theme.item_style)
-            .cursor_style(theme.menu_cursor_style);
+            .cursor_style(theme.listbox_cursor_style);
         self
     }
 
@@ -70,8 +69,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn menu_lines(mut self, lines: usize) -> Self {
-        self.menu_builder = self.menu_builder.lines(lines);
+    pub fn listbox_lines(mut self, lines: usize) -> Self {
+        self.listbox_builder = self.listbox_builder.lines(lines);
         self
     }
 
@@ -87,7 +86,7 @@ impl QuerySelect {
             vec![
                 self.title_builder.build_state()?,
                 self.text_editor_builder.build_state()?,
-                self.menu_builder.build_state()?,
+                self.listbox_builder.build_state()?,
             ],
             move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
                 let text_editor_state = renderables[1]
@@ -96,7 +95,7 @@ impl QuerySelect {
                     .unwrap();
                 let select_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<MenuRenderer>>()
+                    .downcast_ref::<State<ListboxRenderer>>()
                     .unwrap();
 
                 if text_editor_state.text_changed() {
@@ -106,19 +105,19 @@ impl QuerySelect {
                         .texteditor
                         .text_without_cursor();
 
-                    let list = filter(&query, select_state.init.menu.items());
-                    select_state.after.borrow_mut().menu = Menu::from_iter(list);
+                    let list = filter(&query, select_state.init.listbox.items());
+                    select_state.after.borrow_mut().listbox = Listbox::from_iter(list);
                 }
                 Ok(true)
             },
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[2]
                     .as_any()
-                    .downcast_ref::<State<MenuRenderer>>()
+                    .downcast_ref::<State<ListboxRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .menu
+                    .listbox
                     .get())
             },
         )

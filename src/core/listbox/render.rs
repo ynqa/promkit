@@ -6,14 +6,14 @@ use crate::{
         style::ContentStyle,
     },
     grapheme::{trim, Graphemes},
-    menu::Menu,
+    listbox::Listbox,
     pane::Pane,
     render::{AsAny, Renderable},
 };
 
 #[derive(Clone)]
 pub struct Renderer {
-    pub menu: Menu,
+    pub listbox: Listbox,
 
     pub style: ContentStyle,
     pub cursor: String,
@@ -24,12 +24,12 @@ pub struct Renderer {
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let matrix = self
-            .menu
+            .listbox
             .items()
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                if i == self.menu.position() {
+                if i == self.listbox.position() {
                     Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
                 } else {
                     Graphemes::new_with_style(
@@ -46,7 +46,7 @@ impl Renderable for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.menu.position(), self.lines)
+        Pane::new(trimed, self.listbox.position(), self.lines)
     }
 
     /// Default key bindings for item picker.
@@ -66,7 +66,7 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.menu.backward();
+                self.listbox.backward();
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
@@ -74,7 +74,7 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.menu.forward();
+                self.listbox.forward();
             }
 
             _ => (),
@@ -82,7 +82,7 @@ impl Renderable for Renderer {
     }
 
     fn postrun(&mut self) {
-        self.menu.move_to_head()
+        self.listbox.move_to_head()
     }
 }
 

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     error::Result,
-    menu::{Builder as MenuRendererBuilder, Renderer as MenuRenderer},
+    listbox::{Builder as ListboxRendererBuilder, Renderer as ListboxRenderer},
     preset::theme::select::Theme,
     render::{Renderable, State},
     text::Builder as TextRendererBuilder,
@@ -11,22 +11,22 @@ use crate::{
 
 pub struct Select {
     title_builder: TextRendererBuilder,
-    menu_builder: MenuRendererBuilder,
+    listbox_builder: ListboxRendererBuilder,
 }
 
 impl Select {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_builder: Default::default(),
-            menu_builder: MenuRendererBuilder::new(items),
+            listbox_builder: ListboxRendererBuilder::new(items),
         }
         .theme(Theme::default())
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
         self.title_builder = self.title_builder.style(theme.title_style);
-        self.menu_builder = self
-            .menu_builder
+        self.listbox_builder = self
+            .listbox_builder
             .cursor(theme.cursor)
             .style(theme.item_style)
             .cursor_style(theme.cursor_style);
@@ -39,7 +39,7 @@ impl Select {
     }
 
     pub fn lines(mut self, lines: usize) -> Self {
-        self.menu_builder = self.menu_builder.lines(lines);
+        self.listbox_builder = self.listbox_builder.lines(lines);
         self
     }
 
@@ -47,17 +47,17 @@ impl Select {
         Prompt::try_new(
             vec![
                 self.title_builder.build_state()?,
-                self.menu_builder.build_state()?,
+                self.listbox_builder.build_state()?,
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<MenuRenderer>>()
+                    .downcast_ref::<State<ListboxRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
-                    .menu
+                    .listbox
                     .get())
             },
         )

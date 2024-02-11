@@ -5,18 +5,18 @@ pub use render::Renderer;
 mod build;
 pub use build::Builder;
 
-use crate::core::menu::Menu;
+use crate::core::listbox::Listbox;
 
 #[derive(Clone)]
 pub struct Checkbox {
-    menu: Menu,
+    listbox: Listbox,
     picked: HashSet<usize>,
 }
 
 impl<T: fmt::Display> FromIterator<T> for Checkbox {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
-            menu: Menu::from_iter(iter),
+            listbox: Listbox::from_iter(iter),
             picked: HashSet::new(),
         }
     }
@@ -24,11 +24,11 @@ impl<T: fmt::Display> FromIterator<T> for Checkbox {
 
 impl Checkbox {
     pub fn items(&self) -> &Vec<String> {
-        self.menu.items()
+        self.listbox.items()
     }
 
     pub fn position(&self) -> usize {
-        self.menu.position()
+        self.listbox.position()
     }
 
     pub fn picked_indexes(&self) -> &HashSet<usize> {
@@ -39,28 +39,28 @@ impl Checkbox {
         self.picked
             .iter()
             .fold(Vec::<String>::new(), |mut ret, idx| {
-                ret.push(self.menu.items().get(*idx).unwrap().to_owned());
+                ret.push(self.listbox.items().get(*idx).unwrap().to_owned());
                 ret
             })
     }
 
     pub fn toggle(&mut self) {
-        if self.picked.contains(&self.menu.position()) {
-            self.picked.remove(&self.menu.position());
+        if self.picked.contains(&self.listbox.position()) {
+            self.picked.remove(&self.listbox.position());
         } else {
-            self.picked.insert(self.menu.position());
+            self.picked.insert(self.listbox.position());
         }
     }
 
     pub fn backward(&mut self) -> bool {
-        self.menu.backward()
+        self.listbox.backward()
     }
 
     pub fn forward(&mut self) -> bool {
-        self.menu.forward()
+        self.listbox.forward()
     }
 
     pub fn move_to_head(&mut self) {
-        self.menu.move_to_head()
+        self.listbox.move_to_head()
     }
 }

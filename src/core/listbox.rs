@@ -8,9 +8,9 @@ pub use build::Builder;
 use crate::core::cursor::Cursor;
 
 #[derive(Clone)]
-pub struct Menu(Cursor<Vec<String>>);
+pub struct Listbox(Cursor<Vec<String>>);
 
-impl<T: fmt::Display> FromIterator<T> for Menu {
+impl<T: fmt::Display> FromIterator<T> for Listbox {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
             iter.into_iter().map(|e| format!("{}", e)).collect(),
@@ -18,7 +18,7 @@ impl<T: fmt::Display> FromIterator<T> for Menu {
     }
 }
 
-impl Menu {
+impl Listbox {
     pub fn items(&self) -> &Vec<String> {
         self.0.contents()
     }

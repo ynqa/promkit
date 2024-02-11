@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use crate::{
-    checkbox::{Builder as MenuRendererBuilder, Renderer as MenuRenderer},
+    checkbox::{Builder as CheckboxRendererBuilder, Renderer as CheckboxRenderer},
     error::Result,
     preset::theme::checkbox::Theme,
     render::{Renderable, State},
@@ -11,22 +11,22 @@ use crate::{
 
 pub struct Checkbox {
     title_builder: TextRendererBuilder,
-    menu_builder: MenuRendererBuilder,
+    checkbox_builder: CheckboxRendererBuilder,
 }
 
 impl Checkbox {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_builder: Default::default(),
-            menu_builder: MenuRendererBuilder::new(items),
+            checkbox_builder: CheckboxRendererBuilder::new(items),
         }
         .theme(Theme::default())
     }
 
     pub fn theme(mut self, theme: Theme) -> Self {
         self.title_builder = self.title_builder.style(theme.title_style);
-        self.menu_builder = self
-            .menu_builder
+        self.checkbox_builder = self
+            .checkbox_builder
             .mark(theme.mark)
             .cursor(theme.cursor)
             .style(theme.item_style)
@@ -40,7 +40,7 @@ impl Checkbox {
     }
 
     pub fn lines(mut self, lines: usize) -> Self {
-        self.menu_builder = self.menu_builder.lines(lines);
+        self.checkbox_builder = self.checkbox_builder.lines(lines);
         self
     }
 
@@ -48,13 +48,13 @@ impl Checkbox {
         Prompt::try_new(
             vec![
                 self.title_builder.build_state()?,
-                self.menu_builder.build_state()?,
+                self.checkbox_builder.build_state()?,
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<MenuRenderer>>()
+                    .downcast_ref::<State<CheckboxRenderer>>()
                     .unwrap()
                     .after
                     .borrow()
