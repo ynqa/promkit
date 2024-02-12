@@ -18,7 +18,10 @@ promkit = "0.3.0"
 
 - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
-  - Support ranging from presets for easy use to layout building using renderable objects, and even for displaying your own data structures
+  - Preset; Support for quickly setting up a UI by providing simple parameters.
+  - Configure settings such as the order in which each UI component is displayed.
+    In short, you can create your own preset according to your preferences.
+  - (Upcoming) Support to display yor own data structures.
 - Versatile customization capabilities
   - Themes for defining the outer shell style, including text and cursor colors
   - Validation for user input and error message construction
@@ -26,7 +29,7 @@ promkit = "0.3.0"
 
 ## Examples
 
-*promkit* provides presets so that users can utilize prompts immediately without
+*promkit* provides presets so that users can try prompts immediately without
 having to build complex components for specific use cases.  
 
 ### Readline
