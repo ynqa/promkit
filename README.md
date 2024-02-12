@@ -29,32 +29,28 @@ promkit = "0.3.0"
 *promkit* provides presets so that users can utilize prompts immediately without
 having to build complex components for specific use cases.  
 
+### Readline
+
 ```bash
 cargo run --example readline
 ```
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
-
-The actual codes:
+<details>
+<summary>Code</summary>
 
 ```rust
 use promkit::{error::Result, preset::Readline};
 
 fn main() -> Result {
-    let mut p = Readline::default()
-        .title("Feel free to fill in")
-        .validator(
-            |text| text.len() > 10,
-            |text| format!("Length must be over 10 but got {}", text.len()),
-        )
-        .prompt()?;
+    let mut p = Readline::default().title("Feel free to fill in").prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
 ```
+</details>
+</br>
 
-See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
-for more examples.
+![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
 
 ## Why *promkit*?
 
