@@ -31,9 +31,14 @@ having to build complex components for specific use cases.
 
 ### Readline
 
+<details>
+<summary>Command</summary>
+
 ```bash
 cargo run --example readline
 ```
+
+</details>
 
 <details>
 <summary>Code</summary>
@@ -51,6 +56,138 @@ fn main() -> Result {
 </br>
 
 ![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
+
+### Confirm
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example confirm
+```
+
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::Confirm};
+
+fn main() -> Result {
+    let mut p = Confirm::new("Do you like programming?").prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+</br>
+
+![confirm](https://github.com/ynqa/promkit/assets/6745370/bcc17774-c516-4961-95dd-13036cec5137)
+
+### Password
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example password
+```
+
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::Password};
+
+fn main() -> Result {
+    let mut p = Password::default()
+        .title("Put your password")
+        .validator(
+            |text| 4 < text.len() && text.len() < 10,
+            |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
+        )
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+</br>
+
+![password](https://github.com/ynqa/promkit/assets/6745370/15bc9dc7-8e17-4c57-8634-9dcc55effd60)
+
+### Select
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example select
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::Select};
+
+fn main() -> Result {
+    let mut p = Select::new(0..100)
+        .title("What number do you like?")
+        .lines(5)
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+</br>
+
+![select](https://github.com/ynqa/promkit/assets/6745370/bdf3338a-5647-4e6d-88a6-0c79834992ca)
+
+### QuerySelect
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example queryselect
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::QuerySelect};
+
+fn main() -> Result {
+    let mut p = QuerySelect::new(0..100, |text, items| -> Vec<String> {
+        text.parse::<usize>()
+            .map(|query| {
+                items
+                    .iter()
+                    .filter(|num| query <= num.parse::<usize>().unwrap_or_default())
+                    .map(|num| num.to_string())
+                    .collect::<Vec<String>>()
+            })
+            .unwrap_or(items.clone())
+    })
+    .title("What number do you like?")
+    .listbox_lines(5)
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+</br>
+
+![queryselect](https://github.com/ynqa/promkit/assets/6745370/1abdd5c0-2c3b-47d3-916e-386fd4f50779)
 
 ## Why *promkit*?
 
