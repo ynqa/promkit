@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.2.0"
+promkit = "0.3.0"
 ```
 
 ## Features
