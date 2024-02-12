@@ -169,3 +169,6 @@ Let's take the Readline preset as an example to explain.
 This project is licensed under the MIT License.
 See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
 file for details.
+
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
