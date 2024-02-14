@@ -1,5 +1,11 @@
+mod history;
+pub use history::History;
 mod render;
-pub use render::{History, Mode, Renderer, Suggest};
+pub use render::Renderer;
+mod suggest;
+pub use suggest::Suggest;
+mod mode;
+pub use mode::Mode;
 mod build;
 pub use build::Builder;
 

@@ -8,23 +8,8 @@ use crate::{
     grapheme::{matrixify, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
-    text_editor::TextEditor,
+    text_editor::{History, Mode, Suggest, TextEditor},
 };
-
-mod history;
-pub use history::History;
-mod suggest;
-pub use suggest::Suggest;
-
-/// Edit mode.
-#[derive(Clone, Default)]
-pub enum Mode {
-    #[default]
-    /// Insert a char at the current position.
-    Insert,
-    /// Overwrite a char at the current position.
-    Overwrite,
-}
 
 #[derive(Clone)]
 pub struct Renderer {
