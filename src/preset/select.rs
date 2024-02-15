@@ -1,52 +1,83 @@
 use std::fmt::Display;
 
 use crate::{
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     listbox,
-    preset::theme::select::Theme,
     render::{Renderable, State},
+    style::Style,
     text, Prompt,
 };
 
+pub struct Theme {
+    /// Style for title (enabled if you set title).
+    pub title_style: ContentStyle,
+
+    /// Style for selected item.
+    pub active_item_style: ContentStyle,
+    /// Style for un-selected item.
+    pub inactive_item_style: ContentStyle,
+
+    /// Symbol for selected line.
+    pub cursor: String,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self {
+            title_style: Style::new()
+                .attrs(Attributes::from(Attribute::Bold))
+                .build(),
+            active_item_style: Style::new().fgc(Color::DarkCyan).build(),
+            inactive_item_style: Style::new().build(),
+            cursor: String::from("❯ "),
+        }
+    }
+}
+
 pub struct Select {
-    title_builder: text::Builder,
-    listbox_builder: listbox::Builder,
+    title: String,
+    listbox: listbox::Listbox,
+    theme: Theme,
+    window_size: Option<usize>,
 }
 
 impl Select {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
-            title_builder: Default::default(),
-            listbox_builder: listbox::Builder::new(items),
+            title: Default::default(),
+            listbox: listbox::Listbox::from_iter(items),
+            theme: Default::default(),
+            window_size: Default::default(),
         }
-        .theme(Theme::default())
-    }
-
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self.title_builder = self.title_builder.style(theme.title_style);
-        self.listbox_builder = self
-            .listbox_builder
-            .cursor(theme.cursor)
-            .style(theme.item_style)
-            .cursor_style(theme.cursor_style);
-        self
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_builder = self.title_builder.text(text);
+        self.title = text.as_ref().to_string();
         self
     }
 
-    pub fn lines(mut self, lines: usize) -> Self {
-        self.listbox_builder = self.listbox_builder.lines(lines);
+    pub fn theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
+        self
+    }
+
+    pub fn window_size(mut self, window_size: usize) -> Self {
+        self.window_size = Some(window_size);
         self
     }
 
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             vec![
-                self.title_builder.build_state()?,
-                self.listbox_builder.build_state()?,
+                State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
+                State::<listbox::Renderer>::try_new(
+                    self.listbox,
+                    self.theme.active_item_style,
+                    self.theme.inactive_item_style,
+                    self.theme.cursor,
+                    self.window_size,
+                )?,
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {

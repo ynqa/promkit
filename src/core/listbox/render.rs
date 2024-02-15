@@ -5,20 +5,45 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
+    error::Result,
     grapheme::{trim, Graphemes},
     listbox::Listbox,
     pane::Pane,
-    render::{AsAny, Renderable},
+    render::{AsAny, Renderable, State},
 };
 
 #[derive(Clone)]
 pub struct Renderer {
     pub listbox: Listbox,
 
-    pub style: ContentStyle,
+    /// Style for selected line.
+    pub active_item_style: ContentStyle,
+    /// Style for un-selected line.
+    pub inactive_item_style: ContentStyle,
+
+    /// Symbol for selected line.
     pub cursor: String,
-    pub cursor_style: ContentStyle,
-    pub lines: Option<usize>,
+
+    /// Window size.
+    pub window_size: Option<usize>,
+}
+
+impl State<Renderer> {
+    pub fn try_new(
+        listbox: Listbox,
+        active_item_style: ContentStyle,
+        inactive_item_style: ContentStyle,
+        cursor: String,
+        window_size: Option<usize>,
+    ) -> Result<Box<State<Renderer>>> {
+        Ok(Box::new(State::<Renderer>::new(Renderer {
+            listbox,
+            active_item_style,
+            inactive_item_style,
+            cursor,
+            window_size,
+        })))
+    }
 }
 
 impl Renderable for Renderer {
@@ -30,7 +55,10 @@ impl Renderable for Renderer {
             .enumerate()
             .map(|(i, item)| {
                 if i == self.listbox.position() {
-                    Graphemes::new_with_style(format!("{}{}", self.cursor, item), self.cursor_style)
+                    Graphemes::new_with_style(
+                        format!("{}{}", self.cursor, item),
+                        self.active_item_style,
+                    )
                 } else {
                     Graphemes::new_with_style(
                         format!(
@@ -38,7 +66,7 @@ impl Renderable for Renderer {
                             " ".repeat(Graphemes::new(self.cursor.clone()).widths()),
                             item
                         ),
-                        self.style,
+                        self.inactive_item_style,
                     )
                 }
             })
@@ -46,7 +74,7 @@ impl Renderable for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.listbox.position(), self.lines)
+        Pane::new(trimed, self.listbox.position(), self.window_size)
     }
 
     /// Default key bindings for item picker.

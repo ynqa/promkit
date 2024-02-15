@@ -2,8 +2,6 @@ use std::{fmt, iter::FromIterator};
 
 mod render;
 pub use render::Renderer;
-mod build;
-pub use build::Builder;
 
 use crate::core::cursor::Cursor;
 
