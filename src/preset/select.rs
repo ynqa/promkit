@@ -2,23 +2,22 @@ use std::fmt::Display;
 
 use crate::{
     error::Result,
-    listbox::{Builder as ListboxRendererBuilder, Renderer as ListboxRenderer},
+    listbox,
     preset::theme::select::Theme,
     render::{Renderable, State},
-    text::Builder as TextRendererBuilder,
-    Prompt,
+    text, Prompt,
 };
 
 pub struct Select {
-    title_builder: TextRendererBuilder,
-    listbox_builder: ListboxRendererBuilder,
+    title_builder: text::Builder,
+    listbox_builder: listbox::Builder,
 }
 
 impl Select {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_builder: Default::default(),
-            listbox_builder: ListboxRendererBuilder::new(items),
+            listbox_builder: listbox::Builder::new(items),
         }
         .theme(Theme::default())
     }
@@ -53,7 +52,7 @@ impl Select {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<ListboxRenderer>>()
+                    .downcast_ref::<State<listbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

@@ -3,17 +3,16 @@ use crate::{
     error::Result,
     preset::theme::password::Theme,
     render::{Renderable, State},
-    text::{Builder as TextRendererBuilder, Renderer as TextRenderer},
-    text_editor::{Builder as TextEditorRendererBuilder, Renderer as TextEditorRenderer},
+    text, text_editor,
     validate::Validator,
     Prompt,
 };
 
 pub struct Password {
-    title_builder: TextRendererBuilder,
-    text_editor_builder: TextEditorRendererBuilder,
+    title_builder: text::Builder,
+    text_editor_builder: text_editor::Builder,
     validator: Option<Validator<str>>,
-    error_message_builder: TextRendererBuilder,
+    error_message_builder: text::Builder,
 }
 
 impl Default for Password {
@@ -70,7 +69,7 @@ impl Password {
                   -> Result<bool> {
                 let text: String = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorRenderer>>()
+                    .downcast_ref::<State<text_editor::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()
@@ -79,7 +78,7 @@ impl Password {
 
                 let error_message_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<TextRenderer>>()
+                    .downcast_ref::<State<text::Renderer>>()
                     .unwrap();
 
                 let ret = match event {
@@ -109,7 +108,7 @@ impl Password {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorRenderer>>()
+                    .downcast_ref::<State<text_editor::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

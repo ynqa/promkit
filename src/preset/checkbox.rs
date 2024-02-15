@@ -1,24 +1,23 @@
 use std::fmt::Display;
 
 use crate::{
-    checkbox::{Builder as CheckboxRendererBuilder, Renderer as CheckboxRenderer},
+    checkbox,
     error::Result,
     preset::theme::checkbox::Theme,
     render::{Renderable, State},
-    text::Builder as TextRendererBuilder,
-    Prompt,
+    text, Prompt,
 };
 
 pub struct Checkbox {
-    title_builder: TextRendererBuilder,
-    checkbox_builder: CheckboxRendererBuilder,
+    title_builder: text::Builder,
+    checkbox_builder: checkbox::Builder,
 }
 
 impl Checkbox {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_builder: Default::default(),
-            checkbox_builder: CheckboxRendererBuilder::new(items),
+            checkbox_builder: checkbox::Builder::new(items),
         }
         .theme(Theme::default())
     }
@@ -54,7 +53,7 @@ impl Checkbox {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<CheckboxRenderer>>()
+                    .downcast_ref::<State<checkbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

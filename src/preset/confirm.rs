@@ -3,23 +3,21 @@ use crate::{
     error::Result,
     preset::theme::confirm::Theme,
     render::{Renderable, State},
-    text::{Builder as TextRendererBuilder, Renderer as TextRenderer},
-    text_editor::{
-        Builder as TextEditorRendererBuilder, Renderer as TextEditorRenderer, TextEditor,
-    },
+    text,
+    text_editor::{self, TextEditor},
     validate::Validator,
     Prompt,
 };
 
 pub struct Confirm {
-    text_editor_builder: TextEditorRendererBuilder,
-    error_message_builder: TextRendererBuilder,
+    text_editor_builder: text_editor::Builder,
+    error_message_builder: text::Builder,
 }
 
 impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            text_editor_builder: TextEditorRendererBuilder::default()
+            text_editor_builder: text_editor::Builder::default()
                 .prefix(format!("{} (y/n) ", text.as_ref())),
             error_message_builder: Default::default(),
         }
@@ -56,7 +54,7 @@ impl Confirm {
                   -> Result<bool> {
                 let text_editor_state = renderables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditorRenderer>>()
+                    .downcast_ref::<State<text_editor::Renderer>>()
                     .unwrap();
 
                 let text = text_editor_state
@@ -67,7 +65,7 @@ impl Confirm {
 
                 let error_message_state = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextRenderer>>()
+                    .downcast_ref::<State<text::Renderer>>()
                     .unwrap();
 
                 let ret = match event {
@@ -95,7 +93,7 @@ impl Confirm {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[0]
                     .as_any()
-                    .downcast_ref::<State<TextEditorRenderer>>()
+                    .downcast_ref::<State<text_editor::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

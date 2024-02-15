@@ -2,21 +2,21 @@ use crate::{
     error::Result,
     preset::theme::tree::Theme,
     render::{Renderable, State},
-    text::Builder as TextRendererBuilder,
-    tree::{Builder as TreeRendererBuilder, Node, Renderer as TreeRenderer},
+    text,
+    tree::{self, Node},
     Prompt,
 };
 
 pub struct Tree {
-    title_builder: TextRendererBuilder,
-    tree_builder: TreeRendererBuilder,
+    title_builder: text::Builder,
+    tree_builder: tree::Builder,
 }
 
 impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             title_builder: Default::default(),
-            tree_builder: TreeRendererBuilder::new(root),
+            tree_builder: tree::Builder::new(root),
         }
         .theme(Theme::default())
     }
@@ -52,7 +52,7 @@ impl Tree {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TreeRenderer>>()
+                    .downcast_ref::<State<tree::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

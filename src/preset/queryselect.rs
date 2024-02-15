@@ -3,22 +3,20 @@ use std::{fmt::Display, iter::FromIterator};
 use crate::{
     crossterm::event::Event,
     error::Result,
-    listbox::{Builder as ListboxRendererBuilder, Listbox, Renderer as ListboxRenderer},
+    listbox::{self, Listbox},
     preset::theme::queryselect::Theme,
     render::{Renderable, State},
-    text::Builder as TextRendererBuilder,
-    text_editor::{
-        Builder as TextEditorRendererBuilder, Mode, Renderer as TextEditorRenderer, Suggest,
-    },
+    text,
+    text_editor::{self, Mode, Suggest},
     Prompt,
 };
 
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 
 pub struct QuerySelect {
-    title_builder: TextRendererBuilder,
-    text_editor_builder: TextEditorRendererBuilder,
-    listbox_builder: ListboxRendererBuilder,
+    title_builder: text::Builder,
+    text_editor_builder: text_editor::Builder,
+    listbox_builder: listbox::Builder,
     filter: Box<Filter>,
 }
 
@@ -32,7 +30,7 @@ impl QuerySelect {
         Self {
             title_builder: Default::default(),
             text_editor_builder: Default::default(),
-            listbox_builder: ListboxRendererBuilder::new(items),
+            listbox_builder: listbox::Builder::new(items),
             filter: Box::new(filter),
         }
         .theme(Theme::default())
@@ -91,11 +89,11 @@ impl QuerySelect {
             move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
                 let text_editor_state = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<TextEditorRenderer>>()
+                    .downcast_ref::<State<text_editor::Renderer>>()
                     .unwrap();
                 let select_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<ListboxRenderer>>()
+                    .downcast_ref::<State<listbox::Renderer>>()
                     .unwrap();
 
                 if text_editor_state.text_changed() {
@@ -113,7 +111,7 @@ impl QuerySelect {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[2]
                     .as_any()
-                    .downcast_ref::<State<ListboxRenderer>>()
+                    .downcast_ref::<State<listbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()
