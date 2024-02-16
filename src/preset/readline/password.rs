@@ -1,8 +1,6 @@
-use crate::{
-    error::Result,
-    preset::{self, Readline},
-    Prompt,
-};
+use crate::{error::Result, Prompt};
+
+use super::{Readline, Theme};
 
 pub struct Password(Readline);
 
@@ -18,7 +16,7 @@ impl Password {
         self
     }
 
-    pub fn theme(mut self, theme: preset::readline::Theme) -> Self {
+    pub fn theme(mut self, theme: Theme) -> Self {
         self = Password(self.0.theme(theme));
         self
     }

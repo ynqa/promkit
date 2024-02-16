@@ -1,9 +1,7 @@
 mod checkbox;
 pub use checkbox::Checkbox;
-// mod confirm;
-// pub use confirm::Confirm;
 mod readline;
-pub use readline::{Password, Readline};
+pub use readline::{Confirm, Password, Readline};
 mod select;
 pub use select::Select;
 // mod queryselect;

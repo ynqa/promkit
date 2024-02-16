@@ -21,6 +21,9 @@ pub struct Renderer {
 
     /// Prompt string.
     pub ps: String,
+    /// Character to use for masking the input string.
+    pub mask: Option<char>,
+
     /// Style for prompt string.
     pub ps_style: ContentStyle,
     /// Style for selected character.
@@ -30,10 +33,6 @@ pub struct Renderer {
 
     /// Edit mode: insert or overwrite.
     pub mode: Mode,
-
-    /// Character to use for masking the input string.
-    pub mask: Option<char>,
-
     /// Window size.
     pub window_size: Option<usize>,
 }
@@ -45,11 +44,11 @@ impl State<Renderer> {
         history: Option<History>,
         suggest: Suggest,
         ps: String,
+        mask: Option<char>,
         ps_style: ContentStyle,
         active_char_style: ContentStyle,
         inactive_item_style: ContentStyle,
         mode: Mode,
-        mask: Option<char>,
         window_size: Option<usize>,
     ) -> Result<Box<State<Renderer>>> {
         Ok(Box::new(State::<Renderer>::new(Renderer {

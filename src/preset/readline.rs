@@ -12,6 +12,8 @@ use crate::{
     Prompt,
 };
 
+mod confirm;
+pub use confirm::Confirm;
 mod password;
 pub use password::Password;
 
@@ -21,8 +23,6 @@ pub struct Theme {
     /// Style for error message (enabled if you set error message).
     pub error_message_style: ContentStyle,
 
-    /// Prompt string.
-    pub ps: String,
     /// Style for prompt string.
     pub ps_style: ContentStyle,
     /// Style for selected character.
@@ -37,7 +37,6 @@ impl Default for Theme {
             title_style: Style::new()
                 .attrs(Attributes::from(Attribute::Bold))
                 .build(),
-            ps: String::from("❯❯ "),
             ps_style: Style::new().fgc(Color::DarkGreen).build(),
             inactive_item_style: Style::new().build(),
             active_char_style: Style::new().bgc(Color::DarkCyan).build(),
@@ -56,6 +55,7 @@ pub struct Readline {
     error_message: String,
     validator: Option<Validator<str>>,
     theme: Theme,
+    ps: String,
     history: Option<History>,
     suggest: Suggest,
     mode: Mode,
@@ -81,6 +81,11 @@ impl Readline {
 
     pub fn enable_history(mut self) -> Self {
         self.history = Some(History::default());
+        self
+    }
+
+    pub fn prefix_string<T: AsRef<str>>(mut self, ps: T) -> Self {
+        self.ps = ps.as_ref().to_string();
         self
     }
 
@@ -118,12 +123,12 @@ impl Readline {
                     self.texteditor,
                     self.history,
                     self.suggest,
-                    self.theme.ps,
+                    self.ps,
+                    self.mask,
                     self.theme.ps_style,
                     self.theme.active_char_style,
                     self.theme.inactive_item_style,
                     self.mode,
-                    self.mask,
                     self.window_size,
                 )?,
                 State::<text::Renderer>::try_new(
