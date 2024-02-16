@@ -1,9 +1,9 @@
 use std::{collections::HashSet, fmt, iter::FromIterator};
 
+use crate::core::listbox::Listbox;
+
 mod render;
 pub use render::Renderer;
-
-use crate::core::listbox::Listbox;
 
 #[derive(Clone)]
 pub struct Checkbox {

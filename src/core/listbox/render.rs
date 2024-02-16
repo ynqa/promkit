@@ -7,10 +7,11 @@ use crate::{
     },
     error::Result,
     grapheme::{trim, Graphemes},
-    listbox::Listbox,
     pane::Pane,
     render::{AsAny, Renderable, State},
 };
+
+use super::Listbox;
 
 #[derive(Clone)]
 pub struct Renderer {

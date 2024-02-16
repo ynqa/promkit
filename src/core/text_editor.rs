@@ -1,3 +1,5 @@
+use crate::core::cursor::Cursor;
+
 mod history;
 pub use history::History;
 mod render;
@@ -6,8 +8,6 @@ mod suggest;
 pub use suggest::Suggest;
 mod mode;
 pub use mode::Mode;
-
-use crate::core::cursor::Cursor;
 
 #[derive(Clone)]
 pub struct TextEditor(Cursor<String>);

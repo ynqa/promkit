@@ -1,9 +1,9 @@
 use std::{fmt, iter::FromIterator};
 
+use crate::core::cursor::Cursor;
+
 mod render;
 pub use render::Renderer;
-
-use crate::core::cursor::Cursor;
 
 #[derive(Clone)]
 pub struct Listbox(Cursor<Vec<String>>);

@@ -9,8 +9,9 @@ use crate::{
     grapheme::{matrixify, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
-    text_editor::{History, Mode, Suggest, TextEditor},
 };
+
+use super::{History, Mode, Suggest, TextEditor};
 
 #[derive(Clone)]
 pub struct Renderer {

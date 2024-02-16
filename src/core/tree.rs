@@ -1,10 +1,10 @@
 mod node;
 
+use crate::core::cursor::Cursor;
+
 pub use node::{Node, NodeWithDepth};
 mod render;
 pub use render::Renderer;
-
-use crate::core::cursor::Cursor;
 
 #[derive(Clone)]
 pub struct Tree {
