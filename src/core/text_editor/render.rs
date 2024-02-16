@@ -29,7 +29,7 @@ pub struct Renderer {
     /// Style for selected character.
     pub active_char_style: ContentStyle,
     /// Style for un-selected character.
-    pub inactive_item_style: ContentStyle,
+    pub inactive_char_style: ContentStyle,
 
     /// Edit mode: insert or overwrite.
     pub mode: Mode,
@@ -47,7 +47,7 @@ impl State<Renderer> {
         mask: Option<char>,
         ps_style: ContentStyle,
         active_char_style: ContentStyle,
-        inactive_item_style: ContentStyle,
+        inactive_char_style: ContentStyle,
         mode: Mode,
         window_size: Option<usize>,
     ) -> Result<Box<State<Renderer>>> {
@@ -58,7 +58,7 @@ impl State<Renderer> {
             ps,
             ps_style,
             active_char_style,
-            inactive_item_style,
+            inactive_char_style,
             mode,
             mask,
             window_size,
@@ -76,7 +76,7 @@ impl Renderable for Renderer {
             None => self.texteditor.text(),
         };
 
-        let mut styled = Graphemes::new_with_style(text, self.inactive_item_style)
+        let mut styled = Graphemes::new_with_style(text, self.inactive_char_style)
             .stylize(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);

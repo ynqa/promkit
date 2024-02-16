@@ -28,7 +28,7 @@ pub struct Theme {
     /// Style for selected character.
     pub active_char_style: ContentStyle,
     /// Style for un-selected character.
-    pub inactive_item_style: ContentStyle,
+    pub inactive_char_style: ContentStyle,
 }
 
 impl Default for Theme {
@@ -38,8 +38,8 @@ impl Default for Theme {
                 .attrs(Attributes::from(Attribute::Bold))
                 .build(),
             ps_style: Style::new().fgc(Color::DarkGreen).build(),
-            inactive_item_style: Style::new().build(),
             active_char_style: Style::new().bgc(Color::DarkCyan).build(),
+            inactive_char_style: Style::new().build(),
             error_message_style: Style::new()
                 .fgc(Color::DarkRed)
                 .attrs(Attributes::from(Attribute::Bold))
@@ -127,7 +127,7 @@ impl Readline {
                     self.mask,
                     self.theme.ps_style,
                     self.theme.active_char_style,
-                    self.theme.inactive_item_style,
+                    self.theme.inactive_char_style,
                     self.mode,
                     self.window_size,
                 )?,

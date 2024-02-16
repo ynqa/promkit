@@ -3,7 +3,7 @@ use std::fmt::Display;
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    listbox,
+    listbox::{self, Listbox},
     render::{Renderable, State},
     style::Style,
     text, Prompt,
@@ -33,7 +33,7 @@ impl Default for Theme {
 
 pub struct Select {
     title: String,
-    listbox: listbox::Listbox,
+    listbox: Listbox,
     theme: Theme,
     cursor: String,
     window_size: Option<usize>,
@@ -43,7 +43,7 @@ impl Select {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title: Default::default(),
-            listbox: listbox::Listbox::from_iter(items),
+            listbox: Listbox::from_iter(items),
             theme: Default::default(),
             cursor: String::from("❯ "),
             window_size: Default::default(),

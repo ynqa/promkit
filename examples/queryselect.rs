@@ -13,7 +13,7 @@ fn main() -> Result {
             .unwrap_or(items.clone())
     })
     .title("What number do you like?")
-    .listbox_lines(5)
+    .listbox_window_size(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
