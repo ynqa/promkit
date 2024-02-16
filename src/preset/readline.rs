@@ -12,6 +12,9 @@ use crate::{
     Prompt,
 };
 
+mod password;
+pub use password::Password;
+
 pub struct Theme {
     /// Style for title (enabled if you set title).
     pub title_style: ContentStyle,
