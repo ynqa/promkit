@@ -8,76 +8,71 @@ use crate::{
     Prompt,
 };
 
-pub struct Theme {
-    /// Style for title (enabled if you set title).
-    pub title_style: ContentStyle,
-
-    /// Style for selected line.
-    pub active_item_style: ContentStyle,
-    /// Style for un-selected line.
-    pub inactive_item_style: ContentStyle,
-}
-
-impl Default for Theme {
-    fn default() -> Self {
-        Self {
-            title_style: Style::new()
-                .attrs(Attributes::from(Attribute::Bold))
-                .build(),
-            active_item_style: Style::new().fgc(Color::DarkCyan).build(),
-            inactive_item_style: Style::new().build(),
-        }
-    }
-}
-
 pub struct Tree {
-    title: String,
-    tree: tree::Tree,
-    theme: Theme,
-    folded_symbol: String,
-    unfolded_symbol: String,
-    window_size: Option<usize>,
+    title_renderer: text::Renderer,
+    tree_renderer: tree::Renderer,
 }
 
 impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
-            title: Default::default(),
-            tree: tree::Tree::new(root),
-            theme: Default::default(),
-            folded_symbol: String::from("▶︎ "),
-            unfolded_symbol: String::from("▼ "),
-            window_size: Default::default(),
+            title_renderer: text::Renderer {
+                text: Default::default(),
+                style: Style::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+            },
+            tree_renderer: tree::Renderer {
+                tree: tree::Tree::new(root),
+                folded_symbol: String::from("▶︎ "),
+                unfolded_symbol: String::from("▼ "),
+                active_item_style: Style::new().fgc(Color::DarkCyan).build(),
+                inactive_item_style: Style::new().build(),
+                window_size: Default::default(),
+            },
         }
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title = text.as_ref().to_string();
+        self.title_renderer.text = text.as_ref().to_string();
         self
     }
 
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self.theme = theme;
+    pub fn title_style(mut self, style: ContentStyle) -> Self {
+        self.title_renderer.style = style;
+        self
+    }
+
+    pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
+        self.tree_renderer.folded_symbol = symbol.as_ref().to_string();
+        self
+    }
+
+    pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
+        self.tree_renderer.unfolded_symbol = symbol.as_ref().to_string();
+        self
+    }
+
+    pub fn active_item_style(mut self, style: ContentStyle) -> Self {
+        self.tree_renderer.active_item_style = style;
+        self
+    }
+
+    pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
+        self.tree_renderer.inactive_item_style = style;
         self
     }
 
     pub fn window_size(mut self, window_size: usize) -> Self {
-        self.window_size = Some(window_size);
+        self.tree_renderer.window_size = Some(window_size);
         self
     }
 
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             vec![
-                State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
-                State::<tree::Renderer>::try_new(
-                    self.tree,
-                    self.folded_symbol,
-                    self.unfolded_symbol,
-                    self.theme.active_item_style,
-                    self.theme.inactive_item_style,
-                    self.window_size,
-                )?,
+                Box::new(State::<text::Renderer>::new(self.title_renderer)),
+                Box::new(State::<tree::Renderer>::new(self.tree_renderer)),
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {

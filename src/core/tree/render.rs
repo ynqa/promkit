@@ -5,10 +5,9 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    error::Result,
     grapheme::{trim, Graphemes},
     pane::Pane,
-    render::{AsAny, Renderable, State},
+    render::{AsAny, Renderable},
     tree::{NodeWithDepth, Tree},
 };
 
@@ -28,26 +27,6 @@ pub struct Renderer {
 
     /// Window size.
     pub window_size: Option<usize>,
-}
-
-impl State<Renderer> {
-    pub fn try_new(
-        tree: Tree,
-        folded_symbol: String,
-        unfolded_symbol: String,
-        active_item_style: ContentStyle,
-        inactive_item_style: ContentStyle,
-        window_size: Option<usize>,
-    ) -> Result<Box<State<Renderer>>> {
-        Ok(Box::new(State::<Renderer>::new(Renderer {
-            tree,
-            folded_symbol,
-            unfolded_symbol,
-            active_item_style,
-            inactive_item_style,
-            window_size,
-        })))
-    }
 }
 
 impl Renderable for Renderer {

@@ -5,7 +5,6 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    error::Result,
     grapheme::{matrixify, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
@@ -32,38 +31,9 @@ pub struct Renderer {
     pub inactive_char_style: ContentStyle,
 
     /// Edit mode: insert or overwrite.
-    pub mode: Mode,
+    pub edit_mode: Mode,
     /// Window size.
     pub window_size: Option<usize>,
-}
-
-impl State<Renderer> {
-    #![allow(clippy::too_many_arguments)]
-    pub fn try_new(
-        texteditor: TextEditor,
-        history: Option<History>,
-        suggest: Suggest,
-        ps: String,
-        mask: Option<char>,
-        ps_style: ContentStyle,
-        active_char_style: ContentStyle,
-        inactive_char_style: ContentStyle,
-        mode: Mode,
-        window_size: Option<usize>,
-    ) -> Result<Box<State<Renderer>>> {
-        Ok(Box::new(State::<Renderer>::new(Renderer {
-            texteditor,
-            history,
-            suggest,
-            ps,
-            ps_style,
-            active_char_style,
-            inactive_char_style,
-            mode,
-            mask,
-            window_size,
-        })))
-    }
 }
 
 impl Renderable for Renderer {
@@ -199,7 +169,7 @@ impl Renderable for Renderer {
                 modifiers: KeyModifiers::SHIFT,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            }) => match self.mode {
+            }) => match self.edit_mode {
                 Mode::Insert => self.texteditor.insert(*ch),
                 Mode::Overwrite => self.texteditor.overwrite(*ch),
             },

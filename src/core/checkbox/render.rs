@@ -5,10 +5,9 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    error::Result,
     grapheme::{trim, Grapheme, Graphemes},
     pane::Pane,
-    render::{AsAny, Renderable, State},
+    render::{AsAny, Renderable},
 };
 
 use super::Checkbox;
@@ -29,26 +28,6 @@ pub struct Renderer {
 
     /// Window size.
     pub window_size: Option<usize>,
-}
-
-impl State<Renderer> {
-    pub fn try_new(
-        checkbox: Checkbox,
-        cursor: String,
-        mark: char,
-        active_item_style: ContentStyle,
-        inactive_item_style: ContentStyle,
-        window_size: Option<usize>,
-    ) -> Result<Box<State<Renderer>>> {
-        Ok(Box::new(State::<Renderer>::new(Renderer {
-            checkbox,
-            cursor,
-            mark,
-            active_item_style,
-            inactive_item_style,
-            window_size,
-        })))
-    }
 }
 
 impl Renderable for Renderer {

@@ -5,10 +5,9 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    error::Result,
     grapheme::{trim, Graphemes},
     pane::Pane,
-    render::{AsAny, Renderable, State},
+    render::{AsAny, Renderable},
 };
 
 use super::Listbox;
@@ -27,24 +26,6 @@ pub struct Renderer {
 
     /// Window size.
     pub window_size: Option<usize>,
-}
-
-impl State<Renderer> {
-    pub fn try_new(
-        listbox: Listbox,
-        cursor: String,
-        active_item_style: ContentStyle,
-        inactive_item_style: ContentStyle,
-        window_size: Option<usize>,
-    ) -> Result<Box<State<Renderer>>> {
-        Ok(Box::new(State::<Renderer>::new(Renderer {
-            listbox,
-            cursor,
-            active_item_style,
-            inactive_item_style,
-            window_size,
-        })))
-    }
 }
 
 impl Renderable for Renderer {

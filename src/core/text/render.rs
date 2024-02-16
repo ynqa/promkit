@@ -2,10 +2,9 @@ use std::any::Any;
 
 use crate::{
     crossterm::{event::Event, style::ContentStyle},
-    error::Result,
     grapheme::{matrixify, Graphemes},
     pane::Pane,
-    render::{AsAny, Renderable, State},
+    render::{AsAny, Renderable},
 };
 
 #[derive(Clone)]
@@ -14,12 +13,6 @@ pub struct Renderer {
 
     /// Style for text string.
     pub style: ContentStyle,
-}
-
-impl State<Renderer> {
-    pub fn try_new(text: String, style: ContentStyle) -> Result<Box<State<Renderer>>> {
-        Ok(Box::new(State::<Renderer>::new(Renderer { text, style })))
-    }
 }
 
 impl Renderable for Renderer {

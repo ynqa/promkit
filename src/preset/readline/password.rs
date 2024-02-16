@@ -1,6 +1,6 @@
-use crate::{error::Result, Prompt};
+use crate::{crossterm::style::ContentStyle, error::Result, Prompt};
 
-use super::{Readline, Theme};
+use super::Readline;
 
 pub struct Password(Readline);
 
@@ -16,13 +16,23 @@ impl Password {
         self
     }
 
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self = Password(self.0.theme(theme));
+    pub fn title_style(mut self, style: ContentStyle) -> Self {
+        self = Password(self.0.title_style(style));
         self
     }
 
     pub fn mask(mut self, mask: char) -> Self {
         self = Password(self.0.mask(mask));
+        self
+    }
+
+    pub fn active_char_style(mut self, style: ContentStyle) -> Self {
+        self = Password(self.0.active_char_style(style));
+        self
+    }
+
+    pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
+        self = Password(self.0.inactive_char_style(style));
         self
     }
 

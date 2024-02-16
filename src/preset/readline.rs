@@ -7,7 +7,7 @@ use crate::{
     render::{Renderable, State},
     style::Style,
     text,
-    text_editor::{self, History, Mode, Suggest, TextEditor},
+    text_editor::{self, History, Mode, Suggest},
     validate::Validator,
     Prompt,
 };
@@ -17,90 +17,99 @@ pub use confirm::Confirm;
 mod password;
 pub use password::Password;
 
-pub struct Theme {
-    /// Style for title (enabled if you set title).
-    pub title_style: ContentStyle,
-    /// Style for error message (enabled if you set error message).
-    pub error_message_style: ContentStyle,
-
-    /// Style for prompt string.
-    pub ps_style: ContentStyle,
-    /// Style for selected character.
-    pub active_char_style: ContentStyle,
-    /// Style for un-selected character.
-    pub inactive_char_style: ContentStyle,
+pub struct Readline {
+    title_renderer: text::Renderer,
+    text_editor_renderer: text_editor::Renderer,
+    error_message_renderer: text::Renderer,
+    validator: Option<Validator<str>>,
 }
 
-impl Default for Theme {
+impl Default for Readline {
     fn default() -> Self {
         Self {
-            title_style: Style::new()
-                .attrs(Attributes::from(Attribute::Bold))
-                .build(),
-            ps_style: Style::new().fgc(Color::DarkGreen).build(),
-            active_char_style: Style::new().bgc(Color::DarkCyan).build(),
-            inactive_char_style: Style::new().build(),
-            error_message_style: Style::new()
-                .fgc(Color::DarkRed)
-                .attrs(Attributes::from(Attribute::Bold))
-                .build(),
+            title_renderer: text::Renderer {
+                text: Default::default(),
+                style: Style::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+            },
+            text_editor_renderer: text_editor::Renderer {
+                texteditor: Default::default(),
+                history: Default::default(),
+                suggest: Default::default(),
+                ps: String::from("❯❯ "),
+                mask: Default::default(),
+                ps_style: Style::new().fgc(Color::DarkGreen).build(),
+                active_char_style: Style::new().bgc(Color::DarkCyan).build(),
+                inactive_char_style: Style::new().build(),
+                edit_mode: Default::default(),
+                window_size: Default::default(),
+            },
+            error_message_renderer: text::Renderer {
+                text: Default::default(),
+                style: Style::new()
+                    .fgc(Color::DarkRed)
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+            },
+            validator: Default::default(),
         }
     }
 }
 
-#[derive(Default)]
-pub struct Readline {
-    title: String,
-    texteditor: TextEditor,
-    error_message: String,
-    validator: Option<Validator<str>>,
-    theme: Theme,
-    ps: String,
-    history: Option<History>,
-    suggest: Suggest,
-    mode: Mode,
-    mask: Option<char>,
-    window_size: Option<usize>,
-}
-
 impl Readline {
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title = text.as_ref().to_string();
+        self.title_renderer.text = text.as_ref().to_string();
         self
     }
 
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self.theme = theme;
+    pub fn title_style(mut self, style: ContentStyle) -> Self {
+        self.title_renderer.style = style;
         self
     }
 
     pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
-        self.suggest = suggest;
+        self.text_editor_renderer.suggest = suggest;
         self
     }
 
     pub fn enable_history(mut self) -> Self {
-        self.history = Some(History::default());
+        self.text_editor_renderer.history = Some(History::default());
         self
     }
 
     pub fn prefix_string<T: AsRef<str>>(mut self, ps: T) -> Self {
-        self.ps = ps.as_ref().to_string();
+        self.text_editor_renderer.ps = ps.as_ref().to_string();
         self
     }
 
     pub fn mask(mut self, mask: char) -> Self {
-        self.mask = Some(mask);
+        self.text_editor_renderer.mask = Some(mask);
+        self
+    }
+
+    pub fn prefix_string_style(mut self, style: ContentStyle) -> Self {
+        self.text_editor_renderer.ps_style = style;
+        self
+    }
+
+    pub fn active_char_style(mut self, style: ContentStyle) -> Self {
+        self.text_editor_renderer.active_char_style = style;
+        self
+    }
+
+    pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
+        self.text_editor_renderer.inactive_char_style = style;
         self
     }
 
     pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.mode = mode;
+        self.text_editor_renderer.edit_mode = mode;
         self
     }
 
     pub fn window_size(mut self, window_size: usize) -> Self {
-        self.window_size = Some(window_size);
+        self.text_editor_renderer.window_size = Some(window_size);
         self
     }
 
@@ -118,23 +127,11 @@ impl Readline {
 
         Prompt::try_new(
             vec![
-                State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
-                State::<text_editor::Renderer>::try_new(
-                    self.texteditor,
-                    self.history,
-                    self.suggest,
-                    self.ps,
-                    self.mask,
-                    self.theme.ps_style,
-                    self.theme.active_char_style,
-                    self.theme.inactive_char_style,
-                    self.mode,
-                    self.window_size,
-                )?,
-                State::<text::Renderer>::try_new(
-                    self.error_message,
-                    self.theme.error_message_style,
-                )?,
+                Box::new(State::<text::Renderer>::new(self.title_renderer)),
+                Box::new(State::<text_editor::Renderer>::new(
+                    self.text_editor_renderer,
+                )),
+                Box::new(State::<text::Renderer>::new(self.error_message_renderer)),
             ],
             move |event: &Event,
                   renderables: &Vec<Box<dyn Renderable + 'static>>|
