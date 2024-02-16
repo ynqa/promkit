@@ -6,8 +6,6 @@ mod suggest;
 pub use suggest::Suggest;
 mod mode;
 pub use mode::Mode;
-mod build;
-pub use build::Builder;
 
 use crate::core::cursor::Cursor;
 

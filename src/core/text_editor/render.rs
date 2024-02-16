@@ -5,6 +5,7 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
+    error::Result,
     grapheme::{matrixify, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
@@ -17,37 +18,73 @@ pub struct Renderer {
     pub history: Option<History>,
     pub suggest: Suggest,
 
-    pub prefix: String,
-    pub prefix_style: ContentStyle,
-    pub style: ContentStyle,
-    pub cursor_style: ContentStyle,
+    /// Prompt string.
+    pub ps: String,
+    /// Style for prompt string.
+    pub ps_style: ContentStyle,
+    /// Style for selected character.
+    pub active_char_style: ContentStyle,
+    /// Style for un-selected character.
+    pub inactive_item_style: ContentStyle,
+
+    /// Edit mode: insert or overwrite.
     pub mode: Mode,
+
+    /// Character to use for masking the input string.
     pub mask: Option<char>,
-    pub lines: Option<usize>,
+
+    /// Window size.
+    pub window_size: Option<usize>,
+}
+
+impl State<Renderer> {
+    #![allow(clippy::too_many_arguments)]
+    pub fn try_new(
+        texteditor: TextEditor,
+        history: Option<History>,
+        suggest: Suggest,
+        ps: String,
+        ps_style: ContentStyle,
+        active_char_style: ContentStyle,
+        inactive_item_style: ContentStyle,
+        mode: Mode,
+        mask: Option<char>,
+        window_size: Option<usize>,
+    ) -> Result<Box<State<Renderer>>> {
+        Ok(Box::new(State::<Renderer>::new(Renderer {
+            texteditor,
+            history,
+            suggest,
+            ps,
+            ps_style,
+            active_char_style,
+            inactive_item_style,
+            mode,
+            mask,
+            window_size,
+        })))
+    }
 }
 
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
-        buf.append(&mut Graphemes::new_with_style(
-            &self.prefix,
-            self.prefix_style,
-        ));
+        buf.append(&mut Graphemes::new_with_style(&self.ps, self.ps_style));
 
         let text = match self.mask {
             Some(mask) => self.texteditor.masking(mask),
             None => self.texteditor.text(),
         };
 
-        let mut styled = Graphemes::new_with_style(text, self.style)
-            .stylize(self.texteditor.position(), self.cursor_style);
+        let mut styled = Graphemes::new_with_style(text, self.inactive_item_style)
+            .stylize(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);
 
         Pane::new(
             matrixify(width as usize, &buf),
             self.texteditor.position() / width as usize,
-            self.lines,
+            self.window_size,
         )
     }
 

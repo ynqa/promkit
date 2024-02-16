@@ -1,68 +1,98 @@
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    crossterm::{
+        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        style::{Attribute, Attributes, Color, ContentStyle},
+    },
     error::Result,
-    preset::theme::readline::Theme,
     render::{Renderable, State},
+    style::Style,
     text,
-    text_editor::{self, Mode, Suggest},
+    text_editor::{self, History, Mode, Suggest, TextEditor},
     validate::Validator,
     Prompt,
 };
 
-pub struct Readline {
-    title_builder: text::Builder,
-    text_editor_builder: text_editor::Builder,
-    validator: Option<Validator<str>>,
-    error_message_builder: text::Builder,
+pub struct Theme {
+    /// Style for title (enabled if you set title).
+    pub title_style: ContentStyle,
+    /// Style for error message (enabled if you set error message).
+    pub error_message_style: ContentStyle,
+
+    /// Prompt string.
+    pub ps: String,
+    /// Style for prompt string.
+    pub ps_style: ContentStyle,
+    /// Style for selected character.
+    pub active_char_style: ContentStyle,
+    /// Style for un-selected character.
+    pub inactive_item_style: ContentStyle,
 }
 
-impl Default for Readline {
+impl Default for Theme {
     fn default() -> Self {
         Self {
-            title_builder: Default::default(),
-            text_editor_builder: Default::default(),
-            validator: Default::default(),
-            error_message_builder: Default::default(),
+            title_style: Style::new()
+                .attrs(Attributes::from(Attribute::Bold))
+                .build(),
+            ps: String::from("❯❯ "),
+            ps_style: Style::new().fgc(Color::DarkGreen).build(),
+            inactive_item_style: Style::new().build(),
+            active_char_style: Style::new().bgc(Color::DarkCyan).build(),
+            error_message_style: Style::new()
+                .fgc(Color::DarkRed)
+                .attrs(Attributes::from(Attribute::Bold))
+                .build(),
         }
-        .theme(Theme::default())
     }
+}
+
+#[derive(Default)]
+pub struct Readline {
+    title: String,
+    texteditor: TextEditor,
+    error_message: String,
+    validator: Option<Validator<str>>,
+    theme: Theme,
+    history: Option<History>,
+    suggest: Suggest,
+    mode: Mode,
+    mask: Option<char>,
+    window_size: Option<usize>,
 }
 
 impl Readline {
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self.title_builder = self.title_builder.style(theme.title_style);
-        self.text_editor_builder = self
-            .text_editor_builder
-            .prefix(theme.prefix)
-            .prefix_style(theme.prefix_style)
-            .style(theme.text_style)
-            .cursor_style(theme.cursor_style);
-        self.error_message_builder = self.error_message_builder.style(theme.error_message_style);
-        self
-    }
-
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_builder = self.title_builder.text(text);
+        self.title = text.as_ref().to_string();
         self
     }
 
-    pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.text_editor_builder = self.text_editor_builder.edit_mode(mode);
+    pub fn theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
         self
     }
 
-    pub fn lines(mut self, lines: usize) -> Self {
-        self.text_editor_builder = self.text_editor_builder.lines(lines);
-        self
-    }
-
-    pub fn suggest(mut self, suggest: Suggest) -> Self {
-        self.text_editor_builder = self.text_editor_builder.suggest(suggest);
+    pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
+        self.suggest = suggest;
         self
     }
 
     pub fn enable_history(mut self) -> Self {
-        self.text_editor_builder = self.text_editor_builder.enable_history();
+        self.history = Some(History::default());
+        self
+    }
+
+    pub fn edit_mode(mut self, mode: Mode) -> Self {
+        self.mode = mode;
+        self
+    }
+
+    pub fn mask(mut self, mask: char) -> Self {
+        self.mask = Some(mask);
+        self
+    }
+
+    pub fn window_size(mut self, window_size: usize) -> Self {
+        self.window_size = Some(window_size);
         self
     }
 
@@ -80,9 +110,23 @@ impl Readline {
 
         Prompt::try_new(
             vec![
-                self.title_builder.build_state()?,
-                self.text_editor_builder.build_state()?,
-                self.error_message_builder.build_state()?,
+                State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
+                State::<text_editor::Renderer>::try_new(
+                    self.texteditor,
+                    self.history,
+                    self.suggest,
+                    self.theme.ps,
+                    self.theme.ps_style,
+                    self.theme.active_char_style,
+                    self.theme.inactive_item_style,
+                    self.mode,
+                    self.mask,
+                    self.window_size,
+                )?,
+                State::<text::Renderer>::try_new(
+                    self.error_message,
+                    self.theme.error_message_style,
+                )?,
             ],
             move |event: &Event,
                   renderables: &Vec<Box<dyn Renderable + 'static>>|
