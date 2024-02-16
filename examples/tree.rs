@@ -7,7 +7,7 @@ fn main() -> Result {
         Node::new("baz"),
     ]))
     .title("Select a directory or file")
-    .window_size(10)
+    .screen_lines(10)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())

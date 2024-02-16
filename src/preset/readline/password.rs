@@ -36,8 +36,8 @@ impl Password {
         self
     }
 
-    pub fn window_size(mut self, window_size: usize) -> Self {
-        self = Password(self.0.window_size(window_size));
+    pub fn screen_lines(mut self, screen_lines: usize) -> Self {
+        self = Password(self.0.screen_lines(screen_lines));
         self
     }
 

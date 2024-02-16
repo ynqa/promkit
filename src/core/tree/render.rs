@@ -26,7 +26,7 @@ pub struct Renderer {
     pub inactive_item_style: ContentStyle,
 
     /// Window size.
-    pub window_size: Option<usize>,
+    pub screen_lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
@@ -70,7 +70,7 @@ impl Renderable for Renderer {
             .collect::<Vec<Graphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed, self.tree.position(), self.window_size)
+        Pane::new(trimed, self.tree.position(), self.screen_lines)
     }
 
     fn handle_event(&mut self, event: &Event) {

@@ -47,14 +47,14 @@ impl QuerySelect {
                 active_char_style: Style::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: Style::new().build(),
                 edit_mode: Default::default(),
-                window_size: Default::default(),
+                screen_lines: Default::default(),
             },
             listbox_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(items),
                 cursor: String::from("❯ "),
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
-                window_size: Default::default(),
+                screen_lines: Default::default(),
             },
             filter: Box::new(filter),
         }
@@ -100,8 +100,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn text_editor_window_size(mut self, window_size: usize) -> Self {
-        self.text_editor_renderer.window_size = Some(window_size);
+    pub fn text_editor_screen_lines(mut self, screen_lines: usize) -> Self {
+        self.text_editor_renderer.screen_lines = Some(screen_lines);
         self
     }
 
@@ -120,8 +120,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn listbox_window_size(mut self, window_size: usize) -> Self {
-        self.listbox_renderer.window_size = Some(window_size);
+    pub fn listbox_screen_lines(mut self, screen_lines: usize) -> Self {
+        self.listbox_renderer.screen_lines = Some(screen_lines);
         self
     }
 

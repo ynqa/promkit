@@ -138,7 +138,7 @@ use promkit::{error::Result, preset::Select};
 fn main() -> Result {
     let mut p = Select::new(0..100)
         .title("What number do you like?")
-        .lines(5)
+        .screen_lines(5)
         .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
@@ -177,7 +177,7 @@ fn main() -> Result {
             .unwrap_or(items.clone())
     })
     .title("What number do you like?")
-    .listbox_lines(5)
+    .screen_lines(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
@@ -186,6 +186,68 @@ fn main() -> Result {
 </details>
 
 ![queryselect](https://github.com/ynqa/promkit/assets/6745370/1abdd5c0-2c3b-47d3-916e-386fd4f50779)
+
+## Checkbox
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example checkbox
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::Checkbox};
+
+fn main() -> Result {
+    let mut p = Checkbox::new(0..100)
+        .title("What number do you like?")
+        .screen_lines(5)
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+TBD
+
+## Tree
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example tree
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{error::Result, preset::Tree, tree::Node};
+
+fn main() -> Result {
+    let mut p = Tree::new(Node::new("/").add_children([
+        Node::new("foo").add_children([Node::new("test1.txt"), Node::new("test2.txt")]),
+        Node::new("bar"),
+        Node::new("baz"),
+    ]))
+    .title("Select a directory or file")
+    .screen_lines(10)
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+TBD
 
 ## Why *promkit*?
 

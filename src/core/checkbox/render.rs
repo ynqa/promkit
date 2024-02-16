@@ -27,7 +27,7 @@ pub struct Renderer {
     pub inactive_item_style: ContentStyle,
 
     /// Window size.
-    pub window_size: Option<usize>,
+    pub screen_lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
@@ -70,7 +70,7 @@ impl Renderable for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.checkbox.position(), self.window_size)
+        Pane::new(trimed, self.checkbox.position(), self.screen_lines)
     }
 
     /// Default key bindings for item picker.
