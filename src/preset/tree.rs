@@ -16,11 +16,6 @@ pub struct Theme {
     pub active_item_style: ContentStyle,
     /// Style for un-selected line.
     pub inactive_item_style: ContentStyle,
-
-    /// Symbol representing folded items.
-    pub folded_symbol: String,
-    /// Symbol representing unfolded items.
-    pub unfolded_symbol: String,
 }
 
 impl Default for Theme {
@@ -31,8 +26,6 @@ impl Default for Theme {
                 .build(),
             active_item_style: Style::new().fgc(Color::DarkCyan).build(),
             inactive_item_style: Style::new().build(),
-            folded_symbol: String::from("▶︎ "),
-            unfolded_symbol: String::from("▼ "),
         }
     }
 }
@@ -41,6 +34,8 @@ pub struct Tree {
     title: String,
     tree: tree::Tree,
     theme: Theme,
+    folded_symbol: String,
+    unfolded_symbol: String,
     window_size: Option<usize>,
 }
 
@@ -50,6 +45,8 @@ impl Tree {
             title: Default::default(),
             tree: tree::Tree::new(root),
             theme: Default::default(),
+            folded_symbol: String::from("▶︎ "),
+            unfolded_symbol: String::from("▼ "),
             window_size: Default::default(),
         }
     }
@@ -75,10 +72,10 @@ impl Tree {
                 State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
                 State::<tree::Renderer>::try_new(
                     self.tree,
+                    self.folded_symbol,
+                    self.unfolded_symbol,
                     self.theme.active_item_style,
                     self.theme.inactive_item_style,
-                    self.theme.folded_symbol,
-                    self.theme.unfolded_symbol,
                     self.window_size,
                 )?,
             ],

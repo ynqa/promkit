@@ -89,13 +89,13 @@ impl Readline {
         self
     }
 
-    pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.mode = mode;
+    pub fn mask(mut self, mask: char) -> Self {
+        self.mask = Some(mask);
         self
     }
 
-    pub fn mask(mut self, mask: char) -> Self {
-        self.mask = Some(mask);
+    pub fn edit_mode(mut self, mode: Mode) -> Self {
+        self.mode = mode;
         self
     }
 

@@ -17,9 +17,6 @@ pub struct Theme {
     pub active_item_style: ContentStyle,
     /// Style for un-selected item.
     pub inactive_item_style: ContentStyle,
-
-    /// Symbol for selected line.
-    pub cursor: String,
 }
 
 impl Default for Theme {
@@ -30,7 +27,6 @@ impl Default for Theme {
                 .build(),
             active_item_style: Style::new().fgc(Color::DarkCyan).build(),
             inactive_item_style: Style::new().build(),
-            cursor: String::from("❯ "),
         }
     }
 }
@@ -39,6 +35,7 @@ pub struct Select {
     title: String,
     listbox: listbox::Listbox,
     theme: Theme,
+    cursor: String,
     window_size: Option<usize>,
 }
 
@@ -48,6 +45,7 @@ impl Select {
             title: Default::default(),
             listbox: listbox::Listbox::from_iter(items),
             theme: Default::default(),
+            cursor: String::from("❯ "),
             window_size: Default::default(),
         }
     }
@@ -62,6 +60,11 @@ impl Select {
         self
     }
 
+    pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
+        self.cursor = cursor.as_ref().to_string();
+        self
+    }
+
     pub fn window_size(mut self, window_size: usize) -> Self {
         self.window_size = Some(window_size);
         self
@@ -73,9 +76,9 @@ impl Select {
                 State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
                 State::<listbox::Renderer>::try_new(
                     self.listbox,
+                    self.cursor,
                     self.theme.active_item_style,
                     self.theme.inactive_item_style,
-                    self.theme.cursor,
                     self.window_size,
                 )?,
             ],

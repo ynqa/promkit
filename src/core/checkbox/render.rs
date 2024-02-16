@@ -6,7 +6,7 @@ use crate::{
         style::ContentStyle,
     },
     error::Result,
-    grapheme::{trim, Graphemes},
+    grapheme::{trim, Grapheme, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
 };
@@ -17,15 +17,15 @@ use super::Checkbox;
 pub struct Renderer {
     pub checkbox: Checkbox,
 
+    /// Symbol for selected line.
+    pub cursor: String,
+    /// Checkmark (within [ ] parentheses).
+    pub mark: char,
+
     /// Style for selected line.
     pub active_item_style: ContentStyle,
     /// Style for un-selected line.
     pub inactive_item_style: ContentStyle,
-
-    /// Symbol for selected line.
-    pub cursor: String,
-    /// Checkmark (within [ ] parentheses).
-    pub mark: String,
 
     /// Window size.
     pub window_size: Option<usize>,
@@ -34,18 +34,18 @@ pub struct Renderer {
 impl State<Renderer> {
     pub fn try_new(
         checkbox: Checkbox,
+        cursor: String,
+        mark: char,
         active_item_style: ContentStyle,
         inactive_item_style: ContentStyle,
-        cursor: String,
-        mark: String,
         window_size: Option<usize>,
     ) -> Result<Box<State<Renderer>>> {
         Ok(Box::new(State::<Renderer>::new(Renderer {
             checkbox,
-            active_item_style,
-            inactive_item_style,
             cursor,
             mark,
+            active_item_style,
+            inactive_item_style,
             window_size,
         })))
     }
@@ -59,7 +59,7 @@ impl Renderable for Renderer {
             } else {
                 format!(
                     "[{}] {}",
-                    " ".repeat(Graphemes::new(self.mark.clone()).widths()),
+                    " ".repeat(Grapheme::new(self.mark).width()),
                     item
                 )
             }

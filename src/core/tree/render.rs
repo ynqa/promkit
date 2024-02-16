@@ -16,15 +16,15 @@ use crate::{
 pub struct Renderer {
     pub tree: Tree,
 
-    /// Style for selected line.
-    pub active_item_style: ContentStyle,
-    /// Style for un-selected line.
-    pub inactive_item_style: ContentStyle,
-
     /// Symbol representing folded items.
     pub folded_symbol: String,
     /// Symbol representing unfolded items.
     pub unfolded_symbol: String,
+
+    /// Style for selected line.
+    pub active_item_style: ContentStyle,
+    /// Style for un-selected line.
+    pub inactive_item_style: ContentStyle,
 
     /// Window size.
     pub window_size: Option<usize>,
@@ -33,18 +33,18 @@ pub struct Renderer {
 impl State<Renderer> {
     pub fn try_new(
         tree: Tree,
-        active_item_style: ContentStyle,
-        inactive_item_style: ContentStyle,
         folded_symbol: String,
         unfolded_symbol: String,
+        active_item_style: ContentStyle,
+        inactive_item_style: ContentStyle,
         window_size: Option<usize>,
     ) -> Result<Box<State<Renderer>>> {
         Ok(Box::new(State::<Renderer>::new(Renderer {
             tree,
-            active_item_style,
-            inactive_item_style,
             folded_symbol,
             unfolded_symbol,
+            active_item_style,
+            inactive_item_style,
             window_size,
         })))
     }

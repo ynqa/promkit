@@ -17,13 +17,13 @@ use super::Listbox;
 pub struct Renderer {
     pub listbox: Listbox,
 
+    /// Symbol for selected line.
+    pub cursor: String,
+
     /// Style for selected line.
     pub active_item_style: ContentStyle,
     /// Style for un-selected line.
     pub inactive_item_style: ContentStyle,
-
-    /// Symbol for selected line.
-    pub cursor: String,
 
     /// Window size.
     pub window_size: Option<usize>,
@@ -32,16 +32,16 @@ pub struct Renderer {
 impl State<Renderer> {
     pub fn try_new(
         listbox: Listbox,
+        cursor: String,
         active_item_style: ContentStyle,
         inactive_item_style: ContentStyle,
-        cursor: String,
         window_size: Option<usize>,
     ) -> Result<Box<State<Renderer>>> {
         Ok(Box::new(State::<Renderer>::new(Renderer {
             listbox,
+            cursor,
             active_item_style,
             inactive_item_style,
-            cursor,
             window_size,
         })))
     }

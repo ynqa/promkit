@@ -17,11 +17,6 @@ pub struct Theme {
     pub active_item_style: ContentStyle,
     /// Style for un-selected item.
     pub inactive_item_style: ContentStyle,
-
-    /// Symbol for selected line.
-    pub cursor: String,
-    /// Checkmark (within [ ] parentheses).
-    pub mark: String,
 }
 
 impl Default for Theme {
@@ -32,8 +27,6 @@ impl Default for Theme {
                 .build(),
             active_item_style: Style::new().fgc(Color::DarkCyan).build(),
             inactive_item_style: Style::new().build(),
-            mark: String::from("■"),
-            cursor: String::new(),
         }
     }
 }
@@ -42,6 +35,8 @@ pub struct Checkbox {
     title: String,
     checkbox: checkbox::Checkbox,
     theme: Theme,
+    cursor: String,
+    mark: char,
     window_size: Option<usize>,
 }
 
@@ -51,6 +46,8 @@ impl Checkbox {
             title: Default::default(),
             checkbox: checkbox::Checkbox::from_iter(items),
             theme: Default::default(),
+            cursor: String::from("❯ "),
+            mark: '■',
             window_size: Default::default(),
         }
     }
@@ -65,6 +62,16 @@ impl Checkbox {
         self
     }
 
+    pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
+        self.cursor = cursor.as_ref().to_string();
+        self
+    }
+
+    pub fn mark(mut self, mark: char) -> Self {
+        self.mark = mark;
+        self
+    }
+
     pub fn window_size(mut self, window_size: usize) -> Self {
         self.window_size = Some(window_size);
         self
@@ -76,10 +83,10 @@ impl Checkbox {
                 State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
                 State::<checkbox::Renderer>::try_new(
                     self.checkbox,
+                    self.cursor,
+                    self.mark,
                     self.theme.active_item_style,
                     self.theme.inactive_item_style,
-                    self.theme.cursor,
-                    self.theme.mark,
                     self.window_size,
                 )?,
             ],
