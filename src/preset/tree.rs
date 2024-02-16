@@ -1,52 +1,86 @@
 use crate::{
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    preset::theme::tree::Theme,
     render::{Renderable, State},
+    style::Style,
     text,
     tree::{self, Node},
     Prompt,
 };
 
+pub struct Theme {
+    /// Style for title (enabled if you set title).
+    pub title_style: ContentStyle,
+
+    /// Style for selected line.
+    pub active_item_style: ContentStyle,
+    /// Style for un-selected line.
+    pub inactive_item_style: ContentStyle,
+
+    /// Symbol representing folded items.
+    pub folded_symbol: String,
+    /// Symbol representing unfolded items.
+    pub unfolded_symbol: String,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self {
+            title_style: Style::new()
+                .attrs(Attributes::from(Attribute::Bold))
+                .build(),
+            active_item_style: Style::new().fgc(Color::DarkCyan).build(),
+            inactive_item_style: Style::new().build(),
+            folded_symbol: String::from("▶︎ "),
+            unfolded_symbol: String::from("▼ "),
+        }
+    }
+}
+
 pub struct Tree {
-    title_builder: text::Builder,
-    tree_builder: tree::Builder,
+    title: String,
+    tree: tree::Tree,
+    theme: Theme,
+    window_size: Option<usize>,
 }
 
 impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
-            title_builder: Default::default(),
-            tree_builder: tree::Builder::new(root),
+            title: Default::default(),
+            tree: tree::Tree::new(root),
+            theme: Default::default(),
+            window_size: Default::default(),
         }
-        .theme(Theme::default())
-    }
-
-    pub fn theme(mut self, theme: Theme) -> Self {
-        self.title_builder = self.title_builder.style(theme.title_style);
-        self.tree_builder = self
-            .tree_builder
-            .folded_symbol(theme.folded_symbol)
-            .unfolded_symbol(theme.unfolded_symbol)
-            .style(theme.item_style)
-            .cursor_style(theme.cursor_style);
-        self
     }
 
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_builder = self.title_builder.text(text);
+        self.title = text.as_ref().to_string();
         self
     }
 
-    pub fn lines(mut self, lines: usize) -> Self {
-        self.tree_builder = self.tree_builder.lines(lines);
+    pub fn theme(mut self, theme: Theme) -> Self {
+        self.theme = theme;
+        self
+    }
+
+    pub fn window_size(mut self, window_size: usize) -> Self {
+        self.window_size = Some(window_size);
         self
     }
 
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             vec![
-                self.title_builder.build_state()?,
-                self.tree_builder.build_state()?,
+                State::<text::Renderer>::try_new(self.title, self.theme.title_style)?,
+                State::<tree::Renderer>::try_new(
+                    self.tree,
+                    self.theme.active_item_style,
+                    self.theme.inactive_item_style,
+                    self.theme.folded_symbol,
+                    self.theme.unfolded_symbol,
+                    self.window_size,
+                )?,
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {

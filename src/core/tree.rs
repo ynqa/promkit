@@ -3,8 +3,6 @@ mod node;
 pub use node::{Node, NodeWithDepth};
 mod render;
 pub use render::Renderer;
-mod build;
-pub use build::Builder;
 
 use crate::core::cursor::Cursor;
 
