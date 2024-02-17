@@ -1,10 +1,21 @@
 use promkit::{error::Result, preset::Checkbox};
 
 fn main() -> Result {
-    let mut p = Checkbox::new(0..100)
-        .title("What number do you like?")
-        .screen_lines(5)
-        .prompt()?;
+    let mut p = Checkbox::new(vec![
+        "Apple",
+        "Banana",
+        "Orange",
+        "Mango",
+        "Strawberry",
+        "Pineapple",
+        "Grape",
+        "Watermelon",
+        "Kiwi",
+        "Pear",
+    ])
+    .title("Please list as many of your favorite fruits as you can.")
+    .screen_lines(5)
+    .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
