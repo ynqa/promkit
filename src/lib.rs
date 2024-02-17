@@ -18,43 +18,26 @@
 //!
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
-//!   - Support ranging from presets for easy use to layout building using renderable objects, and even for displaying your own data structures
+//!   - Preset; Support for quickly setting up a UI by providing simple parameters.
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.0#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.0#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.0#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.0#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.0#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.0#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.0#tree)
+//!   - Combining various UI components.
+//!     - They are provided with the same interface, allowing users to choose and
+//!       assemble them according to their preferences.
+//!   - (Upcoming) Stronger support to display yor own data structures.
 //! - Versatile customization capabilities
-//!   - Themes for defining the outer shell style, including text and cursor colors
-//!   - Validation for user input and error message construction
-//!   - and so on...
+//!   - Theme for designing the appearance of the prompt.
+//!     - e.g. cursor, text
+//!   - Validation for user input and error message construction.
 //!
 //! ## Examples
 //!
-//! *promkit* provides presets so that users can utilize prompts immediately without
-//! having to build complex components for specific use cases.  
-//!
-//! ```bash
-//! cargo run --example readline
-//! ```
-//!
-//! ![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
-//!
-//! The actual codes:
-//!
-//! ```ignore
-//! use promkit::{error::Result, preset::Readline};
-//!
-//! fn main() -> Result {
-//!     let mut p = Readline::default()
-//!         .title("Feel free to fill in")
-//!         .validator(
-//!             |text| text.len() > 10,
-//!             |text| format!("Length must be over 10 but got {}", text.len()),
-//!         )
-//!         .prompt()?;
-//!     println!("result: {:?}", p.run()?);
-//!     Ok(())
-//! }
-//! ```
-//!
-//! See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
-//! for more examples.
+//! See [here](https://github.com/ynqa/promkit/tree/v0.3.0#examples)
 //!
 //! ## Why *promkit*?
 //!
@@ -118,15 +101,14 @@
 //! These features provide a more reliable and extensible experience for developers,
 //! allowing them to focus on building powerful command-line interfaces.
 //!
-//! ## Understanding dataflow and component interactions
-//!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.2.0#understanding-dataflow-and-component-interactions)
-//!
 //! ## License
 //!
 //! This project is licensed under the MIT License.
 //! See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
 //! file for details.
+//!
+//! ## Stargazers over time
+//! [![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
 
 extern crate scopeguard;
 
