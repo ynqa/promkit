@@ -24,8 +24,8 @@ pub struct Renderer {
     /// Style for un-selected line.
     pub inactive_item_style: ContentStyle,
 
-    /// Window size.
-    pub screen_lines: Option<usize>,
+    /// Num of lines for rendering.
+    pub lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
@@ -56,7 +56,7 @@ impl Renderable for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.listbox.position(), self.screen_lines)
+        Pane::new(trimed, self.listbox.position(), self.lines)
     }
 
     /// Default key bindings for listbox.

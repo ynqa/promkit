@@ -54,7 +54,7 @@ impl QuerySelect {
                 cursor: String::from("❯ "),
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
-                screen_lines: Default::default(),
+                lines: Default::default(),
             },
             filter: Box::new(filter),
         }
@@ -120,8 +120,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn listbox_screen_lines(mut self, screen_lines: usize) -> Self {
-        self.listbox_renderer.screen_lines = Some(screen_lines);
+    pub fn listbox_lines(mut self, lines: usize) -> Self {
+        self.listbox_renderer.lines = Some(lines);
         self
     }
 
