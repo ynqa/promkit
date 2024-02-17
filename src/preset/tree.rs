@@ -28,7 +28,7 @@ impl Tree {
                 unfolded_symbol: String::from("▼ "),
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
-                screen_lines: Default::default(),
+                lines: Default::default(),
             },
         }
     }
@@ -63,8 +63,8 @@ impl Tree {
         self
     }
 
-    pub fn screen_lines(mut self, screen_lines: usize) -> Self {
-        self.tree_renderer.screen_lines = Some(screen_lines);
+    pub fn tree_lines(mut self, lines: usize) -> Self {
+        self.tree_renderer.lines = Some(lines);
         self
     }
 
