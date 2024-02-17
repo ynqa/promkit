@@ -29,7 +29,7 @@ impl Checkbox {
                 mark: '■',
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
-                screen_lines: Default::default(),
+                lines: Default::default(),
             },
         }
     }
@@ -64,8 +64,8 @@ impl Checkbox {
         self
     }
 
-    pub fn screen_lines(mut self, screen_lines: usize) -> Self {
-        self.checkbox_renderer.screen_lines = Some(screen_lines);
+    pub fn checkbox_lines(mut self, lines: usize) -> Self {
+        self.checkbox_renderer.lines = Some(lines);
         self
     }
 
