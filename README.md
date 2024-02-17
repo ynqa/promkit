@@ -19,13 +19,13 @@ promkit = "0.3.0"
 - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
   - Preset; Support for quickly setting up a UI by providing simple parameters.
-    - Readline
-    - Confirm
-    - Password
-    - Select
-    - QuerySelect
-    - Checkbox
-    - Tree
+    - [Readline](#readline)
+    - [Confirm](#confirm)
+    - [Password](#password)
+    - [Select](#select)
+    - [QuerySelect](#queryselect)
+    - [Checkbox](#checkbox)
+    - [Tree](#tree)
   - Combining various UI components.
     - They are provided with the same interface, allowing users to choose and
       assemble them according to their preferences.
@@ -195,7 +195,7 @@ fn main() -> Result {
 
 ![queryselect](https://github.com/ynqa/promkit/assets/6745370/1abdd5c0-2c3b-47d3-916e-386fd4f50779)
 
-## Checkbox
+### Checkbox
 
 <details>
 <summary>Command</summary>
@@ -224,7 +224,7 @@ fn main() -> Result {
 
 TBD
 
-## Tree
+### Tree
 
 <details>
 <summary>Command</summary>
