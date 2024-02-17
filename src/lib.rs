@@ -37,7 +37,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.3.0#examples/demos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.3.0#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
