@@ -9,6 +9,8 @@ pub use suggest::Suggest;
 mod mode;
 pub use mode::Mode;
 
+/// A text editor that supports basic editing operations such as insert, delete, and overwrite.
+/// It utilizes a cursor to navigate and manipulate the text.
 #[derive(Clone)]
 pub struct TextEditor(Cursor<String>);
 
@@ -22,19 +24,24 @@ impl Default for TextEditor {
 }
 
 impl TextEditor {
+    /// Returns the current text including the cursor.
     pub fn text(&self) -> String {
         self.0.contents().clone()
     }
 
+    /// Returns the text without the cursor.
     pub fn text_without_cursor(&self) -> String {
         let mut ret = self.text();
         ret.pop();
         ret
     }
 
+    /// Returns the current position of the cursor within the text.
     pub fn position(&self) -> usize {
         self.0.position()
     }
+
+    /// Masks all characters except the cursor with the specified mask character.
     pub fn masking(&self, mask: char) -> String {
         self.text()
             .chars()
@@ -43,6 +50,7 @@ impl TextEditor {
             .collect::<String>()
     }
 
+    /// Replaces the current text with new text and positions the cursor at the end.
     pub fn replace(&mut self, new: &str) {
         let mut buf = new.to_owned();
         buf.push(' ');
@@ -50,12 +58,14 @@ impl TextEditor {
         *self = Self(Cursor::new_with_position(buf, pos));
     }
 
+    /// Inserts a character at the current cursor position.
     pub fn insert(&mut self, ch: char) {
         let pos = self.position();
         self.0.contents_mut().insert(pos, ch);
         self.forward();
     }
 
+    /// Overwrites the character at the current cursor position with the specified character.
     pub fn overwrite(&mut self, ch: char) {
         if self.0.is_tail() {
             self.insert(ch)
@@ -68,6 +78,7 @@ impl TextEditor {
         }
     }
 
+    /// Erases the character before the cursor position.
     pub fn erase(&mut self) {
         if !self.0.is_head() {
             self.backward();
@@ -76,22 +87,27 @@ impl TextEditor {
         }
     }
 
+    /// Clears all text and resets the editor to its default state.
     pub fn erase_all(&mut self) {
         *self = Self::default();
     }
 
+    /// Moves the cursor to the beginning of the text.
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()
     }
 
+    /// Moves the cursor to the end of the text.
     pub fn move_to_tail(&mut self) {
         self.0.move_to_tail()
     }
 
+    /// Moves the cursor one position backward, if possible.
     pub fn backward(&mut self) -> bool {
         self.0.backward()
     }
 
+    /// Moves the cursor one position forward, if possible.
     pub fn forward(&mut self) -> bool {
         self.0.forward()
     }

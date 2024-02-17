@@ -1,3 +1,5 @@
+/// A `Node` struct that represents a single node in a tree structure.
+/// It contains data as a `String`, a list of child nodes, and a visibility flag for its children.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Node {
     data: String,
@@ -5,6 +7,8 @@ pub struct Node {
     children_visible: bool,
 }
 
+/// A `NodeWithDepth` struct that represents a node along with its depth information.
+/// It is used for flattening a tree structure into a linear representation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeWithDepth {
     pub data: String,
@@ -14,6 +18,7 @@ pub struct NodeWithDepth {
 }
 
 impl Node {
+    /// Constructs a new `Node` with the given data.
     pub fn new<T: AsRef<str>>(string: T) -> Self {
         Self {
             data: string.as_ref().to_string(),
@@ -22,6 +27,7 @@ impl Node {
         }
     }
 
+    /// Adds a list of child nodes to the current node.
     pub fn add_children<I: IntoIterator<Item = Node>>(mut self, nodes: I) -> Self {
         for node in nodes {
             self.children.push(node);
@@ -29,6 +35,7 @@ impl Node {
         self
     }
 
+    /// Flattens the tree structure starting from this node into a vector of `NodeWithDepth`.
     pub fn flatten(&self) -> Vec<NodeWithDepth> {
         self.flatten_with_depth(vec![])
     }
@@ -62,6 +69,7 @@ impl Node {
         None
     }
 
+    /// Toggles the visibility of the children of the node found at the given preorder position.
     pub fn toggle(&mut self, preorder: usize) {
         if let Some(node) = self.traversal(preorder) {
             node.children_visible = !node.children_visible;

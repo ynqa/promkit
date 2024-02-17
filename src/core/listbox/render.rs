@@ -12,19 +12,23 @@ use crate::{
 
 use super::Listbox;
 
+/// Represents a renderer for the `Listbox` component, capable of visualizing a list of items in a pane.
+/// It supports a custom symbol for the selected line, styles for active and inactive items,
+/// and a configurable number of lines for rendering.
 #[derive(Clone)]
 pub struct Renderer {
+    /// The `Listbox` component to be rendered.
     pub listbox: Listbox,
 
-    /// Symbol for selected line.
+    /// Symbol for the selected line.
     pub cursor: String,
 
-    /// Style for selected line.
+    /// Style for the selected line.
     pub active_item_style: ContentStyle,
-    /// Style for un-selected line.
+    /// Style for un-selected lines.
     pub inactive_item_style: ContentStyle,
 
-    /// Num of lines for rendering.
+    /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
 

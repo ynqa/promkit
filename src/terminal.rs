@@ -2,18 +2,42 @@ use std::io::Write;
 
 use crate::{engine::Engine, error::Result, pane::Pane};
 
-// Session
+/// Represents a terminal session, managing the display of panes within the terminal window.
 pub struct Terminal {
+    /// The current cursor position within the terminal.
     position: (u16, u16),
 }
 
 impl Terminal {
+    /// Starts a new terminal session, initializing the cursor position.
+    ///
+    /// # Arguments
+    ///
+    /// * `engine` - A mutable reference to the Engine, which manages terminal operations.
+    ///
+    /// # Returns
+    ///
+    /// A result containing the new Terminal instance or an error.
     pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
         Ok(Self {
             position: engine.position()?,
         })
     }
 
+    /// Draws the provided panes within the terminal window.
+    ///
+    /// # Arguments
+    ///
+    /// * `engine` - A mutable reference to the Engine, which manages terminal operations.
+    /// * `panes` - A vector of Pane instances to be displayed.
+    ///
+    /// # Returns
+    ///
+    /// A result indicating success or an error.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the terminal window does not have enough vertical space to render the UI.
     pub fn draw<W: Write>(&mut self, engine: &mut Engine<W>, panes: Vec<Pane>) -> Result {
         let terminal_height = engine.size()?.1 as usize;
         let viewable_panes = panes

@@ -12,27 +12,34 @@ use crate::{
 
 use super::{History, Mode, Suggest, TextEditor};
 
+/// Represents a renderer for the `TextEditor` component, capable of visualizing text input in a pane.
+/// It supports a variety of features including history navigation, input suggestions, input masking,
+/// customizable prompt strings, and styles for different parts of the input. It also handles different
+/// edit modes such as insert and overwrite, and can be configured to render a specific number of lines.
 #[derive(Clone)]
 pub struct Renderer {
+    /// The `TextEditor` component to be rendered.
     pub texteditor: TextEditor,
+    /// Optional history for navigating through previous inputs.
     pub history: Option<History>,
+    /// Suggestion engine for input completion.
     pub suggest: Suggest,
 
-    /// Prompt string.
+    /// Prompt string displayed before the input text.
     pub ps: String,
-    /// Character to use for masking the input string.
+    /// Optional character used for masking the input string (e.g., for password fields).
     pub mask: Option<char>,
 
-    /// Style for prompt string.
+    /// Style applied to the prompt string.
     pub ps_style: ContentStyle,
-    /// Style for selected character.
+    /// Style applied to the currently selected character.
     pub active_char_style: ContentStyle,
-    /// Style for un-selected character.
+    /// Style applied to characters that are not currently selected.
     pub inactive_char_style: ContentStyle,
 
-    /// Edit mode: insert or overwrite.
+    /// Current edit mode, determining whether input inserts or overwrites existing text.
     pub edit_mode: Mode,
-    /// Num of lines for rendering.
+    /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
 

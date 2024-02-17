@@ -11,6 +11,9 @@ use crate::{
     tree::{NodeWithDepth, Tree},
 };
 
+/// Represents a renderer for a tree structure, capable of visualizing the tree in a pane.
+/// It supports custom symbols for folded and unfolded items, styles for active and inactive items,
+/// and a configurable number of lines for rendering. It also handles key events for navigation and folding/unfolding.
 #[derive(Clone)]
 pub struct Renderer {
     pub tree: Tree,
@@ -20,12 +23,12 @@ pub struct Renderer {
     /// Symbol representing unfolded items.
     pub unfolded_symbol: String,
 
-    /// Style for selected line.
+    /// Style for the selected line.
     pub active_item_style: ContentStyle,
-    /// Style for un-selected line.
+    /// Style for un-selected lines.
     pub inactive_item_style: ContentStyle,
 
-    /// Num of lines for rendering.
+    /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
 

@@ -12,21 +12,25 @@ use crate::{
 
 use super::Checkbox;
 
+/// Represents a renderer for the `Checkbox` component, capable of visualizing checkboxes in a pane.
+/// It supports custom symbols for the cursor and checkmark, styles for active and inactive items,
+/// and a configurable number of lines for rendering. It also handles key events for navigation and toggling checkboxes.
 #[derive(Clone)]
 pub struct Renderer {
+    /// The `Checkbox` component to be rendered.
     pub checkbox: Checkbox,
 
-    /// Symbol for selected line.
+    /// Symbol for the selected line.
     pub cursor: String,
-    /// Checkmark (within [ ] parentheses).
+    /// Checkmark symbol (displayed within square brackets).
     pub mark: char,
 
-    /// Style for selected line.
+    /// Style for the selected line.
     pub active_item_style: ContentStyle,
-    /// Style for un-selected line.
+    /// Style for unselected lines.
     pub inactive_item_style: ContentStyle,
 
-    /// Num of lines for rendering.
+    /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
 
