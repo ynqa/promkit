@@ -35,10 +35,13 @@ promkit = "0.3.0"
     - e.g. cursor, text
   - Validation for user input and error message construction.
 
-## Examples
+## Examples/Demos
 
 *promkit* provides presets so that users can try prompts immediately without
-having to build complex components for specific use cases.  
+having to build complex components for specific use cases.
+
+Show you commands, code, and actual demo screens for examples
+that can be executed immediately below.
 
 ### Readline
 
@@ -270,29 +273,13 @@ fn main() -> Result {
 
 ## Why *promkit*?
 
-Similar libraries in this category include the following:
+Related libraries in this category include the following:
 - [console-rs/dialoguer](https://github.com/console-rs/dialoguer)
 - [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire)
 
 *promkit* offers several advantages over these libraries:
 
-### Resilience to terminal resizing
-
-Performing operations that involve executing a command in one pane while
-simultaneously opening a new pane is a common occurrence. During such operations,
-if UI corruption is caused by resizing the terminal size, it may adversely affect
-the user experience.  
-Other libraries can struggle when the terminal is resized, making typing and
-interaction difficult or impossible. For example:
-
- - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
-
-*promkit* processes the data to fit the screen size, reducing the likelihood of
-rendering issues, such as misalignment. This approach ensures that UI elements
-remain consistent even when the terminal is resized, providing a smoother user
-experience.
-
-### Unified component approach
+### Unified interface approach for UI components
 
 *promkit* takes a unified approach by having all of its components inherit the
 same `Renderable` trait. This design choice enables users to seamlessly support
@@ -314,21 +301,20 @@ UI from scratch, which can be a time-consuming and less flexible process.
   }
   ```
 
-In the provided presets of *promkit*, this mechanism is implemented. If you'd
-like to try it out, you can refer to
-the implementations of
-[view](https://github.com/ynqa/promkit/tree/v0.2.0/src/view)
-and
-[preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
-for guidance.
+### Resilience to terminal resizing
 
-In summary, *promkit*'s resilience to terminal resizing and its unified component
-approach make it a compelling choice for interactive command-line applications,
-especially when compared to
-[console-rs/dialoguer](https://github.com/console-rs/dialoguer) and
-[mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire).
-These features provide a more reliable and extensible experience for developers,
-allowing them to focus on building powerful command-line interfaces.
+Performing operations that involve executing a command in one pane while
+simultaneously opening a new pane is a common occurrence. During such operations,
+if UI corruption is caused by resizing the terminal size, it may adversely affect
+the user experience.  
+Other libraries can struggle when the terminal is resized, making typing and
+interaction difficult or impossible. For example:
+
+ - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
+
+*promkit* introduces a step to align data with the screen size before rendering.
+This approach ensures consistency in UI elements even when
+the terminal size changes, providing a smoother user experience.
 
 ## License
 
