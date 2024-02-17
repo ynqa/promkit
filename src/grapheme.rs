@@ -1,23 +1,35 @@
 //! Manages characters and their display widths within a terminal interface.
 //!
-//! This module provides structures and functions for handling graphemes (characters and their associated display widths)
-//! in terminal applications. It is designed to accurately manage cursor positions and text rendering, especially when dealing
-//! with wide characters such as emojis or special symbols that occupy more than one column in terminal displays.
+//! This module provides structures
+//! and functions for handling graphemes
+//! (characters and their associated display widths)
+//! in terminal applications.
+//! It is designed to accurately manage cursor positions
+//! and text rendering, especially when dealing
+//! with wide characters such as emojis
+//! or special symbols that occupy more than one column in terminal displays.
 //!
 //! # Structures
 //!
-//! - `Grapheme`: Represents a single character, its display width, and optional styling.
-//! - `Graphemes`: A collection of `Grapheme` instances, supporting operations like total width calculation and styling.
+//! - `Grapheme`: Represents a single character,
+//! its display width, and optional styling.
+//! - `Graphemes`: A collection of `Grapheme` instances,
+//! supporting operations like total width calculation and styling.
 //!
 //! # Utility Functions
 //!
-//! - `matrixify`: Splits a collection of graphemes into lines that fit within a specified width, useful for text wrapping.
-//! - `trim`: Trims a collection of graphemes to fit within a specified width, discarding any excess graphemes.
+//! - `matrixify`: Splits a collection of graphemes into lines
+//! that fit within a specified width, useful for text wrapping.
+//! - `trim`: Trims a collection of graphemes
+//! to fit within a specified width, discarding any excess graphemes.
 //!
 //! # Usage
 //!
-//! This module is intended for use in terminal applications where accurate text rendering and cursor movement are crucial.
-//! It leverages the `unicode_width` crate to calculate the display width of characters, ensuring compatibility with a wide
+//! This module is intended for use in terminal applications
+//! where accurate text rendering and cursor movement are crucial.
+//! It leverages the `unicode_width` crate
+//! to calculate the display width of characters,
+//! ensuring compatibility with a wide
 //! range of Unicode characters.
 use std::{
     fmt::{self, Debug},

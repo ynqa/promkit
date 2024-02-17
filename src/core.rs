@@ -5,7 +5,8 @@ pub mod text;
 pub mod text_editor;
 pub mod tree;
 
-/// Defines a `Len` trait for obtaining the length of a collection and checking if it is empty.
+/// Defines a `Len` trait for obtaining the length of a collection
+/// and checking if it is empty.
 pub trait Len {
     /// Returns the length of the collection.
     fn len(&self) -> usize;

@@ -9,7 +9,8 @@ pub use suggest::Suggest;
 mod mode;
 pub use mode::Mode;
 
-/// A text editor that supports basic editing operations such as insert, delete, and overwrite.
+/// A text editor that supports basic editing operations
+/// such as insert, delete, and overwrite.
 /// It utilizes a cursor to navigate and manipulate the text.
 #[derive(Clone)]
 pub struct TextEditor(Cursor<String>);

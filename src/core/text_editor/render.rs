@@ -12,10 +12,14 @@ use crate::{
 
 use super::{History, Mode, Suggest, TextEditor};
 
-/// Represents a renderer for the `TextEditor` component, capable of visualizing text input in a pane.
-/// It supports a variety of features including history navigation, input suggestions, input masking,
-/// customizable prompt strings, and styles for different parts of the input. It also handles different
-/// edit modes such as insert and overwrite, and can be configured to render a specific number of lines.
+/// Represents a renderer for the `TextEditor` component,
+/// capable of visualizing text input in a pane.
+/// It supports a variety of features including history navigation,
+/// input suggestions, input masking,
+/// customizable prompt strings,
+/// and styles for different parts of the input. It also handles different
+/// edit modes such as insert and overwrite,
+/// and can be configured to render a specific number of lines.
 #[derive(Clone)]
 pub struct Renderer {
     /// The `TextEditor` component to be rendered.

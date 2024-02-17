@@ -2,9 +2,11 @@ use crate::crossterm::style::{Attributes, Color, ContentStyle};
 
 /// A struct for defining and building styles for terminal text.
 ///
-/// This struct allows for the customization of text appearance in the terminal,
-/// including foreground, background, and underline colors, as well as text attributes
-/// like bold, italic, etc. It provides a fluent interface for setting these properties,
+/// This struct allows for the customization of text appearance
+/// in the terminal, including foreground, background,
+/// and underline colors, as well as text attributes
+/// like bold, italic, etc.
+/// It provides a fluent interface for setting these properties,
 /// and a method to build a `ContentStyle` that can be applied to text.
 #[derive(Default)]
 pub struct Style {

@@ -12,9 +12,12 @@ use crate::{
 
 use super::Checkbox;
 
-/// Represents a renderer for the `Checkbox` component, capable of visualizing checkboxes in a pane.
-/// It supports custom symbols for the cursor and checkmark, styles for active and inactive items,
-/// and a configurable number of lines for rendering. It also handles key events for navigation and toggling checkboxes.
+/// Represents a renderer for the `Checkbox` component,
+/// capable of visualizing checkboxes in a pane.
+/// It supports custom symbols for the cursor and checkmark,
+/// styles for active and inactive items,
+/// and a configurable number of lines for rendering.
+/// It also handles key events for navigation and toggling checkboxes.
 #[derive(Clone)]
 pub struct Renderer {
     /// The `Checkbox` component to be rendered.

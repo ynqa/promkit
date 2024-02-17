@@ -7,7 +7,8 @@ pub struct Confirm(Readline);
 
 impl Confirm {
     /// Creates a new `Confirm` instance with a specified prompt text.
-    /// The prompt text is formatted to include "(y/n)" to indicate the expected input.
+    /// The prompt text is formatted
+    /// to include "(y/n)" to indicate the expected input.
     ///
     /// # Arguments
     ///
@@ -28,7 +29,8 @@ impl Confirm {
     }
 
     /// Displays the confirmation prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is the user's input.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is the user's input.
     pub fn prompt(self) -> Result<Prompt<String>> {
         self.0.prompt()
     }

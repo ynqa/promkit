@@ -1,6 +1,8 @@
 /// Manages the history of user inputs for a text editor.
-/// This structure allows for the storage, retrieval, and navigation through past inputs.
-/// It supports adding new entries, checking for the existence of specific entries,
+/// This structure allows for the storage,
+/// retrieval, and navigation through past inputs.
+/// It supports adding new entries,
+/// checking for the existence of specific entries,
 /// and moving through the history in both forward and backward directions.
 #[derive(Clone)]
 pub struct History {
@@ -24,9 +26,12 @@ impl Default for History {
 impl History {
     /// Inserts a new item into the history.
     ///
-    /// If the item does not already exist in the buffer, it is inserted just before the last item.
-    /// This method ensures there is always an empty string at the end of the buffer to represent
-    /// a new input line. After insertion, the current position is moved to the end of the buffer.
+    /// If the item does not already exist in the buffer,
+    /// it is inserted just before the last item.
+    /// This method ensures there is always an empty string
+    /// at the end of the buffer to represent
+    /// a new input line. After insertion,
+    /// the current position is moved to the end of the buffer.
     ///
     /// # Arguments
     ///
@@ -50,7 +55,8 @@ impl History {
         }
     }
 
-    /// Retrieves the current item from the history based on the current position.
+    /// Retrieves the current item from the history
+    /// based on the current position.
     /// Returns an empty string if the position is out of bounds.
     pub fn get(&self) -> String {
         self.buf

@@ -10,10 +10,13 @@ use crate::{
     error::{Error, Result},
 };
 
-/// Provides functionality for executing terminal commands and managing terminal state.
+/// Provides functionality for executing terminal commands
+/// and managing terminal state.
 ///
-/// The `Engine` struct encapsulates methods for interacting with the terminal, such as moving the cursor,
-/// clearing the screen, writing text, and more. It leverages the `crossterm` crate to provide cross-platform
+/// The `Engine` struct encapsulates methods for interacting
+/// with the terminal, such as moving the cursor,
+/// clearing the screen, writing text, and more.
+/// It leverages the `crossterm` crate to provide cross-platform
 /// terminal operations.
 #[derive(Clone)]
 pub struct Engine<W: Write> {
@@ -54,16 +57,19 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn clear_from_cursor_down(&mut self) -> Result {
         execute!(self.out, Clear(ClearType::FromCursorDown)).map_err(Error::from)
     }
 
-    /// Clears the entire terminal screen and moves the cursor to the top-left position.
+    /// Clears the entire terminal screen
+    /// and moves the cursor to the top-left position.
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn clear(&mut self) -> Result {
         execute!(self.out, Clear(ClearType::All), MoveTo(0, 0)).map_err(Error::from)
     }
@@ -76,7 +82,8 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn write<D: fmt::Display>(&mut self, string: D) -> Result {
         execute!(self.out, Print(string)).map_err(Error::from)
     }
@@ -89,7 +96,8 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn move_to(&mut self, pos: (u16, u16)) -> Result {
         execute!(self.out, MoveTo(pos.0, pos.1)).map_err(Error::from)
     }
@@ -98,7 +106,8 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing `true` if the cursor is at the bottom, otherwise `false`.
+    /// Returns a `Result` containing `true`
+    /// if the cursor is at the bottom, otherwise `false`.
     pub fn is_bottom(&self) -> Result<bool> {
         Ok(cursor::position()?.1 + 1 == terminal::size()?.1)
     }
@@ -111,7 +120,8 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn scroll_up(&mut self, times: u16) -> Result {
         execute!(self.out, ScrollUp(times)).map_err(Error::from)
     }
@@ -120,7 +130,8 @@ impl<W: Write> Engine<W> {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` indicating the success of the operation, or an `Error` if it fails.
+    /// Returns a `Result` indicating the success of the operation,
+    /// or an `Error` if it fails.
     pub fn move_to_next_line(&mut self) -> Result {
         execute!(self.out, cursor::MoveToNextLine(1)).map_err(Error::from)
     }

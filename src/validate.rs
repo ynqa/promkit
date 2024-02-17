@@ -1,25 +1,31 @@
 /// A generic structure for validating inputs of any type.
 ///
-/// This structure allows for the definition of custom validation logic and error message generation
-/// for inputs of a specified type. It encapsulates a validator function and an error message builder
+/// This structure allows for the definition of custom validation logic
+/// and error message generation for inputs of a specified type.
+/// It encapsulates a validator function and an error message builder
 /// function, both of which operate on references to the input.
 pub struct Validator<T: ?Sized> {
-    /// A boxed function that takes a reference to an input of type `T` and returns a boolean
+    /// A boxed function that takes a reference
+    /// to an input of type `T` and returns a boolean
     /// indicating whether the input passes the validation.
     validator: Box<dyn Fn(&T) -> bool>,
-    /// A boxed function that takes a reference to an input of type `T` and returns a `String`
+    /// A boxed function that takes a reference
+    /// to an input of type `T` and returns a `String`
     /// that describes the validation error.
     error_message_builder: Box<dyn Fn(&T) -> String>,
 }
 
 impl<T: ?Sized> Validator<T> {
-    /// Constructs a new `Validator` instance with the specified validator and error message builder functions.
+    /// Constructs a new `Validator` instance
+    /// with the specified validator and error message builder functions.
     ///
     /// # Arguments
     ///
-    /// * `validator` - A function that takes a reference to an input of type `T` and returns a boolean
+    /// * `validator` - A function that takes a reference
+    /// to an input of type `T` and returns a boolean
     /// indicating whether the input passes the validation.
-    /// * `error_message_builder` - A function that takes a reference to an input of type `T` and returns a `String`
+    /// * `error_message_builder` - A function that takes a reference
+    /// to an input of type `T` and returns a `String`
     /// that describes the validation error.
     ///
     /// # Returns
@@ -36,24 +42,29 @@ impl<T: ?Sized> Validator<T> {
         }
     }
 
-    /// Validates the given input using the encapsulated validator function.
+    /// Validates the given input
+    /// using the encapsulated validator function.
     ///
     /// # Arguments
     ///
-    /// * `input` - A reference to the input of type `T` to be validated.
+    /// * `input` - A reference
+    /// to the input of type `T` to be validated.
     ///
     /// # Returns
     ///
-    /// Returns `true` if the input passes the validation, otherwise `false`.
+    /// Returns `true` if the input passes the validation,
+    /// otherwise `false`.
     pub fn validate(&self, input: &T) -> bool {
         (self.validator)(input)
     }
 
-    /// Generates an error message for the given input using the encapsulated error message builder function.
+    /// Generates an error message for the given input
+    /// using the encapsulated error message builder function.
     ///
     /// # Arguments
     ///
-    /// * `input` - A reference to the input of type `T` for which to generate an error message.
+    /// * `input` - A reference to the input of type `T`
+    /// for which to generate an error message.
     ///
     /// # Returns
     ///

@@ -8,7 +8,8 @@ use crate::{
     Prompt,
 };
 
-/// Represents a tree component for creating and managing a hierarchical list of options.
+/// Represents a tree component for creating
+/// and managing a hierarchical list of options.
 pub struct Tree {
     /// Renderer for the title displayed above the tree.
     title_renderer: text::Renderer,
@@ -84,7 +85,8 @@ impl Tree {
     }
 
     /// Displays the tree prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is a list of selected options.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is a list of selected options.
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             vec![

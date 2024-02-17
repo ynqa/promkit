@@ -18,11 +18,13 @@ pub struct Select {
 }
 
 impl Select {
-    /// Constructs a new `Select` instance with a list of items to be displayed as selectable options.
+    /// Constructs a new `Select` instance
+    /// with a list of items to be displayed as selectable options.
     ///
     /// # Arguments
     ///
-    /// * `items` - An iterator over items that implement the `Display` trait, to be used as options.
+    /// * `items` - An iterator over items
+    /// that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_renderer: text::Renderer {
@@ -78,7 +80,8 @@ impl Select {
     }
 
     /// Displays the select prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is the selected option.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is the selected option.
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             vec![

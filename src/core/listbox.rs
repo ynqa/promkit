@@ -5,15 +5,20 @@ use crate::core::cursor::Cursor;
 mod render;
 pub use render::Renderer;
 
-/// A `Listbox` struct that encapsulates a list of strings, allowing for navigation and manipulation
-/// through a cursor. It supports basic operations such as moving the cursor forward and backward,
-/// retrieving the current item, and initializing from an iterator of displayable items.
+/// A `Listbox` struct that encapsulates a list of strings,
+/// allowing for navigation and manipulation through a cursor.
+/// It supports basic operations
+/// such as moving the cursor forward and backward,
+/// retrieving the current item,
+/// and initializing from an iterator of displayable items.
 #[derive(Clone)]
 pub struct Listbox(Cursor<Vec<String>>);
 
 impl<T: fmt::Display> FromIterator<T> for Listbox {
-    /// Creates a `Listbox` from an iterator of items that implement the `Display` trait.
-    /// Each item is converted to a `String` and collected into a `Vec<String>`.
+    /// Creates a `Listbox` from an iterator of items
+    /// that implement the `Display` trait.
+    /// Each item is converted to a `String`
+    /// and collected into a `Vec<String>`.
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
             iter.into_iter().map(|e| format!("{}", e)).collect(),
@@ -33,7 +38,8 @@ impl Listbox {
     }
 
     /// Retrieves the item at the current cursor position as a `String`.
-    /// If the cursor is at a position without an item, returns an empty `String`.
+    /// If the cursor is at a position without an item,
+    /// returns an empty `String`.
     pub fn get(&self) -> String {
         self.items()
             .get(self.position())

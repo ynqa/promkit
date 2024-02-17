@@ -3,7 +3,8 @@ use std::{any::Any, cell::RefCell};
 use crate::{crossterm::event::Event, pane::Pane};
 
 /// A trait for objects that can be rendered in the terminal.
-/// It requires the ability to create a pane, handle events, and perform cleanup.
+/// It requires the ability to create a pane, handle events,
+/// and perform cleanup.
 pub trait Renderable: AsAny {
     /// Creates a pane with the given width.
     fn make_pane(&self, width: u16) -> Pane;
@@ -44,13 +45,15 @@ impl<R: Clone + Renderable + 'static> Renderable for State<R> {
         self.after.borrow().make_pane(width)
     }
 
-    /// Updates the `before` state and delegates event handling to the `after` state.
+    /// Updates the `before` state and delegates event handling
+    /// to the `after` state.
     fn handle_event(&mut self, event: &Event) {
         self.before = self.after.borrow().clone();
         self.after.borrow_mut().handle_event(event);
     }
 
-    /// Performs cleanup on the `after` state and updates the `init` and `before` states.
+    /// Performs cleanup on the `after` state
+    /// and updates the `init` and `before` states.
     fn postrun(&mut self) {
         self.after.borrow_mut().postrun();
         self.init = self.after.borrow().clone();

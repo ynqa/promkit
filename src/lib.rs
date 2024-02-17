@@ -140,17 +140,26 @@ pub struct Prompt<T> {
 static ONCE: Once = Once::new();
 
 impl<T> Prompt<T> {
-    /// Creates a new `Prompt` instance with specified renderables, evaluator, and output functions.
+    /// Creates a new `Prompt` instance
+    /// with specified renderables, evaluator, and output functions.
     ///
     /// # Arguments
     ///
-    /// * `renderables` - A vector of boxed objects implementing the `Renderable` trait. These are the UI components that will be rendered.
-    /// * `evaluator` - A function that takes an event and the current state of renderables, returning a `Result<bool>` indicating whether the prompt is ready to produce an output.
-    /// * `output` - A function that takes the current state of renderables and returns a `Result<T>`, where `T` is the type of the output produced by the prompt.
+    /// * `renderables` - A vector of boxed objects implementing
+    /// the `Renderable` trait.
+    /// These are the UI components that will be rendered.
+    /// * `evaluator` - A function that takes an event
+    /// and the current state of renderables,
+    /// returning a `Result<bool>` indicating
+    /// whether the prompt is ready to produce an output.
+    /// * `output` - A function that takes the current state of renderables
+    /// and returns a `Result<T>`, where `T` is the type of the output
+    /// produced by the prompt.
     ///
     /// # Returns
     ///
-    /// Returns a `Result` wrapping a new `Prompt` instance if successful, or an error if the creation fails.
+    /// Returns a `Result` wrapping a new `Prompt` instance
+    /// if successful, or an error if the creation fails.
     pub fn try_new<E, O>(
         renderables: Vec<Box<dyn Renderable>>,
         evaluator: E,
@@ -167,15 +176,20 @@ impl<T> Prompt<T> {
         })
     }
 
-    /// Runs the prompt, handling events and rendering UI components until an output is produced or an error occurs.
+    /// Runs the prompt, handling events and rendering UI components
+    /// until an output is produced or an error occurs.
     ///
-    /// This method initializes the terminal in raw mode, hides the cursor, and enters a loop to handle events.
-    /// It continuously renders the UI components based on the current state and events until the evaluator function
-    /// indicates that the prompt is ready to produce an output or an interrupt signal (e.g., Ctrl+C) is received.
+    /// This method initializes the terminal
+    /// in raw mode, hides the cursor, and enters a loop to handle events.
+    /// It continuously renders the UI components
+    /// based on the current state and events until the evaluator function
+    /// indicates that the prompt is ready to produce
+    /// an output or an interrupt signal (e.g., Ctrl+C) is received.
     ///
     /// # Returns
     ///
-    /// Returns a `Result<T>`, where `T` is the type of the output produced by the prompt, or an error if the prompt fails to run.
+    /// Returns a `Result<T>`, where `T` is the type of the output
+    /// produced by the prompt, or an error if the prompt fails to run.
     pub fn run(&mut self) -> Result<T> {
         let mut engine = Engine::new(io::stdout());
 

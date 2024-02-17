@@ -9,7 +9,8 @@ use crate::{
     text, Prompt,
 };
 
-/// Represents a checkbox component for creating and managing a list of selectable options.
+/// Represents a checkbox component for creating
+/// and managing a list of selectable options.
 pub struct Checkbox {
     /// Renderer for the title displayed above the checkbox list.
     title_renderer: text::Renderer,
@@ -18,11 +19,13 @@ pub struct Checkbox {
 }
 
 impl Checkbox {
-    /// Constructs a new `Checkbox` instance with a list of items to be displayed as selectable options.
+    /// Constructs a new `Checkbox` instance with a list of items
+    /// to be displayed as selectable options.
     ///
     /// # Arguments
     ///
-    /// * `items` - An iterator over items that implement the `Display` trait, to be used as options.
+    /// * `items` - An iterator over items
+    /// that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_renderer: text::Renderer {
@@ -85,7 +88,8 @@ impl Checkbox {
     }
 
     /// Displays the checkbox prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is a list of selected options.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is a list of selected options.
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             vec![

@@ -5,8 +5,11 @@ use crate::core::listbox::Listbox;
 mod render;
 pub use render::Renderer;
 
-/// A `Checkbox` struct that encapsulates a listbox for item selection and a set of picked (selected) indices.
-/// It allows for multiple selections, toggling the selection state of items, and navigating through the items.
+/// A `Checkbox` struct that encapsulates a listbox
+/// for item selection and a set of picked (selected) indices.
+/// It allows for multiple selections,
+/// toggling the selection state of items,
+/// and navigating through the items.
 #[derive(Clone)]
 pub struct Checkbox {
     listbox: Listbox,
@@ -14,8 +17,10 @@ pub struct Checkbox {
 }
 
 impl<T: fmt::Display> FromIterator<T> for Checkbox {
-    /// Creates a `Checkbox` from an iterator of items that implement the `Display` trait.
-    /// Each item is added to the listbox, and the set of picked indices is initialized as empty.
+    /// Creates a `Checkbox` from an iterator of items
+    /// that implement the `Display` trait.
+    /// Each item is added to the listbox,
+    /// and the set of picked indices is initialized as empty.
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
             listbox: Listbox::from_iter(iter),

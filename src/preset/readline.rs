@@ -17,8 +17,10 @@ pub use confirm::Confirm;
 mod password;
 pub use password::Password;
 
-/// The `Readline` struct provides functionality for reading a single line of input from the user.
-/// It supports various configurations such as input masking, history, suggestions, and custom styles.
+/// `Readline` struct provides functionality
+/// for reading a single line of input from the user.
+/// It supports various configurations
+/// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
     /// Renderer for the title displayed above the input field.
     title_renderer: text::Renderer,
@@ -140,7 +142,8 @@ impl Readline {
         self
     }
 
-    /// Initiates the prompt process, displaying the configured UI elements and handling user input.
+    /// Initiates the prompt process,
+    /// displaying the configured UI elements and handling user input.
     pub fn prompt(self) -> Result<Prompt<String>> {
         let validator = self.validator;
 

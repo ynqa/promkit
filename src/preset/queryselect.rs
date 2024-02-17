@@ -14,10 +14,13 @@ use crate::{
     Prompt,
 };
 
-/// Used to process and filter a list of options based on the input text in the `QuerySelect` component.
+/// Used to process and filter a list of options
+/// based on the input text in the `QuerySelect` component.
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 
-/// Represents a query selection component that combines a text editor for input and a list box for displaying filtered options based on the input.
+/// Represents a query selection component that combines a text editor
+/// for input and a list box
+/// for displaying filtered options based on the input.
 pub struct QuerySelect {
     /// Renderer for the title displayed above the query selection.
     title_renderer: text::Renderer,
@@ -25,17 +28,22 @@ pub struct QuerySelect {
     text_editor_renderer: text_editor::Renderer,
     /// Renderer for the list box component.
     listbox_renderer: listbox::Renderer,
-    /// A filter function to apply to the list box items based on the text editor input.
+    /// A filter function to apply to the list box items
+    /// based on the text editor input.
     filter: Box<Filter>,
 }
 
 impl QuerySelect {
-    /// Constructs a new `QuerySelect` instance with a list of items and a filter function.
+    /// Constructs a new `QuerySelect` instance
+    /// with a list of items and a filter function.
     ///
     /// # Arguments
     ///
-    /// * `items` - An iterator over items that implement the `Display` trait, to be used as options in the list box.
-    /// * `filter` - A function that takes the current input from the text editor and the list of items, returning a filtered list of items to display.
+    /// * `items` - An iterator over items that implement the `Display` trait,
+    /// to be used as options in the list box.
+    /// * `filter` - A function that takes the current input
+    /// from the text editor and the list of items,
+    /// returning a filtered list of items to display.
     pub fn new<T, I, F>(items: I, filter: F) -> Self
     where
         T: Display,
@@ -151,7 +159,8 @@ impl QuerySelect {
     }
 
     /// Displays the query select prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is the selected option.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is the selected option.
     pub fn prompt(self) -> Result<Prompt<String>> {
         let filter = self.filter;
 

@@ -61,7 +61,8 @@ impl Password {
     }
 
     /// Displays the password prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result, which is the user's input.
+    /// Returns a `Result` containing the `Prompt` result,
+    /// which is the user's input.
     pub fn prompt(self) -> Result<Prompt<String>> {
         self.0.prompt()
     }

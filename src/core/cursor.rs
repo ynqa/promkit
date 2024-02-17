@@ -1,8 +1,10 @@
 use crate::core::Len;
 
 /// A generic cursor structure for navigating and manipulating collections.
-/// It maintains a position within the collection and provides methods to move forward, backward,
-/// to the head, and to the tail of the collection. It requires the collection to implement the `Len` trait.
+/// It maintains a position within the collection
+/// and provides methods to move forward, backward,
+/// to the head, and to the tail of the collection.
+/// It requires the collection to implement the `Len` trait.
 #[derive(Clone)]
 pub struct Cursor<C> {
     contents: C,

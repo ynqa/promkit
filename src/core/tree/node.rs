@@ -1,5 +1,6 @@
 /// A `Node` struct that represents a single node in a tree structure.
-/// It contains data as a `String`, a list of child nodes, and a visibility flag for its children.
+/// It contains data as a `String`,
+/// a list of child nodes, and a visibility flag for its children.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Node {
     data: String,
@@ -7,7 +8,8 @@ pub struct Node {
     children_visible: bool,
 }
 
-/// A `NodeWithDepth` struct that represents a node along with its depth information.
+/// A `NodeWithDepth` struct that represents a node
+/// along with its depth information.
 /// It is used for flattening a tree structure into a linear representation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeWithDepth {
