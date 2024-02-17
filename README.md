@@ -65,7 +65,7 @@ fn main() -> Result {
 ```
 </details>
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
+![readline](https://github.com/ynqa/promkit/assets/6745370/25c2eaa9-c4c6-491f-aaee-1eec172aa6a3)
 
 ### Confirm
 
@@ -92,7 +92,7 @@ fn main() -> Result {
 ```
 </details>
 
-![confirm](https://github.com/ynqa/promkit/assets/6745370/bcc17774-c516-4961-95dd-13036cec5137)
+![confirm](https://github.com/ynqa/promkit/assets/6745370/c307ae97-c5c6-4253-83a7-d6fdfdfd88b1)
 
 ### Password
 
@@ -125,7 +125,7 @@ fn main() -> Result {
 ```
 </details>
 
-![password](https://github.com/ynqa/promkit/assets/6745370/15bc9dc7-8e17-4c57-8634-9dcc55effd60)
+![password](https://github.com/ynqa/promkit/assets/6745370/6063b4cb-6ba6-4540-bca8-d54bd59e9b4e)
 
 ### Select
 
@@ -154,7 +154,7 @@ fn main() -> Result {
 ```
 </details>
 
-![select](https://github.com/ynqa/promkit/assets/6745370/bdf3338a-5647-4e6d-88a6-0c79834992ca)
+![select](https://github.com/ynqa/promkit/assets/6745370/b1093e46-4ddb-4f71-993c-fa0e80998882)
 
 ### QuerySelect
 
@@ -193,7 +193,7 @@ fn main() -> Result {
 ```
 </details>
 
-![queryselect](https://github.com/ynqa/promkit/assets/6745370/1abdd5c0-2c3b-47d3-916e-386fd4f50779)
+![queryselect](https://github.com/ynqa/promkit/assets/6745370/c8b3cbf7-ef8b-45cc-bb1b-c395902de346)
 
 ### Checkbox
 
@@ -233,7 +233,7 @@ fn main() -> Result {
 ```
 </details>
 
-TBD
+![checkbox](https://github.com/ynqa/promkit/assets/6745370/079c412f-cc11-40d5-a73a-dc69ac32cfb6)
 
 ### Tree
 
@@ -266,7 +266,7 @@ fn main() -> Result {
 ```
 </details>
 
-TBD
+![tree](https://github.com/ynqa/promkit/assets/6745370/61c9e32c-6043-41f8-974b-77a0c7ab8223)
 
 ## Why *promkit*?
 
