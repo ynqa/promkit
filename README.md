@@ -18,7 +18,7 @@ promkit = "0.3.0"
 
 - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
-  - Preset; Support for quickly setting up a UI by providing simple parameters.
+  - Preset; Support for quickly setting up a UI by providing simple parameters
     - [Readline](#readline)
     - [Confirm](#confirm)
     - [Password](#password)
@@ -26,14 +26,14 @@ promkit = "0.3.0"
     - [QuerySelect](#queryselect)
     - [Checkbox](#checkbox)
     - [Tree](#tree)
-  - Combining various UI components.
+  - Combining various UI components
     - They are provided with the same interface, allowing users to choose and
-      assemble them according to their preferences.
-  - (Upcoming) Stronger support to display yor own data structures.
+      assemble them according to their preferences
+  - (Upcoming) Stronger support to display yor own data structures
 - Versatile customization capabilities
-  - Theme for designing the appearance of the prompt.
-    - e.g. cursor, text
-  - Validation for user input and error message construction.
+  - Theme for designing the appearance of the prompt
+    - e.g. cursor, text and prompt string
+  - Validation for user input and error message construction
 
 ## Examples/Demos
 
