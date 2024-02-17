@@ -28,13 +28,12 @@ impl Tree {
         self.cursor.position()
     }
 
-    pub fn get(&self) -> String {
-        self.cursor
-            .contents()
-            .get(self.position())
-            .unwrap()
-            .data
-            .clone()
+    pub fn get(&self) -> Vec<String> {
+        let node = self.cursor.contents().get(self.position()).unwrap();
+
+        let mut ret = node.data_from_root.clone();
+        ret.push(node.data.clone());
+        ret
     }
 
     pub fn toggle(&mut self) {

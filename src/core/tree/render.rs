@@ -30,7 +30,7 @@ pub struct Renderer {
 }
 
 impl Renderable for Renderer {
-    fn make_pane(&self, width: u16) -> crate::pane::Pane {
+    fn make_pane(&self, width: u16) -> Pane {
         let symbol = |item: &NodeWithDepth| -> &str {
             if item.is_leaf || !item.children_visible {
                 &self.folded_symbol
@@ -47,7 +47,12 @@ impl Renderable for Renderer {
             .map(|(i, item)| {
                 if i == self.tree.position() {
                     Graphemes::new_with_style(
-                        format!("{}{}{}", symbol(item), " ".repeat(item.depth), item.data),
+                        format!(
+                            "{}{}{}",
+                            symbol(item),
+                            " ".repeat(item.data_from_root.len() + 1),
+                            item.data
+                        ),
                         self.active_item_style,
                     )
                 } else {
@@ -55,7 +60,7 @@ impl Renderable for Renderer {
                         format!(
                             "{}{}{}",
                             " ".repeat(Graphemes::new(symbol(item)).widths()),
-                            " ".repeat(item.depth),
+                            " ".repeat(item.data_from_root.len() + 1),
                             item.data
                         ),
                         self.inactive_item_style,

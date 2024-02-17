@@ -8,7 +8,7 @@ pub struct Node {
 #[derive(Clone, Debug, PartialEq)]
 pub struct NodeWithDepth {
     pub data: String,
-    pub depth: usize,
+    pub data_from_root: Vec<String>,
     pub children_visible: bool,
     pub is_leaf: bool,
 }
@@ -30,21 +30,22 @@ impl Node {
     }
 
     pub fn flatten(&self) -> Vec<NodeWithDepth> {
-        self.flatten_with_depth(0)
+        self.flatten_with_depth(vec![])
     }
 
-    fn flatten_with_depth(&self, depth: usize) -> Vec<NodeWithDepth> {
+    fn flatten_with_depth(&self, mut data_from_root: Vec<String>) -> Vec<NodeWithDepth> {
         let mut res = vec![];
         res.push(NodeWithDepth {
             data: self.data.clone(),
-            depth,
+            data_from_root: data_from_root.clone(),
             children_visible: self.children_visible,
             is_leaf: self.children.is_empty(),
         });
 
+        data_from_root.push(self.data.clone());
         if self.children_visible && !self.children.is_empty() {
             for child in self.children.iter() {
-                res.extend(child.flatten_with_depth(depth + 1));
+                res.extend(child.flatten_with_depth(data_from_root.clone()));
             }
         }
         res
@@ -89,7 +90,7 @@ mod test {
             assert_eq!(
                 vec![NodeWithDepth {
                     data: String::from("/"),
-                    depth: 0,
+                    data_from_root: Vec::new(),
                     children_visible: false,
                     is_leaf: false,
                 }],
@@ -122,25 +123,25 @@ mod test {
             let expect = vec![
                 NodeWithDepth {
                     data: String::from("/"),
-                    depth: 0,
+                    data_from_root: Vec::new(),
                     children_visible: true,
                     is_leaf: false,
                 },
                 NodeWithDepth {
                     data: String::from("a"),
-                    depth: 1,
+                    data_from_root: vec![String::from("/")],
                     children_visible: false,
                     is_leaf: false,
                 },
                 NodeWithDepth {
                     data: String::from("b"),
-                    depth: 1,
+                    data_from_root: vec![String::from("/")],
                     children_visible: false,
                     is_leaf: true,
                 },
                 NodeWithDepth {
                     data: String::from("c"),
-                    depth: 1,
+                    data_from_root: vec![String::from("/")],
                     children_visible: false,
                     is_leaf: true,
                 },

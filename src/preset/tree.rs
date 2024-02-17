@@ -68,14 +68,14 @@ impl Tree {
         self
     }
 
-    pub fn prompt(self) -> Result<Prompt<String>> {
+    pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             vec![
                 Box::new(State::<text::Renderer>::new(self.title_renderer)),
                 Box::new(State::<tree::Renderer>::new(self.tree_renderer)),
             ],
             |_, _| Ok(true),
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
+            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
                 Ok(renderables[1]
                     .as_any()
                     .downcast_ref::<State<tree::Renderer>>()
