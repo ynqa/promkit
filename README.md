@@ -19,13 +19,21 @@ promkit = "0.3.0"
 - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
   - Preset; Support for quickly setting up a UI by providing simple parameters.
-  - Configure settings such as the order in which each UI component is displayed.
-    In short, you can create your own preset according to your preferences.
-  - (Upcoming) Support to display yor own data structures.
+    - Readline
+    - Confirm
+    - Password
+    - Select
+    - QuerySelect
+    - Checkbox
+    - Tree
+  - Combining various UI components.
+    - They are provided with the same interface, allowing users to choose and
+      assemble them according to their preferences.
+  - (Upcoming) Stronger support to display yor own data structures.
 - Versatile customization capabilities
-  - Themes for defining the outer shell style, including text and cursor colors
-  - Validation for user input and error message construction
-  - and so on...
+  - Theme for designing the appearance of the prompt.
+    - e.g. cursor, text
+  - Validation for user input and error message construction.
 
 ## Examples
 
