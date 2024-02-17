@@ -36,8 +36,8 @@ impl Password {
         self
     }
 
-    pub fn screen_lines(mut self, screen_lines: usize) -> Self {
-        self = Password(self.0.screen_lines(screen_lines));
+    pub fn text_editor_lines(mut self, lines: usize) -> Self {
+        self = Password(self.0.text_editor_lines(lines));
         self
     }
 

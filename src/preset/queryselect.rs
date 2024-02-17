@@ -47,7 +47,7 @@ impl QuerySelect {
                 active_char_style: Style::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: Style::new().build(),
                 edit_mode: Default::default(),
-                screen_lines: Default::default(),
+                lines: Default::default(),
             },
             listbox_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(items),
@@ -100,8 +100,8 @@ impl QuerySelect {
         self
     }
 
-    pub fn text_editor_screen_lines(mut self, screen_lines: usize) -> Self {
-        self.text_editor_renderer.screen_lines = Some(screen_lines);
+    pub fn text_editor_lines(mut self, lines: usize) -> Self {
+        self.text_editor_renderer.lines = Some(lines);
         self
     }
 

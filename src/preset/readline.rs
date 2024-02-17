@@ -43,7 +43,7 @@ impl Default for Readline {
                 active_char_style: Style::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: Style::new().build(),
                 edit_mode: Default::default(),
-                screen_lines: Default::default(),
+                lines: Default::default(),
             },
             error_message_renderer: text::Renderer {
                 text: Default::default(),
@@ -108,8 +108,8 @@ impl Readline {
         self
     }
 
-    pub fn screen_lines(mut self, screen_lines: usize) -> Self {
-        self.text_editor_renderer.screen_lines = Some(screen_lines);
+    pub fn text_editor_lines(mut self, lines: usize) -> Self {
+        self.text_editor_renderer.lines = Some(lines);
         self
     }
 

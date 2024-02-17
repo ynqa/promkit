@@ -32,8 +32,8 @@ pub struct Renderer {
 
     /// Edit mode: insert or overwrite.
     pub edit_mode: Mode,
-    /// Window size.
-    pub screen_lines: Option<usize>,
+    /// Num of lines for rendering.
+    pub lines: Option<usize>,
 }
 
 impl Renderable for Renderer {
@@ -54,7 +54,7 @@ impl Renderable for Renderer {
         Pane::new(
             matrixify(width as usize, &buf),
             self.texteditor.position() / width as usize,
-            self.screen_lines,
+            self.lines,
         )
     }
 
