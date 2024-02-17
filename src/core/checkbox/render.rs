@@ -73,14 +73,13 @@ impl Renderable for Renderer {
         Pane::new(trimed, self.checkbox.position(), self.screen_lines)
     }
 
-    /// Default key bindings for item picker.
+    /// Default key bindings for checkbox.
     ///
-    /// | Key                    | Description
-    /// | :--                    | :--
-    /// | <kbd> Enter </kbd>     | Exit the event-loop
-    /// | <kbd> CTRL + C </kbd>  | Exit the event-loop with an error
-    /// | <kbd> ↑ </kbd>         | Move backward
-    /// | <kbd> ↓ </kbd>         | Move forward
+    /// | Key                | Description
+    /// | :--                | :--
+    /// | <kbd> ↑ </kbd>     | Move the cursor backward
+    /// | <kbd> ↓ </kbd>     | Move the cursor forward
+    /// | <kbd> Space </kbd> | Put checkmark for the current item
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Move cursor.

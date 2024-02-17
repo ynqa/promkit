@@ -73,6 +73,13 @@ impl Renderable for Renderer {
         Pane::new(trimed, self.tree.position(), self.screen_lines)
     }
 
+    /// Default key bindings for tree.
+    ///
+    /// | Key                | Description
+    /// | :--                | :--
+    /// | <kbd> ↑ </kbd>     | Move the cursor backward
+    /// | <kbd> ↓ </kbd>     | Move the cursor forward
+    /// | <kbd> Space </kbd> | Switch fold/unfold at the current node
     fn handle_event(&mut self, event: &Event) {
         match event {
             // Move cursor.
