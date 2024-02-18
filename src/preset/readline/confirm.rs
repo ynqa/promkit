@@ -16,7 +16,7 @@ impl Confirm {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self(
             Readline::default()
-                .prefix_string(format!("{} (y/n) ", text.as_ref()))
+                .prefix(format!("{} (y/n) ", text.as_ref()))
                 .validator(
                     |text| -> bool {
                         ["yes", "no", "y", "n", "Y", "N"]

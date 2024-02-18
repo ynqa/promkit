@@ -30,12 +30,12 @@ pub struct Renderer {
     pub suggest: Suggest,
 
     /// Prompt string displayed before the input text.
-    pub ps: String,
+    pub prefix: String,
     /// Optional character used for masking the input string (e.g., for password fields).
     pub mask: Option<char>,
 
     /// Style applied to the prompt string.
-    pub ps_style: ContentStyle,
+    pub prefix_style: ContentStyle,
     /// Style applied to the currently selected character.
     pub active_char_style: ContentStyle,
     /// Style applied to characters that are not currently selected.
@@ -50,7 +50,10 @@ pub struct Renderer {
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = Graphemes::default();
-        buf.append(&mut Graphemes::new_with_style(&self.ps, self.ps_style));
+        buf.append(&mut Graphemes::new_with_style(
+            &self.prefix,
+            self.prefix_style,
+        ));
 
         let text = match self.mask {
             Some(mask) => self.texteditor.masking(mask),

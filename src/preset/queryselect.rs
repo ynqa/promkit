@@ -61,9 +61,9 @@ impl QuerySelect {
                 texteditor: Default::default(),
                 history: None,
                 suggest: Default::default(),
-                ps: String::from("❯❯ "),
+                prefix: String::from("❯❯ "),
                 mask: None,
-                ps_style: Style::new().fgc(Color::DarkGreen).build(),
+                prefix_style: Style::new().fgc(Color::DarkGreen).build(),
                 active_char_style: Style::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: Style::new().build(),
                 edit_mode: Default::default(),
@@ -99,14 +99,14 @@ impl QuerySelect {
     }
 
     /// Sets the prefix string displayed before the input text in the text editor component.
-    pub fn prefix_string<T: AsRef<str>>(mut self, ps: T) -> Self {
-        self.text_editor_renderer.ps = ps.as_ref().to_string();
+    pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
+        self.text_editor_renderer.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the style for the prefix string in the text editor component.
-    pub fn prefix_string_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_renderer.ps_style = style;
+    pub fn prefix_style(mut self, style: ContentStyle) -> Self {
+        self.text_editor_renderer.prefix_style = style;
         self
     }
 
