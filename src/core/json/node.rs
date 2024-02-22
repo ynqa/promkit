@@ -21,7 +21,11 @@ pub enum Kind {
         is_last: bool,
     },
     /// e.g. "number": 1
-    MapEntry { kv: (String, Value), is_last: bool },
+    MapEntry {
+        kv: (String, Value),
+        index: Vec<Index>,
+        is_last: bool,
+    },
 
     /// e.g. [ or "list": [
     ArrayStart {
@@ -37,7 +41,11 @@ pub enum Kind {
         is_last: bool,
     },
     /// e.g. "abc"
-    ArrayEntry { v: Value, is_last: bool },
+    ArrayEntry {
+        v: Value,
+        index: Vec<Index>,
+        is_last: bool,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -219,6 +227,7 @@ impl Node {
                     if let Some(Index::String(key)) = route.last() {
                         ret.push(Kind::MapEntry {
                             kv: (key.clone(), value.clone()),
+                            index: route.clone(),
                             is_last,
                         });
                     } else {
@@ -226,6 +235,7 @@ impl Node {
                         // but it's here for completeness.
                         ret.push(Kind::ArrayEntry {
                             v: value.clone(),
+                            index: route.clone(),
                             is_last,
                         });
                     }
@@ -307,6 +317,7 @@ mod test {
             assert_eq!(
                 vec![Kind::ArrayEntry {
                     v: Value::String("makoto".to_string()),
+                    index: vec![],
                     is_last: true
                 },],
                 node.flatten_visibles(),
@@ -321,7 +332,7 @@ mod test {
                     // {
                     Kind::MapStart {
                         key: None,
-                        index: vec![],
+                        index: vec![]
                     },
                     // "number": 1,
                     Kind::MapEntry {
@@ -329,46 +340,57 @@ mod test {
                             "number".to_string(),
                             Value::Number(serde_json::Number::from(1))
                         ),
-                        is_last: false
+                        index: vec![Index::String("number".to_string())],
+                        is_last: false,
                     },
                     // "map": {
                     Kind::MapStart {
                         key: Some("map".to_string()),
-                        index: vec![Index::String("map".to_string())]
+                        index: vec![Index::String("map".to_string())],
                     },
                     // "string1": "aaa",
                     Kind::MapEntry {
                         kv: ("string1".to_string(), Value::String("aaa".to_string())),
-                        is_last: false
+                        index: vec![
+                            Index::String("map".to_string()),
+                            Index::String("string1".to_string())
+                        ],
+                        is_last: false,
                     },
                     // "string2": "bbb"
                     Kind::MapEntry {
                         kv: ("string2".to_string(), Value::String("bbb".to_string())),
-                        is_last: true
+                        index: vec![
+                            Index::String("map".to_string()),
+                            Index::String("string2".to_string())
+                        ],
+                        is_last: true,
                     },
                     // },
                     Kind::MapEnd { is_last: false },
                     // "list": [
                     Kind::ArrayStart {
                         key: Some("list".to_string()),
-                        index: vec![Index::String("list".to_string())]
+                        index: vec![Index::String("list".to_string())],
                     },
                     // "abc",
                     Kind::ArrayEntry {
                         v: Value::String("abc".to_string()),
-                        is_last: false
+                        index: vec![Index::String("list".to_string()), Index::Number(0)],
+                        is_last: false,
                     },
                     // "def"
                     Kind::ArrayEntry {
                         v: Value::String("def".to_string()),
-                        is_last: true
+                        index: vec![Index::String("list".to_string()), Index::Number(1)],
+                        is_last: true,
                     },
                     // ],
                     Kind::ArrayEnd { is_last: false },
                     // "map_in_map": {
                     Kind::MapStart {
                         key: Some("map_in_map".to_string()),
-                        index: vec![Index::String("map_in_map".to_string())]
+                        index: vec![Index::String("map_in_map".to_string())],
                     },
                     // "nested": {
                     Kind::MapStart {
@@ -376,12 +398,17 @@ mod test {
                         index: vec![
                             Index::String("map_in_map".to_string()),
                             Index::String("nested".to_string())
-                        ]
+                        ],
                     },
                     // "leaf": "eof"
                     Kind::MapEntry {
                         kv: ("leaf".to_string(), Value::String("eof".to_string())),
-                        is_last: true
+                        index: vec![
+                            Index::String("map_in_map".to_string()),
+                            Index::String("nested".to_string()),
+                            Index::String("leaf".to_string())
+                        ],
+                        is_last: true,
                     },
                     // }
                     Kind::MapEnd { is_last: true },
@@ -390,7 +417,7 @@ mod test {
                     // "map_in_list": [
                     Kind::ArrayStart {
                         key: Some("map_in_list".to_string()),
-                        index: vec![Index::String("map_in_list".to_string())]
+                        index: vec![Index::String("map_in_list".to_string())],
                     },
                     // {
                     Kind::MapStart {
@@ -403,7 +430,12 @@ mod test {
                             "map1".to_string(),
                             Value::Number(serde_json::Number::from(1))
                         ),
-                        is_last: true
+                        index: vec![
+                            Index::String("map_in_list".to_string()),
+                            Index::Number(0),
+                            Index::String("map1".to_string())
+                        ],
+                        is_last: true,
                     },
                     // },
                     Kind::MapEnd { is_last: false },
@@ -418,7 +450,12 @@ mod test {
                             "map2".to_string(),
                             Value::Number(serde_json::Number::from(2))
                         ),
-                        is_last: true
+                        index: vec![
+                            Index::String("map_in_list".to_string()),
+                            Index::Number(1),
+                            Index::String("map2".to_string())
+                        ],
+                        is_last: true,
                     },
                     // }
                     Kind::MapEnd { is_last: true },
