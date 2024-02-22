@@ -113,18 +113,18 @@ impl Node {
         Some(node)
     }
 
-    pub fn get_mut(&mut self, route: Vec<Index>) -> Option<&mut Node> {
+    pub fn get_mut(&mut self, route: &Vec<Index>) -> Option<&mut Node> {
         let mut node = self;
         for index in route {
             match index {
                 Index::String(s) => {
                     if let Node::Object { children, .. } = node {
-                        node = children.get_mut(&s).unwrap();
+                        node = children.get_mut(s).unwrap();
                     }
                 }
                 Index::Number(n) => {
                     if let Node::Array { children, .. } = node {
-                        node = children.get_mut(n).unwrap();
+                        node = children.get_mut(*n).unwrap();
                     }
                 }
             }
@@ -132,7 +132,7 @@ impl Node {
         Some(node)
     }
 
-    pub fn toggle(&mut self, route: Vec<Index>) {
+    pub fn toggle(&mut self, route: &Vec<Index>) {
         if let Some(node) = self.get_mut(route) {
             match node {
                 Node::Object {
@@ -299,7 +299,7 @@ mod test {
         #[test]
         fn test_after_toggle() {
             let mut node = Node::new_from_str(JSON_STR).unwrap();
-            node.toggle(vec![]);
+            node.toggle(&vec![]);
             assert_eq!(
                 vec![Kind::MapFolded {
                     key: None,
@@ -313,7 +313,7 @@ mod test {
         #[test]
         fn test_string() {
             let mut node = Node::new_from_str("\"makoto\"").unwrap();
-            node.toggle(vec![]);
+            node.toggle(&vec![]);
             assert_eq!(
                 vec![Kind::ArrayEntry {
                     v: Value::String("makoto".to_string()),
@@ -476,7 +476,7 @@ mod test {
         #[test]
         fn test() {
             let mut node = Node::new_from_str(JSON_STR).unwrap();
-            node.toggle(vec![Index::String("map".to_string())]);
+            node.toggle(&vec![Index::String("map".to_string())]);
             assert!(
                 !as_object(node.get(vec![Index::String("map".to_string())]).unwrap())
                     .unwrap()
