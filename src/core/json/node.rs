@@ -303,9 +303,7 @@ mod test {
     }
 
     mod flatten_visibles {
-
-        use super::super::*;
-        use super::JSON_STR;
+        use super::*;
 
         #[test]
         fn test_after_toggle() {
@@ -493,8 +491,7 @@ mod test {
     }
 
     mod toggle {
-        use super::super::*;
-        use super::{as_object, JSON_STR};
+        use super::*;
 
         #[test]
         fn test() {
@@ -512,8 +509,7 @@ mod test {
     }
 
     mod get {
-        use super::super::*;
-        use super::JSON_STR;
+        use super::*;
 
         #[test]
         fn test() {
@@ -535,8 +531,7 @@ mod test {
     }
 
     mod get_mut {
-        use super::super::*;
-        use super::JSON_STR;
+        use super::*;
 
         #[test]
         fn test() {
@@ -558,10 +553,8 @@ mod test {
     }
 
     mod from_str {
+        use super::*;
         use serde_json::Number;
-
-        use super::super::*;
-        use super::JSON_STR;
 
         #[test]
         fn test() {

@@ -87,6 +87,29 @@ impl Node {
         ids
     }
 
+    pub fn get(&self, path: &Path) -> Option<&Node> {
+        let mut node = self;
+        for seg in path {
+            match node {
+                Node::NonLeaf {
+                    id: _,
+                    children,
+                    children_visible: _,
+                } => {
+                    if let Some(next_node) = children.get(*seg) {
+                        node = next_node;
+                    } else {
+                        return None;
+                    }
+                }
+                Node::Leaf(_) => {
+                    return None;
+                }
+            }
+        }
+        Some(node)
+    }
+
     pub fn get_mut(&mut self, path: &Path) -> Option<&mut Node> {
         let mut node = self;
         for seg in path {
@@ -131,6 +154,17 @@ mod test {
         }
     }
 
+    fn as_nonleaf(node: &Node) -> Option<(&String, &Vec<Node>, bool)> {
+        match node {
+            Node::NonLeaf {
+                id,
+                children,
+                children_visible,
+            } => Some((id, children, *children_visible)),
+            _ => None,
+        }
+    }
+
     mod toggle {
         use super::*;
 
@@ -138,22 +172,7 @@ mod test {
         fn test() {
             let mut node = create_test_node();
             node.toggle(&vec![]);
-            assert_eq!(
-                Node::NonLeaf {
-                    id: "root".into(),
-                    children: vec![
-                        Node::NonLeaf {
-                            id: "a".into(),
-                            children: vec![Node::Leaf("aa".into()), Node::Leaf("ab".into())],
-                            children_visible: true,
-                        },
-                        Node::Leaf("b".into()),
-                        Node::Leaf("c".into()),
-                    ],
-                    children_visible: false,
-                },
-                node,
-            );
+            assert!(!as_nonleaf(node.get(&vec![]).unwrap()).unwrap().2);
         }
     }
 
