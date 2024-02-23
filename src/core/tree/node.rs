@@ -52,7 +52,6 @@ impl Node {
         }
 
         let mut ret = Vec::new();
-        // Root is always visible
         dfs(self, Vec::new(), &mut ret);
         ret
     }
@@ -64,6 +63,28 @@ impl Node {
         {
             *children_visible = !*children_visible;
         }
+    }
+
+    pub fn path_to_ids(&self, path: &Path) -> Vec<String> {
+        let mut ids = Vec::new();
+        let mut node = self;
+        for &index in path {
+            match node {
+                Node::NonLeaf { id, children, .. } => {
+                    ids.push(id.clone());
+                    if let Some(child) = children.get(index) {
+                        node = child;
+                    } else {
+                        break;
+                    }
+                }
+                Node::Leaf(id) => {
+                    ids.push(id.clone());
+                    break;
+                }
+            }
+        }
+        ids
     }
 
     pub fn get_mut(&mut self, path: &Path) -> Option<&mut Node> {

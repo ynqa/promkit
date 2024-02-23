@@ -42,11 +42,8 @@ impl Tree {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         match kind {
             Kind::Folded { id, path } | Kind::Unfolded { id, path } => {
-                let mut ret = path
-                    .iter()
-                    .map(|&index| index.to_string())
-                    .collect::<Vec<String>>();
-                ret.push(id.clone());
+                let mut ret = self.root.path_to_ids(path);
+                ret.push(id.to_string());
                 ret
             }
         }
