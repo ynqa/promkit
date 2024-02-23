@@ -8,8 +8,9 @@ use crate::{
     grapheme::{trim, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable},
-    tree::{Kind, Tree},
 };
+
+use super::{Kind, Tree};
 
 /// Represents a renderer for a tree structure,
 /// capable of visualizing the tree in a pane.

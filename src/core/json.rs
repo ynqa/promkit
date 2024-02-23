@@ -2,7 +2,10 @@ use crate::core::cursor::Cursor;
 
 mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
+mod render;
+pub use render::Renderer;
 
+#[derive(Clone)]
 pub struct Json {
     root: JsonNode,
     cursor: Cursor<Vec<JsonSyntaxKind>>,

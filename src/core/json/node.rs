@@ -8,37 +8,49 @@ pub enum JsonSyntaxKind {
     /// All `bool` represents whether there is comma or not.
 
     /// e.g. { or "map": {
-    MapStart { key: Option<String>, path: JsonPath },
+    MapStart {
+        key: Option<String>,
+        path: JsonPath,
+        indent: usize,
+    },
     /// e.g. }
-    MapEnd { is_last: bool },
+    MapEnd { is_last: bool, indent: usize },
     /// e.g. "map": { ... }
     MapFolded {
         key: Option<String>,
         path: JsonPath,
         is_last: bool,
+        indent: usize,
     },
     /// e.g. "number": 1
     MapEntry {
         kv: (String, Value),
         path: JsonPath,
         is_last: bool,
+        indent: usize,
     },
 
     /// e.g. [ or "list": [
-    ArrayStart { key: Option<String>, path: JsonPath },
+    ArrayStart {
+        key: Option<String>,
+        path: JsonPath,
+        indent: usize,
+    },
     /// e.g. ]
-    ArrayEnd { is_last: bool },
+    ArrayEnd { is_last: bool, indent: usize },
     /// e.g. "list": [ ... ]
     ArrayFolded {
         key: Option<String>,
         path: JsonPath,
         is_last: bool,
+        indent: usize,
     },
     /// e.g. "abc"
     ArrayEntry {
         v: Value,
         path: JsonPath,
         is_last: bool,
+        indent: usize,
     },
 }
 
@@ -163,6 +175,7 @@ impl JsonNode {
             ret: &mut Vec<JsonSyntaxKind>,
             parent_visible: bool,
             is_last: bool,
+            indent: usize,
         ) {
             match node {
                 JsonNode::Object {
@@ -176,6 +189,7 @@ impl JsonNode {
                                 _ => None,
                             }),
                             path: path.clone(),
+                            indent,
                         };
                         ret.push(start_kind);
 
@@ -185,10 +199,17 @@ impl JsonNode {
                             let mut branch = path.clone();
                             branch.push(JsonPathSegment::Key(key.to_string()));
                             let child_is_last = i == keys.len() - 1;
-                            dfs(child, branch, ret, *children_visible, child_is_last);
+                            dfs(
+                                child,
+                                branch,
+                                ret,
+                                *children_visible,
+                                child_is_last,
+                                indent + 1,
+                            );
                         }
 
-                        ret.push(JsonSyntaxKind::MapEnd { is_last });
+                        ret.push(JsonSyntaxKind::MapEnd { is_last, indent });
                     } else {
                         ret.push(JsonSyntaxKind::MapFolded {
                             key: path.last().and_then(|index| match index {
@@ -197,6 +218,7 @@ impl JsonNode {
                             }),
                             path: path.clone(),
                             is_last,
+                            indent,
                         });
                     }
                 }
@@ -211,6 +233,7 @@ impl JsonNode {
                                 _ => None,
                             }),
                             path: path.clone(),
+                            indent,
                         };
                         ret.push(start_kind);
 
@@ -218,10 +241,10 @@ impl JsonNode {
                             let mut branch = path.clone();
                             branch.push(JsonPathSegment::Index(i));
                             let child_is_last = i == children.len() - 1;
-                            dfs(child, branch, ret, true, child_is_last);
+                            dfs(child, branch, ret, true, child_is_last, indent + 1);
                         }
 
-                        ret.push(JsonSyntaxKind::ArrayEnd { is_last });
+                        ret.push(JsonSyntaxKind::ArrayEnd { is_last, indent });
                     } else {
                         ret.push(JsonSyntaxKind::ArrayFolded {
                             key: path.last().and_then(|index| match index {
@@ -230,6 +253,7 @@ impl JsonNode {
                             }),
                             path: path.clone(),
                             is_last,
+                            indent,
                         });
                     }
                 }
@@ -239,6 +263,7 @@ impl JsonNode {
                             kv: (key.clone(), value.clone()),
                             path: path.clone(),
                             is_last,
+                            indent,
                         });
                     } else {
                         // This case might not be necessary
@@ -248,6 +273,7 @@ impl JsonNode {
                             v: value.clone(),
                             path: path.clone(),
                             is_last,
+                            indent,
                         });
                     }
                 }
@@ -255,7 +281,7 @@ impl JsonNode {
         }
 
         let mut ret = Vec::new();
-        dfs(self, Vec::new(), &mut ret, true, true); // Start with the root node being visible and is_last true
+        dfs(self, Vec::new(), &mut ret, true, true, 0); // Start with the root node being visible and is_last true, and indent 0
         ret
     }
 }
@@ -314,6 +340,7 @@ mod test {
                     key: None,
                     path: vec![],
                     is_last: true,
+                    indent: 0,
                 }],
                 node.flatten_visibles(),
             );
@@ -321,13 +348,14 @@ mod test {
 
         #[test]
         fn test_string() {
-            let mut node = JsonNode::new_from_str("\"makoto\"").unwrap();
+            let mut node = JsonNode::new_from_str("\"string\"").unwrap();
             node.toggle(&vec![]);
             assert_eq!(
                 vec![JsonSyntaxKind::ArrayEntry {
-                    v: Value::String("makoto".to_string()),
+                    v: Value::String("string".to_string()),
                     path: vec![],
-                    is_last: true
+                    is_last: true,
+                    indent: 0,
                 },],
                 node.flatten_visibles(),
             );
@@ -341,7 +369,8 @@ mod test {
                     // {
                     JsonSyntaxKind::MapStart {
                         key: None,
-                        path: vec![]
+                        path: vec![],
+                        indent: 0,
                     },
                     // "number": 1,
                     JsonSyntaxKind::MapEntry {
@@ -351,11 +380,13 @@ mod test {
                         ),
                         path: vec![JsonPathSegment::Key("number".to_string())],
                         is_last: false,
+                        indent: 1,
                     },
                     // "map": {
                     JsonSyntaxKind::MapStart {
                         key: Some("map".to_string()),
                         path: vec![JsonPathSegment::Key("map".to_string())],
+                        indent: 1,
                     },
                     // "string1": "aaa",
                     JsonSyntaxKind::MapEntry {
@@ -365,6 +396,7 @@ mod test {
                             JsonPathSegment::Key("string1".to_string())
                         ],
                         is_last: false,
+                        indent: 2,
                     },
                     // "string2": "bbb"
                     JsonSyntaxKind::MapEntry {
@@ -374,13 +406,18 @@ mod test {
                             JsonPathSegment::Key("string2".to_string())
                         ],
                         is_last: true,
+                        indent: 2,
                     },
                     // },
-                    JsonSyntaxKind::MapEnd { is_last: false },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: false,
+                        indent: 1
+                    },
                     // "list": [
                     JsonSyntaxKind::ArrayStart {
                         key: Some("list".to_string()),
                         path: vec![JsonPathSegment::Key("list".to_string())],
+                        indent: 1,
                     },
                     // "abc",
                     JsonSyntaxKind::ArrayEntry {
@@ -390,6 +427,7 @@ mod test {
                             JsonPathSegment::Index(0)
                         ],
                         is_last: false,
+                        indent: 2,
                     },
                     // "def"
                     JsonSyntaxKind::ArrayEntry {
@@ -399,13 +437,18 @@ mod test {
                             JsonPathSegment::Index(1)
                         ],
                         is_last: true,
+                        indent: 2,
                     },
                     // ],
-                    JsonSyntaxKind::ArrayEnd { is_last: false },
+                    JsonSyntaxKind::ArrayEnd {
+                        is_last: false,
+                        indent: 1
+                    },
                     // "map_in_map": {
                     JsonSyntaxKind::MapStart {
                         key: Some("map_in_map".to_string()),
                         path: vec![JsonPathSegment::Key("map_in_map".to_string())],
+                        indent: 1,
                     },
                     // "nested": {
                     JsonSyntaxKind::MapStart {
@@ -414,6 +457,7 @@ mod test {
                             JsonPathSegment::Key("map_in_map".to_string()),
                             JsonPathSegment::Key("nested".to_string())
                         ],
+                        indent: 2,
                     },
                     // "leaf": "eof"
                     JsonSyntaxKind::MapEntry {
@@ -424,15 +468,23 @@ mod test {
                             JsonPathSegment::Key("leaf".to_string())
                         ],
                         is_last: true,
+                        indent: 3,
                     },
                     // }
-                    JsonSyntaxKind::MapEnd { is_last: true },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: true,
+                        indent: 2
+                    },
                     // },
-                    JsonSyntaxKind::MapEnd { is_last: false },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: false,
+                        indent: 1
+                    },
                     // "map_in_list": [
                     JsonSyntaxKind::ArrayStart {
                         key: Some("map_in_list".to_string()),
                         path: vec![JsonPathSegment::Key("map_in_list".to_string())],
+                        indent: 1,
                     },
                     // {
                     JsonSyntaxKind::MapStart {
@@ -441,6 +493,7 @@ mod test {
                             JsonPathSegment::Key("map_in_list".to_string()),
                             JsonPathSegment::Index(0)
                         ],
+                        indent: 2,
                     },
                     // "map1": 1
                     JsonSyntaxKind::MapEntry {
@@ -454,9 +507,13 @@ mod test {
                             JsonPathSegment::Key("map1".to_string())
                         ],
                         is_last: true,
+                        indent: 3,
                     },
                     // },
-                    JsonSyntaxKind::MapEnd { is_last: false },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: false,
+                        indent: 2
+                    },
                     // {
                     JsonSyntaxKind::MapStart {
                         key: None,
@@ -464,6 +521,7 @@ mod test {
                             JsonPathSegment::Key("map_in_list".to_string()),
                             JsonPathSegment::Index(1)
                         ],
+                        indent: 2,
                     },
                     // "map2": 2
                     JsonSyntaxKind::MapEntry {
@@ -477,13 +535,23 @@ mod test {
                             JsonPathSegment::Key("map2".to_string())
                         ],
                         is_last: true,
+                        indent: 3,
                     },
                     // }
-                    JsonSyntaxKind::MapEnd { is_last: true },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: true,
+                        indent: 2
+                    },
                     // ]
-                    JsonSyntaxKind::ArrayEnd { is_last: true },
+                    JsonSyntaxKind::ArrayEnd {
+                        is_last: true,
+                        indent: 1
+                    },
                     // }
-                    JsonSyntaxKind::MapEnd { is_last: true },
+                    JsonSyntaxKind::MapEnd {
+                        is_last: true,
+                        indent: 0
+                    },
                 ],
                 node.flatten_visibles(),
             );
