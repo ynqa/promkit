@@ -1,3 +1,5 @@
+use std::{fs, path};
+
 /// Represents the kind of a node in a tree structure.
 ///
 /// This enum is used to distinguish between nodes that are currently
@@ -38,6 +40,31 @@ pub enum Node {
     /// Represents a leaf node, which does not contain any child nodes.
     /// - `id`: A unique identifier for the leaf node.
     Leaf(String),
+}
+
+impl From<&path::PathBuf> for Node {
+    fn from(dir_path: &path::PathBuf) -> Self {
+        let mut children = Vec::new();
+        if dir_path.is_dir() {
+            for entry in fs::read_dir(dir_path).expect("Directory cannot be read") {
+                let entry = entry.expect("Failed to read directory entry");
+                let path = entry.path();
+                if path.is_dir() {
+                    children.push(Node::from(&path));
+                } else if path.is_file() {
+                    children.push(Node::Leaf(
+                        path.file_name().unwrap().to_str().unwrap().to_string(),
+                    ));
+                }
+            }
+        }
+
+        Node::NonLeaf {
+            id: dir_path.file_name().unwrap().to_str().unwrap().to_string(),
+            children,
+            children_visible: true,
+        }
+    }
 }
 
 impl Node {

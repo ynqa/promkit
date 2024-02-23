@@ -1,5 +1,7 @@
 use indexmap::IndexMap;
-use serde_json::{self, Result, Value};
+use serde_json::{self, Value};
+
+use crate::{Error, Result};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JsonSyntaxKind {
@@ -76,13 +78,22 @@ pub enum JsonNode {
     Leaf(Value),
 }
 
-impl JsonNode {
-    pub fn new_from_serde_value(value: Value) -> Self {
+impl TryFrom<&str> for JsonNode {
+    type Error = Error;
+
+    fn try_from(json_str: &str) -> Result<Self> {
+        let value: Value = serde_json::from_str(json_str)?;
+        Ok(JsonNode::from(value))
+    }
+}
+
+impl From<Value> for JsonNode {
+    fn from(value: Value) -> Self {
         match value {
             Value::Object(map) => {
                 let children = map
                     .into_iter()
-                    .map(|(k, v)| (k, JsonNode::new_from_serde_value(v)))
+                    .map(|(k, v)| (k, JsonNode::from(v)))
                     .collect();
                 JsonNode::Object {
                     children,
@@ -90,10 +101,7 @@ impl JsonNode {
                 }
             }
             Value::Array(vec) => {
-                let children = vec
-                    .into_iter()
-                    .map(JsonNode::new_from_serde_value)
-                    .collect();
+                let children = vec.into_iter().map(JsonNode::from).collect();
                 JsonNode::Array {
                     children,
                     children_visible: true,
@@ -102,12 +110,9 @@ impl JsonNode {
             _ => JsonNode::Leaf(value),
         }
     }
+}
 
-    pub fn new_from_str(json_str: &str) -> Result<Self> {
-        let value: Value = serde_json::from_str(json_str)?;
-        Ok(JsonNode::new_from_serde_value(value))
-    }
-
+impl JsonNode {
     pub fn get(&self, path: &JsonPath) -> Option<&JsonNode> {
         let mut node = self;
         for seg in path {
@@ -322,7 +327,7 @@ mod test {
 
         #[test]
         fn test_after_toggle() {
-            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let mut node = JsonNode::try_from(JSON_STR).unwrap();
             node.toggle(&vec![]);
             assert_eq!(
                 vec![JsonSyntaxKind::MapFolded {
@@ -337,7 +342,7 @@ mod test {
 
         #[test]
         fn test_string() {
-            let mut node = JsonNode::new_from_str("\"string\"").unwrap();
+            let mut node = JsonNode::try_from("\"string\"").unwrap();
             node.toggle(&vec![]);
             assert_eq!(
                 vec![JsonSyntaxKind::ArrayEntry {
@@ -352,7 +357,7 @@ mod test {
 
         #[test]
         fn test() {
-            let node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let node = JsonNode::try_from(JSON_STR).unwrap();
             assert_eq!(
                 vec![
                     // {
@@ -552,7 +557,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let mut node = JsonNode::try_from(JSON_STR).unwrap();
             node.toggle(&vec![JsonPathSegment::Key("map".to_string())]);
             assert!(
                 !as_object(
@@ -570,13 +575,13 @@ mod test {
 
         #[test]
         fn test() {
-            let node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let node = JsonNode::try_from(JSON_STR).unwrap();
             assert_eq!(Some(&node.clone()), node.get(&vec![]));
         }
 
         #[test]
         fn test_with_invalid_path() {
-            let node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let node = JsonNode::try_from(JSON_STR).unwrap();
             assert_eq!(
                 None,
                 node.get(&vec![
@@ -592,13 +597,13 @@ mod test {
 
         #[test]
         fn test() {
-            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let mut node = JsonNode::try_from(JSON_STR).unwrap();
             assert_eq!(Some(&mut node.clone()), node.get_mut(&vec![]));
         }
 
         #[test]
         fn test_with_invalid_path() {
-            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            let mut node = JsonNode::try_from(JSON_STR).unwrap();
             assert_eq!(
                 None,
                 node.get_mut(&vec![
@@ -689,7 +694,7 @@ mod test {
                     ]),
                     children_visible: true,
                 },
-                JsonNode::new_from_str(JSON_STR).unwrap(),
+                JsonNode::try_from(JSON_STR).unwrap(),
             );
         }
     }
