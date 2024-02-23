@@ -58,15 +58,11 @@ impl Node {
     }
 
     pub fn toggle(&mut self, path: &Path) {
-        if let Some(node) = self.get_mut(path) {
-            match node {
-                Node::NonLeaf {
-                    children_visible, ..
-                } => {
-                    *children_visible = !*children_visible;
-                }
-                _ => {}
-            }
+        if let Some(Node::NonLeaf {
+            children_visible, ..
+        }) = self.get_mut(path)
+        {
+            *children_visible = !*children_visible;
         }
     }
 
