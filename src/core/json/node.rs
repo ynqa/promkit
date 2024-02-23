@@ -99,18 +99,22 @@ impl JsonNode {
     pub fn get(&self, path: &JsonPath) -> Option<&JsonNode> {
         let mut node = self;
         for seg in path {
-            match seg {
+            node = match seg {
                 JsonPathSegment::Key(s) => {
                     if let JsonNode::Object { children, .. } = node {
-                        node = children.get(s).unwrap();
+                        children.get(s)?
+                    } else {
+                        return None;
                     }
                 }
                 JsonPathSegment::Index(n) => {
                     if let JsonNode::Array { children, .. } = node {
-                        node = children.get(*n).unwrap();
+                        children.get(*n)?
+                    } else {
+                        return None;
                     }
                 }
-            }
+            };
         }
         Some(node)
     }
@@ -118,18 +122,22 @@ impl JsonNode {
     pub fn get_mut(&mut self, path: &JsonPath) -> Option<&mut JsonNode> {
         let mut node = self;
         for seg in path {
-            match seg {
+            node = match seg {
                 JsonPathSegment::Key(s) => {
                     if let JsonNode::Object { children, .. } = node {
-                        node = children.get_mut(s).unwrap();
+                        children.get_mut(s)?
+                    } else {
+                        return None;
                     }
                 }
                 JsonPathSegment::Index(n) => {
                     if let JsonNode::Array { children, .. } = node {
-                        node = children.get_mut(*n).unwrap();
+                        children.get_mut(*n)?
+                    } else {
+                        return None;
                     }
                 }
-            }
+            };
         }
         Some(node)
     }
@@ -510,7 +518,42 @@ mod test {
         #[test]
         fn test() {
             let node = JsonNode::new_from_str(JSON_STR).unwrap();
-            assert_eq!(&node, node.get(&vec![]).unwrap());
+            assert_eq!(Some(&node.clone()), node.get(&vec![]));
+        }
+
+        #[test]
+        fn test_with_invalid_path() {
+            let node = JsonNode::new_from_str(JSON_STR).unwrap();
+            assert_eq!(
+                None,
+                node.get(&vec![
+                    JsonPathSegment::Key("map".to_string()),
+                    JsonPathSegment::Key("invalid_segment".to_string()),
+                ],)
+            );
+        }
+    }
+
+    mod get_mut {
+        use super::super::*;
+        use super::JSON_STR;
+
+        #[test]
+        fn test() {
+            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            assert_eq!(Some(&mut node.clone()), node.get_mut(&vec![]));
+        }
+
+        #[test]
+        fn test_with_invalid_path() {
+            let mut node = JsonNode::new_from_str(JSON_STR).unwrap();
+            assert_eq!(
+                None,
+                node.get_mut(&vec![
+                    JsonPathSegment::Key("map".to_string()),
+                    JsonPathSegment::Key("invalid_segment".to_string()),
+                ],)
+            );
         }
     }
 
