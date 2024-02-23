@@ -28,7 +28,7 @@ impl Tree {
     }
 
     /// Returns a vector of all nodes in the tree, represented with their depth information.
-    pub fn nodes(&self) -> Vec<Kind> {
+    pub fn kinds(&self) -> Vec<Kind> {
         self.cursor.contents().clone()
     }
 

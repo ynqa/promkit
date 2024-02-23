@@ -59,7 +59,7 @@ impl Renderable for Renderer {
 
         let matrix = self
             .tree
-            .nodes()
+            .kinds()
             .iter()
             .enumerate()
             .map(|(i, kind)| {
