@@ -18,45 +18,42 @@ pub enum Node {
 
 impl Node {
     pub fn flatten_visibles(&self) -> Vec<Kind> {
-        fn dfs(node: &Node, path: Path, ret: &mut Vec<Kind>, visible: bool) {
+        fn dfs(node: &Node, path: Path, ret: &mut Vec<Kind>) {
             match node {
                 Node::NonLeaf {
                     id,
                     children,
                     children_visible,
                 } => {
-                    if visible {
+                    if *children_visible {
                         ret.push(Kind::Unfolded {
                             id: id.clone(),
                             path: path.clone(),
                         });
+                        for (index, child) in children.iter().enumerate() {
+                            let mut new_path = path.clone();
+                            new_path.push(index);
+                            dfs(child, new_path, ret);
+                        }
                     } else {
                         ret.push(Kind::Folded {
                             id: id.clone(),
                             path: path.clone(),
                         });
                     }
-                    if *children_visible {
-                        for (index, child) in children.iter().enumerate() {
-                            let mut new_path = path.clone();
-                            new_path.push(index);
-                            dfs(child, new_path, ret, true);
-                        }
-                    }
                 }
                 Node::Leaf(item) => {
-                    if visible {
-                        ret.push(Kind::Unfolded {
-                            id: item.clone(),
-                            path: path.clone(),
-                        });
-                    }
+                    ret.push(Kind::Folded {
+                        id: item.clone(),
+                        path: path.clone(),
+                    });
                 }
             }
         }
 
         let mut ret = Vec::new();
-        dfs(self, Vec::new(), &mut ret, true); // Root is always visible
+        // Root is always visible
+        dfs(self, Vec::new(), &mut ret);
         ret
     }
 
@@ -110,6 +107,57 @@ mod test {
                 Node::Leaf("c".into()),
             ],
             children_visible: true,
+        }
+    }
+
+    mod flatten_visibles {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let node = create_test_node();
+            assert_eq!(
+                vec![
+                    Kind::Unfolded {
+                        id: "root".into(),
+                        path: vec![],
+                    },
+                    Kind::Unfolded {
+                        id: "a".into(),
+                        path: vec![0],
+                    },
+                    Kind::Folded {
+                        id: "aa".into(),
+                        path: vec![0, 0],
+                    },
+                    Kind::Folded {
+                        id: "ab".into(),
+                        path: vec![0, 1],
+                    },
+                    Kind::Folded {
+                        id: "b".into(),
+                        path: vec![1],
+                    },
+                    Kind::Folded {
+                        id: "c".into(),
+                        path: vec![2],
+                    },
+                ],
+                node.flatten_visibles(),
+            );
+        }
+
+        #[test]
+        fn test_after_toggle() {
+            let mut node = create_test_node();
+            node.toggle(&vec![]);
+            assert_eq!(
+                vec![Kind::Folded {
+                    id: "root".into(),
+                    path: vec![],
+                },],
+                node.flatten_visibles(),
+            );
         }
     }
 }
