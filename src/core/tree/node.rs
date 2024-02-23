@@ -1,5 +1,7 @@
 use std::{fs, path};
 
+use crate::error::{Error, Result};
+
 /// Represents the kind of a node in a tree structure.
 ///
 /// This enum is used to distinguish between nodes that are currently
@@ -42,32 +44,65 @@ pub enum Node {
     Leaf(String),
 }
 
-impl From<&path::PathBuf> for Node {
-    fn from(dir_path: &path::PathBuf) -> Self {
-        let mut children = Vec::new();
+impl TryFrom<&path::PathBuf> for Node {
+    type Error = Error;
+
+    fn try_from(dir_path: &path::PathBuf) -> Result<Self> {
+        let mut directories = Vec::new();
+        let mut files = Vec::new();
+
         if dir_path.is_dir() {
-            for entry in fs::read_dir(dir_path).expect("Directory cannot be read") {
-                let entry = entry.expect("Failed to read directory entry");
-                let path = entry.path();
+            for entry in fs::read_dir(dir_path)? {
+                let path = entry?.path();
                 if path.is_dir() {
-                    children.push(Node::from(&path));
+                    directories.push(Node::try_from(&path)?);
                 } else if path.is_file() {
-                    children.push(Node::Leaf(
-                        path.file_name().unwrap().to_str().unwrap().to_string(),
+                    files.push(Node::Leaf(
+                        path.file_name()
+                            .and_then(|name| name.to_str())
+                            .ok_or_else(|| {
+                                std::io::Error::new(
+                                    std::io::ErrorKind::Other,
+                                    "Failed to convert file name to string",
+                                )
+                            })?
+                            .to_string(),
                     ));
                 }
             }
         }
 
-        Node::NonLeaf {
-            id: dir_path.file_name().unwrap().to_str().unwrap().to_string(),
+        directories.sort_by(|a, b| a.id().cmp(b.id()));
+        files.sort_by(|a, b| a.id().cmp(b.id()));
+
+        let mut children = directories;
+        children.extend(files);
+
+        Ok(Node::NonLeaf {
+            id: dir_path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .ok_or_else(|| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Failed to convert directory name to string",
+                    )
+                })?
+                .to_string(),
             children,
-            children_visible: true,
-        }
+            children_visible: false,
+        })
     }
 }
 
 impl Node {
+    fn id(&self) -> &String {
+        match self {
+            Node::NonLeaf { id, .. } => id,
+            Node::Leaf(id) => id,
+        }
+    }
+
     /// Flattens the tree structure into a vector of `Kind`, including only visible nodes.
     ///
     /// This method performs a depth-first search (DFS) to traverse the tree and collect
