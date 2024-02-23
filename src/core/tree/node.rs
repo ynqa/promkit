@@ -65,7 +65,7 @@ impl Node {
         }
     }
 
-    pub fn path_to_ids(&self, path: &Path) -> Vec<String> {
+    pub fn get_waypoints(&self, path: &Path) -> Vec<String> {
         let mut ids = Vec::new();
         let mut node = self;
         for &index in path {

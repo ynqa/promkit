@@ -42,7 +42,7 @@ impl Tree {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         match kind {
             Kind::Folded { id, path } | Kind::Unfolded { id, path } => {
-                let mut ret = self.root.path_to_ids(path);
+                let mut ret = self.root.get_waypoints(path);
                 ret.push(id.to_string());
                 ret
             }
