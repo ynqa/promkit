@@ -173,7 +173,6 @@ impl JsonNode {
             node: &JsonNode,
             path: JsonPath,
             ret: &mut Vec<JsonSyntaxKind>,
-            parent_visible: bool,
             is_last: bool,
             indent: usize,
         ) {
@@ -182,7 +181,7 @@ impl JsonNode {
                     children,
                     children_visible,
                 } => {
-                    if *children_visible && parent_visible {
+                    if *children_visible {
                         let start_kind = JsonSyntaxKind::MapStart {
                             key: path.last().and_then(|index| match index {
                                 JsonPathSegment::Key(s) => Some(s.clone()),
@@ -199,14 +198,7 @@ impl JsonNode {
                             let mut branch = path.clone();
                             branch.push(JsonPathSegment::Key(key.to_string()));
                             let child_is_last = i == keys.len() - 1;
-                            dfs(
-                                child,
-                                branch,
-                                ret,
-                                *children_visible,
-                                child_is_last,
-                                indent + 1,
-                            );
+                            dfs(child, branch, ret, child_is_last, indent + 1);
                         }
 
                         ret.push(JsonSyntaxKind::MapEnd { is_last, indent });
@@ -226,7 +218,7 @@ impl JsonNode {
                     children,
                     children_visible,
                 } => {
-                    if *children_visible && parent_visible {
+                    if *children_visible {
                         let start_kind = JsonSyntaxKind::ArrayStart {
                             key: path.last().and_then(|index| match index {
                                 JsonPathSegment::Key(s) => Some(s.clone()),
@@ -241,7 +233,7 @@ impl JsonNode {
                             let mut branch = path.clone();
                             branch.push(JsonPathSegment::Index(i));
                             let child_is_last = i == children.len() - 1;
-                            dfs(child, branch, ret, true, child_is_last, indent + 1);
+                            dfs(child, branch, ret, child_is_last, indent + 1);
                         }
 
                         ret.push(JsonSyntaxKind::ArrayEnd { is_last, indent });
@@ -266,9 +258,6 @@ impl JsonNode {
                             indent,
                         });
                     } else {
-                        // This case might not be necessary
-                        // if leaves are always under a key,
-                        // but it's here for completeness.
                         ret.push(JsonSyntaxKind::ArrayEntry {
                             v: value.clone(),
                             path: path.clone(),
@@ -281,7 +270,7 @@ impl JsonNode {
         }
 
         let mut ret = Vec::new();
-        dfs(self, Vec::new(), &mut ret, true, true, 0); // Start with the root node being visible and is_last true, and indent 0
+        dfs(self, Vec::new(), &mut ret, true, 0); // Start with the root node being visible and is_last true, and indent 0
         ret
     }
 }
