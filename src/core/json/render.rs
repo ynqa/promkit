@@ -23,6 +23,8 @@ pub struct Renderer {
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
+
+    pub indent: usize,
 }
 
 impl Renderable for Renderer {
@@ -36,7 +38,7 @@ impl Renderable for Renderer {
                 | JsonSyntaxKind::ArrayFolded { indent, .. }
                 | JsonSyntaxKind::ArrayStart { indent, .. }
                 | JsonSyntaxKind::ArrayEnd { indent, .. }
-                | JsonSyntaxKind::ArrayEntry { indent, .. } => *indent,
+                | JsonSyntaxKind::ArrayEntry { indent, .. } => *indent * self.indent,
             }
         };
 

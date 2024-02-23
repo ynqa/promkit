@@ -26,6 +26,7 @@ impl Json {
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
                 lines: Default::default(),
+                indent: 2,
             },
         }
     }
