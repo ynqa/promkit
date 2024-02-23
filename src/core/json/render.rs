@@ -46,22 +46,58 @@ impl Renderable for Renderer {
                     Some(key) => format!("\"{}\": {{", key),
                     None => "{".to_string(),
                 },
-                JsonSyntaxKind::MapEnd { .. } => "}".to_string(),
-                JsonSyntaxKind::MapFolded { key, .. } => match key {
-                    Some(key) => format!("\"{}\": {{...}}", key),
-                    None => "{...}".to_string(),
+                JsonSyntaxKind::MapEnd { is_last, .. } => {
+                    let mut token = "}".to_string();
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
                 },
-                JsonSyntaxKind::MapEntry { kv, .. } => format!("\"{}\": {}", kv.0, kv.1),
-                JsonSyntaxKind::ArrayFolded { key, .. } => match key {
-                    Some(key) => format!("\"{}\": [...]", key),
-                    None => "[...]".to_string(),
+                JsonSyntaxKind::MapFolded { key, is_last, .. } => {
+                    let mut token = match key {
+                        Some(key) => format!("\"{}\": {{...}}", key),
+                        None => "{...}".to_string(),
+                    };
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
+                },
+                JsonSyntaxKind::MapEntry { kv, is_last, .. } => {
+                    let mut token = format!("\"{}\": {}", kv.0, kv.1);
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
                 },
                 JsonSyntaxKind::ArrayStart { key, .. } => match key {
                     Some(key) => format!("\"{}\": [", key),
                     None => "[".to_string(),
                 },
-                JsonSyntaxKind::ArrayEnd { .. } => "]".to_string(),
-                JsonSyntaxKind::ArrayEntry { v, .. } => format!("{}", v),
+                JsonSyntaxKind::ArrayEnd { is_last, .. } => {
+                    let mut token = "]".to_string();
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
+                },
+                JsonSyntaxKind::ArrayFolded { key, is_last, .. } => {
+                    let mut token = match key {
+                        Some(key) => format!("\"{}\": [...]", key),
+                        None => "[...]".to_string(),
+                    };
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
+                },
+                JsonSyntaxKind::ArrayEntry { v, is_last, .. } => {
+                    let mut token = format!("{}", v);
+                    if !*is_last {
+                        token.push_str(",");
+                    }
+                    token
+                },
             }
         };
 
