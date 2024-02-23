@@ -8,50 +8,46 @@ pub enum Kind {
     /// All `bool` represents whether there is comma or not.
 
     /// e.g. { or "map": {
-    MapStart {
-        key: Option<String>,
-        index: Vec<Index>,
-    },
+    MapStart { key: Option<String>, path: JsonPath },
     /// e.g. }
     MapEnd { is_last: bool },
     /// e.g. "map": { ... }
     MapFolded {
         key: Option<String>,
-        index: Vec<Index>,
+        path: JsonPath,
         is_last: bool,
     },
     /// e.g. "number": 1
     MapEntry {
         kv: (String, Value),
-        index: Vec<Index>,
+        path: JsonPath,
         is_last: bool,
     },
 
     /// e.g. [ or "list": [
-    ArrayStart {
-        key: Option<String>,
-        index: Vec<Index>,
-    },
+    ArrayStart { key: Option<String>, path: JsonPath },
     /// e.g. ]
     ArrayEnd { is_last: bool },
     /// e.g. "list": [ ... ]
     ArrayFolded {
         key: Option<String>,
-        index: Vec<Index>,
+        path: JsonPath,
         is_last: bool,
     },
     /// e.g. "abc"
     ArrayEntry {
         v: Value,
-        index: Vec<Index>,
+        path: JsonPath,
         is_last: bool,
     },
 }
 
+pub type JsonPath = Vec<JsonPathSegment>;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Index {
-    String(String),
-    Number(usize),
+pub enum JsonPathSegment {
+    Key(String),
+    Index(usize),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -94,18 +90,18 @@ impl Node {
         Ok(Node::new(value))
     }
 
-    pub fn get(&self, route: Vec<Index>) -> Option<&Node> {
+    pub fn get(&self, path: &JsonPath) -> Option<&Node> {
         let mut node = self;
-        for index in route {
-            match index {
-                Index::String(s) => {
+        for seg in path {
+            match seg {
+                JsonPathSegment::Key(s) => {
                     if let Node::Object { children, .. } = node {
-                        node = children.get(&s).unwrap();
+                        node = children.get(s).unwrap();
                     }
                 }
-                Index::Number(n) => {
+                JsonPathSegment::Index(n) => {
                     if let Node::Array { children, .. } = node {
-                        node = children.get(n).unwrap();
+                        node = children.get(*n).unwrap();
                     }
                 }
             }
@@ -113,16 +109,16 @@ impl Node {
         Some(node)
     }
 
-    pub fn get_mut(&mut self, route: &Vec<Index>) -> Option<&mut Node> {
+    pub fn get_mut(&mut self, path: &JsonPath) -> Option<&mut Node> {
         let mut node = self;
-        for index in route {
-            match index {
-                Index::String(s) => {
+        for seg in path {
+            match seg {
+                JsonPathSegment::Key(s) => {
                     if let Node::Object { children, .. } = node {
                         node = children.get_mut(s).unwrap();
                     }
                 }
-                Index::Number(n) => {
+                JsonPathSegment::Index(n) => {
                     if let Node::Array { children, .. } = node {
                         node = children.get_mut(*n).unwrap();
                     }
@@ -132,8 +128,8 @@ impl Node {
         Some(node)
     }
 
-    pub fn toggle(&mut self, route: &Vec<Index>) {
-        if let Some(node) = self.get_mut(route) {
+    pub fn toggle(&mut self, path: &JsonPath) {
+        if let Some(node) = self.get_mut(path) {
             match node {
                 Node::Object {
                     children_visible, ..
@@ -149,7 +145,7 @@ impl Node {
     pub fn flatten_visibles(&self) -> Vec<Kind> {
         fn dfs(
             node: &Node,
-            route: Vec<Index>,
+            path: JsonPath,
             ret: &mut Vec<Kind>,
             parent_visible: bool,
             is_last: bool,
@@ -161,31 +157,31 @@ impl Node {
                 } => {
                     if *children_visible && parent_visible {
                         let start_kind = Kind::MapStart {
-                            key: route.last().and_then(|index| match index {
-                                Index::String(s) => Some(s.clone()),
+                            key: path.last().and_then(|index| match index {
+                                JsonPathSegment::Key(s) => Some(s.clone()),
                                 _ => None,
                             }),
-                            index: route.clone(),
+                            path: path.clone(),
                         };
                         ret.push(start_kind);
 
                         let keys = children.keys().collect::<Vec<_>>();
                         for (i, key) in keys.iter().enumerate() {
                             let child = children.get(*key).unwrap();
-                            let mut branch_route = route.clone();
-                            branch_route.push(Index::String(key.to_string()));
+                            let mut branch = path.clone();
+                            branch.push(JsonPathSegment::Key(key.to_string()));
                             let child_is_last = i == keys.len() - 1;
-                            dfs(child, branch_route, ret, *children_visible, child_is_last);
+                            dfs(child, branch, ret, *children_visible, child_is_last);
                         }
 
                         ret.push(Kind::MapEnd { is_last });
                     } else {
                         ret.push(Kind::MapFolded {
-                            key: route.last().and_then(|index| match index {
-                                Index::String(s) => Some(s.clone()),
+                            key: path.last().and_then(|index| match index {
+                                JsonPathSegment::Key(s) => Some(s.clone()),
                                 _ => None,
                             }),
-                            index: route.clone(),
+                            path: path.clone(),
                             is_last,
                         });
                     }
@@ -196,46 +192,47 @@ impl Node {
                 } => {
                     if *children_visible && parent_visible {
                         let start_kind = Kind::ArrayStart {
-                            key: route.last().and_then(|index| match index {
-                                Index::String(s) => Some(s.clone()),
+                            key: path.last().and_then(|index| match index {
+                                JsonPathSegment::Key(s) => Some(s.clone()),
                                 _ => None,
                             }),
-                            index: route.clone(),
+                            path: path.clone(),
                         };
                         ret.push(start_kind);
 
                         for (i, child) in children.iter().enumerate() {
-                            let mut branch_route = route.clone();
-                            branch_route.push(Index::Number(i));
+                            let mut branch = path.clone();
+                            branch.push(JsonPathSegment::Index(i));
                             let child_is_last = i == children.len() - 1;
-                            dfs(child, branch_route, ret, true, child_is_last);
+                            dfs(child, branch, ret, true, child_is_last);
                         }
 
                         ret.push(Kind::ArrayEnd { is_last });
                     } else {
                         ret.push(Kind::ArrayFolded {
-                            key: route.last().and_then(|index| match index {
-                                Index::String(s) => Some(s.clone()),
+                            key: path.last().and_then(|index| match index {
+                                JsonPathSegment::Key(s) => Some(s.clone()),
                                 _ => None,
                             }),
-                            index: route.clone(),
+                            path: path.clone(),
                             is_last,
                         });
                     }
                 }
                 Node::Leaf(value) => {
-                    if let Some(Index::String(key)) = route.last() {
+                    if let Some(JsonPathSegment::Key(key)) = path.last() {
                         ret.push(Kind::MapEntry {
                             kv: (key.clone(), value.clone()),
-                            index: route.clone(),
+                            path: path.clone(),
                             is_last,
                         });
                     } else {
-                        // This case might not be necessary if leaves are always under a key,
+                        // This case might not be necessary
+                        // if leaves are always under a key,
                         // but it's here for completeness.
                         ret.push(Kind::ArrayEntry {
                             v: value.clone(),
-                            index: route.clone(),
+                            path: path.clone(),
                             is_last,
                         });
                     }
@@ -303,7 +300,7 @@ mod test {
             assert_eq!(
                 vec![Kind::MapFolded {
                     key: None,
-                    index: vec![],
+                    path: vec![],
                     is_last: true,
                 }],
                 node.flatten_visibles(),
@@ -317,7 +314,7 @@ mod test {
             assert_eq!(
                 vec![Kind::ArrayEntry {
                     v: Value::String("makoto".to_string()),
-                    index: vec![],
+                    path: vec![],
                     is_last: true
                 },],
                 node.flatten_visibles(),
@@ -332,7 +329,7 @@ mod test {
                     // {
                     Kind::MapStart {
                         key: None,
-                        index: vec![]
+                        path: vec![]
                     },
                     // "number": 1,
                     Kind::MapEntry {
@@ -340,29 +337,29 @@ mod test {
                             "number".to_string(),
                             Value::Number(serde_json::Number::from(1))
                         ),
-                        index: vec![Index::String("number".to_string())],
+                        path: vec![JsonPathSegment::Key("number".to_string())],
                         is_last: false,
                     },
                     // "map": {
                     Kind::MapStart {
                         key: Some("map".to_string()),
-                        index: vec![Index::String("map".to_string())],
+                        path: vec![JsonPathSegment::Key("map".to_string())],
                     },
                     // "string1": "aaa",
                     Kind::MapEntry {
                         kv: ("string1".to_string(), Value::String("aaa".to_string())),
-                        index: vec![
-                            Index::String("map".to_string()),
-                            Index::String("string1".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map".to_string()),
+                            JsonPathSegment::Key("string1".to_string())
                         ],
                         is_last: false,
                     },
                     // "string2": "bbb"
                     Kind::MapEntry {
                         kv: ("string2".to_string(), Value::String("bbb".to_string())),
-                        index: vec![
-                            Index::String("map".to_string()),
-                            Index::String("string2".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map".to_string()),
+                            JsonPathSegment::Key("string2".to_string())
                         ],
                         is_last: true,
                     },
@@ -371,18 +368,24 @@ mod test {
                     // "list": [
                     Kind::ArrayStart {
                         key: Some("list".to_string()),
-                        index: vec![Index::String("list".to_string())],
+                        path: vec![JsonPathSegment::Key("list".to_string())],
                     },
                     // "abc",
                     Kind::ArrayEntry {
                         v: Value::String("abc".to_string()),
-                        index: vec![Index::String("list".to_string()), Index::Number(0)],
+                        path: vec![
+                            JsonPathSegment::Key("list".to_string()),
+                            JsonPathSegment::Index(0)
+                        ],
                         is_last: false,
                     },
                     // "def"
                     Kind::ArrayEntry {
                         v: Value::String("def".to_string()),
-                        index: vec![Index::String("list".to_string()), Index::Number(1)],
+                        path: vec![
+                            JsonPathSegment::Key("list".to_string()),
+                            JsonPathSegment::Index(1)
+                        ],
                         is_last: true,
                     },
                     // ],
@@ -390,23 +393,23 @@ mod test {
                     // "map_in_map": {
                     Kind::MapStart {
                         key: Some("map_in_map".to_string()),
-                        index: vec![Index::String("map_in_map".to_string())],
+                        path: vec![JsonPathSegment::Key("map_in_map".to_string())],
                     },
                     // "nested": {
                     Kind::MapStart {
                         key: Some("nested".to_string()),
-                        index: vec![
-                            Index::String("map_in_map".to_string()),
-                            Index::String("nested".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map_in_map".to_string()),
+                            JsonPathSegment::Key("nested".to_string())
                         ],
                     },
                     // "leaf": "eof"
                     Kind::MapEntry {
                         kv: ("leaf".to_string(), Value::String("eof".to_string())),
-                        index: vec![
-                            Index::String("map_in_map".to_string()),
-                            Index::String("nested".to_string()),
-                            Index::String("leaf".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map_in_map".to_string()),
+                            JsonPathSegment::Key("nested".to_string()),
+                            JsonPathSegment::Key("leaf".to_string())
                         ],
                         is_last: true,
                     },
@@ -417,12 +420,15 @@ mod test {
                     // "map_in_list": [
                     Kind::ArrayStart {
                         key: Some("map_in_list".to_string()),
-                        index: vec![Index::String("map_in_list".to_string())],
+                        path: vec![JsonPathSegment::Key("map_in_list".to_string())],
                     },
                     // {
                     Kind::MapStart {
                         key: None,
-                        index: vec![Index::String("map_in_list".to_string()), Index::Number(0)],
+                        path: vec![
+                            JsonPathSegment::Key("map_in_list".to_string()),
+                            JsonPathSegment::Index(0)
+                        ],
                     },
                     // "map1": 1
                     Kind::MapEntry {
@@ -430,10 +436,10 @@ mod test {
                             "map1".to_string(),
                             Value::Number(serde_json::Number::from(1))
                         ),
-                        index: vec![
-                            Index::String("map_in_list".to_string()),
-                            Index::Number(0),
-                            Index::String("map1".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map_in_list".to_string()),
+                            JsonPathSegment::Index(0),
+                            JsonPathSegment::Key("map1".to_string())
                         ],
                         is_last: true,
                     },
@@ -442,7 +448,10 @@ mod test {
                     // {
                     Kind::MapStart {
                         key: None,
-                        index: vec![Index::String("map_in_list".to_string()), Index::Number(1)],
+                        path: vec![
+                            JsonPathSegment::Key("map_in_list".to_string()),
+                            JsonPathSegment::Index(1)
+                        ],
                     },
                     // "map2": 2
                     Kind::MapEntry {
@@ -450,10 +459,10 @@ mod test {
                             "map2".to_string(),
                             Value::Number(serde_json::Number::from(2))
                         ),
-                        index: vec![
-                            Index::String("map_in_list".to_string()),
-                            Index::Number(1),
-                            Index::String("map2".to_string())
+                        path: vec![
+                            JsonPathSegment::Key("map_in_list".to_string()),
+                            JsonPathSegment::Index(1),
+                            JsonPathSegment::Key("map2".to_string())
                         ],
                         is_last: true,
                     },
@@ -476,11 +485,14 @@ mod test {
         #[test]
         fn test() {
             let mut node = Node::new_from_str(JSON_STR).unwrap();
-            node.toggle(&vec![Index::String("map".to_string())]);
+            node.toggle(&vec![JsonPathSegment::Key("map".to_string())]);
             assert!(
-                !as_object(node.get(vec![Index::String("map".to_string())]).unwrap())
-                    .unwrap()
-                    .1
+                !as_object(
+                    node.get(&vec![JsonPathSegment::Key("map".to_string())])
+                        .unwrap()
+                )
+                .unwrap()
+                .1
             );
         }
     }
@@ -492,7 +504,7 @@ mod test {
         #[test]
         fn test() {
             let node = Node::new_from_str(JSON_STR).unwrap();
-            assert_eq!(&node, node.get(vec![]).unwrap());
+            assert_eq!(&node, node.get(&vec![]).unwrap());
         }
     }
 

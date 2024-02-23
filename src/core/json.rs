@@ -1,7 +1,7 @@
 use crate::core::cursor::Cursor;
 
 mod node;
-pub use node::{Index, Kind, Node};
+pub use node::{JsonPath, JsonPathSegment, Kind, Node};
 
 pub struct Json {
     root: Node,
@@ -24,42 +24,26 @@ impl Json {
         self.cursor.position()
     }
 
-    pub fn get(&self) -> Vec<Index> {
+    pub fn get(&self) -> JsonPath {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         let binding = vec![];
-        let route = match kind {
-            Kind::ArrayEntry {
-                v: _,
-                index,
-                is_last: _,
-            } => index,
-            Kind::MapEntry {
-                kv: _,
-                index,
-                is_last: _,
-            } => index,
+        let path = match kind {
+            Kind::ArrayEntry { path, .. } => path,
+            Kind::MapEntry { path, .. } => path,
             _ => &binding,
         };
 
-        route.clone()
+        path.clone()
     }
 
     pub fn toggle(&mut self) {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         let binding = vec![];
         let route = match kind {
-            Kind::ArrayStart { key: _, index } => index,
-            Kind::ArrayFolded {
-                key: _,
-                index,
-                is_last: _,
-            } => index,
-            Kind::MapStart { key: _, index } => index,
-            Kind::MapFolded {
-                key: _,
-                index,
-                is_last: _,
-            } => index,
+            Kind::ArrayStart { path, .. } => path,
+            Kind::ArrayFolded { path, .. } => path,
+            Kind::MapStart { path, .. } => path,
+            Kind::MapFolded { path, .. } => path,
             _ => &binding,
         };
 
