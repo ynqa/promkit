@@ -41,13 +41,12 @@ impl Json {
 
     pub fn toggle(&mut self) {
         let kind = self.cursor.contents().get(self.position()).unwrap();
-        let binding = vec![];
         let route = match kind {
             JsonSyntaxKind::ArrayStart { path, .. } => path,
             JsonSyntaxKind::ArrayFolded { path, .. } => path,
             JsonSyntaxKind::MapStart { path, .. } => path,
             JsonSyntaxKind::MapFolded { path, .. } => path,
-            _ => &binding,
+            _ => return,
         };
 
         self.root.toggle(route);
