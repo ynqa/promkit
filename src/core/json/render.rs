@@ -49,27 +49,27 @@ impl Renderable for Renderer {
                 JsonSyntaxKind::MapEnd { is_last, .. } => {
                     let mut token = "}".to_string();
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
                 JsonSyntaxKind::MapFolded { key, is_last, .. } => {
                     let mut token = match key {
                         Some(key) => format!("\"{}\": {{...}}", key),
                         None => "{...}".to_string(),
                     };
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
                 JsonSyntaxKind::MapEntry { kv, is_last, .. } => {
                     let mut token = format!("\"{}\": {}", kv.0, kv.1);
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
                 JsonSyntaxKind::ArrayStart { key, .. } => match key {
                     Some(key) => format!("\"{}\": [", key),
                     None => "[".to_string(),
@@ -77,27 +77,27 @@ impl Renderable for Renderer {
                 JsonSyntaxKind::ArrayEnd { is_last, .. } => {
                     let mut token = "]".to_string();
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
                 JsonSyntaxKind::ArrayFolded { key, is_last, .. } => {
                     let mut token = match key {
                         Some(key) => format!("\"{}\": [...]", key),
                         None => "[...]".to_string(),
                     };
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
                 JsonSyntaxKind::ArrayEntry { v, is_last, .. } => {
                     let mut token = format!("{}", v);
                     if !*is_last {
-                        token.push_str(",");
+                        token.push(',');
                     }
                     token
-                },
+                }
             }
         };
 
