@@ -96,7 +96,11 @@ impl Node {
                     children,
                     children_visible: _,
                 } => {
-                    node = children.get_mut(*seg).unwrap();
+                    if let Some(next_node) = children.get_mut(*seg) {
+                        node = next_node;
+                    } else {
+                        return None;
+                    }
                 }
                 Node::Leaf(_) => {
                     return None;
@@ -124,6 +128,32 @@ mod test {
                 Node::Leaf("c".into()),
             ],
             children_visible: true,
+        }
+    }
+
+    mod toggle {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let mut node = create_test_node();
+            node.toggle(&vec![]);
+            assert_eq!(
+                Node::NonLeaf {
+                    id: "root".into(),
+                    children: vec![
+                        Node::NonLeaf {
+                            id: "a".into(),
+                            children: vec![Node::Leaf("aa".into()), Node::Leaf("ab".into())],
+                            children_visible: true,
+                        },
+                        Node::Leaf("b".into()),
+                        Node::Leaf("c".into()),
+                    ],
+                    children_visible: false,
+                },
+                node,
+            );
         }
     }
 
