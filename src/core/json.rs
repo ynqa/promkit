@@ -1,22 +1,22 @@
 use crate::core::cursor::Cursor;
 
 mod node;
-pub use node::{JsonPath, JsonPathSegment, Kind, Node};
+pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
 
 pub struct Json {
-    root: Node,
-    cursor: Cursor<Vec<Kind>>,
+    root: JsonNode,
+    cursor: Cursor<Vec<JsonSyntaxKind>>,
 }
 
 impl Json {
-    pub fn new(root: Node) -> Self {
+    pub fn new(root: JsonNode) -> Self {
         Self {
             root: root.clone(),
             cursor: Cursor::new(root.flatten_visibles()),
         }
     }
 
-    pub fn kinds(&self) -> Vec<Kind> {
+    pub fn kinds(&self) -> Vec<JsonSyntaxKind> {
         self.cursor.contents().clone()
     }
 
@@ -28,8 +28,8 @@ impl Json {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         let binding = vec![];
         let path = match kind {
-            Kind::ArrayEntry { path, .. } => path,
-            Kind::MapEntry { path, .. } => path,
+            JsonSyntaxKind::ArrayEntry { path, .. } => path,
+            JsonSyntaxKind::MapEntry { path, .. } => path,
             _ => &binding,
         };
 
@@ -40,10 +40,10 @@ impl Json {
         let kind = self.cursor.contents().get(self.position()).unwrap();
         let binding = vec![];
         let route = match kind {
-            Kind::ArrayStart { path, .. } => path,
-            Kind::ArrayFolded { path, .. } => path,
-            Kind::MapStart { path, .. } => path,
-            Kind::MapFolded { path, .. } => path,
+            JsonSyntaxKind::ArrayStart { path, .. } => path,
+            JsonSyntaxKind::ArrayFolded { path, .. } => path,
+            JsonSyntaxKind::MapStart { path, .. } => path,
+            JsonSyntaxKind::MapFolded { path, .. } => path,
             _ => &binding,
         };
 
