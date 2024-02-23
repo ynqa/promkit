@@ -65,12 +65,12 @@ pub enum JsonNode {
 }
 
 impl JsonNode {
-    pub fn new(value: Value) -> Self {
+    pub fn new_from_serde_value(value: Value) -> Self {
         match value {
             Value::Object(map) => {
                 let children = map
                     .into_iter()
-                    .map(|(k, v)| (k, JsonNode::new(v)))
+                    .map(|(k, v)| (k, JsonNode::new_from_serde_value(v)))
                     .collect();
                 JsonNode::Object {
                     children,
@@ -78,7 +78,10 @@ impl JsonNode {
                 }
             }
             Value::Array(vec) => {
-                let children = vec.into_iter().map(JsonNode::new).collect();
+                let children = vec
+                    .into_iter()
+                    .map(JsonNode::new_from_serde_value)
+                    .collect();
                 JsonNode::Array {
                     children,
                     children_visible: true,
@@ -90,7 +93,7 @@ impl JsonNode {
 
     pub fn new_from_str(json_str: &str) -> Result<Self> {
         let value: Value = serde_json::from_str(json_str)?;
-        Ok(JsonNode::new(value))
+        Ok(JsonNode::new_from_serde_value(value))
     }
 
     pub fn get(&self, path: &JsonPath) -> Option<&JsonNode> {

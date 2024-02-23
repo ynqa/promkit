@@ -8,7 +8,7 @@ use crate::{
     grapheme::{trim, Graphemes},
     pane::Pane,
     render::{AsAny, Renderable},
-    tree::{NodeWithDepth, Tree},
+    tree::{Kind, Tree},
 };
 
 /// Represents a renderer for a tree structure,
@@ -37,11 +37,22 @@ pub struct Renderer {
 
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
-        let symbol = |item: &NodeWithDepth| -> &str {
-            if item.is_leaf || !item.children_visible {
-                &self.folded_symbol
-            } else {
-                &self.unfolded_symbol
+        let symbol = |kind: &Kind| -> &str {
+            match kind {
+                Kind::Folded { .. } => &self.folded_symbol,
+                Kind::Unfolded { .. } => &self.unfolded_symbol,
+            }
+        };
+
+        let indent = |kind: &Kind| -> usize {
+            match kind {
+                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => path.len(),
+            }
+        };
+
+        let id = |kind: &Kind| -> String {
+            match kind {
+                Kind::Folded { id, .. } | Kind::Unfolded { id, .. } => id.clone(),
             }
         };
 
@@ -50,24 +61,19 @@ impl Renderable for Renderer {
             .nodes()
             .iter()
             .enumerate()
-            .map(|(i, item)| {
+            .map(|(i, kind)| {
                 if i == self.tree.position() {
                     Graphemes::new_with_style(
-                        format!(
-                            "{}{}{}",
-                            symbol(item),
-                            " ".repeat(item.data_from_root.len() + 1),
-                            item.data
-                        ),
+                        format!("{}{}{}", symbol(kind), " ".repeat(indent(kind)), id(kind),),
                         self.active_item_style,
                     )
                 } else {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::new(symbol(item)).widths()),
-                            " ".repeat(item.data_from_root.len() + 1),
-                            item.data
+                            " ".repeat(Graphemes::new(symbol(kind)).widths()),
+                            " ".repeat(indent(kind)),
+                            id(kind),
                         ),
                         self.inactive_item_style,
                     )

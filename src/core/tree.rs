@@ -2,7 +2,7 @@ mod node;
 
 use crate::core::cursor::Cursor;
 
-pub use node::{Node, NodeWithDepth};
+pub use node::{Kind, Node, Path};
 mod render;
 pub use render::Renderer;
 
@@ -11,7 +11,7 @@ pub use render::Renderer;
 #[derive(Clone)]
 pub struct Tree {
     root: Node,
-    cursor: Cursor<Vec<NodeWithDepth>>,
+    cursor: Cursor<Vec<Kind>>,
 }
 
 impl Tree {
@@ -23,12 +23,12 @@ impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             root: root.clone(),
-            cursor: Cursor::new(root.flatten()),
+            cursor: Cursor::new(root.flatten_visibles()),
         }
     }
 
     /// Returns a vector of all nodes in the tree, represented with their depth information.
-    pub fn nodes(&self) -> Vec<NodeWithDepth> {
+    pub fn nodes(&self) -> Vec<Kind> {
         self.cursor.contents().clone()
     }
 
@@ -39,17 +39,27 @@ impl Tree {
 
     /// Retrieves the data of the current node pointed by the cursor, along with its path from the root.
     pub fn get(&self) -> Vec<String> {
-        let node = self.cursor.contents().get(self.position()).unwrap();
-
-        let mut ret = node.data_from_root.clone();
-        ret.push(node.data.clone());
-        ret
+        let kind = self.cursor.contents().get(self.position()).unwrap();
+        match kind {
+            Kind::Folded { id, path } | Kind::Unfolded { id, path } => {
+                let mut ret = path
+                    .iter()
+                    .map(|&index| index.to_string())
+                    .collect::<Vec<String>>();
+                ret.push(id.clone());
+                ret
+            }
+        }
     }
 
     /// Toggles the state of the current node and updates the cursor position accordingly.
     pub fn toggle(&mut self) {
-        self.root.toggle(self.cursor.position());
-        self.cursor = Cursor::new_with_position(self.root.flatten(), self.position());
+        if let Some(Kind::Folded { path, .. }) | Some(Kind::Unfolded { path, .. }) =
+            self.cursor.contents().get(self.position())
+        {
+            self.root.toggle(path);
+            self.cursor = Cursor::new_with_position(self.root.flatten_visibles(), self.position());
+        }
     }
 
     /// Moves the cursor backward in the tree, if possible.
