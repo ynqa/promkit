@@ -1,7 +1,7 @@
-use promkit::{error::Result, preset::Select};
+use promkit::{error::Result, preset::Listbox};
 
 fn main() -> Result {
-    let mut p = Select::new(0..100)
+    let mut p = Listbox::new(0..100)
         .title("What number do you like?")
         .listbox_lines(5)
         .prompt()?;

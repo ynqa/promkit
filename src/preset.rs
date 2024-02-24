@@ -13,8 +13,8 @@
 //! - `Readline`: For reading a line of text from the user.
 //! Includes variations like `Confirm` for yes/no questions,
 //! and `Password` for masked input.
-//! - `Select`: For allowing the user to select from a list of options.
-//! - `QuerySelect`: Similar to `Select`,
+//! - `Listbox`: For allowing the user to select from a list of options.
+//! - `QuerySelect`: Similar to `Listbox`,
 //! but with support for filtering options through user input.
 //! - `Tree`: For displaying and navigating hierarchical data.
 //!
@@ -25,8 +25,8 @@ mod checkbox;
 pub use checkbox::Checkbox;
 mod readline;
 pub use readline::{Confirm, Password, Readline};
-mod select;
-pub use select::Select;
+mod listbox;
+pub use listbox::Listbox;
 mod queryselect;
 pub use queryselect::QuerySelect;
 mod tree;

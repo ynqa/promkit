@@ -3,22 +3,22 @@ use std::fmt::Display;
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    listbox::{self, Listbox},
+    listbox,
     render::{Renderable, State},
     style::Style,
     text, Prompt,
 };
 
 /// A component for creating and managing a selectable list of options.
-pub struct Select {
+pub struct Listbox {
     /// Renderer for the title displayed above the selectable list.
     title_renderer: text::Renderer,
     /// Renderer for the selectable list itself.
     listbox_renderer: listbox::Renderer,
 }
 
-impl Select {
-    /// Constructs a new `Select` instance
+impl Listbox {
+    /// Constructs a new `Listbox` instance
     /// with a list of items to be displayed as selectable options.
     ///
     /// # Arguments
@@ -34,7 +34,7 @@ impl Select {
                     .build(),
             },
             listbox_renderer: listbox::Renderer {
-                listbox: Listbox::from_iter(items),
+                listbox: listbox::Listbox::from_iter(items),
                 cursor: String::from("❯ "),
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
