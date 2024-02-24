@@ -64,16 +64,6 @@ impl Renderable for Renderer {
             }
         };
 
-        // let apply_bgc_by_active = |style: ContentStyle, active: bool| -> ContentStyle {
-        //     let mut ret = style;
-        //     if active {
-        //         ret.background_color = Some(self.active_item_background_color);
-        //     } else {
-        //         ret.background_color = Some(self.inactive_item_background_color);
-        //     }
-        //     ret
-        // };
-
         let value = |v: &serde_json::Value| -> Graphemes {
             match v {
                 serde_json::Value::String(s) => {
