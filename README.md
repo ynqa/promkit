@@ -22,8 +22,8 @@ promkit = "0.3.0"
     - [Readline](#readline)
     - [Confirm](#confirm)
     - [Password](#password)
-    - [Select](#select)
-    - [QuerySelect](#queryselect)
+    - [Listbox](#listbox)
+    - [QuerySelector](#queryselector)
     - [Checkbox](#checkbox)
     - [Tree](#tree)
   - Combining various UI components
@@ -130,13 +130,13 @@ fn main() -> Result {
 
 ![password](https://github.com/ynqa/promkit/assets/6745370/6063b4cb-6ba6-4540-bca8-d54bd59e9b4e)
 
-### Select
+### Listbox
 
 <details>
 <summary>Command</summary>
 
 ```bash
-cargo run --example select
+cargo run --example listbox
 ```
 </details>
 
@@ -144,10 +144,10 @@ cargo run --example select
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Select};
+use promkit::{error::Result, preset::Listbox};
 
 fn main() -> Result {
-    let mut p = Select::new(0..100)
+    let mut p = Listbox::new(0..100)
         .title("What number do you like?")
         .listbox_lines(5)
         .prompt()?;
@@ -157,15 +157,15 @@ fn main() -> Result {
 ```
 </details>
 
-![select](https://github.com/ynqa/promkit/assets/6745370/b1093e46-4ddb-4f71-993c-fa0e80998882)
+![listbox](https://github.com/ynqa/promkit/assets/6745370/b1093e46-4ddb-4f71-993c-fa0e80998882)
 
-### QuerySelect
+### QuerySelector
 
 <details>
 <summary>Command</summary>
 
 ```bash
-cargo run --example queryselect
+cargo run --example queryselector
 ```
 </details>
 
@@ -173,10 +173,10 @@ cargo run --example queryselect
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::QuerySelect};
+use promkit::{error::Result, preset::QuerySelector};
 
 fn main() -> Result {
-    let mut p = QuerySelect::new(0..100, |text, items| -> Vec<String> {
+    let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
         text.parse::<usize>()
             .map(|query| {
                 items
@@ -255,21 +255,15 @@ cargo run --example tree
 use promkit::{error::Result, preset::Tree, tree::Node};
 
 fn main() -> Result {
-    let mut p = Tree::new(Node::new("/").add_children([
-        Node::new("foo").add_children([Node::new("test1.txt"), Node::new("test2.txt")]),
-        Node::new("bar"),
-        Node::new("baz"),
-    ]))
-    .title("Select a directory or file")
-    .tree_lines(10)
-    .prompt()?;
+    let mut p = Tree::new(Node::try_from(&std::env::current_dir()?.join("src"))?)
+        .title("Select a directory or file")
+        .tree_lines(10)
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
 ```
 </details>
-
-![tree](https://github.com/ynqa/promkit/assets/6745370/61c9e32c-6043-41f8-974b-77a0c7ab8223)
 
 ## Why *promkit*?
 
