@@ -187,15 +187,11 @@ impl Renderable for Renderer {
             .enumerate()
             .map(|(i, kind)| {
                 if i == self.json.position() {
-                    Graphemes::from_iter([
-                        Graphemes::from(" ".repeat(indent(kind))),
-                        syntax(kind).stylize_all_backgrounds(self.active_item_background_color),
-                    ])
+                    Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
+                        .stylize_all_backgrounds(self.active_item_background_color)
                 } else {
-                    Graphemes::from_iter([
-                        Graphemes::from(" ".repeat(indent(kind))),
-                        syntax(kind).stylize_all_backgrounds(self.inactive_item_background_color),
-                    ])
+                    Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
+                        .stylize_all_backgrounds(self.inactive_item_background_color)
                 }
             })
             .collect::<Vec<Graphemes>>();
