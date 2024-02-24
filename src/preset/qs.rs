@@ -15,13 +15,13 @@ use crate::{
 };
 
 /// Used to process and filter a list of options
-/// based on the input text in the `QuerySelect` component.
+/// based on the input text in the `QuerySelector` component.
 type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 
 /// Represents a query selection component that combines a text editor
 /// for input and a list box
 /// for displaying filtered options based on the input.
-pub struct QuerySelect {
+pub struct QuerySelector {
     /// Renderer for the title displayed above the query selection.
     title_renderer: text::Renderer,
     /// Renderer for the text editor component.
@@ -33,8 +33,8 @@ pub struct QuerySelect {
     filter: Box<Filter>,
 }
 
-impl QuerySelect {
-    /// Constructs a new `QuerySelect` instance
+impl QuerySelector {
+    /// Constructs a new `QuerySelector` instance
     /// with a list of items and a filter function.
     ///
     /// # Arguments

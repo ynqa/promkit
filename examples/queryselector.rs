@@ -1,7 +1,7 @@
-use promkit::{error::Result, preset::QuerySelect};
+use promkit::{error::Result, preset::QuerySelector};
 
 fn main() -> Result {
-    let mut p = QuerySelect::new(0..100, |text, items| -> Vec<String> {
+    let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
         text.parse::<usize>()
             .map(|query| {
                 items

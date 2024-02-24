@@ -14,7 +14,7 @@
 //! Includes variations like `Confirm` for yes/no questions,
 //! and `Password` for masked input.
 //! - `Listbox`: For allowing the user to select from a list of options.
-//! - `QuerySelect`: Similar to `Listbox`,
+//! - `QuerySelector`: Similar to `Listbox`,
 //! but with support for filtering options through user input.
 //! - `Tree`: For displaying and navigating hierarchical data.
 //!
@@ -27,8 +27,8 @@ mod readline;
 pub use readline::{Confirm, Password, Readline};
 mod listbox;
 pub use listbox::Listbox;
-mod queryselect;
-pub use queryselect::QuerySelect;
+mod qs;
+pub use qs::QuerySelector;
 mod tree;
 pub use tree::Tree;
 mod json;
