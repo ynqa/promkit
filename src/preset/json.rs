@@ -7,12 +7,18 @@ use crate::{
     text, Prompt,
 };
 
+/// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
     title_renderer: text::Renderer,
     json_renderer: json::Renderer,
 }
 
 impl Json {
+    /// Creates a new `Json` instance with a specified root JSON node.
+    ///
+    /// # Arguments
+    ///
+    /// * `root` - A `JsonNode` that represents the root of the JSON data to be rendered.
     pub fn new(root: JsonNode) -> Self {
         Self {
             title_renderer: text::Renderer {
@@ -22,7 +28,7 @@ impl Json {
                     .build(),
             },
             json_renderer: json::Renderer {
-                json: json::Json::new(root),
+                json: json::JsonTree::new(root),
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
                 lines: Default::default(),
@@ -31,31 +37,43 @@ impl Json {
         }
     }
 
+    /// Sets the title text for the JSON preset.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title_renderer.text = text.as_ref().to_string();
         self
     }
 
+    /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
         self.title_renderer.style = style;
         self
     }
 
+    /// Sets the style for the active JSON item.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
         self.json_renderer.active_item_style = style;
         self
     }
 
+    /// Sets the style for the inactive JSON items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
         self.json_renderer.inactive_item_style = style;
         self
     }
 
+    /// Sets the number of lines to be used for rendering the JSON data.
     pub fn json_lines(mut self, lines: usize) -> Self {
         self.json_renderer.lines = Some(lines);
         self
     }
 
+    /// Sets the indentation level for rendering the JSON data.
+    pub fn indent(mut self, indent: usize) -> Self {
+        self.json_renderer.indent = indent;
+        self
+    }
+
+    /// Creates a prompt based on the current configuration of the `Json` instance.
     pub fn prompt(self) -> Result<Prompt<Vec<JsonPathSegment>>> {
         Prompt::try_new(
             vec![

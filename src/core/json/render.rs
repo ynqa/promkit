@@ -10,11 +10,16 @@ use crate::{
     render::{AsAny, Renderable},
 };
 
-use super::{Json, JsonSyntaxKind};
+use super::{JsonSyntaxKind, JsonTree};
 
+/// Represents a renderer for the `Json` component,
+/// capable of visualizing JSON structures in a pane.
+/// It supports interactive exploration of the JSON structure, including folding and unfolding
+/// of JSON elements. The renderer highlights the currently selected line and can be configured
+/// to render a specific number of lines with a specified indentation level for nested elements.
 #[derive(Clone)]
 pub struct Renderer {
-    pub json: Json,
+    pub json: JsonTree,
 
     /// Style for the selected line.
     pub active_item_style: ContentStyle,
@@ -127,7 +132,7 @@ impl Renderable for Renderer {
         Pane::new(trimed, self.json.position(), self.lines)
     }
 
-    /// Default key bindings for tree.
+    /// Default key bindings for JSON.
     ///
     /// | Key                | Description
     /// | :--                | :--

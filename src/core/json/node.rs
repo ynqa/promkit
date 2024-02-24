@@ -3,51 +3,57 @@ use serde_json;
 
 use crate::{Error, Result};
 
+/// Represents the various kinds of syntax elements found in a JSON document.
+/// This includes the start and end of maps and arrays, entries within maps and arrays,
+/// and folded representations of maps and arrays for compact display.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JsonSyntaxKind {
-    /// `Value` is one of the following:
-    /// Null, Bool(bool), Number(Number), String(String)
-    /// All `bool` represents whether there is comma or not.
-
-    /// e.g. { or "map": {
+    /// Represents the start of a map. Optionally contains the key if this map is an entry in another map,
+    /// the path to this map in the JSON document, and the indentation level for formatting.
     MapStart {
         key: Option<String>,
         path: JsonPath,
         indent: usize,
     },
-    /// e.g. }
+    /// Represents the end of a map. Contains a flag indicating if this is the last element in its parent
+    /// and the indentation level for formatting.
     MapEnd { is_last: bool, indent: usize },
-    /// e.g. "map": { ... }
+    /// Represents a map that is folded (i.e., its contents are not displayed). Contains the same information as `MapStart`
+    /// plus a flag indicating if this is the last element in its parent.
     MapFolded {
         key: Option<String>,
         path: JsonPath,
         is_last: bool,
         indent: usize,
     },
-    /// e.g. "number": 1
+    /// Represents an entry in a map, containing the key-value pair, the path to this entry,
+    /// a flag indicating if this is the last element in its parent, and the indentation level for formatting.
     MapEntry {
         kv: (String, serde_json::Value),
         path: JsonPath,
         is_last: bool,
         indent: usize,
     },
-
-    /// e.g. [ or "list": [
+    /// Represents the start of an array. Optionally contains the key if this array is an entry in a map,
+    /// the path to this array in the JSON document, and the indentation level for formatting.
     ArrayStart {
         key: Option<String>,
         path: JsonPath,
         indent: usize,
     },
-    /// e.g. ]
+    /// Represents the end of an array. Contains a flag indicating if this is the last element in its parent
+    /// and the indentation level for formatting.
     ArrayEnd { is_last: bool, indent: usize },
-    /// e.g. "list": [ ... ]
+    /// Represents an array that is folded (i.e., its contents are not displayed). Contains the same information as `ArrayStart`
+    /// plus a flag indicating if this is the last element in its parent.
     ArrayFolded {
         key: Option<String>,
         path: JsonPath,
         is_last: bool,
         indent: usize,
     },
-    /// e.g. "abc"
+    /// Represents an entry in an array, containing the value, the path to this entry,
+    /// a flag indicating if this is the last element in its parent, and the indentation level for formatting.
     ArrayEntry {
         v: serde_json::Value,
         path: JsonPath,
@@ -58,12 +64,17 @@ pub enum JsonSyntaxKind {
 
 pub type JsonPath = Vec<JsonPathSegment>;
 
+/// Represents a segment of a path in a JSON document, which can be either a key in an object
+/// or an index in an array.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JsonPathSegment {
+    /// Represents a key in a JSON object.
     Key(String),
+    /// Represents an index in a JSON array.
     Index(usize),
 }
 
+/// Represents a node in a JSON structure, which can be an object, an array, or a leaf value.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum JsonNode {
     Object {
@@ -79,6 +90,10 @@ pub enum JsonNode {
 }
 
 impl TryFrom<&str> for JsonNode {
+    /// Attempts to create a `JsonNode` from a JSON string.
+    ///
+    /// # Errors
+    /// Returns an error if the string is not valid JSON.
     type Error = Error;
 
     fn try_from(json_str: &str) -> Result<Self> {
@@ -88,6 +103,7 @@ impl TryFrom<&str> for JsonNode {
 }
 
 impl From<serde_json::Value> for JsonNode {
+    /// Converts a `serde_json::Value` into a `JsonNode`.
     fn from(value: serde_json::Value) -> Self {
         match value {
             serde_json::Value::Object(map) => {
@@ -113,6 +129,13 @@ impl From<serde_json::Value> for JsonNode {
 }
 
 impl JsonNode {
+    /// Retrieves a reference to a `JsonNode` at a specified JSON path.
+    ///
+    /// # Arguments
+    /// * `path` - A vector of `JsonPathSegment` indicating the path to the node.
+    ///
+    /// # Returns
+    /// An `Option` containing a reference to the found node, or `None` if not found.
     pub fn get(&self, path: &JsonPath) -> Option<&JsonNode> {
         let mut node = self;
         for seg in path {
@@ -136,6 +159,13 @@ impl JsonNode {
         Some(node)
     }
 
+    /// Retrieves a mutable reference to a `JsonNode` at a specified JSON path.
+    ///
+    /// # Arguments
+    /// * `path` - A vector of `JsonPathSegment` indicating the path to the node.
+    ///
+    /// # Returns
+    /// An `Option` containing a mutable reference to the found node, or `None` if not found.
     pub fn get_mut(&mut self, path: &JsonPath) -> Option<&mut JsonNode> {
         let mut node = self;
         for seg in path {
@@ -159,6 +189,10 @@ impl JsonNode {
         Some(node)
     }
 
+    /// Toggles the visibility of children for a `JsonNode` at a specified JSON path.
+    ///
+    /// # Arguments
+    /// * `path` - A vector of `JsonPathSegment` indicating the path to the node.
     pub fn toggle(&mut self, path: &JsonPath) {
         if let Some(node) = self.get_mut(path) {
             match node {
@@ -173,6 +207,10 @@ impl JsonNode {
         }
     }
 
+    /// Flattens the visible parts of the JSON structure into a vector of `JsonSyntaxKind`.
+    ///
+    /// # Returns
+    /// A vector of `JsonSyntaxKind` representing the visible parts of the JSON structure.
     pub fn flatten_visibles(&self) -> Vec<JsonSyntaxKind> {
         fn dfs(
             node: &JsonNode,

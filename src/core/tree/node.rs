@@ -45,6 +45,27 @@ pub enum Node {
 }
 
 impl TryFrom<&path::PathBuf> for Node {
+    /// Attempts to create a `Node` from a given directory path.
+    ///
+    /// This method constructs a `Node::NonLeaf` representing the directory specified by `dir_path`.
+    /// It recursively explores the directory, converting subdirectories into `Node::NonLeaf` instances
+    /// and files into `Node::Leaf` instances. Directories and files are kept in separate lists initially,
+    /// then combined with all directories first, followed by files. Both lists are sorted alphabetically
+    /// before merging. The resulting tree structure reflects the hierarchy of files and directories within
+    /// `dir_path`, with directories listed before files, both in alphabetical order.
+    ///
+    /// # Parameters
+    /// - `dir_path`: A reference to a `PathBuf` representing the directory to be converted into a `Node`.
+    ///
+    /// # Returns
+    /// A `Result` containing the root `Node` of the constructed tree if successful, or an `Error` if the
+    /// directory cannot be read or if any file name cannot be converted to a string.
+    ///
+    /// # Errors
+    /// This method returns an `Error` if:
+    /// - The path does not exist or is not a directory.
+    /// - There is an error reading the directory contents.
+    /// - A file name cannot be converted to a UTF-8 string.
     type Error = Error;
 
     fn try_from(dir_path: &path::PathBuf) -> Result<Self> {

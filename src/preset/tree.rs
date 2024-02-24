@@ -38,6 +38,7 @@ impl Tree {
                 active_item_style: Style::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: Style::new().build(),
                 lines: Default::default(),
+                indent: 2,
             },
         }
     }
@@ -81,6 +82,12 @@ impl Tree {
     /// Sets the number of lines to be used for displaying the tree.
     pub fn tree_lines(mut self, lines: usize) -> Self {
         self.tree_renderer.lines = Some(lines);
+        self
+    }
+
+    /// Sets the indentation level for rendering the tree data.
+    pub fn indent(mut self, indent: usize) -> Self {
+        self.tree_renderer.indent = indent;
         self
     }
 

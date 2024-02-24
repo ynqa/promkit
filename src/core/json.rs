@@ -6,12 +6,12 @@ mod render;
 pub use render::Renderer;
 
 #[derive(Clone)]
-pub struct Json {
+pub struct JsonTree {
     root: JsonNode,
     cursor: Cursor<Vec<JsonSyntaxKind>>,
 }
 
-impl Json {
+impl JsonTree {
     pub fn new(root: JsonNode) -> Self {
         Self {
             root: root.clone(),

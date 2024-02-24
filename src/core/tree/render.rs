@@ -34,6 +34,8 @@ pub struct Renderer {
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
+
+    pub indent: usize,
 }
 
 impl Renderable for Renderer {
@@ -47,7 +49,7 @@ impl Renderable for Renderer {
 
         let indent = |kind: &Kind| -> usize {
             match kind {
-                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => path.len(),
+                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => path.len() * self.indent,
             }
         };
 
