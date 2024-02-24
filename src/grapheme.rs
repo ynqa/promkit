@@ -39,7 +39,7 @@ use std::{
 
 use unicode_width::UnicodeWidthChar;
 
-use crate::crossterm::style::ContentStyle;
+use crate::crossterm::style::{Color, ContentStyle};
 
 /// Represents a single grapheme (character) with its display width and optional styling.
 ///
@@ -111,6 +111,14 @@ impl Graphemes {
             grapheme.style = style;
             grapheme
         });
+        self
+    }
+
+    // Updates the background color of all `Grapheme` instances in the collection.
+    pub fn stylize_all_backgrounds(mut self, bgc: Color) -> Self {
+        for grapheme in &mut self.0 {
+            grapheme.style.background_color = Some(bgc);
+        }
         self
     }
 

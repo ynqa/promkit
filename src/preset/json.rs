@@ -39,7 +39,7 @@ impl Json {
                 string_value_style: Style::new().fgc(Color::DarkGreen).build(),
                 number_value_style: Style::new().build(),
                 boolean_value_style: Style::new().build(),
-                active_item_background_color: Color::DarkCyan,
+                active_item_background_color: Color::DarkYellow,
                 inactive_item_background_color: Color::Reset,
                 lines: Default::default(),
                 indent: 2,
