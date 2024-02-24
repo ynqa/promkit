@@ -98,7 +98,7 @@ mod test {
             assert_eq!(
                 true,
                 Pane {
-                    layout: matrixify(10, &Graphemes::new("")),
+                    layout: matrixify(10, &Graphemes::from("")),
                     offset: 0,
                     fixed_height: None,
                 }
@@ -112,19 +112,19 @@ mod test {
         #[test]
         fn test_with_less_extraction_size_than_layout() {
             let expect = vec![
-                Graphemes::new("aa"),
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
+                Graphemes::from("aa"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 0,
                     fixed_height: None,
@@ -136,21 +136,21 @@ mod test {
         #[test]
         fn test_with_much_extraction_size_than_layout() {
             let expect = vec![
-                Graphemes::new("aa"),
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                Graphemes::from("aa"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
+                Graphemes::from("dd"),
+                Graphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 0,
                     fixed_height: None,
@@ -161,16 +161,16 @@ mod test {
 
         #[test]
         fn test_with_within_extraction_size_and_offset_non_zero() {
-            let expect = vec![Graphemes::new("cc"), Graphemes::new("dd")];
+            let expect = vec![Graphemes::from("cc"), Graphemes::from("dd")];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 2, // indicate `cc`
                     fixed_height: None,
@@ -182,19 +182,19 @@ mod test {
         #[test]
         fn test_with_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                Graphemes::from("cc"),
+                Graphemes::from("dd"),
+                Graphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: None,
@@ -206,20 +206,20 @@ mod test {
         #[test]
         fn test_with_small_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
+                Graphemes::from("dd"),
+                Graphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: Some(5),
@@ -231,20 +231,20 @@ mod test {
         #[test]
         fn test_with_large_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                Graphemes::from("bb"),
+                Graphemes::from("cc"),
+                Graphemes::from("dd"),
+                Graphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        Graphemes::from("aa"),
+                        Graphemes::from("bb"),
+                        Graphemes::from("cc"),
+                        Graphemes::from("dd"),
+                        Graphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: Some(4),

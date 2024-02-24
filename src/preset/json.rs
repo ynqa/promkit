@@ -29,8 +29,18 @@ impl Json {
             },
             json_renderer: json::Renderer {
                 json: json::JsonTree::new(root),
-                active_item_style: Style::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: Style::new().build(),
+                curly_brackets_style: Style::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+                square_brackets_style: Style::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+                key_style: Style::new().fgc(Color::DarkBlue).build(),
+                string_value_style: Style::new().fgc(Color::DarkGreen).build(),
+                number_value_style: Style::new().build(),
+                boolean_value_style: Style::new().build(),
+                active_item_background_color: Color::DarkCyan,
+                inactive_item_background_color: Color::Reset,
                 lines: Default::default(),
                 indent: 2,
             },
@@ -49,15 +59,15 @@ impl Json {
         self
     }
 
-    /// Sets the style for the active JSON item.
-    pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.json_renderer.active_item_style = style;
+    /// Sets the background color for active items in the JSON rendering.
+    pub fn active_item_background_color(mut self, color: Color) -> Self {
+        self.json_renderer.active_item_background_color = color;
         self
     }
 
-    /// Sets the style for the inactive JSON items.
-    pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.json_renderer.inactive_item_style = style;
+    /// Sets the background color for inactive items in the JSON rendering.
+    pub fn inactive_item_background_color(mut self, color: Color) -> Self {
+        self.json_renderer.inactive_item_background_color = color;
         self
     }
 

@@ -3,7 +3,7 @@ use std::any::Any;
 use crate::{
     crossterm::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::ContentStyle,
+        style::{Color, ContentStyle},
     },
     grapheme::{trim, Graphemes},
     pane::Pane,
@@ -21,14 +21,31 @@ use super::{JsonSyntaxKind, JsonTree};
 pub struct Renderer {
     pub json: JsonTree,
 
+    /// Style for {}.
+    pub curly_brackets_style: ContentStyle,
+    /// Style for [].
+    pub square_brackets_style: ContentStyle,
+    /// Style for "key".
+    pub key_style: ContentStyle,
+    /// Style for string values.
+    pub string_value_style: ContentStyle,
+    /// Style for number values.
+    pub number_value_style: ContentStyle,
+    /// Style for boolean values.
+    pub boolean_value_style: ContentStyle,
+
     /// Style for the selected line.
-    pub active_item_style: ContentStyle,
+    pub active_item_background_color: Color,
     /// Style for un-selected lines.
-    pub inactive_item_style: ContentStyle,
+    pub inactive_item_background_color: Color,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 
+    /// The number of spaces used for indentation in the rendered JSON structure.
+    /// This value multiplies with the indentation level of a JSON element to determine
+    /// the total indentation space. For example, an `indent` value of 4 means each
+    /// indentation level will be 4 spaces wide.
     pub indent: usize,
 }
 
@@ -47,29 +64,76 @@ impl Renderable for Renderer {
             }
         };
 
-        let syntax = |kind: &JsonSyntaxKind| -> String {
+        let apply_bgc_by_active = |style: ContentStyle, active: bool| -> ContentStyle {
+            let mut ret = style.clone();
+            if active {
+                ret.background_color = Some(self.active_item_background_color);
+            } else {
+                ret.background_color = Some(self.inactive_item_background_color);
+            }
+            ret
+        };
+
+        let syntax = |kind: &JsonSyntaxKind, active: bool| -> Graphemes {
             match kind {
                 JsonSyntaxKind::MapStart { key, .. } => match key {
-                    Some(key) => format!("\"{}\": {{", key),
-                    None => "{".to_string(),
+                    Some(key) => Graphemes::from_iter([
+                        Graphemes::new_with_style(
+                            format!("\"{}\"", key),
+                            apply_bgc_by_active(self.key_style, active),
+                        ),
+                        Graphemes::from(": "),
+                        Graphemes::new_with_style(
+                            "{",
+                            apply_bgc_by_active(self.curly_brackets_style, active),
+                        ),
+                    ]),
+                    None => Graphemes::new_with_style(
+                        "{",
+                        apply_bgc_by_active(self.curly_brackets_style, active),
+                    ),
                 },
                 JsonSyntaxKind::MapEnd { is_last, .. } => {
-                    let mut token = "}".to_string();
-                    if !*is_last {
-                        token.push(',');
+                    if *is_last {
+                        Graphemes::new_with_style(
+                            "}",
+                            apply_bgc_by_active(self.curly_brackets_style, active),
+                        )
+                    } else {
+                        Graphemes::from_iter([
+                            Graphemes::new_with_style(
+                                "}",
+                                apply_bgc_by_active(self.curly_brackets_style, active),
+                            ),
+                            Graphemes::from(","),
+                        ])
                     }
-                    token
                 }
                 JsonSyntaxKind::MapFolded { key, is_last, .. } => {
                     let mut token = match key {
-                        Some(key) => format!("\"{}\": {{...}}", key),
-                        None => "{...}".to_string(),
+                        Some(key) => Graphemes::from_iter([
+                            Graphemes::new_with_style(
+                                format!("\"{}\"", key),
+                                apply_bgc_by_active(self.key_style, active),
+                            ),
+                            Graphemes::from(": "),
+                            Graphemes::new_with_style(
+                                "{...}",
+                                apply_bgc_by_active(self.curly_brackets_style, active),
+                            ),
+                        ]),
+                        None => Graphemes::new_with_style(
+                            "{...}",
+                            apply_bgc_by_active(self.curly_brackets_style, active),
+                        ),
                     };
-                    if !*is_last {
-                        token.push(',');
+                    if *is_last {
+                        token
+                    } else {
+                        Graphemes::from_iter([token, Graphemes::from(",")])
                     }
-                    token
                 }
+                // TODO: fix below
                 JsonSyntaxKind::MapEntry { kv, is_last, .. } => {
                     let mut token = format!("\"{}\": {}", kv.0, kv.1);
                     if !*is_last {
@@ -115,15 +179,15 @@ impl Renderable for Renderer {
             .enumerate()
             .map(|(i, kind)| {
                 if i == self.json.position() {
-                    Graphemes::new_with_style(
-                        format!("{}{}", " ".repeat(indent(kind)), syntax(kind)),
-                        self.active_item_style,
-                    )
+                    Graphemes::from_iter([
+                        Graphemes::from(" ".repeat(indent(kind))),
+                        syntax(kind, true),
+                    ])
                 } else {
-                    Graphemes::new_with_style(
-                        format!("{}{}", " ".repeat(indent(kind)), syntax(kind)),
-                        self.inactive_item_style,
-                    )
+                    Graphemes::from_iter([
+                        Graphemes::from(" ".repeat(indent(kind))),
+                        syntax(kind, false),
+                    ])
                 }
             })
             .collect::<Vec<Graphemes>>();

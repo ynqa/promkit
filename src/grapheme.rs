@@ -41,7 +41,12 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::crossterm::style::ContentStyle;
 
-/// A character and its width.
+/// Represents a single grapheme (character) with its display width and optional styling.
+///
+/// A grapheme may consist of a single character or a composed character sequence
+/// that is treated as a single unit for display purposes. The display width is calculated
+/// based on Unicode width standards, which helps in accurately positioning and rendering
+/// text in terminal applications.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
     ch: char,
@@ -67,15 +72,28 @@ impl Grapheme {
     }
 }
 
-/// Characters and their width.
+/// A collection of `Grapheme` instances.
+///
+/// Supports operations like calculating the total display width of the collection,
+/// applying styles to individual graphemes, and generating a display representation
+/// that respects the applied styles.
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Graphemes(pub Vec<Grapheme>);
 
-impl Graphemes {
-    pub fn new<S: AsRef<str>>(string: S) -> Self {
+impl FromIterator<Graphemes> for Graphemes {
+    fn from_iter<I: IntoIterator<Item = Graphemes>>(iter: I) -> Self {
+        let concatenated = iter.into_iter().flat_map(|g| g.0).collect();
+        Graphemes(concatenated)
+    }
+}
+
+impl<S: AsRef<str>> From<S> for Graphemes {
+    fn from(string: S) -> Self {
         Graphemes::new_with_style(string, ContentStyle::new())
     }
+}
 
+impl Graphemes {
     pub fn new_with_style<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
         string
             .as_ref()
@@ -146,6 +164,11 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
     }
 }
 
+/// Splits a collection of graphemes into lines that fit within a specified width.
+///
+/// This function is useful for text wrapping in terminal applications, ensuring that
+/// lines do not exceed the specified width. It respects the display width of each grapheme,
+/// allowing for accurate layout even with wide characters or emojis.
 pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
     let mut ret = vec![];
     let mut row = Graphemes::default();
@@ -166,6 +189,11 @@ pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
     ret
 }
 
+/// Trims a collection of graphemes to fit within a specified width.
+///
+/// This function discards any excess graphemes that would cause the total display width
+/// to exceed the specified limit. It is useful for ensuring that a piece of text fits
+/// within a given space without wrapping.
 pub fn trim(width: usize, g: &Graphemes) -> Graphemes {
     let mut row = Graphemes::default();
     for ch in g.iter() {
@@ -191,35 +219,35 @@ mod test {
         #[test]
         fn test() {
             let expect = vec![
-                Graphemes::new(">>"),
-                Graphemes::new(" a"),
-                Graphemes::new("aa"),
-                Graphemes::new(" "),
+                Graphemes::from(">>"),
+                Graphemes::from(" a"),
+                Graphemes::from("aa"),
+                Graphemes::from(" "),
             ];
-            assert_eq!(expect, matrixify(2, &Graphemes::new(">> aaa ")),);
+            assert_eq!(expect, matrixify(2, &Graphemes::from(">> aaa ")),);
         }
 
         #[test]
         fn test_with_emoji() {
             let expect = vec![
-                Graphemes::new(">>"),
-                Graphemes::new(" "),
-                Graphemes::new("😎"),
-                Graphemes::new("😎"),
-                Graphemes::new(" "),
+                Graphemes::from(">>"),
+                Graphemes::from(" "),
+                Graphemes::from("😎"),
+                Graphemes::from("😎"),
+                Graphemes::from(" "),
             ];
-            assert_eq!(expect, matrixify(2, &Graphemes::new(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(2, &Graphemes::from(">> 😎😎 ")),);
         }
 
         #[test]
         fn test_with_emoji_at_narrow_terminal() {
             let expect = vec![
-                Graphemes::new(">"),
-                Graphemes::new(">"),
-                Graphemes::new(" "),
-                Graphemes::new(" "),
+                Graphemes::from(">"),
+                Graphemes::from(">"),
+                Graphemes::from(" "),
+                Graphemes::from(" "),
             ];
-            assert_eq!(expect, matrixify(1, &Graphemes::new(">> 😎😎 ")),);
+            assert_eq!(expect, matrixify(1, &Graphemes::from(">> 😎😎 ")),);
         }
     }
 
@@ -228,17 +256,20 @@ mod test {
 
         #[test]
         fn test() {
-            assert_eq!(Graphemes::new(">> a"), trim(4, &Graphemes::new(">> aaa ")));
+            assert_eq!(
+                Graphemes::from(">> a"),
+                trim(4, &Graphemes::from(">> aaa "))
+            );
         }
 
         #[test]
         fn test_with_emoji() {
-            assert_eq!(Graphemes::new("😎"), trim(2, &Graphemes::new("😎")));
+            assert_eq!(Graphemes::from("😎"), trim(2, &Graphemes::from("😎")));
         }
 
         #[test]
         fn test_with_emoji_at_narrow_terminal() {
-            assert_eq!(Graphemes::new(""), trim(1, &Graphemes::new("😎")));
+            assert_eq!(Graphemes::from(""), trim(1, &Graphemes::from("😎")));
         }
     }
 }

@@ -66,7 +66,7 @@ impl Renderable for Renderer {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}",
-                            " ".repeat(Graphemes::new(self.cursor.clone()).widths()),
+                            " ".repeat(Graphemes::from(self.cursor.clone()).widths()),
                             f(i, item)
                         ),
                         self.inactive_item_style,

@@ -35,6 +35,10 @@ pub struct Renderer {
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 
+    /// The number of spaces used for indenting child items in the tree.
+    /// This value determines how much horizontal space is used to visually
+    /// represent the hierarchical structure of the tree. Each level of
+    /// indentation typically represents a deeper level in the tree hierarchy.
     pub indent: usize,
 }
 
@@ -74,7 +78,7 @@ impl Renderable for Renderer {
                     Graphemes::new_with_style(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::new(symbol(kind)).widths()),
+                            " ".repeat(Graphemes::from(symbol(kind)).widths()),
                             " ".repeat(indent(kind)),
                             id(kind),
                         ),
