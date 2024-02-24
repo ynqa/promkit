@@ -27,7 +27,7 @@ fn main() -> Result {
           ]
         }"#,
     )?)
-    .title("Select a directory or file")
+    .title("JSON viewer")
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
