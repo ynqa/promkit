@@ -265,6 +265,8 @@ fn main() -> Result {
 ```
 </details>
 
+![tree](https://github.com/ynqa/promkit/assets/6745370/c732f526-e3f7-4b0d-bae2-6f5a8c96a66a)
+
 ## Why *promkit*?
 
 Related libraries in this category include the following:
