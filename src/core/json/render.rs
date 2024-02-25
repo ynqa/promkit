@@ -33,6 +33,8 @@ pub struct Renderer {
     pub number_value_style: ContentStyle,
     /// Style for boolean values.
     pub boolean_value_style: ContentStyle,
+    /// Style for null values.
+    pub null_value_style: ContentStyle,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
@@ -70,6 +72,7 @@ impl Renderable for Renderer {
                 serde_json::Value::Bool(b) => {
                     Graphemes::new_with_style(b.to_string(), self.boolean_value_style)
                 }
+                serde_json::Value::Null => Graphemes::new_with_style("null", self.null_value_style),
                 _ => Graphemes::from(""),
             }
         };
