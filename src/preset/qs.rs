@@ -8,7 +8,7 @@ use crate::{
     error::Result,
     listbox::{self, Listbox},
     render::{Renderable, State},
-    style::Style,
+    style::StyleBuilder,
     text,
     text_editor::{self, Mode, Suggest},
     Prompt,
@@ -53,7 +53,7 @@ impl QuerySelector {
         Self {
             title_renderer: text::Renderer {
                 text: Default::default(),
-                style: Style::new()
+                style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
@@ -63,17 +63,17 @@ impl QuerySelector {
                 suggest: Default::default(),
                 prefix: String::from("❯❯ "),
                 mask: None,
-                prefix_style: Style::new().fgc(Color::DarkGreen).build(),
-                active_char_style: Style::new().bgc(Color::DarkCyan).build(),
-                inactive_char_style: Style::new().build(),
+                prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+                active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
+                inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
                 lines: Default::default(),
             },
             listbox_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(items),
                 cursor: String::from("❯ "),
-                active_item_style: Style::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: Style::new().build(),
+                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
+                inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
             filter: Box::new(filter),

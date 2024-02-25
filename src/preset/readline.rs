@@ -5,7 +5,7 @@ use crate::{
     },
     error::Result,
     render::{Renderable, State},
-    style::Style,
+    style::StyleBuilder,
     text,
     text_editor::{self, History, Mode, Suggest},
     validate::Validator,
@@ -37,7 +37,7 @@ impl Default for Readline {
         Self {
             title_renderer: text::Renderer {
                 text: Default::default(),
-                style: Style::new()
+                style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
@@ -47,15 +47,15 @@ impl Default for Readline {
                 suggest: Default::default(),
                 prefix: String::from("❯❯ "),
                 mask: Default::default(),
-                prefix_style: Style::new().fgc(Color::DarkGreen).build(),
-                active_char_style: Style::new().bgc(Color::DarkCyan).build(),
-                inactive_char_style: Style::new().build(),
+                prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+                active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
+                inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
                 lines: Default::default(),
             },
             error_message_renderer: text::Renderer {
                 text: Default::default(),
-                style: Style::new()
+                style: StyleBuilder::new()
                     .fgc(Color::DarkRed)
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),

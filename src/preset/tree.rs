@@ -2,7 +2,7 @@ use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     render::{Renderable, State},
-    style::Style,
+    style::StyleBuilder,
     text,
     tree::{self, Node},
     Prompt,
@@ -27,7 +27,7 @@ impl Tree {
         Self {
             title_renderer: text::Renderer {
                 text: Default::default(),
-                style: Style::new()
+                style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
@@ -35,8 +35,8 @@ impl Tree {
                 tree: tree::Tree::new(root),
                 folded_symbol: String::from("▶︎ "),
                 unfolded_symbol: String::from("▼ "),
-                active_item_style: Style::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: Style::new().build(),
+                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
+                inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
                 indent: 2,
             },

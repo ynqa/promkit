@@ -3,7 +3,7 @@ use crate::{
     error::Result,
     json::{self, JsonNode, JsonPathSegment},
     render::{Renderable, State},
-    style::Style,
+    style::StyleBuilder,
     text, Prompt,
 };
 
@@ -23,22 +23,22 @@ impl Json {
         Self {
             title_renderer: text::Renderer {
                 text: Default::default(),
-                style: Style::new()
+                style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
             json_renderer: json::Renderer {
                 json: json::JsonTree::new(root),
-                curly_brackets_style: Style::new()
+                curly_brackets_style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
-                square_brackets_style: Style::new()
+                square_brackets_style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
-                key_style: Style::new().fgc(Color::DarkBlue).build(),
-                string_value_style: Style::new().fgc(Color::DarkGreen).build(),
-                number_value_style: Style::new().build(),
-                boolean_value_style: Style::new().build(),
+                key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
+                string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+                number_value_style: StyleBuilder::new().build(),
+                boolean_value_style: StyleBuilder::new().build(),
                 lines: Default::default(),
                 indent: 2,
             },

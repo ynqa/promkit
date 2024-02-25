@@ -9,17 +9,17 @@ use crate::crossterm::style::{Attributes, Color, ContentStyle};
 /// It provides a fluent interface for setting these properties,
 /// and a method to build a `ContentStyle` that can be applied to text.
 #[derive(Default)]
-pub struct Style {
+pub struct StyleBuilder {
     foreground_color: Option<Color>,
     background_color: Option<Color>,
     underline_color: Option<Color>,
     attributes: Attributes,
 }
 
-impl Style {
+impl StyleBuilder {
     /// Creates a new `Style` instance with default values.
     pub fn new() -> Self {
-        Style::default()
+        StyleBuilder::default()
     }
 
     /// Sets the foreground color of the style.
