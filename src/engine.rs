@@ -3,7 +3,7 @@ use std::{fmt, io::Write};
 use crate::{
     crossterm::{
         cursor::{self, MoveTo},
-        execute,
+        queue,
         style::Print,
         terminal::{self, Clear, ClearType, ScrollUp},
     },
@@ -60,7 +60,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn clear_from_cursor_down(&mut self) -> Result {
-        execute!(self.out, Clear(ClearType::FromCursorDown)).map_err(Error::from)
+        queue!(self.out, Clear(ClearType::FromCursorDown)).map_err(Error::from)
     }
 
     /// Clears the entire terminal screen
@@ -71,7 +71,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn clear(&mut self) -> Result {
-        execute!(self.out, Clear(ClearType::All), MoveTo(0, 0)).map_err(Error::from)
+        queue!(self.out, Clear(ClearType::All), MoveTo(0, 0)).map_err(Error::from)
     }
 
     /// Writes a string to the terminal.
@@ -85,7 +85,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn write<D: fmt::Display>(&mut self, string: D) -> Result {
-        execute!(self.out, Print(string)).map_err(Error::from)
+        queue!(self.out, Print(string)).map_err(Error::from)
     }
 
     /// Moves the cursor to the specified position in the terminal.
@@ -99,7 +99,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn move_to(&mut self, pos: (u16, u16)) -> Result {
-        execute!(self.out, MoveTo(pos.0, pos.1)).map_err(Error::from)
+        queue!(self.out, MoveTo(pos.0, pos.1)).map_err(Error::from)
     }
 
     /// Checks if the cursor is at the bottom of the terminal.
@@ -123,7 +123,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn scroll_up(&mut self, times: u16) -> Result {
-        execute!(self.out, ScrollUp(times)).map_err(Error::from)
+        queue!(self.out, ScrollUp(times)).map_err(Error::from)
     }
 
     /// Moves the cursor to the next line in the terminal.
@@ -133,7 +133,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn move_to_next_line(&mut self) -> Result {
-        execute!(self.out, cursor::MoveToNextLine(1)).map_err(Error::from)
+        queue!(self.out, cursor::MoveToNextLine(1)).map_err(Error::from)
     }
 }
 
