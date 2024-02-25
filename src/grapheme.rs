@@ -37,10 +37,9 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use crossterm::style::Attributes;
 use unicode_width::UnicodeWidthChar;
 
-use crate::crossterm::style::{Color, ContentStyle};
+use crate::crossterm::style::{Attribute, Color, ContentStyle};
 
 /// Represents a single grapheme (character) with its display width and optional styling.
 ///
@@ -115,17 +114,9 @@ impl Graphemes {
         self
     }
 
-    // Updates the background color of all `Grapheme` instances in the collection.
-    pub fn stylize_all_backgrounds(mut self, bgc: Color) -> Self {
+    pub fn set_attribute(mut self, attr: Attribute) -> Self {
         for grapheme in &mut self.0 {
-            grapheme.style.background_color = Some(bgc);
-        }
-        self
-    }
-
-    pub fn stylize_all_attributes(mut self, attrs: Attributes) -> Self {
-        for grapheme in &mut self.0 {
-            grapheme.style.attributes = attrs;
+            grapheme.style.attributes.set(attr);
         }
         self
     }

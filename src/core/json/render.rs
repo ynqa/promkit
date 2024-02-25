@@ -3,7 +3,7 @@ use std::any::Any;
 use crate::{
     crossterm::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::{Attribute, Attributes, ContentStyle},
+        style::{Attribute, ContentStyle},
     },
     grapheme::{trim, Graphemes},
     pane::Pane,
@@ -175,7 +175,7 @@ impl Renderable for Renderer {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
                 } else {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
-                        .stylize_all_attributes(Attributes::from(Attribute::Dim))
+                        .set_attribute(Attribute::Dim)
                 }
             })
             .collect::<Vec<Graphemes>>();
