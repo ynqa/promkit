@@ -39,8 +39,6 @@ impl Json {
                 string_value_style: Style::new().fgc(Color::DarkGreen).build(),
                 number_value_style: Style::new().build(),
                 boolean_value_style: Style::new().build(),
-                active_item_background_color: Color::DarkYellow,
-                inactive_item_background_color: Color::Reset,
                 lines: Default::default(),
                 indent: 2,
             },
@@ -56,18 +54,6 @@ impl Json {
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
         self.title_renderer.style = style;
-        self
-    }
-
-    /// Sets the background color for active items in the JSON rendering.
-    pub fn active_item_background_color(mut self, color: Color) -> Self {
-        self.json_renderer.active_item_background_color = color;
-        self
-    }
-
-    /// Sets the background color for inactive items in the JSON rendering.
-    pub fn inactive_item_background_color(mut self, color: Color) -> Self {
-        self.json_renderer.inactive_item_background_color = color;
         self
     }
 

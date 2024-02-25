@@ -37,6 +37,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use crossterm::style::Attributes;
 use unicode_width::UnicodeWidthChar;
 
 use crate::crossterm::style::{Color, ContentStyle};
@@ -118,6 +119,13 @@ impl Graphemes {
     pub fn stylize_all_backgrounds(mut self, bgc: Color) -> Self {
         for grapheme in &mut self.0 {
             grapheme.style.background_color = Some(bgc);
+        }
+        self
+    }
+
+    pub fn stylize_all_attributes(mut self, attrs: Attributes) -> Self {
+        for grapheme in &mut self.0 {
+            grapheme.style.attributes = attrs;
         }
         self
     }

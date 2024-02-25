@@ -3,7 +3,7 @@ use std::any::Any;
 use crate::{
     crossterm::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::{Color, ContentStyle},
+        style::{Attribute, Attributes, ContentStyle},
     },
     grapheme::{trim, Graphemes},
     pane::Pane,
@@ -33,11 +33,6 @@ pub struct Renderer {
     pub number_value_style: ContentStyle,
     /// Style for boolean values.
     pub boolean_value_style: ContentStyle,
-
-    /// Style for the selected line.
-    pub active_item_background_color: Color,
-    /// Style for un-selected lines.
-    pub inactive_item_background_color: Color,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
@@ -178,10 +173,9 @@ impl Renderable for Renderer {
             .map(|(i, kind)| {
                 if i == self.json.position() {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
-                        .stylize_all_backgrounds(self.active_item_background_color)
                 } else {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
-                        .stylize_all_backgrounds(self.inactive_item_background_color)
+                        .stylize_all_attributes(Attributes::from(Attribute::Dim))
                 }
             })
             .collect::<Vec<Graphemes>>();
