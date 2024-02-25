@@ -39,7 +39,7 @@ use std::{
 
 use unicode_width::UnicodeWidthChar;
 
-use crate::crossterm::style::{Attribute, Color, ContentStyle};
+use crate::crossterm::style::{Attribute, ContentStyle};
 
 /// Represents a single grapheme (character) with its display width and optional styling.
 ///
@@ -106,7 +106,7 @@ impl Graphemes {
         self.0.iter().map(|grapheme| grapheme.width).sum()
     }
 
-    pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
+    pub fn apply_style_at(mut self, idx: usize, style: ContentStyle) -> Self {
         self.get_mut(idx).map(|grapheme| {
             grapheme.style = style;
             grapheme
@@ -114,7 +114,7 @@ impl Graphemes {
         self
     }
 
-    pub fn set_attribute(mut self, attr: Attribute) -> Self {
+    pub fn apply_attribute_to_all(mut self, attr: Attribute) -> Self {
         for grapheme in &mut self.0 {
             grapheme.style.attributes.set(attr);
         }

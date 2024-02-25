@@ -61,7 +61,7 @@ impl Renderable for Renderer {
         };
 
         let mut styled = Graphemes::new_with_style(text, self.inactive_char_style)
-            .stylize(self.texteditor.position(), self.active_char_style);
+            .apply_style_at(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);
 

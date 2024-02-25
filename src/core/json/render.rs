@@ -175,7 +175,7 @@ impl Renderable for Renderer {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
                 } else {
                     Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
-                        .set_attribute(Attribute::Dim)
+                        .apply_attribute_to_all(Attribute::Dim)
                 }
             })
             .collect::<Vec<Graphemes>>();
