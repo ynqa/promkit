@@ -1,6 +1,6 @@
 use std::{
     collections::VecDeque,
-    fmt::{self, Debug},
+    fmt,
     ops::{Deref, DerefMut},
 };
 
@@ -84,7 +84,7 @@ impl<S: AsRef<str>> From<S> for StyledGraphemes {
     }
 }
 
-impl Debug for StyledGraphemes {
+impl fmt::Debug for StyledGraphemes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for styled_grapheme in self.iter() {
             write!(f, "{}", styled_grapheme.ch)?;

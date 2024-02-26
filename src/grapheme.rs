@@ -1,6 +1,6 @@
 use std::{
     collections::VecDeque,
-    fmt::Debug,
+    fmt,
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
@@ -12,6 +12,14 @@ use crate::Len;
 mod styled;
 pub use styled::{matrixify, trim, StyledGraphemes};
 
+impl From<char> for Grapheme {
+    fn from(ch: char) -> Self {
+        Self {
+            ch,
+            width: UnicodeWidthChar::width(ch).unwrap_or(0),
+        }
+    }
+}
 /// Represents a single grapheme with its character and display width.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
@@ -20,14 +28,6 @@ pub struct Grapheme {
 }
 
 impl Grapheme {
-    /// Creates a new `Grapheme` from a character, calculating its display width.
-    pub fn new(ch: char) -> Self {
-        Self {
-            ch,
-            width: UnicodeWidthChar::width(ch).unwrap_or(0),
-        }
-    }
-
     /// Returns the display width of the grapheme.
     pub fn width(&self) -> usize {
         self.width
@@ -85,7 +85,7 @@ impl Iterator for Graphemes {
 impl<S: AsRef<str>> From<S> for Graphemes {
     /// Creates a `Graphemes` instance from a string slice, converting each char to a `Grapheme`.
     fn from(string: S) -> Self {
-        string.as_ref().chars().map(Grapheme::new).collect()
+        string.as_ref().chars().map(Grapheme::from).collect()
     }
 }
 
@@ -101,9 +101,44 @@ impl Len for Graphemes {
     }
 }
 
+impl fmt::Display for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let string: String = self.chars().iter().collect();
+        write!(f, "{}", string)
+    }
+}
+
+impl fmt::Debug for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for grapheme in self.iter() {
+            write!(f, "{}", grapheme.ch)?;
+        }
+        Ok(())
+    }
+}
+
 impl Graphemes {
     /// Calculates the total display width of all `Grapheme` instances in the collection.
     pub fn widths(&self) -> usize {
         self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
+    /// Returns a `Vec<char>` containing the characters of all `Grapheme` instances in the collection.
+    pub fn chars(&self) -> Vec<char> {
+        self.0.iter().map(|grapheme| grapheme.ch).collect()
+    }
+
+    /// Replaces the specified range with the given string.
+    pub fn replace_range<S: AsRef<str>>(&mut self, range: std::ops::Range<usize>, replacement: S) {
+        // Remove the specified range.
+        for _ in range.clone() {
+            self.0.remove(range.start);
+        }
+
+        // Insert the replacement at the start of the range.
+        let replacement_graphemes: Graphemes = replacement.as_ref().into();
+        for grapheme in replacement_graphemes.0.iter().rev() {
+            self.0.insert(range.start, grapheme.clone());
+        }
     }
 }

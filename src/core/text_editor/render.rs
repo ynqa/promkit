@@ -60,7 +60,7 @@ impl Renderable for Renderer {
             None => self.texteditor.text(),
         };
 
-        let mut styled = StyledGraphemes::from_str(text, self.inactive_char_style)
+        let mut styled = StyledGraphemes::from_graphemes(text, self.inactive_char_style)
             .apply_style_at(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);
@@ -164,7 +164,10 @@ impl Renderable for Renderer {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                if let Some(new) = self.suggest.search(self.texteditor.text_without_cursor()) {
+                if let Some(new) = self
+                    .suggest
+                    .search(self.texteditor.text_without_cursor().to_string())
+                {
                     self.texteditor.replace(new)
                 }
             }
@@ -192,7 +195,7 @@ impl Renderable for Renderer {
 
     fn postrun(&mut self) {
         if let Some(ref mut history) = &mut self.history {
-            history.insert(self.texteditor.text_without_cursor());
+            history.insert(self.texteditor.text_without_cursor().to_string());
         }
         self.texteditor = TextEditor::default();
     }

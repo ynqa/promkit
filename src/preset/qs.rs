@@ -187,7 +187,8 @@ impl QuerySelector {
                         .after
                         .borrow()
                         .texteditor
-                        .text_without_cursor();
+                        .text_without_cursor()
+                        .to_string();
 
                     let list = filter(&query, select_state.init.listbox.items());
                     select_state.after.borrow_mut().listbox = Listbox::from_iter(list);

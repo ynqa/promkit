@@ -45,7 +45,7 @@ impl Renderable for Renderer {
             } else {
                 format!(
                     "[{}] {}",
-                    " ".repeat(Grapheme::new(self.mark).width()),
+                    " ".repeat(Grapheme::from(self.mark).width()),
                     item
                 )
             }

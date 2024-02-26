@@ -165,7 +165,8 @@ impl Readline {
                     .after
                     .borrow()
                     .texteditor
-                    .text_without_cursor();
+                    .text_without_cursor()
+                    .to_string();
 
                 let error_message_state = renderables[2]
                     .as_any()
@@ -204,7 +205,8 @@ impl Readline {
                     .after
                     .borrow()
                     .texteditor
-                    .text_without_cursor())
+                    .text_without_cursor()
+                    .to_string())
             },
         )
     }
