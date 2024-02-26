@@ -5,7 +5,7 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::{Attribute, ContentStyle},
     },
-    grapheme::{trim, Graphemes},
+    grapheme::{trim, StyledGraphemes},
     pane::Pane,
     render::{AsAny, Renderable},
 };
@@ -61,108 +61,108 @@ impl Renderable for Renderer {
             }
         };
 
-        let value = |v: &serde_json::Value| -> Graphemes {
+        let value = |v: &serde_json::Value| -> StyledGraphemes {
             match v {
                 serde_json::Value::String(s) => {
-                    Graphemes::new_with_style(format!("\"{}\"", s), self.string_value_style)
+                    StyledGraphemes::from_str(format!("\"{}\"", s), self.string_value_style)
                 }
                 serde_json::Value::Number(n) => {
-                    Graphemes::new_with_style(n.to_string(), self.number_value_style)
+                    StyledGraphemes::from_str(n.to_string(), self.number_value_style)
                 }
                 serde_json::Value::Bool(b) => {
-                    Graphemes::new_with_style(b.to_string(), self.boolean_value_style)
+                    StyledGraphemes::from_str(b.to_string(), self.boolean_value_style)
                 }
-                serde_json::Value::Null => Graphemes::new_with_style("null", self.null_value_style),
-                _ => Graphemes::from(""),
+                serde_json::Value::Null => StyledGraphemes::from_str("null", self.null_value_style),
+                _ => StyledGraphemes::from(""),
             }
         };
 
-        let syntax = |kind: &JsonSyntaxKind| -> Graphemes {
+        let syntax = |kind: &JsonSyntaxKind| -> StyledGraphemes {
             match kind {
                 JsonSyntaxKind::MapStart { key, .. } => match key {
-                    Some(key) => Graphemes::from_iter([
-                        Graphemes::new_with_style(format!("\"{}\"", key), self.key_style),
-                        Graphemes::from(": "),
-                        Graphemes::new_with_style("{", self.curly_brackets_style),
+                    Some(key) => StyledGraphemes::from_iter([
+                        StyledGraphemes::from_str(format!("\"{}\"", key), self.key_style),
+                        StyledGraphemes::from(": "),
+                        StyledGraphemes::from_str("{", self.curly_brackets_style),
                     ]),
-                    None => Graphemes::new_with_style("{", self.curly_brackets_style),
+                    None => StyledGraphemes::from_str("{", self.curly_brackets_style),
                 },
                 JsonSyntaxKind::MapEnd { is_last, .. } => {
                     if *is_last {
-                        Graphemes::new_with_style("}", self.curly_brackets_style)
+                        StyledGraphemes::from_str("}", self.curly_brackets_style)
                     } else {
-                        Graphemes::from_iter([
-                            Graphemes::new_with_style("}", self.curly_brackets_style),
-                            Graphemes::from(","),
+                        StyledGraphemes::from_iter([
+                            StyledGraphemes::from_str("}", self.curly_brackets_style),
+                            StyledGraphemes::from(","),
                         ])
                     }
                 }
                 JsonSyntaxKind::MapFolded { key, is_last, .. } => {
                     let token = match key {
-                        Some(key) => Graphemes::from_iter([
-                            Graphemes::new_with_style(format!("\"{}\"", key), self.key_style),
-                            Graphemes::from(": "),
-                            Graphemes::new_with_style("{...}", self.curly_brackets_style),
+                        Some(key) => StyledGraphemes::from_iter([
+                            StyledGraphemes::from_str(format!("\"{}\"", key), self.key_style),
+                            StyledGraphemes::from(": "),
+                            StyledGraphemes::from_str("{...}", self.curly_brackets_style),
                         ]),
-                        None => Graphemes::new_with_style("{...}", self.curly_brackets_style),
+                        None => StyledGraphemes::from_str("{...}", self.curly_brackets_style),
                     };
                     if *is_last {
                         token
                     } else {
-                        Graphemes::from_iter([token, Graphemes::from(",")])
+                        StyledGraphemes::from_iter([token, StyledGraphemes::from(",")])
                     }
                 }
                 JsonSyntaxKind::MapEntry { kv, is_last, .. } => {
-                    let token = Graphemes::from_iter([
-                        Graphemes::new_with_style(format!("\"{}\"", kv.0), self.key_style),
-                        Graphemes::from(": "),
+                    let token = StyledGraphemes::from_iter([
+                        StyledGraphemes::from_str(format!("\"{}\"", kv.0), self.key_style),
+                        StyledGraphemes::from(": "),
                         value(&kv.1),
                     ]);
                     if *is_last {
                         token
                     } else {
-                        Graphemes::from_iter([token, Graphemes::from(",")])
+                        StyledGraphemes::from_iter([token, StyledGraphemes::from(",")])
                     }
                 }
                 JsonSyntaxKind::ArrayStart { key, .. } => match key {
-                    Some(key) => Graphemes::from_iter([
-                        Graphemes::new_with_style(format!("\"{}\"", key), self.key_style),
-                        Graphemes::from(": "),
-                        Graphemes::new_with_style("[", self.square_brackets_style),
+                    Some(key) => StyledGraphemes::from_iter([
+                        StyledGraphemes::from_str(format!("\"{}\"", key), self.key_style),
+                        StyledGraphemes::from(": "),
+                        StyledGraphemes::from_str("[", self.square_brackets_style),
                     ]),
-                    None => Graphemes::new_with_style("[", self.square_brackets_style),
+                    None => StyledGraphemes::from_str("[", self.square_brackets_style),
                 },
                 JsonSyntaxKind::ArrayEnd { is_last, .. } => {
                     if *is_last {
-                        Graphemes::new_with_style("]", self.square_brackets_style)
+                        StyledGraphemes::from_str("]", self.square_brackets_style)
                     } else {
-                        Graphemes::from_iter([
-                            Graphemes::new_with_style("]", self.square_brackets_style),
-                            Graphemes::from(","),
+                        StyledGraphemes::from_iter([
+                            StyledGraphemes::from_str("]", self.square_brackets_style),
+                            StyledGraphemes::from(","),
                         ])
                     }
                 }
                 JsonSyntaxKind::ArrayFolded { key, is_last, .. } => {
                     let token = match key {
-                        Some(key) => Graphemes::from_iter([
-                            Graphemes::new_with_style(format!("\"{}\"", key), self.key_style),
-                            Graphemes::from(": "),
-                            Graphemes::new_with_style("[...]", self.square_brackets_style),
+                        Some(key) => StyledGraphemes::from_iter([
+                            StyledGraphemes::from_str(format!("\"{}\"", key), self.key_style),
+                            StyledGraphemes::from(": "),
+                            StyledGraphemes::from_str("[...]", self.square_brackets_style),
                         ]),
-                        None => Graphemes::new_with_style("[...]", self.square_brackets_style),
+                        None => StyledGraphemes::from_str("[...]", self.square_brackets_style),
                     };
                     if *is_last {
                         token
                     } else {
-                        Graphemes::from_iter([token, Graphemes::from(",")])
+                        StyledGraphemes::from_iter([token, StyledGraphemes::from(",")])
                     }
                 }
                 JsonSyntaxKind::ArrayEntry { v, is_last, .. } => {
-                    let token = Graphemes::from_iter([value(v)]);
+                    let token = StyledGraphemes::from_iter([value(v)]);
                     if *is_last {
                         token
                     } else {
-                        Graphemes::from_iter([token, Graphemes::from(",")])
+                        StyledGraphemes::from_iter([token, StyledGraphemes::from(",")])
                     }
                 }
             }
@@ -175,13 +175,19 @@ impl Renderable for Renderer {
             .enumerate()
             .map(|(i, kind)| {
                 if i == self.json.position() {
-                    Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
+                    StyledGraphemes::from_iter([
+                        StyledGraphemes::from(" ".repeat(indent(kind))),
+                        syntax(kind),
+                    ])
                 } else {
-                    Graphemes::from_iter([Graphemes::from(" ".repeat(indent(kind))), syntax(kind)])
-                        .apply_attribute_to_all(Attribute::Dim)
+                    StyledGraphemes::from_iter([
+                        StyledGraphemes::from(" ".repeat(indent(kind))),
+                        syntax(kind),
+                    ])
+                    .apply_attribute_to_all(Attribute::Dim)
                 }
             })
-            .collect::<Vec<Graphemes>>();
+            .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
         Pane::new(trimed, self.json.position(), self.lines)

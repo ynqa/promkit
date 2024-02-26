@@ -5,7 +5,7 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    grapheme::{matrixify, Graphemes},
+    grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
     render::{AsAny, Renderable, State},
 };
@@ -49,8 +49,8 @@ pub struct Renderer {
 
 impl Renderable for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
-        let mut buf = Graphemes::default();
-        buf.append(&mut Graphemes::new_with_style(
+        let mut buf = StyledGraphemes::default();
+        buf.append(&mut StyledGraphemes::from_str(
             &self.prefix,
             self.prefix_style,
         ));
@@ -60,7 +60,7 @@ impl Renderable for Renderer {
             None => self.texteditor.text(),
         };
 
-        let mut styled = Graphemes::new_with_style(text, self.inactive_char_style)
+        let mut styled = StyledGraphemes::from_str(text, self.inactive_char_style)
             .apply_style_at(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);

@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::{
     crossterm::{event::Event, style::ContentStyle},
-    grapheme::{matrixify, Graphemes},
+    grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
     render::{AsAny, Renderable},
 };
@@ -20,7 +20,7 @@ impl Renderable for Renderer {
         Pane::new(
             matrixify(
                 width as usize,
-                &Graphemes::new_with_style(&self.text, self.style),
+                &StyledGraphemes::from_str(&self.text, self.style),
             ),
             0,
             None,

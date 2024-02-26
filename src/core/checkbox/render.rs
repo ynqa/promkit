@@ -5,7 +5,7 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    grapheme::{trim, Grapheme, Graphemes},
+    grapheme::{trim, Grapheme, Graphemes, StyledGraphemes},
     pane::Pane,
     render::{AsAny, Renderable},
 };
@@ -58,12 +58,12 @@ impl Renderable for Renderer {
             .enumerate()
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
-                    Graphemes::new_with_style(
+                    StyledGraphemes::from_str(
                         format!("{}{}", self.cursor, f(i, item)),
                         self.active_item_style,
                     )
                 } else {
-                    Graphemes::new_with_style(
+                    StyledGraphemes::from_str(
                         format!(
                             "{}{}",
                             " ".repeat(Graphemes::from(self.cursor.clone()).widths()),
@@ -73,7 +73,7 @@ impl Renderable for Renderer {
                     )
                 }
             })
-            .collect::<Vec<Graphemes>>();
+            .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 

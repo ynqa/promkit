@@ -32,14 +32,18 @@
 //! ensuring compatibility with a wide
 //! range of Unicode characters.
 use std::{
-    fmt::{self, Debug},
+    collections::VecDeque,
+    fmt::Debug,
     iter::FromIterator,
     ops::{Deref, DerefMut},
 };
 
 use unicode_width::UnicodeWidthChar;
 
-use crate::crossterm::style::{Attribute, ContentStyle};
+use crate::Len;
+
+mod styled;
+pub use styled::{matrixify, trim, StyledGraphemes};
 
 /// Represents a single grapheme (character) with its display width and optional styling.
 ///
@@ -51,24 +55,18 @@ use crate::crossterm::style::{Attribute, ContentStyle};
 pub struct Grapheme {
     ch: char,
     width: usize,
-    style: ContentStyle,
 }
 
 impl Grapheme {
     pub fn new(ch: char) -> Self {
-        Grapheme::new_with_style(ch, ContentStyle::new())
+        Self {
+            ch,
+            width: UnicodeWidthChar::width(ch).unwrap_or(0),
+        }
     }
 
     pub fn width(&self) -> usize {
         self.width
-    }
-
-    pub fn new_with_style(ch: char, style: ContentStyle) -> Self {
-        Self {
-            ch,
-            width: UnicodeWidthChar::width(ch).unwrap_or(0),
-            style,
-        }
     }
 }
 
@@ -78,65 +76,10 @@ impl Grapheme {
 /// applying styles to individual graphemes, and generating a display representation
 /// that respects the applied styles.
 #[derive(Clone, Default, PartialEq, Eq)]
-pub struct Graphemes(pub Vec<Grapheme>);
-
-impl FromIterator<Graphemes> for Graphemes {
-    fn from_iter<I: IntoIterator<Item = Graphemes>>(iter: I) -> Self {
-        let concatenated = iter.into_iter().flat_map(|g| g.0).collect();
-        Graphemes(concatenated)
-    }
-}
-
-impl<S: AsRef<str>> From<S> for Graphemes {
-    fn from(string: S) -> Self {
-        Graphemes::new_with_style(string, ContentStyle::new())
-    }
-}
-
-impl Graphemes {
-    pub fn new_with_style<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
-        string
-            .as_ref()
-            .chars()
-            .map(|ch| Grapheme::new_with_style(ch, style))
-            .collect()
-    }
-
-    pub fn widths(&self) -> usize {
-        self.0.iter().map(|grapheme| grapheme.width).sum()
-    }
-
-    pub fn apply_style_at(mut self, idx: usize, style: ContentStyle) -> Self {
-        self.get_mut(idx).map(|grapheme| {
-            grapheme.style = style;
-            grapheme
-        });
-        self
-    }
-
-    pub fn apply_attribute_to_all(mut self, attr: Attribute) -> Self {
-        for grapheme in &mut self.0 {
-            grapheme.style.attributes.set(attr);
-        }
-        self
-    }
-
-    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
-        StyledGraphemesDisplay { graphemes: self }
-    }
-}
-
-impl Debug for Graphemes {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for grapheme in self.iter() {
-            write!(f, "{}", grapheme.ch)?;
-        }
-        Ok(())
-    }
-}
+pub struct Graphemes(pub VecDeque<Grapheme>);
 
 impl Deref for Graphemes {
-    type Target = Vec<Grapheme>;
+    type Target = VecDeque<Grapheme>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -148,135 +91,49 @@ impl DerefMut for Graphemes {
     }
 }
 
+impl FromIterator<Graphemes> for Graphemes {
+    fn from_iter<I: IntoIterator<Item = Graphemes>>(iter: I) -> Self {
+        let concatenated = iter.into_iter().flat_map(|g| g.0).collect();
+        Graphemes(concatenated)
+    }
+}
+
 impl FromIterator<Grapheme> for Graphemes {
     fn from_iter<I: IntoIterator<Item = Grapheme>>(iter: I) -> Self {
         let mut g = Graphemes::default();
         for i in iter {
-            g.push(i);
+            g.push_back(i);
         }
         g
     }
 }
 
-pub struct StyledGraphemesDisplay<'a> {
-    graphemes: &'a Graphemes,
-}
+impl Iterator for Graphemes {
+    type Item = Grapheme;
 
-impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for grapheme in self.graphemes.iter() {
-            write!(f, "{}", grapheme.style.apply(grapheme.ch))?;
-        }
-        Ok(())
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_front()
     }
 }
 
-/// Splits a collection of graphemes into lines that fit within a specified width.
-///
-/// This function is useful for text wrapping in terminal applications, ensuring that
-/// lines do not exceed the specified width. It respects the display width of each grapheme,
-/// allowing for accurate layout even with wide characters or emojis.
-pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
-    let mut ret = vec![];
-    let mut row = Graphemes::default();
-    for ch in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + ch.width;
-        if !row.is_empty() && width < width_with_next_char {
-            ret.push(row);
-            row = Graphemes::default();
-        }
-        if width >= ch.width {
-            row.push(ch.clone());
-        }
+impl<S: AsRef<str>> From<S> for Graphemes {
+    fn from(string: S) -> Self {
+        string.as_ref().chars().map(Grapheme::new).collect()
     }
-    ret.push(row);
-    ret
 }
 
-/// Trims a collection of graphemes to fit within a specified width.
-///
-/// This function discards any excess graphemes that would cause the total display width
-/// to exceed the specified limit. It is useful for ensuring that a piece of text fits
-/// within a given space without wrapping.
-pub fn trim(width: usize, g: &Graphemes) -> Graphemes {
-    let mut row = Graphemes::default();
-    for ch in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + ch.width;
-        if width < width_with_next_char {
-            break;
-        }
-        if width >= ch.width {
-            row.push(ch.clone());
-        }
+impl Len for Graphemes {
+    fn len(&self) -> usize {
+        self.0.len()
     }
-    row
+
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
-#[cfg(test)]
-mod test {
-    mod matrixify {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let expect = vec![
-                Graphemes::from(">>"),
-                Graphemes::from(" a"),
-                Graphemes::from("aa"),
-                Graphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &Graphemes::from(">> aaa ")),);
-        }
-
-        #[test]
-        fn test_with_emoji() {
-            let expect = vec![
-                Graphemes::from(">>"),
-                Graphemes::from(" "),
-                Graphemes::from("😎"),
-                Graphemes::from("😎"),
-                Graphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &Graphemes::from(">> 😎😎 ")),);
-        }
-
-        #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            let expect = vec![
-                Graphemes::from(">"),
-                Graphemes::from(">"),
-                Graphemes::from(" "),
-                Graphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(1, &Graphemes::from(">> 😎😎 ")),);
-        }
-    }
-
-    mod trim {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            assert_eq!(
-                Graphemes::from(">> a"),
-                trim(4, &Graphemes::from(">> aaa "))
-            );
-        }
-
-        #[test]
-        fn test_with_emoji() {
-            assert_eq!(Graphemes::from("😎"), trim(2, &Graphemes::from("😎")));
-        }
-
-        #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            assert_eq!(Graphemes::from(""), trim(1, &Graphemes::from("😎")));
-        }
+impl Graphemes {
+    pub fn widths(&self) -> usize {
+        self.0.iter().map(|grapheme| grapheme.width).sum()
     }
 }
