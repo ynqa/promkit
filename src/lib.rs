@@ -93,8 +93,6 @@
 //! ## Stargazers over time
 //! [![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
 
-extern crate scopeguard;
-
 pub use crossterm;
 
 mod core;
@@ -111,8 +109,6 @@ pub mod validate;
 
 use std::io;
 use std::sync::Once;
-
-use scopeguard::defer;
 
 use crate::{
     crossterm::{
@@ -138,6 +134,14 @@ pub struct Prompt<T> {
 }
 
 static ONCE: Once = Once::new();
+
+impl<T> Drop for Prompt<T> {
+    fn drop(&mut self) {
+        execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
+        execute!(io::stdout(), cursor::Show).ok();
+        disable_raw_mode().ok();
+    }
+}
 
 impl<T> Prompt<T> {
     /// Creates a new `Prompt` instance
@@ -199,11 +203,6 @@ impl<T> Prompt<T> {
 
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
-        defer! {{
-            execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
-            execute!(io::stdout(), cursor::Show).ok();
-            disable_raw_mode().ok();
-        }};
 
         let mut terminal = Terminal::start_session(&mut engine)?;
         let size = engine.size()?;
