@@ -4,7 +4,8 @@ use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, Renderable},
+    render::{AsAny, EventAction, Renderable},
+    Result,
 };
 
 #[derive(Clone)]
@@ -27,7 +28,9 @@ impl Renderable for Renderer {
         )
     }
 
-    fn handle_event(&mut self, _event: &Event) {}
+    fn handle_event(&mut self, _event: &Event) -> Result<EventAction> {
+        Ok(EventAction::Continue)
+    }
 
     fn postrun(&mut self) {}
 }

@@ -7,7 +7,8 @@ use crate::{
     },
     grapheme::{trim, Graphemes, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, Renderable},
+    render::{AsAny, EventAction, Renderable},
+    Error, Result,
 };
 
 use super::Listbox;
@@ -71,8 +72,21 @@ impl Renderable for Renderer {
     /// | :--            | :--
     /// | <kbd> ↑ </kbd> | Move the cursor backward
     /// | <kbd> ↓ </kbd> | Move the cursor forward
-    fn handle_event(&mut self, event: &Event) {
+    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
         match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => return Ok(EventAction::Quit),
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => return Err(Error::Interrupted("ctrl+c".into())),
+
             // Move cursor.
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
@@ -93,6 +107,7 @@ impl Renderable for Renderer {
 
             _ => (),
         }
+        Ok(EventAction::Continue)
     }
 
     fn postrun(&mut self) {

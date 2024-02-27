@@ -7,7 +7,8 @@ use crate::{
     },
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, Renderable, State},
+    render::{AsAny, EventAction, Renderable, State},
+    Error, Result,
 };
 
 use super::{History, Mode, Suggest, TextEditor};
@@ -85,8 +86,21 @@ impl Renderable for Renderer {
     /// | <kbd> Backspace </kbd> | Erase a character at the current cursor position
     /// | <kbd> Ctrl + U </kbd>  | Erase all characters on the current line
     /// | <kbd> TAB </kbd>       | Perform tab completion by searching for suggestions
-    fn handle_event(&mut self, event: &Event) {
+    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
         match event {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => return Ok(EventAction::Quit),
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            }) => return Err(Error::Interrupted("ctrl+c".into())),
+
             // Move cursor.
             Event::Key(KeyEvent {
                 code: KeyCode::Left,
@@ -191,6 +205,7 @@ impl Renderable for Renderer {
 
             _ => (),
         }
+        Ok(EventAction::Continue)
     }
 
     fn postrun(&mut self) {

@@ -113,13 +113,13 @@ use std::sync::Once;
 use crate::{
     crossterm::{
         cursor,
-        event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        event::{self, Event},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
     engine::Engine,
     error::{Error, Result},
-    render::Renderable,
+    render::{EventAction, Renderable},
     terminal::Terminal,
 };
 
@@ -217,11 +217,29 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            for editor in &mut self.renderables {
-                editor.handle_event(&ev);
+            // This flow iterates through each renderable component,
+            // handling the current event.
+            // If a component signals to quit (EventAction::Quit),
+            // it sets a flag to indicate the prompt should quit.
+            // If an error occurs while handling the event,
+            // it returns the error immediately.
+            let mut should_quit = false;
+            for renderable in &mut self.renderables {
+                match renderable.handle_event(&ev) {
+                    Ok(EventAction::Quit) => {
+                        should_quit = true;
+                        break;
+                    }
+                    Err(e) => return Err(e),
+                    _ => (),
+                }
             }
 
-            let finalizable = (self.evaluator)(&ev, &self.renderables)?;
+            let is_ready_for_output = (self.evaluator)(&ev, &self.renderables)?;
+
+            if should_quit && is_ready_for_output {
+                break;
+            }
 
             let size = engine.size()?;
             terminal.draw(
@@ -231,26 +249,6 @@ impl<T> Prompt<T> {
                     .map(|editor| editor.make_pane(size.0))
                     .collect(),
             )?;
-
-            match &ev {
-                Event::Key(KeyEvent {
-                    code: KeyCode::Enter,
-                    modifiers: KeyModifiers::NONE,
-                    kind: KeyEventKind::Press,
-                    state: KeyEventState::NONE,
-                }) => {
-                    if finalizable {
-                        break;
-                    }
-                }
-                Event::Key(KeyEvent {
-                    code: KeyCode::Char('c'),
-                    modifiers: KeyModifiers::CONTROL,
-                    kind: KeyEventKind::Press,
-                    state: KeyEventState::NONE,
-                }) => return Err(Error::Interrupted("ctrl+c".into())),
-                _ => (),
-            }
         }
 
         let ret = (self.output)(&self.renderables);

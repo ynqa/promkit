@@ -1,6 +1,22 @@
 use std::{any::Any, cell::RefCell};
 
-use crate::{crossterm::event::Event, pane::Pane};
+use crate::{crossterm::event::Event, pane::Pane, Result};
+
+/// Represents the action to be taken after an event is processed.
+///
+/// This enum is used to determine how the `Prompt::run` method should proceed
+/// after handling an event for a `Renderable` component.
+///
+/// - `Continue`: Indicates that the prompt should continue running and process further events.
+/// - `Quit`: Signals that the prompt should stop running. If any of the `Renderable` components
+///   returns `Quit`, a flag is set to indicate that the prompt should terminate. This allows
+///   for a graceful exit when the user has completed their interaction with the prompt or when
+///   an exit condition is met.
+#[derive(Eq, PartialEq)]
+pub enum EventAction {
+    Continue,
+    Quit,
+}
 
 /// A trait for objects that can be rendered in the terminal.
 /// It requires the ability to create a pane, handle events,
@@ -9,7 +25,7 @@ pub trait Renderable: AsAny {
     /// Creates a pane with the given width.
     fn make_pane(&self, width: u16) -> Pane;
     /// Handles terminal events.
-    fn handle_event(&mut self, event: &Event);
+    fn handle_event(&mut self, event: &Event) -> Result<EventAction>;
     /// Performs something (e.g. cleanup) after rendering is complete.
     fn postrun(&mut self);
 }
@@ -47,9 +63,9 @@ impl<R: Clone + Renderable + 'static> Renderable for State<R> {
 
     /// Updates the `before` state and delegates event handling
     /// to the `after` state.
-    fn handle_event(&mut self, event: &Event) {
+    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
         self.before = self.after.borrow().clone();
-        self.after.borrow_mut().handle_event(event);
+        self.after.borrow_mut().handle_event(event)
     }
 
     /// Performs cleanup on the `after` state
