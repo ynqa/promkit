@@ -4,9 +4,9 @@ use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     listbox,
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt,
+    text, Prompt, Renderable,
 };
 
 /// A component for creating and managing a selectable list of options.
@@ -85,14 +85,14 @@ impl Listbox {
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<listbox::Renderer>::new(self.listbox_renderer)),
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<listbox::Renderer>>()
+                    .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

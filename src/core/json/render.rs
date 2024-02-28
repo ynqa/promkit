@@ -7,8 +7,7 @@ use crate::{
     },
     grapheme::{trim, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, EventAction, Renderable},
-    Error, Result,
+    AsAny, Error, EventAction, Renderable, Result,
 };
 
 use super::{JsonSyntaxKind, JsonTree};

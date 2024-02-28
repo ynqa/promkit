@@ -7,8 +7,8 @@ use crate::{
     },
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, EventAction, Renderable, State},
-    Error, Result,
+    snapshot::Snapshot,
+    AsAny, Error, EventAction, Renderable, Result,
 };
 
 use super::{History, Mode, Suggest, TextEditor};
@@ -222,7 +222,7 @@ impl AsAny for Renderer {
     }
 }
 
-impl State<Renderer> {
+impl Snapshot<Renderer> {
     pub fn text_changed(&self) -> bool {
         self.before.texteditor.text() != self.after.borrow().texteditor.text()
     }

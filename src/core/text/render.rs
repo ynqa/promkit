@@ -4,8 +4,7 @@ use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    render::{AsAny, EventAction, Renderable},
-    Result,
+    AsAny, EventAction, Renderable, Result,
 };
 
 #[derive(Clone)]

@@ -4,9 +4,9 @@ use crate::{
     checkbox,
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt,
+    text, Prompt, Renderable,
 };
 
 /// Represents a checkbox component for creating
@@ -93,14 +93,14 @@ impl Checkbox {
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<checkbox::Renderer>::new(self.checkbox_renderer)),
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer)),
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<checkbox::Renderer>>()
+                    .downcast_ref::<Snapshot<checkbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

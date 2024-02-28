@@ -1,11 +1,11 @@
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
     text,
     tree::{self, Node},
-    Prompt,
+    Prompt, Renderable,
 };
 
 /// Represents a tree component for creating
@@ -97,14 +97,14 @@ impl Tree {
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<tree::Renderer>::new(self.tree_renderer)),
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<tree::Renderer>::new(self.tree_renderer)),
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<tree::Renderer>>()
+                    .downcast_ref::<Snapshot<tree::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

@@ -7,11 +7,11 @@ use crate::{
     },
     error::Result,
     listbox::{self, Listbox},
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
     text,
     text_editor::{self, Mode, Suggest},
-    Prompt,
+    Prompt, Renderable,
 };
 
 /// Used to process and filter a list of options
@@ -166,20 +166,20 @@ impl QuerySelector {
 
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<text_editor::Renderer>::new(
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
                 )),
-                Box::new(State::<listbox::Renderer>::new(self.listbox_renderer)),
+                Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
                 let text_editor_state = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<text_editor::Renderer>>()
+                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap();
                 let select_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<listbox::Renderer>>()
+                    .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap();
 
                 if text_editor_state.text_changed() {
@@ -198,7 +198,7 @@ impl QuerySelector {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[2]
                     .as_any()
-                    .downcast_ref::<State<listbox::Renderer>>()
+                    .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

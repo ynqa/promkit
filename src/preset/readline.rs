@@ -4,12 +4,12 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
     text,
     text_editor::{self, History, Mode, Suggest},
     validate::Validator,
-    Prompt,
+    Prompt, Renderable,
 };
 
 mod confirm;
@@ -149,18 +149,18 @@ impl Readline {
 
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<text_editor::Renderer>::new(
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
                 )),
-                Box::new(State::<text::Renderer>::new(self.error_message_renderer)),
+                Box::new(Snapshot::<text::Renderer>::new(self.error_message_renderer)),
             ],
             move |event: &Event,
                   renderables: &Vec<Box<dyn Renderable + 'static>>|
                   -> Result<bool> {
                 let text: String = renderables[1]
                     .as_any()
-                    .downcast_ref::<State<text_editor::Renderer>>()
+                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()
@@ -170,7 +170,7 @@ impl Readline {
 
                 let error_message_state = renderables[2]
                     .as_any()
-                    .downcast_ref::<State<text::Renderer>>()
+                    .downcast_ref::<Snapshot<text::Renderer>>()
                     .unwrap();
 
                 let ret = match event {
@@ -200,7 +200,7 @@ impl Readline {
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<text_editor::Renderer>>()
+                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()

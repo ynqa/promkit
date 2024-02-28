@@ -2,9 +2,9 @@ use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     json::{self, JsonNode, JsonPathSegment},
-    render::{Renderable, State},
+    snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt,
+    text, Prompt, Renderable,
 };
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
@@ -74,14 +74,14 @@ impl Json {
     pub fn prompt(self) -> Result<Prompt<Vec<JsonPathSegment>>> {
         Prompt::try_new(
             vec![
-                Box::new(State::<text::Renderer>::new(self.title_renderer)),
-                Box::new(State::<json::Renderer>::new(self.json_renderer)),
+                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
+                Box::new(Snapshot::<json::Renderer>::new(self.json_renderer)),
             ],
             |_, _| Ok(true),
             |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<JsonPathSegment>> {
                 Ok(renderables[1]
                     .as_any()
-                    .downcast_ref::<State<json::Renderer>>()
+                    .downcast_ref::<Snapshot<json::Renderer>>()
                     .unwrap()
                     .after
                     .borrow()
