@@ -156,13 +156,13 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-type Evaluate = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
+type Evaluator = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
 type Output<T> = dyn Fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
     renderables: Vec<Box<dyn Renderable>>,
-    evaluator: Box<Evaluate>,
+    evaluator: Box<Evaluator>,
     output: Box<Output<T>>,
 }
 
