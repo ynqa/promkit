@@ -4,13 +4,13 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
+    keymap::{self, KeymapManager},
     snapshot::Snapshot,
     style::StyleBuilder,
     text,
-    text_editor::{self, History, Mode, Suggest},
+    text_editor::{self, History, Suggest},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    Prompt, Renderer,
+    EventHandler, Prompt, Renderer,
 };
 
 mod confirm;
@@ -123,7 +123,7 @@ impl Readline {
     }
 
     /// Sets the edit mode for the text editor, either insert or overwrite.
-    pub fn edit_mode(mut self, mode: Mode) -> Self {
+    pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
         self.text_editor_renderer.edit_mode = mode;
         self
     }
@@ -131,6 +131,15 @@ impl Readline {
     /// Sets the number of lines available for rendering the text editor.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
         self.text_editor_renderer.lines = Some(lines);
+        self
+    }
+
+    pub fn register_keymap(
+        mut self,
+        mode: keymap::Mode,
+        handler: EventHandler<text_editor::Renderer>,
+    ) -> Self {
+        self.text_editor_renderer.keymap.register(mode, handler);
         self
     }
 

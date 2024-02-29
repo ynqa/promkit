@@ -24,10 +24,8 @@ impl<S> KeymapManager<S> {
         }
     }
 
-    pub fn insert(&mut self, mode: Mode, handler: EventHandler<S>) {
-        if let Mode::Type(t) = mode {
-            self.mapping.insert(Mode::Type(t), handler);
-        }
+    pub fn register(&mut self, mode: Mode, handler: EventHandler<S>) {
+        self.mapping.insert(mode, handler);
     }
 
     pub fn switch(&mut self, mode: Mode) {

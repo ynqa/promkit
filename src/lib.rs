@@ -100,7 +100,7 @@ pub use core::*;
 mod engine;
 pub mod error;
 mod grapheme;
-mod keymap;
+pub mod keymap;
 mod pane;
 pub mod preset;
 mod snapshot;
