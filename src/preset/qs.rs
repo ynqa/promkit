@@ -11,7 +11,7 @@ use crate::{
     style::StyleBuilder,
     text,
     text_editor::{self, Mode, Suggest},
-    Prompt, Renderable,
+    Prompt, Renderer,
 };
 
 /// Used to process and filter a list of options
@@ -172,12 +172,12 @@ impl QuerySelector {
                 )),
                 Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
-            move |_: &Event, renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<bool> {
-                let text_editor_state = renderables[1]
+            move |_: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
+                let text_editor_state = renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap();
-                let select_state = renderables[2]
+                let select_state = renderers[2]
                     .as_any()
                     .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap();
@@ -195,8 +195,8 @@ impl QuerySelector {
                 }
                 Ok(true)
             },
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
-                Ok(renderables[2]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
+                Ok(renderers[2]
                     .as_any()
                     .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap()

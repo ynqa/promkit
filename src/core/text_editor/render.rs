@@ -8,7 +8,7 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
     snapshot::Snapshot,
-    AsAny, Error, EventAction, Renderable, Result,
+    AsAny, Error, EventAction, Result,
 };
 
 use super::{History, Mode, Suggest, TextEditor};
@@ -48,7 +48,7 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let mut buf = StyledGraphemes::default();
         buf.append(&mut StyledGraphemes::from_str(

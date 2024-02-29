@@ -6,7 +6,7 @@ use crate::{
     listbox,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt, Renderable,
+    text, Prompt, Renderer,
 };
 
 /// A component for creating and managing a selectable list of options.
@@ -89,8 +89,8 @@ impl Listbox {
                 Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             |_, _| Ok(true),
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
-                Ok(renderables[1]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
+                Ok(renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<listbox::Renderer>>()
                     .unwrap()

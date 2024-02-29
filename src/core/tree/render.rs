@@ -7,7 +7,7 @@ use crate::{
     },
     grapheme::{trim, Graphemes, StyledGraphemes},
     pane::Pane,
-    AsAny, Error, EventAction, Renderable, Result,
+    AsAny, Error, EventAction, Result,
 };
 
 use super::{Kind, Tree};
@@ -42,7 +42,7 @@ pub struct Renderer {
     pub indent: usize,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {

@@ -4,7 +4,7 @@ use crate::{
     json::{self, JsonNode, JsonPathSegment},
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt, Renderable,
+    text, Prompt, Renderer,
 };
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
@@ -78,8 +78,8 @@ impl Json {
                 Box::new(Snapshot::<json::Renderer>::new(self.json_renderer)),
             ],
             |_, _| Ok(true),
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<JsonPathSegment>> {
-                Ok(renderables[1]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<JsonPathSegment>> {
+                Ok(renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<json::Renderer>>()
                     .unwrap()

@@ -1,24 +1,24 @@
 use std::{any::Any, cell::RefCell};
 
-use crate::{crossterm::event::Event, pane::Pane, AsAny, EventAction, Renderable, Result};
+use crate::{crossterm::event::Event, pane::Pane, AsAny, EventAction, Renderer, Result};
 
-pub struct Snapshot<R: Renderable> {
+pub struct Snapshot<R: Renderer> {
     pub init: R,
     pub before: R,
     pub after: RefCell<R>,
 }
 
-impl<R: Renderable + Clone> Snapshot<R> {
-    pub fn new(renderable: R) -> Self {
+impl<R: Renderer + Clone> Snapshot<R> {
+    pub fn new(renderer: R) -> Self {
         Self {
-            init: renderable.clone(),
-            before: renderable.clone(),
-            after: RefCell::new(renderable),
+            init: renderer.clone(),
+            before: renderer.clone(),
+            after: RefCell::new(renderer),
         }
     }
 }
 
-impl<R: Clone + Renderable + 'static> Renderable for Snapshot<R> {
+impl<R: Clone + Renderer + 'static> Renderer for Snapshot<R> {
     fn make_pane(&self, width: u16) -> Pane {
         self.after.borrow().make_pane(width)
     }
@@ -35,7 +35,7 @@ impl<R: Clone + Renderable + 'static> Renderable for Snapshot<R> {
     }
 }
 
-impl<R: Renderable + 'static> AsAny for Snapshot<R> {
+impl<R: Renderer + 'static> AsAny for Snapshot<R> {
     fn as_any(&self) -> &dyn Any {
         self
     }

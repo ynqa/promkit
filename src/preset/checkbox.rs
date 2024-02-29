@@ -6,7 +6,7 @@ use crate::{
     error::Result,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt, Renderable,
+    text, Prompt, Renderer,
 };
 
 /// Represents a checkbox component for creating
@@ -97,8 +97,8 @@ impl Checkbox {
                 Box::new(Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer)),
             ],
             |_, _| Ok(true),
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
-                Ok(renderables[1]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
+                Ok(renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<checkbox::Renderer>>()
                     .unwrap()

@@ -5,7 +5,7 @@ use crate::{
     style::StyleBuilder,
     text,
     tree::{self, Node},
-    Prompt, Renderable,
+    Prompt, Renderer,
 };
 
 /// Represents a tree component for creating
@@ -101,8 +101,8 @@ impl Tree {
                 Box::new(Snapshot::<tree::Renderer>::new(self.tree_renderer)),
             ],
             |_, _| Ok(true),
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<Vec<String>> {
-                Ok(renderables[1]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
+                Ok(renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<tree::Renderer>>()
                     .unwrap()

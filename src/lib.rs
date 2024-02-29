@@ -50,7 +50,7 @@
 //! ### Unified interface approach for UI components
 //!
 //! *promkit* takes a unified approach by having all of its components inherit the
-//! same `Renderable` trait. This design choice enables users to seamlessly support
+//! same `Renderer` trait. This design choice enables users to seamlessly support
 //! their custom data structures for display, similar to the relationships seen in
 //! TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
 //! and
@@ -62,7 +62,7 @@
 //! UI from scratch, which can be a time-consuming and less flexible process.
 //!
 //!   ```ignore
-//!   pub trait Renderable {
+//!   pub trait Renderer {
 //!       fn make_pane(&self, width: u16) -> Pane;
 //!       fn handle_event(&mut self, event: &Event);
 //!       fn postrun(&mut self);
@@ -125,10 +125,10 @@ use crate::{
 /// Represents the action to be taken after an event is processed.
 ///
 /// This enum is used to determine how the `Prompt::run` method should proceed
-/// after handling an event for a `Renderable` component.
+/// after handling an event for a `Renderer` component.
 ///
 /// - `Continue`: Indicates that the prompt should continue running and process further events.
-/// - `Quit`: Signals that the prompt should stop running. If any of the `Renderable` components
+/// - `Quit`: Signals that the prompt should stop running. If any of the `Renderer` components
 ///   returns `Quit`, a flag is set to indicate that the prompt should terminate. This allows
 ///   for a graceful exit when the user has completed their interaction with the prompt or when
 ///   an exit condition is met.
@@ -141,7 +141,7 @@ pub enum EventAction {
 /// A trait for objects that can be rendered in the terminal.
 /// It requires the ability to create a pane, handle events,
 /// and perform cleanup.
-pub trait Renderable: AsAny {
+pub trait Renderer: AsAny {
     /// Creates a pane with the given width.
     fn make_pane(&self, width: u16) -> Pane;
     /// Handles terminal events.
@@ -156,19 +156,19 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-/// `Evaluator` is defined using `dyn Fn` to leverage closures, 
-// enabling the capture and utilization of external variables within its scope. 
+/// `Evaluator` is defined using `dyn Fn` to leverage closures,
+// enabling the capture and utilization of external variables within its scope.
 // This design choice allows for the incorporation of validators or
-// other context-specific data directly into the evaluation logic. 
-// Unlike static function pointers (`fn`), 
+// other context-specific data directly into the evaluation logic.
+// Unlike static function pointers (`fn`),
 // closures with `dyn Fn` can encapsulate their surrounding environment,
 // offering a flexible solution for scenarios requiring access to external data or state.
-type Evaluator = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
-type ResultProducer<T> = fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
+type Evaluator = dyn Fn(&Event, &Vec<Box<dyn Renderer>>) -> Result<bool>;
+type ResultProducer<T> = fn(&Vec<Box<dyn Renderer>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
-    renderables: Vec<Box<dyn Renderable>>,
+    renderers: Vec<Box<dyn Renderer>>,
     evaluator: Box<Evaluator>,
     producer: ResultProducer<T>,
 }
@@ -185,18 +185,18 @@ impl<T> Drop for Prompt<T> {
 
 impl<T> Prompt<T> {
     /// Creates a new `Prompt` instance
-    /// with specified renderables, evaluator, and producer functions.
+    /// with specified renderers, evaluator, and producer functions.
     ///
     /// # Arguments
     ///
-    /// * `renderables` - A vector of boxed objects implementing
-    /// the `Renderable` trait.
+    /// * `renderers` - A vector of boxed objects implementing
+    /// the `Renderer` trait.
     /// These are the UI components that will be rendered.
     /// * `evaluator` - A function that takes an event
-    /// and the current state of renderables,
+    /// and the current state of renderer,
     /// returning a `Result<bool>` indicating
     /// whether the prompt is ready to produce an output.
-    /// * `producer` - A function that takes the current state of renderables
+    /// * `producer` - A function that takes the current state of renderer
     /// and returns a `Result<T>`, where `T` is the type of the output
     /// produced by the prompt.
     ///
@@ -205,15 +205,15 @@ impl<T> Prompt<T> {
     /// Returns a `Result` wrapping a new `Prompt` instance
     /// if successful, or an error if the creation fails.
     pub fn try_new<E>(
-        renderables: Vec<Box<dyn Renderable>>,
+        renderers: Vec<Box<dyn Renderer>>,
         evaluator: E,
         producer: ResultProducer<T>,
     ) -> Result<Self>
     where
-        E: Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool> + 'static,
+        E: Fn(&Event, &Vec<Box<dyn Renderer>>) -> Result<bool> + 'static,
     {
         Ok(Self {
-            renderables,
+            renderers,
             evaluator: Box::new(evaluator),
             producer,
         })
@@ -247,7 +247,7 @@ impl<T> Prompt<T> {
         let size = engine.size()?;
         terminal.draw(
             &mut engine,
-            self.renderables
+            self.renderers
                 .iter()
                 .map(|editor| editor.make_pane(size.0))
                 .collect(),
@@ -256,15 +256,15 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            // This flow iterates through each renderable component,
+            // This flow iterates through each renderer component,
             // handling the current event.
             // If a component signals to quit (EventAction::Quit),
             // it sets a flag to indicate the prompt should quit.
             // If an error occurs while handling the event,
             // it returns the error immediately.
             let mut should_quit = false;
-            for renderable in &mut self.renderables {
-                match renderable.handle_event(&ev) {
+            for renderer in &mut self.renderers {
+                match renderer.handle_event(&ev) {
                     Ok(EventAction::Quit) => {
                         should_quit = true;
                         break;
@@ -274,7 +274,7 @@ impl<T> Prompt<T> {
                 }
             }
 
-            let is_ready_for_output = (self.evaluator)(&ev, &self.renderables)?;
+            let is_ready_for_output = (self.evaluator)(&ev, &self.renderers)?;
 
             if should_quit && is_ready_for_output {
                 break;
@@ -283,15 +283,15 @@ impl<T> Prompt<T> {
             let size = engine.size()?;
             terminal.draw(
                 &mut engine,
-                self.renderables
+                self.renderers
                     .iter()
                     .map(|editor| editor.make_pane(size.0))
                     .collect(),
             )?;
         }
 
-        let ret = (self.producer)(&self.renderables);
-        self.renderables.iter_mut().for_each(|editor| {
+        let ret = (self.producer)(&self.renderers);
+        self.renderers.iter_mut().for_each(|editor| {
             editor.postrun();
         });
         ret

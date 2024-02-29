@@ -9,7 +9,7 @@ use crate::{
     text,
     text_editor::{self, History, Mode, Suggest},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    Prompt, Renderable,
+    Prompt, Renderer,
 };
 
 mod confirm;
@@ -155,10 +155,8 @@ impl Readline {
                 )),
                 Box::new(Snapshot::<text::Renderer>::new(self.error_message_renderer)),
             ],
-            move |event: &Event,
-                  renderables: &Vec<Box<dyn Renderable + 'static>>|
-                  -> Result<bool> {
-                let text: String = renderables[1]
+            move |event: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
+                let text: String = renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap()
@@ -168,7 +166,7 @@ impl Readline {
                     .text_without_cursor()
                     .to_string();
 
-                let error_message_state = renderables[2]
+                let error_message_state = renderers[2]
                     .as_any()
                     .downcast_ref::<Snapshot<text::Renderer>>()
                     .unwrap();
@@ -197,8 +195,8 @@ impl Readline {
                 }
                 Ok(ret)
             },
-            |renderables: &Vec<Box<dyn Renderable + 'static>>| -> Result<String> {
-                Ok(renderables[1]
+            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
+                Ok(renderers[1]
                     .as_any()
                     .downcast_ref::<Snapshot<text_editor::Renderer>>()
                     .unwrap()

@@ -4,7 +4,7 @@ use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    AsAny, EventAction, Renderable, Result,
+    AsAny, EventAction, Result,
 };
 
 #[derive(Clone)]
@@ -15,7 +15,7 @@ pub struct Renderer {
     pub style: ContentStyle,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
             matrixify(

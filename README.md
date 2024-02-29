@@ -278,7 +278,7 @@ Related libraries in this category include the following:
 ### Unified interface approach for UI components
 
 *promkit* takes a unified approach by having all of its components inherit the
-same `Renderable` trait. This design choice enables users to seamlessly support
+same `Renderer` trait. This design choice enables users to seamlessly support
 their custom data structures for display, similar to the relationships seen in
 TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
 and
@@ -290,7 +290,7 @@ entity. If you want to display a new data structure, you often have to build the
 UI from scratch, which can be a time-consuming and less flexible process.
 
   ```rust
-  pub trait Renderable {
+  pub trait Renderer {
       fn make_pane(&self, width: u16) -> Pane;
       fn handle_event(&mut self, event: &Event);
       fn postrun(&mut self);

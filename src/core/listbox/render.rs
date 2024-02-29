@@ -7,7 +7,7 @@ use crate::{
     },
     grapheme::{trim, Graphemes, StyledGraphemes},
     pane::Pane,
-    AsAny, Error, EventAction, Renderable, Result,
+    AsAny, Error, EventAction, Result,
 };
 
 use super::Listbox;
@@ -34,7 +34,7 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let matrix = self
             .listbox

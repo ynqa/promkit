@@ -7,7 +7,7 @@ use crate::{
     },
     grapheme::{trim, StyledGraphemes},
     pane::Pane,
-    AsAny, Error, EventAction, Renderable, Result,
+    AsAny, Error, EventAction, Result,
 };
 
 use super::{JsonSyntaxKind, JsonTree};
@@ -46,7 +46,7 @@ pub struct Renderer {
     pub indent: usize,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let indent = |kind: &JsonSyntaxKind| -> usize {
             match kind {

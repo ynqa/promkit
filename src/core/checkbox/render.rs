@@ -7,7 +7,7 @@ use crate::{
     },
     grapheme::{trim, Grapheme, Graphemes, StyledGraphemes},
     pane::Pane,
-    AsAny, Error, EventAction, Renderable, Result,
+    AsAny, Error, EventAction, Result,
 };
 
 use super::Checkbox;
@@ -37,7 +37,7 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl Renderable for Renderer {
+impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let f = |idx: usize, item: &String| -> String {
             if self.checkbox.picked_indexes().contains(&idx) {
