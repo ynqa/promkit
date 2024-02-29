@@ -1,4 +1,9 @@
-use crate::{crossterm::style::ContentStyle, error::Result, Prompt};
+use crate::{
+    crossterm::style::ContentStyle,
+    error::Result,
+    validate::{ErrorMessageGenerator, Validator},
+    Prompt,
+};
 
 use super::Readline;
 
@@ -51,12 +56,12 @@ impl Password {
     }
 
     /// Configures a validator for the password input with a function to validate the input and another to configure the error message.
-    pub fn validator<V, F>(mut self, validator: V, error_message_configure: F) -> Self
-    where
-        V: Fn(&str) -> bool + 'static,
-        F: Fn(&str) -> String + 'static,
-    {
-        self = Password(self.0.validator(validator, error_message_configure));
+    pub fn validator(
+        mut self,
+        validator: Validator<str>,
+        error_message_generator: ErrorMessageGenerator<str>,
+    ) -> Self {
+        self = Password(self.0.validator(validator, error_message_generator));
         self
     }
 

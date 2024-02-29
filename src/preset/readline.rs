@@ -8,7 +8,7 @@ use crate::{
     style::StyleBuilder,
     text,
     text_editor::{self, History, Mode, Suggest},
-    validate::Validator,
+    validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     Prompt, Renderable,
 };
 
@@ -29,7 +29,7 @@ pub struct Readline {
     /// Renderer for displaying error messages based on input validation.
     error_message_renderer: text::Renderer,
     /// Optional validator for input validation with custom error messages.
-    validator: Option<Validator<str>>,
+    validator: Option<ValidatorManager<str>>,
 }
 
 impl Default for Readline {
@@ -133,12 +133,12 @@ impl Readline {
     }
 
     /// Configures a validator for the input with a function to validate the input and another to configure the error message.
-    pub fn validator<V, F>(mut self, validator: V, error_message_configure: F) -> Self
-    where
-        V: Fn(&str) -> bool + 'static,
-        F: Fn(&str) -> String + 'static,
-    {
-        self.validator = Some(Validator::new(validator, error_message_configure));
+    pub fn validator(
+        mut self,
+        validator: Validator<str>,
+        error_message_generator: ErrorMessageGenerator<str>,
+    ) -> Self {
+        self.validator = Some(ValidatorManager::new(validator, error_message_generator));
         self
     }
 
@@ -184,7 +184,7 @@ impl Readline {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
                                 error_message_state.after.borrow_mut().text =
-                                    validator.error_message(&text);
+                                    validator.generate_error_message(&text);
                             }
                             ret
                         }
