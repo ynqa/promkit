@@ -111,7 +111,7 @@ mod grapheme;
 pub mod keymap;
 mod pane;
 pub mod preset;
-mod snapshot;
+pub mod snapshot;
 pub mod style;
 mod terminal;
 pub mod validate;
