@@ -352,6 +352,14 @@ UI from scratch, which can be a time-consuming and less flexible process.
   }
   ```
 
+### Variety of Pre-built UI Preset Components
+
+One of the compelling reasons to choose *promkit* is its extensive range of pre-built UI preset components.
+These presets allow developers to quickly implement various interactive prompts without the need to design and
+build each component from scratch. The availability of these presets not only speeds up the development process
+but also ensures consistency and reliability across different applications.
+Here are some of the preset components available, see [Examples](#examplesdemos)
+
 ### Resilience to terminal resizing
 
 Performing operations that involve executing a command in one pane while
