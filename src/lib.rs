@@ -156,14 +156,18 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
+/// `Evaluator` is defined as a trait object using `dyn Fn` to allow the use of closures.
+/// This is particularly useful when there's a need to capture and use variables defined outside the function scope,
+/// such as validators or other context-specific data. Unlike function pointers (`fn`), closures can capture
+/// their environment, making `dyn Fn` the appropriate choice for scenarios where external data needs to be accessed.
 type Evaluator = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
-type Output<T> = dyn Fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
+type ResultProducer<T> = fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
     renderables: Vec<Box<dyn Renderable>>,
     evaluator: Box<Evaluator>,
-    output: Box<Output<T>>,
+    producer: ResultProducer<T>,
 }
 
 static ONCE: Once = Once::new();
@@ -178,7 +182,7 @@ impl<T> Drop for Prompt<T> {
 
 impl<T> Prompt<T> {
     /// Creates a new `Prompt` instance
-    /// with specified renderables, evaluator, and output functions.
+    /// with specified renderables, evaluator, and producer functions.
     ///
     /// # Arguments
     ///
@@ -189,7 +193,7 @@ impl<T> Prompt<T> {
     /// and the current state of renderables,
     /// returning a `Result<bool>` indicating
     /// whether the prompt is ready to produce an output.
-    /// * `output` - A function that takes the current state of renderables
+    /// * `producer` - A function that takes the current state of renderables
     /// and returns a `Result<T>`, where `T` is the type of the output
     /// produced by the prompt.
     ///
@@ -197,19 +201,18 @@ impl<T> Prompt<T> {
     ///
     /// Returns a `Result` wrapping a new `Prompt` instance
     /// if successful, or an error if the creation fails.
-    pub fn try_new<E, O>(
+    pub fn try_new<E>(
         renderables: Vec<Box<dyn Renderable>>,
         evaluator: E,
-        output: O,
+        producer: ResultProducer<T>,
     ) -> Result<Self>
     where
         E: Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool> + 'static,
-        O: Fn(&Vec<Box<dyn Renderable>>) -> Result<T> + 'static,
     {
         Ok(Self {
             renderables,
             evaluator: Box::new(evaluator),
-            output: Box::new(output),
+            producer,
         })
     }
 
@@ -284,7 +287,7 @@ impl<T> Prompt<T> {
             )?;
         }
 
-        let ret = (self.output)(&self.renderables);
+        let ret = (self.producer)(&self.renderables);
         self.renderables.iter_mut().for_each(|editor| {
             editor.postrun();
         });
