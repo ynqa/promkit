@@ -156,10 +156,13 @@ pub trait AsAny {
     fn as_any(&self) -> &dyn Any;
 }
 
-/// `Evaluator` is defined as a trait object using `dyn Fn` to allow the use of closures.
-/// This is particularly useful when there's a need to capture and use variables defined outside the function scope,
-/// such as validators or other context-specific data. Unlike function pointers (`fn`), closures can capture
-/// their environment, making `dyn Fn` the appropriate choice for scenarios where external data needs to be accessed.
+/// `Evaluator` is defined using `dyn Fn` to leverage closures, 
+// enabling the capture and utilization of external variables within its scope. 
+// This design choice allows for the incorporation of validators or
+// other context-specific data directly into the evaluation logic. 
+// Unlike static function pointers (`fn`), 
+// closures with `dyn Fn` can encapsulate their surrounding environment,
+// offering a flexible solution for scenarios requiring access to external data or state.
 type Evaluator = dyn Fn(&Event, &Vec<Box<dyn Renderable>>) -> Result<bool>;
 type ResultProducer<T> = fn(&Vec<Box<dyn Renderable>>) -> Result<T>;
 
