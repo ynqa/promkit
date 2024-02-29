@@ -1,14 +1,12 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{
-        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::ContentStyle,
-    },
+    crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, StyledGraphemes},
+    keymap::KeymapManager,
     pane::Pane,
     snapshot::Snapshot,
-    AsAny, Error, EventAction, Result,
+    AsAny, EventAction, Result,
 };
 
 use super::{History, Mode, Suggest, TextEditor};
@@ -29,6 +27,8 @@ pub struct Renderer {
     pub history: Option<History>,
     /// Suggestion engine for input completion.
     pub suggest: Suggest,
+
+    pub keymap: KeymapManager<Self>,
 
     /// Prompt string displayed before the input text.
     pub prefix: String,
@@ -87,125 +87,7 @@ impl crate::Renderer for Renderer {
     /// | <kbd> Ctrl + U </kbd>  | Erase all characters on the current line
     /// | <kbd> TAB </kbd>       | Perform tab completion by searching for suggestions
     fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        match event {
-            Event::Key(KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Ok(EventAction::Quit),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Err(Error::Interrupted("ctrl+c".into())),
-
-            // Move cursor.
-            Event::Key(KeyEvent {
-                code: KeyCode::Left,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.texteditor.backward();
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Right,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.texteditor.forward();
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('a'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.texteditor.move_to_head(),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('e'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.texteditor.move_to_tail(),
-
-            // Erase char(s).
-            Event::Key(KeyEvent {
-                code: KeyCode::Backspace,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.texteditor.erase(),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('u'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.texteditor.erase_all(),
-
-            // Choose history
-            Event::Key(KeyEvent {
-                code: KeyCode::Up,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                if let Some(ref mut history) = &mut self.history {
-                    if history.backward() {
-                        self.texteditor.replace(&history.get())
-                    }
-                }
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Down,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                if let Some(ref mut history) = &mut self.history {
-                    if history.forward() {
-                        self.texteditor.replace(&history.get())
-                    }
-                }
-            }
-
-            // Choose suggestion
-            Event::Key(KeyEvent {
-                code: KeyCode::Tab,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                if let Some(new) = self
-                    .suggest
-                    .search(self.texteditor.text_without_cursor().to_string())
-                {
-                    self.texteditor.replace(new)
-                }
-            }
-
-            // Input char.
-            Event::Key(KeyEvent {
-                code: KeyCode::Char(ch),
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            })
-            | Event::Key(KeyEvent {
-                code: KeyCode::Char(ch),
-                modifiers: KeyModifiers::SHIFT,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => match self.edit_mode {
-                Mode::Insert => self.texteditor.insert(*ch),
-                Mode::Overwrite => self.texteditor.overwrite(*ch),
-            },
-
-            _ => (),
-        }
-        Ok(EventAction::Continue)
+        (self.keymap.get())(self, event)
     }
 
     fn postrun(&mut self) {

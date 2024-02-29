@@ -5,6 +5,11 @@ use crate::{crossterm::event::Event, pane::Pane, AsAny, EventAction, Renderer, R
 pub struct Snapshot<R: Renderer> {
     pub init: R,
     pub before: R,
+    /// `after` is a `RefCell` containing the renderer state after an event has been processed.
+    /// The use of `RefCell` allows for dynamic, mutable borrowing of the contained value,
+    /// enabling modifications to the renderer state at runtime while adhering to Rust's borrowing rules.
+    /// This is crucial for allowing safe, mutable access to the renderer state in scenarios
+    /// where the borrowing context is not statically known.
     pub after: RefCell<R>,
 }
 

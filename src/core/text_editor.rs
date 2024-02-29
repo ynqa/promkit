@@ -7,6 +7,7 @@ mod history;
 pub use history::History;
 mod render;
 pub use render::Renderer;
+pub mod keymap;
 mod suggest;
 pub use suggest::Suggest;
 mod mode;

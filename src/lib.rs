@@ -100,6 +100,7 @@ pub use core::*;
 mod engine;
 pub mod error;
 mod grapheme;
+mod keymap;
 mod pane;
 pub mod preset;
 mod snapshot;
@@ -137,6 +138,8 @@ pub enum EventAction {
     Continue,
     Quit,
 }
+
+pub type EventHandler<S> = fn(&mut S, &Event) -> Result<EventAction>;
 
 /// A trait for objects that can be rendered in the terminal.
 /// It requires the ability to create a pane, handle events,
