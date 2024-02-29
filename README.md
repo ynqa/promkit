@@ -165,7 +165,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example queryselector
+cargo run --example query_selector
 ```
 </details>
 
