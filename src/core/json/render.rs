@@ -36,6 +36,11 @@ pub struct Renderer {
     /// Style for null values.
     pub null_value_style: ContentStyle,
 
+    /// Attribute for the selected line.
+    pub active_item_attribute: Attribute,
+    /// Attribute for unselected lines.
+    pub inactive_item_attribute: Attribute,
+
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 
@@ -177,14 +182,14 @@ impl crate::Renderer for Renderer {
                 if i == self.json.position() {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(indent(kind))),
-                        syntax(kind),
+                        syntax(kind).apply_attribute_to_all(self.active_item_attribute),
                     ])
                 } else {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(indent(kind))),
                         syntax(kind),
                     ])
-                    .apply_attribute_to_all(Attribute::Dim)
+                    .apply_attribute_to_all(self.inactive_item_attribute)
                 }
             })
             .collect::<Vec<StyledGraphemes>>();

@@ -28,6 +28,7 @@ fn main() -> Result {
         }"#,
     )?)
     .title("JSON viewer")
+    .json_lines(10)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())

@@ -40,6 +40,8 @@ impl Json {
                 number_value_style: StyleBuilder::new().build(),
                 boolean_value_style: StyleBuilder::new().build(),
                 null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
+                active_item_attribute: Attribute::Undercurled,
+                inactive_item_attribute: Attribute::Dim,
                 lines: Default::default(),
                 indent: 2,
             },
@@ -67,6 +69,18 @@ impl Json {
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
         self.json_renderer.indent = indent;
+        self
+    }
+
+    /// Sets the attribute for active (currently selected) items.
+    pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
+        self.json_renderer.active_item_attribute = attr;
+        self
+    }
+
+    /// Sets the attribute for inactive (not currently selected) items.
+    pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
+        self.json_renderer.inactive_item_attribute = attr;
         self
     }
 
