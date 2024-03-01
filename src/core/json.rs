@@ -4,6 +4,7 @@ mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
 mod render;
 pub use render::Renderer;
+pub mod keymap;
 
 /// A `JsonTree` structure that manages a JSON document as a tree of nodes.
 /// It utilizes a cursor to navigate and manipulate the nodes within the JSON tree.

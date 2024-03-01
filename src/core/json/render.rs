@@ -2,12 +2,13 @@ use std::any::Any;
 
 use crate::{
     crossterm::{
-        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        event::Event,
         style::{Attribute, ContentStyle},
     },
     grapheme::{trim, StyledGraphemes},
+    keymap::KeymapManager,
     pane::Pane,
-    AsAny, Error, EventAction, Result,
+    AsAny, EventAction, Result,
 };
 
 use super::{JsonSyntaxKind, JsonTree};
@@ -20,6 +21,8 @@ use super::{JsonSyntaxKind, JsonTree};
 #[derive(Clone)]
 pub struct Renderer {
     pub json: JsonTree,
+
+    pub keymap: KeymapManager<Self>,
 
     /// Style for {}.
     pub curly_brackets_style: ContentStyle,
@@ -198,59 +201,8 @@ impl crate::Renderer for Renderer {
         Pane::new(trimed, self.json.position(), self.lines)
     }
 
-    /// Default key bindings for JSON.
-    ///
-    /// | Key                | Description
-    /// | :--                | :--
-    /// | <kbd> ↑ </kbd>     | Move the cursor backward
-    /// | <kbd> ↓ </kbd>     | Move the cursor forward
-    /// | <kbd> Space </kbd> | Switch fold/unfold at the current node
     fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        match event {
-            Event::Key(KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Ok(EventAction::Quit),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Err(Error::Interrupted("ctrl+c".into())),
-
-            // Move cursor.
-            Event::Key(KeyEvent {
-                code: KeyCode::Up,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.json.backward();
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Down,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.json.forward();
-            }
-
-            // Fold/Unfold
-            Event::Key(KeyEvent {
-                code: KeyCode::Char(' '),
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.json.toggle();
-            }
-
-            _ => (),
-        }
-        Ok(EventAction::Continue)
+        (self.keymap.get())(self, event)
     }
 
     fn postrun(&mut self) {

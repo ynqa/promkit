@@ -2,6 +2,7 @@ use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     json::{self, JsonNode, JsonPathSegment},
+    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
     text, Prompt, Renderer,
@@ -29,6 +30,7 @@ impl Json {
             },
             json_renderer: json::Renderer {
                 json: json::JsonTree::new(root),
+                keymap: KeymapManager::new("default", json::keymap::default_keymap),
                 curly_brackets_style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
