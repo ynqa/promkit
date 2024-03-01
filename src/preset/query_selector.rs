@@ -73,6 +73,7 @@ impl QuerySelector {
             },
             listbox_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(items),
+                keymap: KeymapManager::new("default", listbox::keymap::default_keymap),
                 cursor: String::from("❯ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: StyleBuilder::new().build(),

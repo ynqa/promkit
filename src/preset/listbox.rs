@@ -3,6 +3,7 @@ use std::fmt::Display;
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
+    keymap::KeymapManager,
     listbox,
     snapshot::Snapshot,
     style::StyleBuilder,
@@ -35,6 +36,7 @@ impl Listbox {
             },
             listbox_renderer: listbox::Renderer {
                 listbox: listbox::Listbox::from_iter(items),
+                keymap: KeymapManager::new("default", listbox::keymap::default_keymap),
                 cursor: String::from("❯ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: StyleBuilder::new().build(),
