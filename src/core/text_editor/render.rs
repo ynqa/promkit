@@ -73,19 +73,6 @@ impl crate::Renderer for Renderer {
         )
     }
 
-    /// Default key bindings for text editor.
-    ///
-    /// | Key                    | Description
-    /// | :--                    | :--
-    /// | <kbd> ← </kbd>         | Move the cursor backward
-    /// | <kbd> → </kbd>         | Move the cursor forward
-    /// | <kbd> Ctrl + A </kbd>  | Move the cursor to the beginning of the input buffer
-    /// | <kbd> Ctrl + E </kbd>  | Move the cursor to the end of the input buffer
-    /// | <kbd> ↑ </kbd>         | Retrieve the previous input from history
-    /// | <kbd> ↓ </kbd>         | Retrieve the next input from history
-    /// | <kbd> Backspace </kbd> | Erase a character at the current cursor position
-    /// | <kbd> Ctrl + U </kbd>  | Erase all characters on the current line
-    /// | <kbd> TAB </kbd>       | Perform tab completion by searching for suggestions
     fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
         (self.keymap.get())(self, event)
     }

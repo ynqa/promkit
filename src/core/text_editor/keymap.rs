@@ -5,6 +5,21 @@ use crate::{
 
 use super::Mode;
 
+/// Default key bindings for the text editor.
+///
+/// | Key                    | Action
+/// | :--------------------- | :-------------------------------------------
+/// | <kbd>Enter</kbd>       | Exit the editor
+/// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
+/// | <kbd>←</kbd>           | Move the cursor one character to the left
+/// | <kbd>→</kbd>           | Move the cursor one character to the right
+/// | <kbd>Ctrl + A</kbd>    | Move the cursor to the start of the line
+/// | <kbd>Ctrl + E</kbd>    | Move the cursor to the end of the line
+/// | <kbd>↑</kbd>           | Recall the previous entry from history
+/// | <kbd>↓</kbd>           | Recall the next entry from history
+/// | <kbd>Backspace</kbd>   | Delete the character before the cursor
+/// | <kbd>Ctrl + U</kbd>    | Delete all characters in the current line
+/// | <kbd>TAB</kbd>         | Autocomplete the current input based on available suggestions
 pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<EventAction> {
     match event {
         Event::Key(KeyEvent {
