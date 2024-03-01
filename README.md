@@ -35,6 +35,7 @@ promkit = "0.3.0"
   - Theme for designing the appearance of the prompt
     - e.g. cursor, text and prompt string
   - Validation for user input and error message construction
+  - Customizable key mappings
 
 ## Examples/Demos
 
