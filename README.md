@@ -69,7 +69,7 @@ fn main() -> Result {
 ```
 </details>
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/25c2eaa9-c4c6-491f-aaee-1eec172aa6a3)
+![readline](https://github.com/ynqa/promkit/assets/6745370/7f791483-2a66-4f55-86fc-e6235f021dd2)
 
 ### Confirm
 
@@ -96,7 +96,7 @@ fn main() -> Result {
 ```
 </details>
 
-![confirm](https://github.com/ynqa/promkit/assets/6745370/c307ae97-c5c6-4253-83a7-d6fdfdfd88b1)
+![confirm](https://github.com/ynqa/promkit/assets/6745370/061de1db-08e6-4d6b-8c33-04b81c15b47a)
 
 ### Password
 
@@ -129,7 +129,7 @@ fn main() -> Result {
 ```
 </details>
 
-![password](https://github.com/ynqa/promkit/assets/6745370/6063b4cb-6ba6-4540-bca8-d54bd59e9b4e)
+![password](https://github.com/ynqa/promkit/assets/6745370/6f96276a-be18-4f14-bba3-b7db1dc8b5ee)
 
 ### Listbox
 
@@ -158,7 +158,7 @@ fn main() -> Result {
 ```
 </details>
 
-![listbox](https://github.com/ynqa/promkit/assets/6745370/b1093e46-4ddb-4f71-993c-fa0e80998882)
+![listbox](https://github.com/ynqa/promkit/assets/6745370/1da81584-7703-4424-b595-8f7de403e53d)
 
 ### QuerySelector
 
@@ -197,7 +197,7 @@ fn main() -> Result {
 ```
 </details>
 
-![queryselect](https://github.com/ynqa/promkit/assets/6745370/c8b3cbf7-ef8b-45cc-bb1b-c395902de346)
+![query_selector](https://github.com/ynqa/promkit/assets/6745370/750c4964-44f7-4dbd-98b3-338d59be1bef)
 
 ### Checkbox
 
@@ -237,7 +237,7 @@ fn main() -> Result {
 ```
 </details>
 
-![checkbox](https://github.com/ynqa/promkit/assets/6745370/079c412f-cc11-40d5-a73a-dc69ac32cfb6)
+![checkbox](https://github.com/ynqa/promkit/assets/6745370/e9c41dab-d0a4-45c2-91d4-4517c5970ffb)
 
 ### Tree
 
@@ -266,7 +266,7 @@ fn main() -> Result {
 ```
 </details>
 
-![tree](https://github.com/ynqa/promkit/assets/6745370/c732f526-e3f7-4b0d-bae2-6f5a8c96a66a)
+![tree](https://github.com/ynqa/promkit/assets/6745370/fb720ac7-398f-459c-99f0-f453963f9c11)
 
 ### JSON
 
@@ -320,7 +320,7 @@ fn main() -> Result {
 ```
 </details>
 
-![json](https://github.com/ynqa/promkit/assets/6745370/9474ead0-6c5e-4515-a5dc-f6e33df21624)
+![json](https://github.com/ynqa/promkit/assets/6745370/fb2afca1-1407-49ee-bd78-1a46c05f24b6)
 
 ## Why *promkit*?
 
