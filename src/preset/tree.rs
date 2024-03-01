@@ -1,6 +1,7 @@
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
+    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
     text,
@@ -33,6 +34,7 @@ impl Tree {
             },
             tree_renderer: tree::Renderer {
                 tree: tree::Tree::new(root),
+                keymap: KeymapManager::new("default", tree::keymap::default_keymap),
                 folded_symbol: String::from("▶︎ "),
                 unfolded_symbol: String::from("▼ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
