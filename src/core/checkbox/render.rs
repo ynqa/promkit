@@ -1,13 +1,11 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{
-        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::ContentStyle,
-    },
+    crossterm::{event::Event, style::ContentStyle},
     grapheme::{trim, Grapheme, Graphemes, StyledGraphemes},
+    keymap::KeymapManager,
     pane::Pane,
-    AsAny, Error, EventAction, Result,
+    AsAny, EventAction, Result,
 };
 
 use super::Checkbox;
@@ -22,6 +20,8 @@ use super::Checkbox;
 pub struct Renderer {
     /// The `Checkbox` component to be rendered.
     pub checkbox: Checkbox,
+
+    pub keymap: KeymapManager<Self>,
 
     /// Symbol for the selected line.
     pub cursor: String,
@@ -80,55 +80,8 @@ impl crate::Renderer for Renderer {
         Pane::new(trimed, self.checkbox.position(), self.lines)
     }
 
-    /// Default key bindings for checkbox.
-    ///
-    /// | Key                | Description
-    /// | :--                | :--
-    /// | <kbd> ↑ </kbd>     | Move the cursor backward
-    /// | <kbd> ↓ </kbd>     | Move the cursor forward
-    /// | <kbd> Space </kbd> | Put checkmark for the current item
     fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        match event {
-            Event::Key(KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Ok(EventAction::Quit),
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => return Err(Error::Interrupted("ctrl+c".into())),
-
-            // Move cursor.
-            Event::Key(KeyEvent {
-                code: KeyCode::Up,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.checkbox.backward();
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Down,
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => {
-                self.checkbox.forward();
-            }
-            Event::Key(KeyEvent {
-                code: KeyCode::Char(' '),
-                modifiers: KeyModifiers::NONE,
-                kind: KeyEventKind::Press,
-                state: KeyEventState::NONE,
-            }) => self.checkbox.toggle(),
-
-            _ => (),
-        }
-        Ok(EventAction::Continue)
+        (self.keymap.get())(self, event)
     }
 
     fn postrun(&mut self) {

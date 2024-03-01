@@ -4,6 +4,7 @@ use crate::{
     checkbox,
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
+    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
     text, Prompt, Renderer,
@@ -36,6 +37,8 @@ impl Checkbox {
             },
             checkbox_renderer: checkbox::Renderer {
                 checkbox: checkbox::Checkbox::from_iter(items),
+                keymap: KeymapManager::new("default", checkbox::keymap::default_keymap),
+
                 cursor: String::from("❯ "),
                 mark: '■',
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
