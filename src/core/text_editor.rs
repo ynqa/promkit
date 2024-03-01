@@ -10,8 +10,16 @@ pub use render::Renderer;
 pub mod keymap;
 mod suggest;
 pub use suggest::Suggest;
-mod mode;
-pub use mode::Mode;
+
+/// Edit mode.
+#[derive(Clone, Default)]
+pub enum Mode {
+    #[default]
+    /// Insert a char at the current position.
+    Insert,
+    /// Overwrite a char at the current position.
+    Overwrite,
+}
 
 /// A text editor that supports basic editing operations
 /// such as insert, delete, and overwrite.
