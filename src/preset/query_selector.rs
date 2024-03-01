@@ -12,7 +12,7 @@ use crate::{
     style::StyleBuilder,
     text,
     text_editor::{self, Mode, Suggest},
-    Prompt, Renderer,
+    EventHandler, Prompt, Renderer,
 };
 
 /// Used to process and filter a list of options
@@ -62,7 +62,7 @@ impl QuerySelector {
                 texteditor: Default::default(),
                 history: None,
                 suggest: Default::default(),
-                keymap: KeymapManager::new(text_editor::keymap::default_keymap()),
+                keymap: KeymapManager::new("default", text_editor::keymap::default_keymap),
                 prefix: String::from("❯❯ "),
                 mask: None,
                 prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
@@ -157,6 +157,15 @@ impl QuerySelector {
     /// Sets the number of lines available for the list box component.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
         self.listbox_renderer.lines = Some(lines);
+        self
+    }
+
+    pub fn register_keymap<K: AsRef<str>>(
+        mut self,
+        key: K,
+        handler: EventHandler<text_editor::Renderer>,
+    ) -> Self {
+        self.text_editor_renderer.keymap = self.text_editor_renderer.keymap.register(key, handler);
         self
     }
 

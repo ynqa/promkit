@@ -4,7 +4,7 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::{self, KeymapManager},
+    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
     text,
@@ -46,7 +46,7 @@ impl Default for Readline {
                 texteditor: Default::default(),
                 history: Default::default(),
                 suggest: Default::default(),
-                keymap: KeymapManager::new(text_editor::keymap::default_keymap()),
+                keymap: KeymapManager::new("default", text_editor::keymap::default_keymap),
                 prefix: String::from("❯❯ "),
                 mask: Default::default(),
                 prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
@@ -134,12 +134,12 @@ impl Readline {
         self
     }
 
-    pub fn register_keymap(
+    pub fn register_keymap<K: AsRef<str>>(
         mut self,
-        mode: keymap::Mode,
+        key: K,
         handler: EventHandler<text_editor::Renderer>,
     ) -> Self {
-        self.text_editor_renderer.keymap.register(mode, handler);
+        self.text_editor_renderer.keymap = self.text_editor_renderer.keymap.register(key, handler);
         self
     }
 
