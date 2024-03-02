@@ -1,4 +1,4 @@
-name: promkit
+name: ci
 
 on: [push]
 
