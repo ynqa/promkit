@@ -1,6 +1,6 @@
 # promkit
 
-[![.github/workflows/promkit.yml](https://github.com/ynqa/promkit/actions/workflows/promkit.yml/badge.svg)](https://github.com/ynqa/promkit/actions/workflows/promkit.yml)
+[![ci](https://github.com/ynqa/promkit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ynqa/promkit/actions/workflows/ci.yml)
 [![docs.rs](https://img.shields.io/docsrs/promkit)](https://docs.rs/promkit)
 
 A toolkit for building your own interactive prompt in Rust.
