@@ -6,6 +6,8 @@ use std::collections::VecDeque;
 /// It supports adding new entries,
 /// checking for the existence of specific entries,
 /// and moving through the history in both forward and backward directions.
+/// Additionally, it can limit the number of entries stored in the history
+/// to a specified maximum size.
 #[derive(Clone)]
 pub struct History {
     /// Buffer storing the history of inputs as strings.
@@ -13,6 +15,9 @@ pub struct History {
     /// Current position in the history buffer.
     position: usize,
 
+    /// Optional limit on the number of entries in the history.
+    /// If set, the history will not exceed this number of entries,
+    /// and older entries will be removed to make room for new ones.
     limit_size: Option<usize>,
 }
 
