@@ -1,7 +1,6 @@
 use indexmap::IndexMap;
-use serde_json;
 
-use crate::{Error, Result};
+use crate::{Error, Result, serde_json};
 
 /// Represents the various kinds of syntax elements found in a JSON document.
 /// This includes the start and end of maps and arrays, entries within maps and arrays,
@@ -663,7 +662,7 @@ mod test {
 
     mod from_str {
         use super::*;
-        use serde_json::Number;
+        use crate::serde_json::Number;
 
         #[test]
         fn test() {

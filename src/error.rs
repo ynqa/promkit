@@ -1,7 +1,8 @@
 pub type Result<T = ()> = std::result::Result<T, Error>;
 
-use serde_json;
 use thiserror::Error;
+
+use crate::serde_json;
 
 /// Represents all possible errors that can occur in the application.
 ///

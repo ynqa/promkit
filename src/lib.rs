@@ -102,6 +102,7 @@
 //! [![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
 
 pub use crossterm;
+pub use serde_json;
 
 mod core;
 pub use core::*;
