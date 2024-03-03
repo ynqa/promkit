@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 pub mod checkbox;
 mod cursor;
 pub mod json;
@@ -24,6 +26,19 @@ impl<T> Len for Vec<T> {
     }
 
     /// Checks if the vector is empty.
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+/// Implements the `Len` trait for `VecDeque<T>`.
+impl<T> Len for VecDeque<T> {
+    /// Returns the number of elements in the queue.
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    /// Checks if the queue is empty.
     fn is_empty(&self) -> bool {
         self.is_empty()
     }

@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use crate::core::cursor::Cursor;
+
 /// Manages the history of user inputs for a text editor.
 /// This structure allows for the storage,
 /// retrieval, and navigation through past inputs.
@@ -11,9 +13,7 @@ use std::collections::VecDeque;
 #[derive(Clone)]
 pub struct History {
     /// Buffer storing the history of inputs as strings.
-    buf: VecDeque<String>,
-    /// Current position in the history buffer.
-    position: usize,
+    pub cursor: Cursor<VecDeque<String>>,
 
     /// Optional limit on the number of entries in the history.
     /// If set, the history will not exceed this number of entries,
@@ -26,8 +26,7 @@ impl Default for History {
     /// and initializes the position at 0.
     fn default() -> Self {
         Self {
-            buf: VecDeque::from([String::new()]), // Start with an empty input as the current state.
-            position: 0,
+            cursor: Cursor::new(VecDeque::from([String::new()])),
             limit_size: None,
         }
     }
@@ -36,8 +35,7 @@ impl Default for History {
 impl History {
     pub fn new_with_limit_size(limit_size: usize) -> Self {
         Self {
-            buf: VecDeque::from([String::new()]), // Start with an empty input as the current state.
-            position: 0,
+            cursor: Cursor::new(VecDeque::from([String::new()])),
             limit_size: Some(limit_size),
         }
     }
@@ -63,14 +61,14 @@ impl History {
     pub fn insert<T: AsRef<str>>(&mut self, item: T) {
         let item = item.as_ref().to_string();
         if !self.exists(&item) {
-            let init_state = self.buf.pop_back().unwrap();
-            self.buf.push_back(item);
+            let init_state = self.cursor.contents_mut().pop_back().unwrap();
+            self.cursor.contents_mut().push_back(item);
             if let Some(limit) = self.limit_size {
-                if limit < self.buf.len() {
-                    self.buf.pop_front();
+                if limit < self.cursor.contents_mut().len() {
+                    self.cursor.contents_mut().pop_front();
                 }
             }
-            self.buf.push_back(init_state);
+            self.cursor.contents_mut().push_back(init_state);
         }
         self.move_to_tail();
     }
@@ -79,8 +77,9 @@ impl History {
     /// based on the current position.
     /// Returns an empty string if the position is out of bounds.
     pub fn get(&self) -> String {
-        self.buf
-            .get(self.position)
+        self.cursor
+            .contents()
+            .get(self.cursor.position())
             .unwrap_or(&String::new())
             .to_string()
     }
@@ -95,32 +94,24 @@ impl History {
     ///
     /// Returns `true` if the item exists in the history, `false` otherwise.
     fn exists<T: AsRef<str>>(&self, item: T) -> bool {
-        self.buf.iter().any(|i| i == item.as_ref())
+        self.cursor.contents().iter().any(|i| i == item.as_ref())
     }
 
     /// Moves the current position backward in the history, if possible.
     /// Returns `true` if the position was successfully moved backward, `false` otherwise.
     pub fn backward(&mut self) -> bool {
-        if self.position > 0 {
-            self.position -= 1;
-            return true;
-        }
-        false
+        self.cursor.backward()
     }
 
     /// Moves the current position forward in the history, if possible.
     /// Returns `true` if the position was successfully moved forward, `false` otherwise.
     pub fn forward(&mut self) -> bool {
-        if !self.buf.is_empty() && self.position < self.buf.len() - 1 {
-            self.position += 1;
-            return true;
-        }
-        false
+        self.cursor.forward()
     }
 
     /// Moves the current position to the tail (end) of the history buffer.
     pub fn move_to_tail(&mut self) {
-        self.position = self.buf.len() - 1;
+        self.cursor.move_to_tail()
     }
 }
 
@@ -133,7 +124,10 @@ mod test {
         fn test() {
             let mut h = History::default();
             h.insert("item");
-            assert_eq!(VecDeque::from([String::from("item"), String::new()]), h.buf);
+            assert_eq!(
+                VecDeque::from([String::from("item"), String::new()]),
+                *h.cursor.contents()
+            );
         }
 
         #[test]
@@ -143,7 +137,7 @@ mod test {
             h.insert("item2");
             assert_eq!(
                 VecDeque::from([String::from("item1"), String::from("item2"), String::new()]),
-                h.buf
+                *h.cursor.contents()
             );
         }
 
@@ -155,7 +149,7 @@ mod test {
             h.insert("item3");
             assert_eq!(
                 VecDeque::from([String::from("item2"), String::from("item3"), String::new()]),
-                h.buf
+                *h.cursor.contents()
             );
         }
     }
