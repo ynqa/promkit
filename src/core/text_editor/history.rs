@@ -1,6 +1,11 @@
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    fs::File,
+    io::{BufRead, BufReader, Write},
+    path::Path,
+};
 
-use crate::core::cursor::Cursor;
+use crate::{core::cursor::Cursor, Result};
 
 /// Manages the history of user inputs for a text editor.
 /// This structure allows for the storage,
@@ -38,6 +43,73 @@ impl History {
             cursor: Cursor::new(VecDeque::from([String::new()])),
             limit_size: Some(limit_size),
         }
+    }
+
+    /// Saves the current history items to a file in reverse order (newest first),
+    /// respecting the optional limit on the number of entries if provided.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file where the history should be saved.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the history was successfully saved, or an `io::Error` otherwise.
+    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result {
+        let mut file = File::create(path)?;
+        let mut contents = self.cursor.contents().clone();
+
+        // Note: The initial empty string ("") in the history
+        // is not included in the save operation.
+        contents.pop_back();
+
+        let items_to_save: Vec<_> = if let Some(limit) = self.limit_size {
+            contents.iter().rev().take(limit).collect()
+        } else {
+            contents.iter().rev().collect()
+        };
+
+        for item in items_to_save {
+            writeln!(file, "{}", item)?;
+        }
+        Ok(())
+    }
+
+    /// Loads history items from a file into a new `History` instance.
+    ///
+    /// This function reads the specified file line by line, adding each non-empty line
+    /// to the history. It respects the optional limit on the number of entries if provided.
+    /// An empty string is always added at the end of the history to represent a new input line.
+    /// After loading, the cursor is moved to the end of the history.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the file from which the history should be loaded.
+    /// * `limit_size` - An optional limit on the number of entries in the history.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(History)` with the loaded history if successful, or an `io::Error` otherwise.
+    pub fn load_from_file<P: AsRef<Path>>(path: P, limit_size: Option<usize>) -> Result<Self> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+
+        let mut ret = match limit_size {
+            Some(limit) => Self::new_with_limit_size(limit),
+            None => Self::default(),
+        };
+
+        for line in reader.lines() {
+            let line = line?;
+            if !line.is_empty() {
+                // Avoid adding empty lines
+                ret.cursor.contents_mut().push_back(line);
+            }
+        }
+        // Ensure there's always an empty string at the end of the buffer
+        ret.cursor.contents_mut().push_back(String::new());
+        ret.move_to_tail(); // Move cursor to the end after loading
+        Ok(ret)
     }
 
     /// Inserts a new item into the history.
