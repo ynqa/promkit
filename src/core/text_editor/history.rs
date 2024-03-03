@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 /// Manages the history of user inputs for a text editor.
 /// This structure allows for the storage,
 /// retrieval, and navigation through past inputs.
@@ -7,7 +9,7 @@
 #[derive(Clone)]
 pub struct History {
     /// Buffer storing the history of inputs as strings.
-    buf: Vec<String>,
+    buf: VecDeque<String>,
     /// Current position in the history buffer.
     position: usize,
 }
@@ -17,7 +19,7 @@ impl Default for History {
     /// and initializes the position at 0.
     fn default() -> Self {
         Self {
-            buf: vec![String::new()], // Start with an empty input as the current state.
+            buf: VecDeque::from([String::new()]), // Start with an empty input as the current state.
             position: 0,
         }
     }
@@ -44,15 +46,12 @@ impl History {
     /// - After inserting "xyz": `items = ["abc", "xyz", ""]`
     pub fn insert<T: AsRef<str>>(&mut self, item: T) {
         let item = item.as_ref().to_string();
-        if self.buf.is_empty() {
-            self.buf.push(item)
-        } else {
-            if !self.exists(&item) {
-                let tail_idx = self.buf.len() - 1;
-                self.buf.insert(tail_idx, item);
-            }
-            self.move_to_tail();
+        if !self.exists(&item) {
+            let init_state = self.buf.pop_back().unwrap();
+            self.buf.push_back(item);
+            self.buf.push_back(init_state);
         }
+        self.move_to_tail();
     }
 
     /// Retrieves the current item from the history
@@ -112,9 +111,19 @@ mod test {
         #[test]
         fn test() {
             let mut h = History::default();
-            h.insert("line");
-            assert_eq!(h.position, 1);
-            assert_eq!(h.get(), "");
+            h.insert("item");
+            assert_eq!(VecDeque::from([String::from("item"), String::new()]), h.buf);
+        }
+
+        #[test]
+        fn test_with_multiple_items() {
+            let mut h = History::default();
+            h.insert("item1");
+            h.insert("item2");
+            assert_eq!(
+                VecDeque::from([String::from("item1"), String::from("item2"), String::new()]),
+                h.buf
+            );
         }
     }
 
