@@ -12,6 +12,8 @@ pub struct History {
     buf: VecDeque<String>,
     /// Current position in the history buffer.
     position: usize,
+
+    limit_size: Option<usize>,
 }
 
 impl Default for History {
@@ -21,11 +23,20 @@ impl Default for History {
         Self {
             buf: VecDeque::from([String::new()]), // Start with an empty input as the current state.
             position: 0,
+            limit_size: None,
         }
     }
 }
 
 impl History {
+    pub fn new_with_limit_size(limit_size: usize) -> Self {
+        Self {
+            buf: VecDeque::from([String::new()]), // Start with an empty input as the current state.
+            position: 0,
+            limit_size: Some(limit_size),
+        }
+    }
+
     /// Inserts a new item into the history.
     ///
     /// If the item does not already exist in the buffer,
@@ -49,6 +60,11 @@ impl History {
         if !self.exists(&item) {
             let init_state = self.buf.pop_back().unwrap();
             self.buf.push_back(item);
+            if let Some(limit) = self.limit_size {
+                if limit < self.buf.len() {
+                    self.buf.pop_front();
+                }
+            }
             self.buf.push_back(init_state);
         }
         self.move_to_tail();
@@ -122,6 +138,18 @@ mod test {
             h.insert("item2");
             assert_eq!(
                 VecDeque::from([String::from("item1"), String::from("item2"), String::new()]),
+                h.buf
+            );
+        }
+
+        #[test]
+        fn test_with_limit_size() {
+            let mut h = History::new_with_limit_size(2);
+            h.insert("item1");
+            h.insert("item2");
+            h.insert("item3");
+            assert_eq!(
+                VecDeque::from([String::from("item2"), String::from("item3"), String::new()]),
                 h.buf
             );
         }
