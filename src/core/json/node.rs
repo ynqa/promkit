@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{Error, Result, serde_json};
+use crate::{serde_json, Error, Result};
 
 /// Represents the various kinds of syntax elements found in a JSON document.
 /// This includes the start and end of maps and arrays, entries within maps and arrays,
