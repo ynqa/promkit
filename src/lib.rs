@@ -108,6 +108,7 @@ mod core;
 pub use core::*;
 mod engine;
 pub mod error;
+pub mod fake_input;
 mod grapheme;
 pub mod keymap;
 mod pane;

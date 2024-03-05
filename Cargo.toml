@@ -15,6 +15,7 @@ path = "src/lib.rs"
 [dependencies]
 crossterm = { version = "0.27.0", features = ["use-dev-tty"] }
 indexmap = "2.2.3"
+libc = "0.2.153"
 radix_trie = "0.2.1"
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114", features = ["preserve_order"] }
