@@ -38,9 +38,9 @@ impl Checkbox {
             checkbox_renderer: checkbox::Renderer {
                 checkbox: checkbox::Checkbox::from_iter(items),
                 keymap: KeymapManager::new("default", checkbox::keymap::default_keymap),
-
                 cursor: String::from("❯ "),
-                mark: '■',
+                active_mark: '•',
+                inactive_mark: '◦',
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
@@ -67,8 +67,8 @@ impl Checkbox {
     }
 
     /// Sets the mark symbol used to indicate selected items.
-    pub fn mark(mut self, mark: char) -> Self {
-        self.checkbox_renderer.mark = mark;
+    pub fn active_mark(mut self, mark: char) -> Self {
+        self.checkbox_renderer.active_mark = mark;
         self
     }
 

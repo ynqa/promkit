@@ -2,7 +2,7 @@ use std::any::Any;
 
 use crate::{
     crossterm::{event::Event, style::ContentStyle},
-    grapheme::{trim, Grapheme, Graphemes, StyledGraphemes},
+    grapheme::{trim, Graphemes, StyledGraphemes},
     keymap::KeymapManager,
     pane::Pane,
     AsAny, EventAction, Result,
@@ -25,8 +25,11 @@ pub struct Renderer {
 
     /// Symbol for the selected line.
     pub cursor: String,
-    /// Checkmark symbol (displayed within square brackets).
-    pub mark: char,
+
+    /// Symbol used to indicate an active (selected) checkbox item.
+    pub active_mark: char,
+    /// Symbol used to indicate an inactive (unselected) checkbox item.
+    pub inactive_mark: char,
 
     /// Style for the selected line.
     pub active_item_style: ContentStyle,
@@ -41,13 +44,9 @@ impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         let f = |idx: usize, item: &String| -> String {
             if self.checkbox.picked_indexes().contains(&idx) {
-                format!("[{}] {}", self.mark, item)
+                format!("{} {}", self.active_mark, item)
             } else {
-                format!(
-                    "[{}] {}",
-                    " ".repeat(Grapheme::from(self.mark).width()),
-                    item
-                )
+                format!("{} {}", self.inactive_mark, item)
             }
         };
 
