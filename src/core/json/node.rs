@@ -96,38 +96,77 @@ impl TryFrom<&str> for JsonNode {
     type Error = Error;
 
     fn try_from(json_str: &str) -> Result<Self> {
-        let value: serde_json::Value = serde_json::from_str(json_str)?;
-        Ok(JsonNode::from(value))
+        Self::try_new_with_visible_depth(json_str, None)
     }
 }
 
-impl From<serde_json::Value> for JsonNode {
-    /// Converts a `serde_json::Value` into a `JsonNode`.
-    fn from(value: serde_json::Value) -> Self {
+impl JsonNode {
+    /// Creates a `JsonNode` from a `serde_json::Value` with visibility for all children set to true if `depth` is `None`,
+    /// or up to a specified depth if `depth` is `Some(usize)`.
+    ///
+    /// # Arguments
+    /// * `value` - The `serde_json::Value` to convert into a `JsonNode`.
+    /// * `depth` - An `Option<usize>` representing the depth up to which child nodes should be visible.
+    ///   A depth of `Some(0)` means only the root is visible. `None` means all children are visible.
+    ///
+    /// # Returns
+    /// A `JsonNode` with children visibility set according to the specified depth.
+    pub fn new_with_visible_depth(value: serde_json::Value, depth: Option<usize>) -> Self {
         match value {
             serde_json::Value::Object(map) => {
                 let children = map
                     .into_iter()
-                    .map(|(k, v)| (k, JsonNode::from(v)))
+                    .map(|(k, v)| {
+                        (
+                            k,
+                            JsonNode::new_with_visible_depth(v, depth.map(|d| d.saturating_sub(1))),
+                        )
+                    })
                     .collect();
                 JsonNode::Object {
                     children,
-                    children_visible: true,
+                    children_visible: depth.map_or(true, |d| d > 0),
                 }
             }
             serde_json::Value::Array(vec) => {
-                let children = vec.into_iter().map(JsonNode::from).collect();
+                let children = vec
+                    .into_iter()
+                    .map(|v| {
+                        JsonNode::new_with_visible_depth(v, depth.map(|d| d.saturating_sub(1)))
+                    })
+                    .collect();
                 JsonNode::Array {
                     children,
-                    children_visible: true,
+                    children_visible: depth.map_or(true, |d| d > 0),
                 }
             }
             _ => JsonNode::Leaf(value),
         }
     }
-}
 
-impl JsonNode {
+    /// Attempts to create a `JsonNode` from a JSON string with visibility for all children set according to a specified depth.
+    ///
+    /// This function parses the given JSON string into a `serde_json::Value`, then converts it into a `JsonNode`
+    /// with children visibility determined by the `depth` parameter. A depth of `Some(0)` means only the root node is visible.
+    /// `None` means all children are visible, regardless of their depth.
+    ///
+    /// # Arguments
+    /// * `json_str` - A JSON string to be converted into a `JsonNode`.
+    /// * `depth` - An `Option<usize>` representing the depth up to which child nodes should be visible.
+    ///
+    /// # Returns
+    /// A `Result` containing the created `JsonNode` or an error if the string is not valid JSON.
+    ///
+    /// # Errors
+    /// Returns an error if the given string is not valid JSON.
+    pub fn try_new_with_visible_depth<J: AsRef<str>>(
+        json_str: J,
+        depth: Option<usize>,
+    ) -> Result<Self> {
+        let value: serde_json::Value = serde_json::from_str(json_str.as_ref())?;
+        Ok(Self::new_with_visible_depth(value, depth))
+    }
+
     /// Retrieves a reference to a `JsonNode` at a specified JSON path.
     ///
     /// # Arguments
@@ -356,6 +395,83 @@ mod test {
             Some((children, *children_visible))
         } else {
             None
+        }
+    }
+
+    #[cfg(test)]
+    mod try_new_with_visible_depth {
+        use super::*;
+        use crate::serde_json::json;
+
+        #[test]
+        fn test_one_level_depth() {
+            let value: serde_json::Value = serde_json::from_str(JSON_STR).unwrap();
+            let node = JsonNode::new_with_visible_depth(value, Some(1));
+            let expected = JsonNode::Object {
+                children: IndexMap::from_iter(vec![
+                    ("number".to_string(), JsonNode::Leaf(json!(1))),
+                    (
+                        "map".to_string(),
+                        JsonNode::Object {
+                            children: IndexMap::from_iter(vec![
+                                ("string1".to_string(), JsonNode::Leaf(json!("aaa"))),
+                                ("string2".to_string(), JsonNode::Leaf(json!("bbb"))),
+                            ]),
+                            children_visible: false,
+                        },
+                    ),
+                    (
+                        "list".to_string(),
+                        JsonNode::Array {
+                            children: vec![
+                                JsonNode::Leaf(json!("abc")),
+                                JsonNode::Leaf(json!("def")),
+                            ],
+                            children_visible: false,
+                        },
+                    ),
+                    (
+                        "map_in_map".to_string(),
+                        JsonNode::Object {
+                            children: IndexMap::from_iter(vec![(
+                                "nested".to_string(),
+                                JsonNode::Object {
+                                    children: IndexMap::from_iter(vec![(
+                                        "leaf".to_string(),
+                                        JsonNode::Leaf(json!("eof")),
+                                    )]),
+                                    children_visible: false,
+                                },
+                            )]),
+                            children_visible: false,
+                        },
+                    ),
+                    (
+                        "map_in_list".to_string(),
+                        JsonNode::Array {
+                            children: vec![
+                                JsonNode::Object {
+                                    children: IndexMap::from_iter(vec![(
+                                        "map1".to_string(),
+                                        JsonNode::Leaf(json!(1)),
+                                    )]),
+                                    children_visible: false,
+                                },
+                                JsonNode::Object {
+                                    children: IndexMap::from_iter(vec![(
+                                        "map2".to_string(),
+                                        JsonNode::Leaf(json!(2)),
+                                    )]),
+                                    children_visible: false,
+                                },
+                            ],
+                            children_visible: false,
+                        },
+                    ),
+                ]),
+                children_visible: true,
+            };
+            assert_eq!(node, expected);
         }
     }
 
