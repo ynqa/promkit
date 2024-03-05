@@ -192,6 +192,7 @@ impl<T> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
         execute!(io::stdout(), cursor::Show).ok();
+        execute!(io::stdout(), event::DisableMouseCapture).ok();
         disable_raw_mode().ok();
     }
 }
@@ -254,7 +255,7 @@ impl<T> Prompt<T> {
         });
 
         enable_raw_mode()?;
-        execute!(io::stdout(), cursor::Hide)?;
+        execute!(io::stdout(), cursor::Hide, event::EnableMouseCapture)?;
 
         let mut terminal = Terminal::start_session(&mut engine)?;
         let size = engine.size()?;
