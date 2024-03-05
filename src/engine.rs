@@ -4,6 +4,7 @@ use crate::{
     crossterm::{
         cursor::{self, MoveTo},
         queue,
+        execute,
         style::Print,
         terminal::{self, Clear, ClearType, ScrollUp},
     },
@@ -85,7 +86,7 @@ impl<W: Write> Engine<W> {
     /// Returns a `Result` indicating the success of the operation,
     /// or an `Error` if it fails.
     pub fn write<D: fmt::Display>(&mut self, string: D) -> Result {
-        queue!(self.out, Print(string)).map_err(Error::from)
+        execute!(self.out, Print(string)).map_err(Error::from)
     }
 
     /// Moves the cursor to the specified position in the terminal.
@@ -100,16 +101,6 @@ impl<W: Write> Engine<W> {
     /// or an `Error` if it fails.
     pub fn move_to(&mut self, pos: (u16, u16)) -> Result {
         queue!(self.out, MoveTo(pos.0, pos.1)).map_err(Error::from)
-    }
-
-    /// Checks if the cursor is at the bottom of the terminal.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing `true`
-    /// if the cursor is at the bottom, otherwise `false`.
-    pub fn is_bottom(&self) -> Result<bool> {
-        Ok(cursor::position()?.1 + 1 == terminal::size()?.1)
     }
 
     /// Scrolls the terminal content up by a specified number of lines.

@@ -59,6 +59,7 @@ impl Terminal {
 
         let mut used = 0;
 
+        let mut current_cursor_y = engine.size()?.1.saturating_sub(self.position.1);
         for (i, pane) in viewable_panes.iter().enumerate() {
             let rows = pane.extract(
                 1.max(
@@ -70,8 +71,9 @@ impl Terminal {
             used += rows.len();
             for row in &rows {
                 engine.write(row.styled_display())?;
+                current_cursor_y = current_cursor_y.saturating_sub(1);
 
-                if engine.is_bottom()? && self.position.1 != 0 {
+                if current_cursor_y + 1 == 0 && self.position.1 != 0 {
                     engine.scroll_up(1)?;
                     self.position.1 -= 1;
                 }
