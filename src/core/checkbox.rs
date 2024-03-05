@@ -81,4 +81,9 @@ impl Checkbox {
     pub fn move_to_head(&mut self) {
         self.listbox.move_to_head()
     }
+
+    /// Moves the cursor to the tail of the listbox.
+    pub fn move_to_tail(&mut self) {
+        self.listbox.move_to_tail()
+    }
 }

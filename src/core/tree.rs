@@ -78,4 +78,9 @@ impl Tree {
     pub fn move_to_head(&mut self) {
         self.cursor.move_to_head()
     }
+
+    /// Moves the cursor to the tail of the tree.
+    pub fn move_to_tail(&mut self) {
+        self.cursor.move_to_tail()
+    }
 }

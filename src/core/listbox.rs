@@ -64,4 +64,9 @@ impl Listbox {
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()
     }
+
+    /// Moves the cursor to the tail of the listbox.
+    pub fn move_to_tail(&mut self) {
+        self.0.move_to_tail()
+    }
 }
