@@ -3,8 +3,7 @@ use std::{fmt, io::Write};
 use crate::{
     crossterm::{
         cursor::{self, MoveTo},
-        queue,
-        execute,
+        execute, queue,
         style::Print,
         terminal::{self, Clear, ClearType, ScrollUp},
     },
