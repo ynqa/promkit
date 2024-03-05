@@ -12,6 +12,7 @@ use crate::{
 pub struct Json {
     title_renderer: text::Renderer,
     json_renderer: json::Renderer,
+    enable_mouse_scroll: bool,
 }
 
 impl Json {
@@ -47,7 +48,15 @@ impl Json {
                 lines: Default::default(),
                 indent: 2,
             },
+            enable_mouse_scroll: false,
         }
+    }
+
+    /// Enables mouse scroll functionality for the component.
+    /// When enabled, users can scroll through the items of list using the mouse wheel.
+    pub fn enable_mouse_scroll(mut self) -> Self {
+        self.enable_mouse_scroll = true;
+        self
     }
 
     /// Sets the title text for the JSON preset.
@@ -104,6 +113,7 @@ impl Json {
                     .json
                     .get())
             },
+            self.enable_mouse_scroll,
         )
     }
 }

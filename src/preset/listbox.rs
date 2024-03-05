@@ -16,6 +16,7 @@ pub struct Listbox {
     title_renderer: text::Renderer,
     /// Renderer for the selectable list itself.
     listbox_renderer: listbox::Renderer,
+    enable_mouse_scroll: bool,
 }
 
 impl Listbox {
@@ -42,7 +43,15 @@ impl Listbox {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
+            enable_mouse_scroll: false,
         }
+    }
+
+    /// Enables mouse scroll functionality for the component.
+    /// When enabled, users can scroll through the items of list using the mouse wheel.
+    pub fn enable_mouse_scroll(mut self) -> Self {
+        self.enable_mouse_scroll = true;
+        self
     }
 
     /// Sets the title text displayed above the selectable list.
@@ -101,6 +110,7 @@ impl Listbox {
                     .listbox
                     .get())
             },
+            self.enable_mouse_scroll,
         )
     }
 }

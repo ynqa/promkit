@@ -184,6 +184,7 @@ pub struct Prompt<T> {
     renderers: Vec<Box<dyn Renderer>>,
     evaluator: Box<Evaluator>,
     producer: ResultProducer<T>,
+    capture_mouse_events: bool,
 }
 
 static ONCE: Once = Once::new();
@@ -199,13 +200,13 @@ impl<T> Drop for Prompt<T> {
 
 impl<T> Prompt<T> {
     /// Creates a new `Prompt` instance
-    /// with specified renderers, evaluator, and producer functions.
+    /// with specified renderers, evaluator, producer functions,
+    /// and mouse event capture option.
     ///
     /// # Arguments
     ///
     /// * `renderers` - A vector of boxed objects implementing
     /// the `Renderer` trait.
-    /// These are the UI components that will be rendered.
     /// * `evaluator` - A function that takes an event
     /// and the current state of renderer,
     /// returning a `Result<bool>` indicating
@@ -213,6 +214,8 @@ impl<T> Prompt<T> {
     /// * `producer` - A function that takes the current state of renderer
     /// and returns a `Result<T>`, where `T` is the type of the output
     /// produced by the prompt.
+    /// * `capture_mouse_events` - A boolean indicating
+    /// whether to capture mouse events.
     ///
     /// # Returns
     ///
@@ -222,6 +225,7 @@ impl<T> Prompt<T> {
         renderers: Vec<Box<dyn Renderer>>,
         evaluator: E,
         producer: ResultProducer<T>,
+        capture_mouse_events: bool,
     ) -> Result<Self>
     where
         E: Fn(&Event, &Vec<Box<dyn Renderer>>) -> Result<bool> + 'static,
@@ -230,6 +234,7 @@ impl<T> Prompt<T> {
             renderers,
             evaluator: Box::new(evaluator),
             producer,
+            capture_mouse_events,
         })
     }
 
@@ -255,7 +260,10 @@ impl<T> Prompt<T> {
         });
 
         enable_raw_mode()?;
-        execute!(io::stdout(), cursor::Hide, event::EnableMouseCapture)?;
+        execute!(io::stdout(), cursor::Hide)?;
+        if self.capture_mouse_events {
+            execute!(io::stdout(), event::EnableMouseCapture)?;
+        }
 
         let mut terminal = Terminal::start_session(&mut engine)?;
         let size = engine.size()?;
