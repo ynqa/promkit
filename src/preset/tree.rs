@@ -113,14 +113,11 @@ impl Tree {
             ],
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
-                Ok(renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<tree::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .tree
-                    .get())
+                Ok(
+                    Snapshot::<tree::Renderer>::cast_and_borrow_after(&renderers[1])?
+                        .tree
+                        .get(),
+                )
             },
             self.enable_mouse_scroll,
         )

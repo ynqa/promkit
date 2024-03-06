@@ -101,14 +101,11 @@ impl Listbox {
             ],
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
-                Ok(renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<listbox::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .listbox
-                    .get())
+                Ok(
+                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(&renderers[1])?
+                        .listbox
+                        .get(),
+                )
             },
             self.enable_mouse_scroll,
         )

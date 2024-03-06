@@ -5,7 +5,6 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     keymap::KeymapManager,
     pane::Pane,
-    snapshot::Snapshot,
     AsAny, EventAction, Result,
 };
 
@@ -89,10 +88,8 @@ impl AsAny for Renderer {
     fn as_any(&self) -> &dyn Any {
         self
     }
-}
 
-impl Snapshot<Renderer> {
-    pub fn text_changed(&self) -> bool {
-        self.before.texteditor.text() != self.after.borrow().texteditor.text()
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

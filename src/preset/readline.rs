@@ -167,20 +167,10 @@ impl Readline {
                 Box::new(Snapshot::<text::Renderer>::new(self.error_message_renderer)),
             ],
             move |event: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text: String = renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
+                let text = Snapshot::<text_editor::Renderer>::cast_and_borrow_after(&renderers[1])?
                     .texteditor
                     .text_without_cursor()
                     .to_string();
-
-                let error_message_state = renderers[2]
-                    .as_any()
-                    .downcast_ref::<Snapshot<text::Renderer>>()
-                    .unwrap();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -192,8 +182,9 @@ impl Readline {
                         Some(validator) => {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
-                                error_message_state.after.borrow_mut().text =
-                                    validator.generate_error_message(&text);
+                                Snapshot::<text::Renderer>::cast(&renderers[2])?
+                                    .borrow_mut_after()
+                                    .text = validator.generate_error_message(&text);
                             }
                             ret
                         }
@@ -202,20 +193,17 @@ impl Readline {
                     _ => true,
                 };
                 if ret {
-                    *error_message_state.after.borrow_mut() = error_message_state.init.clone();
+                    // *error_message_state.after.borrow_mut() = error_message_state.init.clone();
                 }
                 Ok(ret)
             },
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
-                Ok(renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .texteditor
-                    .text_without_cursor()
-                    .to_string())
+                Ok(
+                    Snapshot::<text_editor::Renderer>::cast_and_borrow_after(&renderers[1])?
+                        .texteditor
+                        .text_without_cursor()
+                        .to_string(),
+                )
             },
             false,
         )

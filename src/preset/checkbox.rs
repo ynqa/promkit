@@ -110,14 +110,11 @@ impl Checkbox {
             ],
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
-                Ok(renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<checkbox::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .checkbox
-                    .get())
+                Ok(
+                    Snapshot::<checkbox::Renderer>::cast_and_borrow_after(&renderers[1])?
+                        .checkbox
+                        .get(),
+                )
             },
             self.enable_mouse_scroll,
         )

@@ -194,37 +194,29 @@ impl QuerySelector {
                 Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             move |_: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text_editor_state = renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<text_editor::Renderer>>()
-                    .unwrap();
-                let select_state = renderers[2]
-                    .as_any()
-                    .downcast_ref::<Snapshot<listbox::Renderer>>()
-                    .unwrap();
+                let text_editor_state = Snapshot::<text_editor::Renderer>::cast(&renderers[1])?;
+                let select_state = Snapshot::<listbox::Renderer>::cast(&renderers[2])?;
 
-                if text_editor_state.text_changed() {
+                if text_editor_state.compare_states(|before, after| {
+                    before.texteditor.text() != after.texteditor.text()
+                }) {
                     let query = text_editor_state
-                        .after
-                        .borrow()
+                        .borrow_after()
                         .texteditor
                         .text_without_cursor()
                         .to_string();
 
-                    let list = filter(&query, select_state.init.listbox.items());
-                    select_state.after.borrow_mut().listbox = Listbox::from_iter(list);
+                    let list = filter(&query, select_state.init().listbox.items());
+                    select_state.borrow_mut_after().listbox = Listbox::from_iter(list);
                 }
                 Ok(true)
             },
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
-                Ok(renderers[2]
-                    .as_any()
-                    .downcast_ref::<Snapshot<listbox::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .listbox
-                    .get())
+                Ok(
+                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(&renderers[2])?
+                        .listbox
+                        .get(),
+                )
             },
             self.enable_mouse_scroll,
         )

@@ -169,6 +169,8 @@ pub trait Renderer: AsAny {
 pub trait AsAny {
     /// Returns `Any`.
     fn as_any(&self) -> &dyn Any;
+
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 /// `Evaluator` is defined using `dyn Fn` to leverage closures,

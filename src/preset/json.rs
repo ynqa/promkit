@@ -104,14 +104,11 @@ impl Json {
             ],
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<JsonPathSegment>> {
-                Ok(renderers[1]
-                    .as_any()
-                    .downcast_ref::<Snapshot<json::Renderer>>()
-                    .unwrap()
-                    .after
-                    .borrow()
-                    .json
-                    .get())
+                Ok(
+                    Snapshot::<json::Renderer>::cast_and_borrow_after(&renderers[1])?
+                        .json
+                        .get(),
+                )
             },
             self.enable_mouse_scroll,
         )

@@ -30,6 +30,9 @@ pub enum Error {
     #[error("{0} interrupted")]
     Interrupted(String),
 
-    #[error("error at evaluator phase: {0}")]
+    #[error("evaluation error: {0}")]
     EvaluatorError(String),
+
+    #[error("failed to downcast to {0}")]
+    TypeCastError(String),
 }
