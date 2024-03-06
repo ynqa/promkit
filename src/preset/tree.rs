@@ -114,7 +114,7 @@ impl Tree {
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
                 Ok(
-                    Snapshot::<tree::Renderer>::cast_and_borrow_after(&renderers[1])?
+                    Snapshot::<tree::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
                         .tree
                         .get(),
                 )

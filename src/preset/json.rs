@@ -105,7 +105,7 @@ impl Json {
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<JsonPathSegment>> {
                 Ok(
-                    Snapshot::<json::Renderer>::cast_and_borrow_after(&renderers[1])?
+                    Snapshot::<json::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
                         .json
                         .get(),
                 )

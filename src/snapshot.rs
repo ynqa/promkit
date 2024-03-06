@@ -107,7 +107,7 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     }
 
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>` and borrows its `after` state.
-    pub fn cast_and_borrow_after(renderer: &Box<dyn Renderer>) -> Result<Ref<R>> {
+    pub fn cast_and_borrow_after(renderer: &dyn Renderer) -> Result<Ref<R>> {
         let snapshot: &Snapshot<R> = renderer
             .as_any()
             .downcast_ref::<Snapshot<R>>()

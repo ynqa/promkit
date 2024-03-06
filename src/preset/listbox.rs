@@ -102,7 +102,7 @@ impl Listbox {
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
                 Ok(
-                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(&renderers[1])?
+                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
                         .listbox
                         .get(),
                 )

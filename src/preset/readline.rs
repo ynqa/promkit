@@ -167,10 +167,12 @@ impl Readline {
                 Box::new(Snapshot::<text::Renderer>::new(self.error_message_renderer)),
             ],
             move |event: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text = Snapshot::<text_editor::Renderer>::cast_and_borrow_after(&renderers[1])?
-                    .texteditor
-                    .text_without_cursor()
-                    .to_string();
+                let text = Snapshot::<text_editor::Renderer>::cast_and_borrow_after(
+                    renderers[1].as_ref(),
+                )?
+                .texteditor
+                .text_without_cursor()
+                .to_string();
 
                 let ret = match event {
                     Event::Key(KeyEvent {
@@ -199,10 +201,12 @@ impl Readline {
             },
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
                 Ok(
-                    Snapshot::<text_editor::Renderer>::cast_and_borrow_after(&renderers[1])?
-                        .texteditor
-                        .text_without_cursor()
-                        .to_string(),
+                    Snapshot::<text_editor::Renderer>::cast_and_borrow_after(
+                        renderers[1].as_ref(),
+                    )?
+                    .texteditor
+                    .text_without_cursor()
+                    .to_string(),
                 )
             },
             false,

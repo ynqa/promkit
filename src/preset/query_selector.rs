@@ -213,7 +213,7 @@ impl QuerySelector {
             },
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
                 Ok(
-                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(&renderers[2])?
+                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(renderers[2].as_ref())?
                         .listbox
                         .get(),
                 )

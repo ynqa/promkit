@@ -111,7 +111,7 @@ impl Checkbox {
             |_, _| Ok(true),
             |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
                 Ok(
-                    Snapshot::<checkbox::Renderer>::cast_and_borrow_after(&renderers[1])?
+                    Snapshot::<checkbox::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
                         .checkbox
                         .get(),
                 )
