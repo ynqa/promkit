@@ -27,6 +27,11 @@ impl JsonTree {
         }
     }
 
+    /// Returns a reference to the root node of the JSON tree.
+    pub fn root(&self) -> &JsonNode {
+        &self.root
+    }
+
     /// Returns a vector of all `JsonSyntaxKind` in the tree, representing the visible nodes.
     pub fn kinds(&self) -> Vec<JsonSyntaxKind> {
         self.cursor.contents().clone()
