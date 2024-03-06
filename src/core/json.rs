@@ -32,6 +32,12 @@ impl JsonTree {
         &self.root
     }
 
+    /// Replaces the current root node of the JSON tree with a new one.
+    pub fn replace(&mut self, new: JsonNode) {
+        self.root = new.clone();
+        self.cursor.replace(new.flatten_visibles());
+    }
+
     /// Returns a vector of all `JsonSyntaxKind` in the tree, representing the visible nodes.
     pub fn kinds(&self) -> Vec<JsonSyntaxKind> {
         self.cursor.contents().clone()
