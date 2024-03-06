@@ -16,7 +16,8 @@ promkit = "0.3.0"
 
 ## Features
 
-- Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
+- Support cross-platform both UNIX and Windows owing to
+[crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
   - Preset; Support for quickly setting up a UI by providing simple parameters
     - [Readline](#readline)
@@ -36,6 +37,8 @@ promkit = "0.3.0"
     - e.g. cursor, text and prompt string
   - Validation for user input and error message construction
   - Customizable key mappings
+- Mouse support (partially)
+  - Allows scrolling through lists with the mouse wheel
 
 ## Examples/Demos
 

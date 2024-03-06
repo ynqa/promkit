@@ -34,6 +34,8 @@
 //!   - Theme for designing the appearance of the prompt.
 //!     - e.g. cursor, text
 //!   - Validation for user input and error message construction.
+//! - Mouse support (partially)
+//!   - Allows scrolling through lists with the mouse wheel
 //!
 //! ## Examples/Demos
 //!
