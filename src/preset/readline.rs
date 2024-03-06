@@ -184,7 +184,7 @@ impl Readline {
                         Some(validator) => {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
-                                Snapshot::<text::Renderer>::cast(&renderers[2])?
+                                Snapshot::<text::Renderer>::cast(renderers[2].as_ref())?
                                     .borrow_mut_after()
                                     .text = validator.generate_error_message(&text);
                             }

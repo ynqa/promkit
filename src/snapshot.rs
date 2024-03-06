@@ -80,7 +80,7 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     }
 
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>`.
-    pub fn cast(renderer: &Box<dyn Renderer>) -> Result<&Snapshot<R>> {
+    pub fn cast(renderer: &dyn Renderer) -> Result<&Snapshot<R>> {
         let snapshot: &Snapshot<R> = renderer
             .as_any()
             .downcast_ref::<Snapshot<R>>()

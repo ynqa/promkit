@@ -194,8 +194,9 @@ impl QuerySelector {
                 Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             move |_: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text_editor_state = Snapshot::<text_editor::Renderer>::cast(&renderers[1])?;
-                let select_state = Snapshot::<listbox::Renderer>::cast(&renderers[2])?;
+                let text_editor_state =
+                    Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
+                let select_state = Snapshot::<listbox::Renderer>::cast(renderers[2].as_ref())?;
 
                 if text_editor_state.compare_states(|before, after| {
                     before.texteditor.text() != after.texteditor.text()
