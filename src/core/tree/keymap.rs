@@ -1,5 +1,8 @@
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    crossterm::event::{
+        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
+        MouseEventKind,
+    },
     Error, EventAction, Result,
 };
 
@@ -36,11 +39,28 @@ pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<E
         }) => {
             renderer.tree.backward();
         }
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::ScrollUp,
+            column: _,
+            row: _,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            renderer.tree.backward();
+        }
+
         Event::Key(KeyEvent {
             code: KeyCode::Down,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
+        }) => {
+            renderer.tree.forward();
+        }
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::ScrollDown,
+            column: _,
+            row: _,
+            modifiers: KeyModifiers::NONE,
         }) => {
             renderer.tree.forward();
         }

@@ -1,5 +1,8 @@
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    crossterm::event::{
+        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
+        MouseEventKind,
+    },
     Error, EventAction, Result,
 };
 
@@ -36,6 +39,15 @@ pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<E
         }) => {
             renderer.checkbox.backward();
         }
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::ScrollUp,
+            column: _,
+            row: _,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            renderer.checkbox.backward();
+        }
+
         Event::Key(KeyEvent {
             code: KeyCode::Down,
             modifiers: KeyModifiers::NONE,
@@ -44,6 +56,15 @@ pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<E
         }) => {
             renderer.checkbox.forward();
         }
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::ScrollDown,
+            column: _,
+            row: _,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            renderer.checkbox.forward();
+        }
+
         Event::Key(KeyEvent {
             code: KeyCode::Char(' '),
             modifiers: KeyModifiers::NONE,
