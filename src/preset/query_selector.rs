@@ -194,21 +194,20 @@ impl QuerySelector {
                 Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
             ],
             move |_: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text_editor_state =
-                    Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
-                let select_state = Snapshot::<listbox::Renderer>::cast(renderers[2].as_ref())?;
+                let text_snapshot = Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
+                let list_snapshot = Snapshot::<listbox::Renderer>::cast(renderers[2].as_ref())?;
 
-                if text_editor_state.compare_states(|before, after| {
+                if text_snapshot.compare_states(|before, after| {
                     before.texteditor.text() != after.texteditor.text()
                 }) {
-                    let query = text_editor_state
+                    let query = text_snapshot
                         .borrow_after()
                         .texteditor
                         .text_without_cursor()
                         .to_string();
 
-                    let list = filter(&query, select_state.init().listbox.items());
-                    select_state.borrow_mut_after().listbox = Listbox::from_iter(list);
+                    let list = filter(&query, list_snapshot.init().listbox.items());
+                    list_snapshot.borrow_mut_after().listbox = Listbox::from_iter(list);
                 }
                 Ok(true)
             },
