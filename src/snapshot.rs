@@ -106,6 +106,11 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
         compare(&self.before, &self.after.borrow())
     }
 
+    /// Resets the `after` state to the initial state (`init`).
+    pub fn reset_after_to_init(&self) {
+        *self.after.borrow_mut() = self.init.clone();
+    }
+
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>` and borrows its `after` state.
     pub fn cast_and_borrow_after(renderer: &dyn Renderer) -> Result<Ref<R>> {
         let snapshot: &Snapshot<R> = renderer

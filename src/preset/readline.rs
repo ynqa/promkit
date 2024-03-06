@@ -174,6 +174,7 @@ impl Readline {
                 .text_without_cursor()
                 .to_string();
 
+                let error_message = Snapshot::<text::Renderer>::cast(renderers[2].as_ref())?;
                 let ret = match event {
                     Event::Key(KeyEvent {
                         code: KeyCode::Enter,
@@ -184,9 +185,8 @@ impl Readline {
                         Some(validator) => {
                             let ret = validator.validate(&text);
                             if !validator.validate(&text) {
-                                Snapshot::<text::Renderer>::cast(renderers[2].as_ref())?
-                                    .borrow_mut_after()
-                                    .text = validator.generate_error_message(&text);
+                                error_message.borrow_mut_after().text =
+                                    validator.generate_error_message(&text);
                             }
                             ret
                         }
@@ -195,7 +195,7 @@ impl Readline {
                     _ => true,
                 };
                 if ret {
-                    // *error_message_state.after.borrow_mut() = error_message_state.init.clone();
+                    error_message.reset_after_to_init()
                 }
                 Ok(ret)
             },
