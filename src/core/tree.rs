@@ -40,10 +40,10 @@ impl Tree {
 
     /// Retrieves the data of the current node pointed by the cursor, along with its path from the root.
     pub fn get(&self) -> Vec<String> {
-        let kind = self.cursor.contents().get(self.position()).unwrap();
+        let kind = self.cursor.contents()[self.position()].clone();
         match kind {
             Kind::Folded { id, path } | Kind::Unfolded { id, path } => {
-                let mut ret = self.root.get_waypoints(path);
+                let mut ret = self.root.get_waypoints(&path);
                 ret.push(id.to_string());
                 ret
             }
@@ -52,12 +52,12 @@ impl Tree {
 
     /// Toggles the state of the current node and updates the cursor position accordingly.
     pub fn toggle(&mut self) {
-        if let Some(Kind::Folded { path, .. }) | Some(Kind::Unfolded { path, .. }) =
-            self.cursor.contents().get(self.position())
-        {
-            self.root.toggle(path);
-            self.cursor = Cursor::new_with_position(self.root.flatten_visibles(), self.position());
-        }
+        let path = match self.cursor.contents()[self.position()].clone() {
+            Kind::Folded { path, .. } => path,
+            Kind::Unfolded { path, .. } => path,
+        };
+        self.root.toggle(&path);
+        self.cursor = Cursor::new_with_position(self.root.flatten_visibles(), self.position());
     }
 
     /// Moves the cursor backward in the tree, if possible.

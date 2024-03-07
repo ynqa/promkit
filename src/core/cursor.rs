@@ -75,7 +75,7 @@ impl<C: Len> Cursor<C> {
     /// Moves the cursor one position forward, if possible. Returns `true` if successful.
     pub fn forward(&mut self) -> bool {
         let l = self.contents.len();
-        if l != 0 && self.position < l - 1 {
+        if l != 0 && self.position < l.saturating_sub(1) {
             self.position += 1;
             return true;
         }
@@ -98,7 +98,7 @@ impl<C: Len> Cursor<C> {
         if l == 0 {
             self.position = 0
         } else {
-            self.position = l - 1;
+            self.position = l.saturating_sub(1);
         }
     }
 
