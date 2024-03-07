@@ -33,6 +33,10 @@ impl JsonBundle {
         self.cursor.global_position()
     }
 
+    pub fn roots(&self) -> &Vec<JsonNode> {
+        &self.roots
+    }
+
     pub fn flatten_kinds(&self) -> Vec<JsonSyntaxKind> {
         self.roots
             .iter()
