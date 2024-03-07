@@ -3,7 +3,9 @@ use crate::core::cursor::Cursor;
 mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
 mod render;
-pub use render::Renderer;
+pub use render::{Renderer, Theme};
+pub mod bundle;
+pub use bundle::JsonBundle;
 pub mod keymap;
 
 /// A `Json` structure that manages a JSON document as a tree of nodes.

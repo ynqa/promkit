@@ -1,5 +1,7 @@
 mod len;
 use len::Len;
+mod composite;
+pub use composite::CompositeCursor;
 
 /// A generic cursor structure for navigating and manipulating collections.
 /// It maintains a position within the collection
