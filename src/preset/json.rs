@@ -30,7 +30,7 @@ impl Json {
                     .build(),
             },
             json_renderer: json::Renderer {
-                json: json::JsonTree::new(root),
+                json: json::Json::new(root),
                 keymap: KeymapManager::new("default", json::keymap::default_keymap),
                 curly_brackets_style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))

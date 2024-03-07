@@ -11,7 +11,7 @@ use crate::{
     AsAny, EventAction, Result,
 };
 
-use super::{JsonSyntaxKind, JsonTree};
+use super::{Json, JsonSyntaxKind};
 
 /// Represents a renderer for the `Json` component,
 /// capable of visualizing JSON structures in a pane.
@@ -20,7 +20,7 @@ use super::{JsonSyntaxKind, JsonTree};
 /// to render a specific number of lines with a specified indentation level for nested elements.
 #[derive(Clone)]
 pub struct Renderer {
-    pub json: JsonTree,
+    pub json: Json,
 
     pub keymap: KeymapManager<Self>,
 
