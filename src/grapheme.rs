@@ -7,8 +7,6 @@ use std::{
 
 use unicode_width::UnicodeWidthChar;
 
-use crate::Len;
-
 mod styled;
 pub use styled::{matrixify, trim, StyledGraphemes};
 
@@ -86,18 +84,6 @@ impl<S: AsRef<str>> From<S> for Graphemes {
     /// Creates a `Graphemes` instance from a string slice, converting each char to a `Grapheme`.
     fn from(string: S) -> Self {
         string.as_ref().chars().map(Grapheme::from).collect()
-    }
-}
-
-impl Len for Graphemes {
-    /// Returns the number of `Grapheme` instances in the collection.
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    /// Checks if the collection is empty.
-    fn is_empty(&self) -> bool {
-        self.0.is_empty()
     }
 }
 

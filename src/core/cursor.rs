@@ -1,4 +1,5 @@
-use crate::core::Len;
+mod len;
+use len::Len;
 
 /// A generic cursor structure for navigating and manipulating collections.
 /// It maintains a position within the collection
