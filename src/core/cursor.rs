@@ -22,8 +22,19 @@ impl<C: Len> Cursor<C> {
     }
 
     /// Constructs a new `Cursor` with the given contents and an initial position.
+    /// If the given position is greater than the length of the contents,
+    /// it sets the position to the last item of the contents.
     pub fn new_with_position(contents: C, position: usize) -> Self {
-        Self { contents, position }
+        let adjusted_position = if position >= contents.len() {
+            contents.len().saturating_sub(1)
+        } else {
+            position
+        };
+
+        Self {
+            contents,
+            position: adjusted_position,
+        }
     }
 
     /// Returns a reference to the contents.
@@ -45,7 +56,7 @@ impl<C: Len> Cursor<C> {
     /// If the current position is beyond the end of the new contents,
     /// the cursor's position is adjusted to the last item of the new contents.
     pub fn replace(&mut self, new: C) {
-        let new_tail = new.len() - 1;
+        let new_tail = new.len().saturating_sub(1);
         if self.position() > new_tail {
             self.position = new_tail;
         }
@@ -54,8 +65,8 @@ impl<C: Len> Cursor<C> {
 
     /// Moves the cursor one position backward, if possible. Returns `true` if successful.
     pub fn backward(&mut self) -> bool {
-        if 0 < self.position {
-            self.position -= 1;
+        if self.position > 0 {
+            self.position = self.position.saturating_sub(1);
             return true;
         }
         false
@@ -93,7 +104,7 @@ impl<C: Len> Cursor<C> {
 
     /// Checks if the cursor is at the tail (end) of the contents.
     pub fn is_tail(&self) -> bool {
-        self.position == self.contents.len() - 1
+        self.position == self.contents.len().saturating_sub(1)
     }
 }
 
