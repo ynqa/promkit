@@ -33,6 +33,7 @@ impl Default for TextEditor {
             // Set cursor
             Graphemes::from(" "),
             0,
+            false,
         ))
     }
 }
@@ -70,7 +71,7 @@ impl TextEditor {
         let mut buf = new.to_owned();
         buf.push(' ');
         let pos = buf.len() - 1;
-        *self = Self(Cursor::new(Graphemes::from(buf), pos));
+        *self = Self(Cursor::new(Graphemes::from(buf), pos, false));
     }
 
     /// Inserts a character at the current cursor position.
@@ -135,7 +136,7 @@ mod test {
     use super::TextEditor;
 
     fn new_with_position(s: String, p: usize) -> TextEditor {
-        TextEditor(Cursor::new(Graphemes::from(s), p))
+        TextEditor(Cursor::new(Graphemes::from(s), p, false))
     }
 
     mod masking {

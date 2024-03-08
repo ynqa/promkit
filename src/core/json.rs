@@ -25,7 +25,7 @@ impl Json {
     pub fn new(root: JsonNode) -> Self {
         Self {
             root: root.clone(),
-            cursor: Cursor::new(root.flatten_visibles(), 0),
+            cursor: Cursor::new(root.flatten_visibles(), 0, false),
         }
     }
 
@@ -71,7 +71,7 @@ impl Json {
         };
 
         self.root.toggle(&route);
-        self.cursor = Cursor::new(self.root.flatten_visibles(), self.position());
+        self.cursor = Cursor::new(self.root.flatten_visibles(), self.position(), false);
     }
 
     /// Returns the current position of the cursor within the JSON tree.

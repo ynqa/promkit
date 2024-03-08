@@ -8,17 +8,20 @@ pub use composite::CompositeCursor;
 /// and provides methods to move forward, backward,
 /// to the head, and to the tail of the collection.
 /// It requires the collection to implement the `Len` trait.
+/// The `cyclic` parameter allows the cursor to cycle through the collection.
 #[derive(Clone)]
 pub struct Cursor<C> {
     contents: C,
     position: usize,
+    cyclic: bool,
 }
 
 impl<C: Len> Cursor<C> {
-    /// Constructs a new `Cursor` with the given contents and an initial position.
+    /// Constructs a new `Cursor` with the given contents, an initial position, and a cyclic flag.
     /// If the given position is greater than the length of the contents,
     /// it sets the position to the last item of the contents.
-    pub fn new(contents: C, position: usize) -> Self {
+    /// If `cyclic` is true, the cursor can cycle through the collection.
+    pub fn new(contents: C, position: usize, cyclic: bool) -> Self {
         let adjusted_position = if position >= contents.len() {
             contents.len().saturating_sub(1)
         } else {
@@ -28,6 +31,7 @@ impl<C: Len> Cursor<C> {
         Self {
             contents,
             position: adjusted_position,
+            cyclic, // 追加
         }
     }
 
@@ -58,22 +62,32 @@ impl<C: Len> Cursor<C> {
     }
 
     /// Moves the cursor one position backward, if possible. Returns `true` if successful.
+    /// If `cyclic` is true and the cursor is at the head, it moves to the tail.
     pub fn backward(&mut self) -> bool {
         if self.position > 0 {
             self.position = self.position.saturating_sub(1);
-            return true;
+            true
+        } else if self.cyclic && self.contents.len() > 0 {
+            self.position = self.contents.len().saturating_sub(1);
+            true
+        } else {
+            false
         }
-        false
     }
 
     /// Moves the cursor one position forward, if possible. Returns `true` if successful.
+    /// If `cyclic` is true and the cursor is at the tail, it moves to the head.
     pub fn forward(&mut self) -> bool {
         let l = self.contents.len();
         if l != 0 && self.position < l.saturating_sub(1) {
             self.position += 1;
-            return true;
+            true
+        } else if self.cyclic && l != 0 {
+            self.position = 0;
+            true
+        } else {
+            false
         }
-        false
     }
 
     /// Moves the cursor to the head (start) of the contents.
@@ -109,7 +123,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = Cursor::new(vec!["a", "b", "c"], 0);
+            let mut b = Cursor::new(vec!["a", "b", "c"], 0, false);
             assert!(!b.backward());
             b.position = 1;
             assert!(b.backward());
@@ -121,7 +135,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = Cursor::new(vec!["a", "b", "c"], 0);
+            let mut b = Cursor::new(vec!["a", "b", "c"], 0, false);
             assert!(b.forward());
             b.position = b.contents.len() - 1;
             assert!(!b.forward());
