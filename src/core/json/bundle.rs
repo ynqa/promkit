@@ -12,7 +12,7 @@ use crate::{
     AsAny, Error, EventAction, Result,
 };
 
-use super::{JsonNode, JsonSyntaxKind};
+use super::{JsonNode, JsonPath, JsonSyntaxKind};
 
 #[derive(Clone)]
 pub struct JsonBundle {
@@ -42,6 +42,19 @@ impl JsonBundle {
             .iter()
             .flat_map(|root| root.flatten_visibles().into_iter())
             .collect()
+    }
+
+    pub fn current_path(&self) -> JsonPath {
+        let (index, inner) = self.cursor.current_indices();
+        let kind = self.cursor.bundle()[index][inner].clone();
+        let binding = vec![];
+        let path = match kind {
+            JsonSyntaxKind::ArrayEntry { path, .. } => path,
+            JsonSyntaxKind::MapEntry { path, .. } => path,
+            _ => binding,
+        };
+
+        path.clone()
     }
 
     pub fn toggle(&mut self) {
