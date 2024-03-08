@@ -3,14 +3,14 @@ use super::Len;
 #[derive(Clone)]
 pub struct CompositeCursor<C> {
     bundle: Vec<C>,
-    global_position: usize,
+    cross_contents_position: usize,
 }
 
 impl<C: Len> CompositeCursor<C> {
     pub fn new<I: IntoIterator<Item = C>>(bundle: I) -> Self {
         Self {
             bundle: bundle.into_iter().collect(),
-            global_position: 0,
+            cross_contents_position: 0,
         }
     }
 
@@ -25,7 +25,7 @@ impl<C: Len> CompositeCursor<C> {
 
         Self {
             bundle,
-            global_position: adjusted_position,
+            cross_contents_position: adjusted_position,
         }
     }
 
@@ -33,16 +33,16 @@ impl<C: Len> CompositeCursor<C> {
         &self.bundle
     }
 
-    pub fn global_position(&self) -> usize {
-        self.global_position
+    pub fn cross_contents_position(&self) -> usize {
+        self.cross_contents_position
     }
 
-    pub fn current_indices(&self) -> (usize, usize) {
+    pub fn current_bundle_index_and_inner_position(&self) -> (usize, usize) {
         let mut accumulated_len = 0;
         for (bundle_index, c) in self.bundle.iter().enumerate() {
             let c_len = c.len();
-            if accumulated_len + c_len > self.global_position {
-                return (bundle_index, self.global_position - accumulated_len);
+            if accumulated_len + c_len > self.cross_contents_position {
+                return (bundle_index, self.cross_contents_position - accumulated_len);
             }
             accumulated_len += c_len;
         }
@@ -51,8 +51,8 @@ impl<C: Len> CompositeCursor<C> {
 
     pub fn forward(&mut self) -> bool {
         let total_len: usize = self.bundle.iter().map(|c| c.len()).sum();
-        if self.global_position < total_len.saturating_sub(1) {
-            self.global_position += 1;
+        if self.cross_contents_position < total_len.saturating_sub(1) {
+            self.cross_contents_position += 1;
             true
         } else {
             false
@@ -60,8 +60,8 @@ impl<C: Len> CompositeCursor<C> {
     }
 
     pub fn backward(&mut self) -> bool {
-        if self.global_position > 0 {
-            self.global_position = self.global_position.saturating_sub(1);
+        if self.cross_contents_position > 0 {
+            self.cross_contents_position = self.cross_contents_position.saturating_sub(1);
             true
         } else {
             false
@@ -70,16 +70,16 @@ impl<C: Len> CompositeCursor<C> {
 
     /// Moves the cursor to the head (start) of the bundle.
     pub fn move_to_head(&mut self) {
-        self.global_position = 0
+        self.cross_contents_position = 0
     }
 
     /// Moves the cursor to the tail (end) of the bundle.
     pub fn move_to_tail(&mut self) {
         let total_len: usize = self.bundle.iter().map(|c| c.len()).sum();
         if total_len == 0 {
-            self.global_position = 0
+            self.cross_contents_position = 0
         } else {
-            self.global_position = total_len.saturating_sub(1);
+            self.cross_contents_position = total_len.saturating_sub(1);
         }
     }
 }

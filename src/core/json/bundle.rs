@@ -29,10 +29,6 @@ impl JsonBundle {
         }
     }
 
-    pub fn global_position(&self) -> usize {
-        self.cursor.global_position()
-    }
-
     pub fn roots(&self) -> &Vec<JsonNode> {
         &self.roots
     }
@@ -45,7 +41,7 @@ impl JsonBundle {
     }
 
     pub fn current_path(&self) -> JsonPath {
-        let (index, inner) = self.cursor.current_indices();
+        let (index, inner) = self.cursor.current_bundle_index_and_inner_position();
         let kind = self.cursor.bundle()[index][inner].clone();
         let binding = vec![];
         let path = match kind {
@@ -62,7 +58,7 @@ impl JsonBundle {
     }
 
     pub fn toggle(&mut self) {
-        let (index, inner) = self.cursor.current_indices();
+        let (index, inner) = self.cursor.current_bundle_index_and_inner_position();
 
         let kind = self.cursor.bundle()[index][inner].clone();
         let route = match kind {
@@ -76,7 +72,7 @@ impl JsonBundle {
         self.roots[index].toggle(&route);
         self.cursor = CompositeCursor::new_with_position(
             self.roots.iter().map(|r| r.flatten_visibles()),
-            self.cursor.global_position(),
+            self.cursor.cross_contents_position(),
         );
     }
 
@@ -188,7 +184,7 @@ impl crate::Renderer for Renderer {
             .iter()
             .enumerate()
             .map(|(i, kind)| {
-                if i == self.bundle.global_position() {
+                if i == self.bundle.cursor.cross_contents_position() {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(
                             " ".repeat(super::Renderer::indent_level(kind, &self.theme)),
@@ -209,7 +205,11 @@ impl crate::Renderer for Renderer {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(layout, self.bundle.global_position(), self.theme.lines)
+        Pane::new(
+            layout,
+            self.bundle.cursor.cross_contents_position(),
+            self.theme.lines,
+        )
     }
 
     fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
