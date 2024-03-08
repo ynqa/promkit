@@ -49,8 +49,12 @@ impl JsonBundle {
         let kind = self.cursor.bundle()[index][inner].clone();
         let binding = vec![];
         let path = match kind {
+            JsonSyntaxKind::ArrayStart { path, .. } => path,
             JsonSyntaxKind::ArrayEntry { path, .. } => path,
+            JsonSyntaxKind::ArrayFolded { path, .. } => path,
+            JsonSyntaxKind::MapStart { path, .. } => path,
             JsonSyntaxKind::MapEntry { path, .. } => path,
+            JsonSyntaxKind::MapFolded { path, .. } => path,
             _ => binding,
         };
 
