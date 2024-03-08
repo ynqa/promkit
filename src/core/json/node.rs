@@ -96,7 +96,7 @@ impl TryFrom<&str> for JsonNode {
     type Error = Error;
 
     fn try_from(json_str: &str) -> Result<Self> {
-        Self::try_new_with_visible_depth(json_str, None)
+        Self::try_new(json_str, None)
     }
 }
 
@@ -111,17 +111,12 @@ impl JsonNode {
     ///
     /// # Returns
     /// A `JsonNode` with children visibility set according to the specified depth.
-    pub fn new_with_visible_depth(value: serde_json::Value, depth: Option<usize>) -> Self {
+    pub fn new(value: serde_json::Value, depth: Option<usize>) -> Self {
         match value {
             serde_json::Value::Object(map) => {
                 let children = map
                     .into_iter()
-                    .map(|(k, v)| {
-                        (
-                            k,
-                            JsonNode::new_with_visible_depth(v, depth.map(|d| d.saturating_sub(1))),
-                        )
-                    })
+                    .map(|(k, v)| (k, JsonNode::new(v, depth.map(|d| d.saturating_sub(1)))))
                     .collect();
                 JsonNode::Object {
                     children,
@@ -131,9 +126,7 @@ impl JsonNode {
             serde_json::Value::Array(vec) => {
                 let children = vec
                     .into_iter()
-                    .map(|v| {
-                        JsonNode::new_with_visible_depth(v, depth.map(|d| d.saturating_sub(1)))
-                    })
+                    .map(|v| JsonNode::new(v, depth.map(|d| d.saturating_sub(1))))
                     .collect();
                 JsonNode::Array {
                     children,
@@ -159,12 +152,9 @@ impl JsonNode {
     ///
     /// # Errors
     /// Returns an error if the given string is not valid JSON.
-    pub fn try_new_with_visible_depth<J: AsRef<str>>(
-        json_str: J,
-        depth: Option<usize>,
-    ) -> Result<Self> {
+    pub fn try_new<J: AsRef<str>>(json_str: J, depth: Option<usize>) -> Result<Self> {
         let value: serde_json::Value = serde_json::from_str(json_str.as_ref())?;
-        Ok(Self::new_with_visible_depth(value, depth))
+        Ok(Self::new(value, depth))
     }
 
     /// Retrieves a reference to a `JsonNode` at a specified JSON path.
@@ -382,14 +372,14 @@ mod test {
         }
     }
 
-    mod try_new_with_visible_depth {
+    mod new {
         use super::*;
         use crate::serde_json::json;
 
         #[test]
         fn test_one_level_depth() {
             let value: serde_json::Value = serde_json::from_str(JSON_STR).unwrap();
-            let node = JsonNode::new_with_visible_depth(value, Some(1));
+            let node = JsonNode::new(value, Some(1));
             let expected = JsonNode::Object {
                 children: IndexMap::from_iter(vec![
                     ("number".to_string(), JsonNode::Leaf(json!(1))),
@@ -589,7 +579,7 @@ mod test {
         }
     }
 
-    mod from_str {
+    mod try_from {
         use super::*;
         use crate::serde_json::Number;
 
