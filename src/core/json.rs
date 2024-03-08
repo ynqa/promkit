@@ -34,19 +34,13 @@ impl Json {
         &self.root
     }
 
-    /// Replaces the current root node of the JSON tree with a new one.
-    pub fn replace(&mut self, new: JsonNode) {
-        self.root = new.clone();
-        self.cursor.replace(new.flatten_visibles());
-    }
-
     /// Returns a vector of all `JsonSyntaxKind` in the tree, representing the visible nodes.
     pub fn kinds(&self) -> Vec<JsonSyntaxKind> {
         self.cursor.contents().clone()
     }
 
     /// Retrieves the `JsonPath` of the current node pointed by the cursor.
-    pub fn get(&self) -> JsonPath {
+    pub fn path_from_root(&self) -> JsonPath {
         let kind = self.cursor.contents()[self.position()].clone();
         let binding = vec![];
         let path = match kind {
@@ -56,6 +50,12 @@ impl Json {
         };
 
         path.clone()
+    }
+
+    /// Replaces the current root node of the JSON tree with a new one.
+    pub fn replace(&mut self, new: JsonNode) {
+        self.root = new.clone();
+        self.cursor.replace(new.flatten_visibles());
     }
 
     /// Toggles the state of the current node (e.g., from expanded to folded) and updates the cursor position accordingly.
