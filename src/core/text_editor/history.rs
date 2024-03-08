@@ -18,12 +18,12 @@ use crate::{core::cursor::Cursor, Result};
 #[derive(Clone)]
 pub struct History {
     /// Buffer storing the history of inputs as strings.
-    pub cursor: Cursor<VecDeque<String>>,
+    cursor: Cursor<VecDeque<String>>,
 
     /// Optional limit on the number of entries in the history.
     /// If set, the history will not exceed this number of entries,
     /// and older entries will be removed to make room for new ones.
-    limit_size: Option<usize>,
+    pub limit_size: Option<usize>,
 }
 
 impl Default for History {
@@ -38,13 +38,6 @@ impl Default for History {
 }
 
 impl History {
-    pub fn new_with_limit_size(limit_size: usize) -> Self {
-        Self {
-            cursor: Cursor::new(VecDeque::from([String::new()])),
-            limit_size: Some(limit_size),
-        }
-    }
-
     /// Saves the current history items to a file in reverse order (newest first),
     /// respecting the optional limit on the number of entries if provided.
     ///
@@ -94,9 +87,9 @@ impl History {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
 
-        let mut ret = match limit_size {
-            Some(limit) => Self::new_with_limit_size(limit),
-            None => Self::default(),
+        let mut ret = Self {
+            limit_size,
+            ..Default::default()
         };
 
         for line in reader.lines() {
@@ -215,7 +208,10 @@ mod test {
 
         #[test]
         fn test_with_limit_size() {
-            let mut h = History::new_with_limit_size(2);
+            let mut h = History {
+                limit_size: Some(2),
+                ..Default::default()
+            };
             h.insert("item1");
             h.insert("item2");
             h.insert("item3");
