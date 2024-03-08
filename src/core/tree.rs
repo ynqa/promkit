@@ -24,7 +24,7 @@ impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             root: root.clone(),
-            cursor: Cursor::new(root.flatten_visibles()),
+            cursor: Cursor::new(root.flatten_visibles(), 0),
         }
     }
 
@@ -57,7 +57,7 @@ impl Tree {
             Kind::Unfolded { path, .. } => path,
         };
         self.root.toggle(&path);
-        self.cursor = Cursor::new_with_position(self.root.flatten_visibles(), self.position());
+        self.cursor = Cursor::new(self.root.flatten_visibles(), self.position());
     }
 
     /// Moves the cursor backward in the tree, if possible.

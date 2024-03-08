@@ -15,18 +15,10 @@ pub struct Cursor<C> {
 }
 
 impl<C: Len> Cursor<C> {
-    /// Constructs a new `Cursor` with the given contents, initially positioned at the start.
-    pub fn new(contents: C) -> Self {
-        Self {
-            contents,
-            position: 0,
-        }
-    }
-
     /// Constructs a new `Cursor` with the given contents and an initial position.
     /// If the given position is greater than the length of the contents,
     /// it sets the position to the last item of the contents.
-    pub fn new_with_position(contents: C, position: usize) -> Self {
+    pub fn new(contents: C, position: usize) -> Self {
         let adjusted_position = if position >= contents.len() {
             contents.len().saturating_sub(1)
         } else {
@@ -117,7 +109,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = Cursor::new(vec!["a", "b", "c"]);
+            let mut b = Cursor::new(vec!["a", "b", "c"], 0);
             assert!(!b.backward());
             b.position = 1;
             assert!(b.backward());
@@ -129,7 +121,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut b = Cursor::new(vec!["a", "b", "c"]);
+            let mut b = Cursor::new(vec!["a", "b", "c"], 0);
             assert!(b.forward());
             b.position = b.contents.len() - 1;
             assert!(!b.forward());

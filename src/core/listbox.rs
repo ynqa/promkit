@@ -23,6 +23,7 @@ impl<T: fmt::Display> FromIterator<T> for Listbox {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
             iter.into_iter().map(|e| format!("{}", e)).collect(),
+            0,
         ))
     }
 }

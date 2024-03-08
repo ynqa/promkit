@@ -31,7 +31,7 @@ impl Default for History {
     /// and initializes the position at 0.
     fn default() -> Self {
         Self {
-            cursor: Cursor::new(VecDeque::from([String::new()])),
+            cursor: Cursor::new(VecDeque::from([String::new()]), 0),
             limit_size: None,
         }
     }
