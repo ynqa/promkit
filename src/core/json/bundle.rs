@@ -40,7 +40,7 @@ impl JsonBundle {
             .collect()
     }
 
-    pub fn current_path(&self) -> JsonPath {
+    pub fn current_bundle_path_from_root(&self) -> JsonPath {
         let (index, inner) = self.cursor.current_bundle_index_and_inner_position();
         let kind = self.cursor.bundle()[index][inner].clone();
         let binding = vec![];

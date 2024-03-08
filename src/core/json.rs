@@ -47,8 +47,12 @@ impl Json {
     pub fn path_from_root(&self) -> Option<JsonPath> {
         let kind = self.current_kind().clone();
         let path = match kind {
+            JsonSyntaxKind::ArrayStart { path, .. } => path,
             JsonSyntaxKind::ArrayEntry { path, .. } => path,
+            JsonSyntaxKind::ArrayFolded { path, .. } => path,
+            JsonSyntaxKind::MapStart { path, .. } => path,
             JsonSyntaxKind::MapEntry { path, .. } => path,
+            JsonSyntaxKind::MapFolded { path, .. } => path,
             _ => return None,
         };
 
