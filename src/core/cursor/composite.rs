@@ -7,14 +7,7 @@ pub struct CompositeCursor<C> {
 }
 
 impl<C: Len> CompositeCursor<C> {
-    pub fn new<I: IntoIterator<Item = C>>(bundle: I) -> Self {
-        Self {
-            bundle: bundle.into_iter().collect(),
-            cross_contents_position: 0,
-        }
-    }
-
-    pub fn new_with_position<I: IntoIterator<Item = C>>(bundle_iter: I, position: usize) -> Self {
+    pub fn new<I: IntoIterator<Item = C>>(bundle_iter: I, position: usize) -> Self {
         let bundle: Vec<C> = bundle_iter.into_iter().collect();
         let total_len: usize = bundle.iter().map(|c| c.len()).sum();
         let adjusted_position = if position >= total_len {

@@ -25,7 +25,7 @@ impl JsonBundle {
         let roots: Vec<JsonNode> = iter.into_iter().collect();
         Self {
             roots: roots.clone(),
-            cursor: CompositeCursor::new(roots.iter().map(|r| r.flatten_visibles())),
+            cursor: CompositeCursor::new(roots.iter().map(|r| r.flatten_visibles()), 0),
         }
     }
 
@@ -70,7 +70,7 @@ impl JsonBundle {
         };
 
         self.roots[index].toggle(&route);
-        self.cursor = CompositeCursor::new_with_position(
+        self.cursor = CompositeCursor::new(
             self.roots.iter().map(|r| r.flatten_visibles()),
             self.cursor.cross_contents_position(),
         );
