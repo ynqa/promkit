@@ -109,7 +109,8 @@ impl Json {
                 Ok(
                     Snapshot::<json::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
                         .json
-                        .path_from_root(),
+                        .path_from_root()
+                        .unwrap_or_default(),
                 )
             },
             self.enable_mouse_scroll,
