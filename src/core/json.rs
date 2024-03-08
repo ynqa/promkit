@@ -39,9 +39,13 @@ impl Json {
         self.cursor.contents().clone()
     }
 
+    fn current_kind(&self) -> &JsonSyntaxKind {
+        &self.cursor.contents()[self.position()]
+    }
+
     /// Retrieves the `JsonPath` of the current node pointed by the cursor.
     pub fn path_from_root(&self) -> JsonPath {
-        let kind = self.cursor.contents()[self.position()].clone();
+        let kind = self.current_kind().clone();
         let binding = vec![];
         let path = match kind {
             JsonSyntaxKind::ArrayEntry { path, .. } => path,
@@ -54,7 +58,7 @@ impl Json {
 
     /// Toggles the state of the current node (e.g., from expanded to folded) and updates the cursor position accordingly.
     pub fn toggle(&mut self) {
-        let kind = self.cursor.contents()[self.position()].clone();
+        let kind = self.current_kind().clone();
         let route = match kind {
             JsonSyntaxKind::ArrayStart { path, .. } => path,
             JsonSyntaxKind::ArrayFolded { path, .. } => path,
