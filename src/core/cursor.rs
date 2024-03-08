@@ -50,17 +50,6 @@ impl<C: Len> Cursor<C> {
         self.position
     }
 
-    /// Replaces the current contents with the new contents provided.
-    /// If the current position is beyond the end of the new contents,
-    /// the cursor's position is adjusted to the last item of the new contents.
-    pub fn replace(&mut self, new: C) {
-        let new_tail = new.len().saturating_sub(1);
-        if self.position() > new_tail {
-            self.position = new_tail;
-        }
-        self.contents = new;
-    }
-
     /// Moves the cursor one position backward, if possible. Returns `true` if successful.
     /// If `cyclic` is true and the cursor is at the head, it moves to the tail.
     pub fn backward(&mut self) -> bool {
