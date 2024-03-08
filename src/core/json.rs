@@ -52,12 +52,6 @@ impl Json {
         path.clone()
     }
 
-    /// Replaces the current root node of the JSON tree with a new one.
-    pub fn replace(&mut self, new: JsonNode) {
-        self.root = new.clone();
-        self.cursor.replace(new.flatten_visibles());
-    }
-
     /// Toggles the state of the current node (e.g., from expanded to folded) and updates the cursor position accordingly.
     pub fn toggle(&mut self) {
         let kind = self.cursor.contents()[self.position()].clone();
