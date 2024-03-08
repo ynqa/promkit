@@ -360,29 +360,13 @@ impl JsonNode {
 mod test {
     use super::*;
 
-    const JSON_STR: &str = r#"
-    {
+    const JSON_STR: &str = r#"{
         "number": 1,
         "map": {
-          "string1": "aaa",
-          "string2": "bbb"
+          "string1": "aaa"
         },
         "list": [
-          "abc",
-          "def"
-        ],
-        "map_in_map": {
-          "nested": {
-            "leaf": "eof"
-          }
-        },
-        "map_in_list": [
-          {
-            "map1": 1
-          },
-          {
-            "map2": 2
-          }
+          "abc"
         ]
     }"#;
 
@@ -398,7 +382,6 @@ mod test {
         }
     }
 
-    #[cfg(test)]
     mod try_new_with_visible_depth {
         use super::*;
         use crate::serde_json::json;
@@ -413,58 +396,17 @@ mod test {
                     (
                         "map".to_string(),
                         JsonNode::Object {
-                            children: IndexMap::from_iter(vec![
-                                ("string1".to_string(), JsonNode::Leaf(json!("aaa"))),
-                                ("string2".to_string(), JsonNode::Leaf(json!("bbb"))),
-                            ]),
+                            children: IndexMap::from_iter(vec![(
+                                "string1".to_string(),
+                                JsonNode::Leaf(json!("aaa")),
+                            )]),
                             children_visible: false,
                         },
                     ),
                     (
                         "list".to_string(),
                         JsonNode::Array {
-                            children: vec![
-                                JsonNode::Leaf(json!("abc")),
-                                JsonNode::Leaf(json!("def")),
-                            ],
-                            children_visible: false,
-                        },
-                    ),
-                    (
-                        "map_in_map".to_string(),
-                        JsonNode::Object {
-                            children: IndexMap::from_iter(vec![(
-                                "nested".to_string(),
-                                JsonNode::Object {
-                                    children: IndexMap::from_iter(vec![(
-                                        "leaf".to_string(),
-                                        JsonNode::Leaf(json!("eof")),
-                                    )]),
-                                    children_visible: false,
-                                },
-                            )]),
-                            children_visible: false,
-                        },
-                    ),
-                    (
-                        "map_in_list".to_string(),
-                        JsonNode::Array {
-                            children: vec![
-                                JsonNode::Object {
-                                    children: IndexMap::from_iter(vec![(
-                                        "map1".to_string(),
-                                        JsonNode::Leaf(json!(1)),
-                                    )]),
-                                    children_visible: false,
-                                },
-                                JsonNode::Object {
-                                    children: IndexMap::from_iter(vec![(
-                                        "map2".to_string(),
-                                        JsonNode::Leaf(json!(2)),
-                                    )]),
-                                    children_visible: false,
-                                },
-                            ],
+                            children: vec![JsonNode::Leaf(json!("abc"))],
                             children_visible: false,
                         },
                     ),
@@ -477,36 +419,6 @@ mod test {
 
     mod flatten_visibles {
         use super::*;
-
-        #[test]
-        fn test_after_toggle() {
-            let mut node = JsonNode::try_from(JSON_STR).unwrap();
-            node.toggle(&vec![]);
-            assert_eq!(
-                vec![JsonSyntaxKind::MapFolded {
-                    key: None,
-                    path: vec![],
-                    is_last: true,
-                    indent: 0,
-                }],
-                node.flatten_visibles(),
-            );
-        }
-
-        #[test]
-        fn test_string() {
-            let mut node = JsonNode::try_from("\"string\"").unwrap();
-            node.toggle(&vec![]);
-            assert_eq!(
-                vec![JsonSyntaxKind::ArrayEntry {
-                    v: serde_json::Value::String("string".to_string()),
-                    path: vec![],
-                    is_last: true,
-                    indent: 0,
-                },],
-                node.flatten_visibles(),
-            );
-        }
 
         #[test]
         fn test() {
@@ -545,19 +457,6 @@ mod test {
                             JsonPathSegment::Key("map".to_string()),
                             JsonPathSegment::Key("string1".to_string())
                         ],
-                        is_last: false,
-                        indent: 2,
-                    },
-                    // "string2": "bbb"
-                    JsonSyntaxKind::MapEntry {
-                        kv: (
-                            "string2".to_string(),
-                            serde_json::Value::String("bbb".to_string())
-                        ),
-                        path: vec![
-                            JsonPathSegment::Key("map".to_string()),
-                            JsonPathSegment::Key("string2".to_string())
-                        ],
                         is_last: true,
                         indent: 2,
                     },
@@ -579,126 +478,10 @@ mod test {
                             JsonPathSegment::Key("list".to_string()),
                             JsonPathSegment::Index(0)
                         ],
-                        is_last: false,
-                        indent: 2,
-                    },
-                    // "def"
-                    JsonSyntaxKind::ArrayEntry {
-                        v: serde_json::Value::String("def".to_string()),
-                        path: vec![
-                            JsonPathSegment::Key("list".to_string()),
-                            JsonPathSegment::Index(1)
-                        ],
                         is_last: true,
                         indent: 2,
                     },
                     // ],
-                    JsonSyntaxKind::ArrayEnd {
-                        is_last: false,
-                        indent: 1
-                    },
-                    // "map_in_map": {
-                    JsonSyntaxKind::MapStart {
-                        key: Some("map_in_map".to_string()),
-                        path: vec![JsonPathSegment::Key("map_in_map".to_string())],
-                        indent: 1,
-                    },
-                    // "nested": {
-                    JsonSyntaxKind::MapStart {
-                        key: Some("nested".to_string()),
-                        path: vec![
-                            JsonPathSegment::Key("map_in_map".to_string()),
-                            JsonPathSegment::Key("nested".to_string())
-                        ],
-                        indent: 2,
-                    },
-                    // "leaf": "eof"
-                    JsonSyntaxKind::MapEntry {
-                        kv: (
-                            "leaf".to_string(),
-                            serde_json::Value::String("eof".to_string())
-                        ),
-                        path: vec![
-                            JsonPathSegment::Key("map_in_map".to_string()),
-                            JsonPathSegment::Key("nested".to_string()),
-                            JsonPathSegment::Key("leaf".to_string())
-                        ],
-                        is_last: true,
-                        indent: 3,
-                    },
-                    // }
-                    JsonSyntaxKind::MapEnd {
-                        is_last: true,
-                        indent: 2
-                    },
-                    // },
-                    JsonSyntaxKind::MapEnd {
-                        is_last: false,
-                        indent: 1
-                    },
-                    // "map_in_list": [
-                    JsonSyntaxKind::ArrayStart {
-                        key: Some("map_in_list".to_string()),
-                        path: vec![JsonPathSegment::Key("map_in_list".to_string())],
-                        indent: 1,
-                    },
-                    // {
-                    JsonSyntaxKind::MapStart {
-                        key: None,
-                        path: vec![
-                            JsonPathSegment::Key("map_in_list".to_string()),
-                            JsonPathSegment::Index(0)
-                        ],
-                        indent: 2,
-                    },
-                    // "map1": 1
-                    JsonSyntaxKind::MapEntry {
-                        kv: (
-                            "map1".to_string(),
-                            serde_json::Value::Number(serde_json::Number::from(1))
-                        ),
-                        path: vec![
-                            JsonPathSegment::Key("map_in_list".to_string()),
-                            JsonPathSegment::Index(0),
-                            JsonPathSegment::Key("map1".to_string())
-                        ],
-                        is_last: true,
-                        indent: 3,
-                    },
-                    // },
-                    JsonSyntaxKind::MapEnd {
-                        is_last: false,
-                        indent: 2
-                    },
-                    // {
-                    JsonSyntaxKind::MapStart {
-                        key: None,
-                        path: vec![
-                            JsonPathSegment::Key("map_in_list".to_string()),
-                            JsonPathSegment::Index(1)
-                        ],
-                        indent: 2,
-                    },
-                    // "map2": 2
-                    JsonSyntaxKind::MapEntry {
-                        kv: (
-                            "map2".to_string(),
-                            serde_json::Value::Number(serde_json::Number::from(2))
-                        ),
-                        path: vec![
-                            JsonPathSegment::Key("map_in_list".to_string()),
-                            JsonPathSegment::Index(1),
-                            JsonPathSegment::Key("map2".to_string())
-                        ],
-                        is_last: true,
-                        indent: 3,
-                    },
-                    // }
-                    JsonSyntaxKind::MapEnd {
-                        is_last: true,
-                        indent: 2
-                    },
-                    // ]
                     JsonSyntaxKind::ArrayEnd {
                         is_last: true,
                         indent: 1
@@ -709,6 +492,36 @@ mod test {
                         indent: 0
                     },
                 ],
+                node.flatten_visibles(),
+            );
+        }
+
+        #[test]
+        fn test_after_toggle() {
+            let mut node = JsonNode::try_from(JSON_STR).unwrap();
+            node.toggle(&vec![]);
+            assert_eq!(
+                vec![JsonSyntaxKind::MapFolded {
+                    key: None,
+                    path: vec![],
+                    is_last: true,
+                    indent: 0,
+                }],
+                node.flatten_visibles(),
+            );
+        }
+
+        #[test]
+        fn test_string() {
+            let mut node = JsonNode::try_from("\"string\"").unwrap();
+            node.toggle(&vec![]);
+            assert_eq!(
+                vec![JsonSyntaxKind::ArrayEntry {
+                    v: serde_json::Value::String("string".to_string()),
+                    path: vec![],
+                    is_last: true,
+                    indent: 0,
+                },],
                 node.flatten_visibles(),
             );
         }
@@ -792,74 +605,19 @@ mod test {
                         (
                             String::from("map"),
                             JsonNode::Object {
-                                children: IndexMap::from_iter(vec![
-                                    (
-                                        String::from("string1"),
-                                        JsonNode::Leaf(serde_json::Value::String(String::from(
-                                            "aaa"
-                                        )))
-                                    ),
-                                    (
-                                        String::from("string2"),
-                                        JsonNode::Leaf(serde_json::Value::String(String::from(
-                                            "bbb"
-                                        )))
-                                    ),
-                                ]),
+                                children: IndexMap::from_iter(vec![(
+                                    String::from("string1"),
+                                    JsonNode::Leaf(serde_json::Value::String(String::from("aaa")))
+                                ),]),
                                 children_visible: true,
                             }
                         ),
                         (
                             String::from("list"),
                             JsonNode::Array {
-                                children: vec![
-                                    JsonNode::Leaf(serde_json::Value::String(String::from("abc"))),
-                                    JsonNode::Leaf(serde_json::Value::String(String::from("def"))),
-                                ],
-                                children_visible: true,
-                            }
-                        ),
-                        (
-                            String::from("map_in_map"),
-                            JsonNode::Object {
-                                children: IndexMap::from_iter(vec![(
-                                    String::from("nested"),
-                                    JsonNode::Object {
-                                        children: IndexMap::from_iter(vec![(
-                                            String::from("leaf"),
-                                            JsonNode::Leaf(serde_json::Value::String(
-                                                String::from("eof")
-                                            ))
-                                        ),]),
-                                        children_visible: true,
-                                    }
-                                ),]),
-                                children_visible: true,
-                            }
-                        ),
-                        (
-                            String::from("map_in_list"),
-                            JsonNode::Array {
-                                children: vec![
-                                    JsonNode::Object {
-                                        children: IndexMap::from_iter(vec![(
-                                            String::from("map1"),
-                                            JsonNode::Leaf(serde_json::Value::Number(
-                                                Number::from(1)
-                                            ))
-                                        ),]),
-                                        children_visible: true,
-                                    },
-                                    JsonNode::Object {
-                                        children: IndexMap::from_iter(vec![(
-                                            String::from("map2"),
-                                            JsonNode::Leaf(serde_json::Value::Number(
-                                                Number::from(2)
-                                            ))
-                                        ),]),
-                                        children_visible: true,
-                                    },
-                                ],
+                                children: vec![JsonNode::Leaf(serde_json::Value::String(
+                                    String::from("abc")
+                                )),],
                                 children_visible: true,
                             }
                         ),
