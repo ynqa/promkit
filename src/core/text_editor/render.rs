@@ -8,7 +8,7 @@ use crate::{
     AsAny, EventAction, Result,
 };
 
-use super::{History, Mode, Suggest, TextEditor};
+use super::{History, Mode, TextEditor};
 
 /// Represents a renderer for the `TextEditor` component,
 /// capable of visualizing text input in a pane.
@@ -24,8 +24,6 @@ pub struct Renderer {
     pub texteditor: TextEditor,
     /// Optional history for navigating through previous inputs.
     pub history: Option<History>,
-    /// Suggestion engine for input completion.
-    pub suggest: Suggest,
 
     pub keymap: KeymapManager<Self>,
 

@@ -8,8 +8,6 @@ pub use history::History;
 mod render;
 pub use render::Renderer;
 pub mod keymap;
-mod suggest;
-pub use suggest::Suggest;
 
 /// Edit mode.
 #[derive(Clone, Default)]

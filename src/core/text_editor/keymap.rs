@@ -19,7 +19,6 @@ use super::Mode;
 /// | <kbd>↓</kbd>           | Recall the next entry from history
 /// | <kbd>Backspace</kbd>   | Delete the character before the cursor
 /// | <kbd>Ctrl + U</kbd>    | Delete all characters in the current line
-/// | <kbd>TAB</kbd>         | Autocomplete the current input based on available suggestions
 pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<EventAction> {
     match event {
         Event::Key(KeyEvent {
@@ -102,21 +101,6 @@ pub fn default_keymap(renderer: &mut super::Renderer, event: &Event) -> Result<E
                 if history.forward() {
                     renderer.texteditor.replace(&history.get())
                 }
-            }
-        }
-
-        // Choose suggestion
-        Event::Key(KeyEvent {
-            code: KeyCode::Tab,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => {
-            if let Some(new) = renderer
-                .suggest
-                .search(renderer.texteditor.text_without_cursor().to_string())
-            {
-                renderer.texteditor.replace(new)
             }
         }
 
