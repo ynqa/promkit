@@ -45,11 +45,6 @@ impl Json {
         self.cursor.contents().clone()
     }
 
-    /// Returns the current position of the cursor within the JSON tree.
-    pub fn position(&self) -> usize {
-        self.cursor.position()
-    }
-
     /// Retrieves the `JsonPath` of the current node pointed by the cursor.
     pub fn get(&self) -> JsonPath {
         let kind = self.cursor.contents()[self.position()].clone();
@@ -76,6 +71,11 @@ impl Json {
 
         self.root.toggle(&route);
         self.cursor = Cursor::new_with_position(self.root.flatten_visibles(), self.position());
+    }
+
+    /// Returns the current position of the cursor within the JSON tree.
+    pub fn position(&self) -> usize {
+        self.cursor.position()
     }
 
     /// Moves the cursor backward in the JSON tree, if possible.
