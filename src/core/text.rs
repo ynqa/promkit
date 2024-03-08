@@ -20,6 +20,12 @@ pub struct Renderer {
     pub style: ContentStyle,
 }
 
+impl Renderer {
+    pub fn replace(&mut self, renderer: Self) {
+        *self = renderer;
+    }
+}
+
 impl crate::Renderer for Renderer {
     fn make_pane(&self, width: u16) -> Pane {
         Pane::new(
