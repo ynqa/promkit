@@ -11,7 +11,7 @@ use crate::{
     snapshot::Snapshot,
     style::StyleBuilder,
     text,
-    text_editor::{self, Mode, Suggest},
+    text_editor::{self, Mode},
     EventHandler, Prompt, Renderer,
 };
 
@@ -62,7 +62,6 @@ impl QuerySelector {
             text_editor_renderer: text_editor::Renderer {
                 texteditor: Default::default(),
                 history: None,
-                suggest: Default::default(),
                 keymap: KeymapManager::new("default", text_editor::keymap::default_keymap),
                 prefix: String::from("❯❯ "),
                 mask: None,
@@ -101,12 +100,6 @@ impl QuerySelector {
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
         self.title_renderer.style = style;
-        self
-    }
-
-    /// Enables suggestion functionality in the text editor component with the specified suggestion configuration.
-    pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
-        self.text_editor_renderer.suggest = suggest;
         self
     }
 

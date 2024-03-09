@@ -48,12 +48,12 @@ fn minimum_keymap<S>(_: &mut S, event: &Event) -> Result<EventAction> {
 /// # Fields
 ///
 /// * `mapping`: A `HashMap` that associates string keys with their corresponding `EventHandler`.
-/// * `current`: A `String` representing the key of the currently active event handler.
+/// * `active_key`: A `String` representing the key of the currently active event handler.
 /// * `default`: An `EventHandler` that is used as a fallback when no specific handler is found for the current key.
 #[derive(Clone)]
 pub struct KeymapManager<S> {
     mapping: HashMap<String, EventHandler<S>>,
-    current: String,
+    active_key: String,
     default: EventHandler<S>,
 }
 
@@ -72,7 +72,7 @@ impl<S> KeymapManager<S> {
         let key = key.as_ref().to_string();
         Self {
             mapping: HashMap::new(),
-            current: key.clone(),
+            active_key: key.clone(),
             default: minimum_keymap,
         }
         .register(key, handler)
@@ -101,8 +101,17 @@ impl<S> KeymapManager<S> {
     pub fn switch<K: AsRef<str>>(&mut self, key: K) {
         let key = key.as_ref().to_string();
         if self.mapping.contains_key(&key) {
-            self.current = key;
+            self.active_key = key;
         }
+    }
+
+    /// Returns a reference to the string representing the key of the currently active event handler.
+    ///
+    /// This method allows for querying which event handler is currently active by returning the key
+    /// associated with it. This can be useful for debugging or for logic that needs to know which
+    /// handler is currently in use.
+    pub fn active_key(&self) -> &str {
+        &self.active_key
     }
 
     /// Retrieves the current `EventHandler` based on the current key.
@@ -112,7 +121,7 @@ impl<S> KeymapManager<S> {
     /// Returns a reference to the current `EventHandler`. If the current key does not have an
     /// associated handler, the default handler is returned.
     pub fn get(&self) -> &EventHandler<S> {
-        match self.mapping.get(&self.current) {
+        match self.mapping.get(&self.active_key) {
             Some(handler) => handler,
             None => &self.default,
         }
