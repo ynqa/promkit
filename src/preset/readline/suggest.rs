@@ -28,6 +28,12 @@ pub fn on_suggest_text_editor_keymap(
 ) -> Result<EventAction> {
     match event {
         Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        })
+        | Event::Key(KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
