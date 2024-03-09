@@ -1,3 +1,7 @@
+// IMPORTANT: To avoid potential borrow conflicts, methods that borrow `after` should only be
+// implemented as `borrow_after` and `borrow_mut_after`. Do not add methods that borrow `after`
+// in any other way, as this could lead to borrow conflicts for the callers.
+
 use std::{
     any::{type_name, Any},
     cell::{Ref, RefCell, RefMut},
@@ -79,6 +83,10 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
         &self.init
     }
 
+    pub fn before(&self) -> &R {
+        &self.before
+    }
+
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>`.
     pub fn cast(renderer: &dyn Renderer) -> Result<&Snapshot<R>> {
         let snapshot: &Snapshot<R> = renderer
@@ -86,6 +94,14 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
             .downcast_ref::<Snapshot<R>>()
             .ok_or_else(|| Error::TypeCastError(type_name::<R>().to_string()))?;
         Ok(snapshot)
+    }
+    /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>` and borrows its `after` state.
+    pub fn cast_and_borrow_after(renderer: &dyn Renderer) -> Result<Ref<R>> {
+        let snapshot: &Snapshot<R> = renderer
+            .as_any()
+            .downcast_ref::<Snapshot<R>>()
+            .ok_or_else(|| Error::TypeCastError(type_name::<R>().to_string()))?;
+        Ok(snapshot.after.borrow())
     }
 
     /// Borrows the `after` state of the `Snapshot`.
@@ -96,27 +112,5 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     /// Borrows the `after` state of the `Snapshot` mutably.
     pub fn borrow_mut_after(&self) -> RefMut<R> {
         self.after.borrow_mut()
-    }
-
-    /// Compares the `before` and `after` states of the `Snapshot` using a provided comparison function.
-    pub fn compare_states<F>(&self, compare: F) -> bool
-    where
-        F: FnOnce(&R, &R) -> bool,
-    {
-        compare(&self.before, &self.after.borrow())
-    }
-
-    /// Resets the `after` state to the initial state (`init`).
-    pub fn reset_after_to_init(&self) {
-        *self.after.borrow_mut() = self.init.clone();
-    }
-
-    /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>` and borrows its `after` state.
-    pub fn cast_and_borrow_after(renderer: &dyn Renderer) -> Result<Ref<R>> {
-        let snapshot: &Snapshot<R> = renderer
-            .as_any()
-            .downcast_ref::<Snapshot<R>>()
-            .ok_or_else(|| Error::TypeCastError(type_name::<R>().to_string()))?;
-        Ok(snapshot.after.borrow())
     }
 }

@@ -190,11 +190,11 @@ impl QuerySelector {
                 let text_snapshot = Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
                 let list_snapshot = Snapshot::<listbox::Renderer>::cast(renderers[2].as_ref())?;
 
-                if text_snapshot.compare_states(|before, after| {
-                    before.texteditor.text() != after.texteditor.text()
-                }) {
-                    let query = text_snapshot
-                        .borrow_after()
+                let text_borrowed_after = text_snapshot.borrow_after();
+
+                if text_borrowed_after.texteditor.text() != text_snapshot.before().texteditor.text()
+                {
+                    let query = text_borrowed_after
                         .texteditor
                         .text_without_cursor()
                         .to_string();
