@@ -61,6 +61,24 @@ pub enum JsonSyntaxKind {
     },
 }
 
+impl JsonSyntaxKind {
+    /// Retrieves the path of the `JsonSyntaxKind` if available.
+    ///
+    /// # Returns
+    /// An `Option<&JsonPath>` representing the path of the syntax kind, or `None` if not applicable.
+    pub fn path(&self) -> Option<&JsonPath> {
+        match self {
+            JsonSyntaxKind::MapStart { path, .. }
+            | JsonSyntaxKind::MapFolded { path, .. }
+            | JsonSyntaxKind::MapEntry { path, .. }
+            | JsonSyntaxKind::ArrayStart { path, .. }
+            | JsonSyntaxKind::ArrayFolded { path, .. }
+            | JsonSyntaxKind::ArrayEntry { path, .. } => Some(path),
+            _ => None,
+        }
+    }
+}
+
 pub type JsonPath = Vec<JsonPathSegment>;
 
 /// Represents a segment of a path in a JSON document, which can be either a key in an object
