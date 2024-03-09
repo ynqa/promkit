@@ -127,3 +127,21 @@ impl<S> KeymapManager<S> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod register {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let mut manager =
+                KeymapManager::<()>::new("default", |_: &mut (), _| Ok(EventAction::Continue))
+                    .register("key2", |_: &mut (), _| Ok(EventAction::Continue));
+            manager.switch("key2");
+            assert_eq!("key2", manager.active_key)
+        }
+    }
+}
