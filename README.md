@@ -350,9 +350,7 @@ UI from scratch, which can be a time-consuming and less flexible process.
 
   ```rust
   pub trait Renderer {
-      fn make_pane(&self, width: u16) -> Pane;
-      fn handle_event(&mut self, event: &Event);
-      fn postrun(&mut self);
+      fn create_panes(&self, width: u16) -> Vec<Pane>;
   }
   ```
 

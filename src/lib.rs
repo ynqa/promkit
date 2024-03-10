@@ -65,9 +65,7 @@
 //!
 //!   ```ignore
 //!   pub trait Renderer {
-//!       fn make_pane(&self, width: u16) -> Pane;
-//!       fn handle_event(&mut self, event: &Event);
-//!       fn postrun(&mut self);
+//!       fn create_panes(&self, width: u16) -> Vec<Pane>;
 //!   }
 //!   ```
 //!
@@ -165,7 +163,7 @@ pub enum PromptSignal {
 pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
 
 pub trait Renderer: AsAny {
-    /// Creates a pane with the given width.
+    /// Creates panes with the given width.
     fn create_panes(&self, width: u16) -> Vec<Pane>;
 }
 
