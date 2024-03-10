@@ -1,15 +1,19 @@
-use std::any::Any;
+use std::{
+    any::Any,
+    cell::{Ref, RefCell},
+};
 
 use crate::{pane::Pane, AsAny, Renderer};
 
 pub struct Snapshot<R: Renderer + Clone> {
     init: R,
-    before: R,
+    before: RefCell<R>,
     after: R,
 }
 
 impl<R: Renderer + Clone + 'static> Renderer for Snapshot<R> {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
+        *self.before.borrow_mut() = self.after.clone();
         self.after.create_panes(width)
     }
 
@@ -18,7 +22,7 @@ impl<R: Renderer + Clone + 'static> Renderer for Snapshot<R> {
     fn postrun(&mut self) {
         self.after.postrun();
         self.init = self.after.clone();
-        self.before = self.after.clone();
+        self.before = RefCell::new(self.after.clone());
     }
 }
 
@@ -36,7 +40,7 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     pub fn new(renderer: R) -> Self {
         Self {
             init: renderer.clone(),
-            before: renderer.clone(),
+            before: RefCell::new(renderer.clone()),
             after: renderer,
         }
     }
@@ -46,8 +50,8 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
         &self.init
     }
 
-    pub fn before(&self) -> &R {
-        &self.before
+    pub fn borrow_before(&self) -> Ref<R> {
+        self.before.borrow()
     }
 
     pub fn after(&self) -> &R {

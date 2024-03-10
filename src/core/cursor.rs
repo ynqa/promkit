@@ -31,7 +31,7 @@ impl<C: Len> Cursor<C> {
         Self {
             contents,
             position: adjusted_position,
-            cyclic, // 追加
+            cyclic,
         }
     }
 

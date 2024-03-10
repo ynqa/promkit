@@ -12,8 +12,11 @@ use crate::{
     style::StyleBuilder,
     text,
     text_editor::{self, Mode},
-    EventHandler, Prompt, Renderer,
+    EventHandler, Prompt, PromptSignal, Renderer,
 };
+
+pub mod keymap;
+pub mod render;
 
 /// Used to process and filter a list of options
 /// based on the input text in the `QuerySelector` component.
@@ -29,6 +32,8 @@ pub struct QuerySelector {
     text_editor_renderer: text_editor::Renderer,
     /// Renderer for the list box component.
     listbox_renderer: listbox::Renderer,
+    keymap: KeymapManager<self::render::Renderer>,
+
     /// A filter function to apply to the list box items
     /// based on the text editor input.
     filter: Box<Filter>,
@@ -62,7 +67,6 @@ impl QuerySelector {
             text_editor_renderer: text_editor::Renderer {
                 texteditor: Default::default(),
                 history: None,
-                keymap: KeymapManager::new("default", text_editor::keymap::default_keymap),
                 prefix: String::from("❯❯ "),
                 mask: None,
                 prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
@@ -73,12 +77,12 @@ impl QuerySelector {
             },
             listbox_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(items),
-                keymap: KeymapManager::new("default", listbox::keymap::default_keymap),
                 cursor: String::from("❯ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
+            keymap: KeymapManager::new("default", self::keymap::default),
             filter: Box::new(filter),
             enable_mouse_scroll: false,
         }
@@ -166,9 +170,9 @@ impl QuerySelector {
     pub fn register_keymap<K: AsRef<str>>(
         mut self,
         key: K,
-        handler: EventHandler<text_editor::Renderer>,
+        handler: EventHandler<self::render::Renderer>,
     ) -> Self {
-        self.text_editor_renderer.keymap = self.text_editor_renderer.keymap.register(key, handler);
+        self.keymap = self.keymap.register(key, handler);
         self
     }
 
@@ -179,37 +183,50 @@ impl QuerySelector {
         let filter = self.filter;
 
         Prompt::try_new(
-            vec![
-                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
-                Box::new(Snapshot::<text_editor::Renderer>::new(
+            Box::new(self::render::Renderer {
+                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
+                text_editor_snapshot: Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
-                )),
-                Box::new(Snapshot::<listbox::Renderer>::new(self.listbox_renderer)),
-            ],
-            move |_: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text_snapshot = Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
-                let list_snapshot = Snapshot::<listbox::Renderer>::cast(renderers[2].as_ref())?;
+                ),
+                listbox_snapshot: Snapshot::<listbox::Renderer>::new(self.listbox_renderer),
+                keymap: self.keymap,
+            }),
+            Box::new(
+                move |event: &Event,
+                      renderer: &mut Box<dyn Renderer + 'static>|
+                      -> Result<PromptSignal> {
+                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    let signal = match renderer.keymap.get() {
+                        Some(f) => f(&mut renderer, event),
+                        None => Ok(PromptSignal::Quit),
+                    };
 
-                let text_borrowed_after = text_snapshot.borrow_after();
+                    if renderer.text_editor_snapshot.after().texteditor.text()
+                        != renderer
+                            .text_editor_snapshot
+                            .borrow_before()
+                            .texteditor
+                            .text()
+                    {
+                        let query = renderer
+                            .text_editor_snapshot
+                            .after()
+                            .texteditor
+                            .text_without_cursor()
+                            .to_string();
 
-                if text_borrowed_after.texteditor.text() != text_snapshot.before().texteditor.text()
-                {
-                    let query = text_borrowed_after
-                        .texteditor
-                        .text_without_cursor()
-                        .to_string();
-
-                    let list = filter(&query, list_snapshot.init().listbox.items());
-                    list_snapshot.borrow_mut_after().listbox = Listbox::from_iter(list);
-                }
-                Ok(true)
-            },
-            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
-                Ok(
-                    Snapshot::<listbox::Renderer>::cast_and_borrow_after(renderers[2].as_ref())?
-                        .listbox
-                        .get(),
-                )
+                        let list = filter(&query, renderer.listbox_snapshot.init().listbox.items());
+                        renderer.listbox_snapshot.after_mut().listbox = Listbox::from_iter(list);
+                    }
+                    signal
+                },
+            ),
+            |renderer: &Box<dyn Renderer + 'static>| -> Result<String> {
+                Ok(self::render::Renderer::cast(renderer.as_ref())?
+                    .listbox_snapshot
+                    .after()
+                    .listbox
+                    .get())
             },
             self.enable_mouse_scroll,
         )

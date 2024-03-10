@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::QuerySelector};
+use promkit::{error::Result, preset::query_selector::QuerySelector};
 
 fn main() -> Result {
     let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
