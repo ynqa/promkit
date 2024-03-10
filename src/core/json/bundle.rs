@@ -70,6 +70,50 @@ impl JsonBundle {
         );
     }
 
+    /// Toggles the visibility of all nodes in the JSON tree.
+    /// `expand` controls whether nodes are expanded or collapsed.
+    fn toggle_all_visibility(&mut self, expand: bool) {
+        fn toggle_visibility(node: &mut JsonNode, expand: bool) {
+            match node {
+                JsonNode::Object {
+                    children,
+                    children_visible,
+                } => {
+                    *children_visible = expand;
+                    for child in children.values_mut() {
+                        toggle_visibility(child, expand);
+                    }
+                }
+                JsonNode::Array {
+                    children,
+                    children_visible,
+                } => {
+                    *children_visible = expand;
+                    for child in children.iter_mut() {
+                        toggle_visibility(child, expand);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for root in &mut self.roots {
+            toggle_visibility(root, expand);
+        }
+        self.cursor = CompositeCursor::new(
+            self.roots.iter().map(|r| r.flatten_visibles()),
+            self.cursor.cross_contents_position(),
+        );
+    }
+
+    pub fn collapse_all(&mut self) {
+        self.toggle_all_visibility(false);
+    }
+
+    pub fn expand_all(&mut self) {
+        self.toggle_all_visibility(true);
+    }
+
     pub fn backward(&mut self) -> bool {
         self.cursor.backward()
     }
