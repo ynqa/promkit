@@ -142,7 +142,7 @@ pub enum PromptSignal {
     Quit,
 }
 
-pub type EventHandler<S> = fn(&mut S, &Event) -> Result<PromptSignal>;
+pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
 
 pub trait Renderer: AsAny {
     /// Creates a pane with the given width.
@@ -162,7 +162,12 @@ pub trait AsAny {
 type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
 type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
-/// A core data structure to manage the hooks and state.
+/// Represents a customizable prompt that can handle user input and produce a result.
+///
+/// This struct encapsulates the rendering logic,
+/// event handling, and result production for a prompt.
+/// It supports capturing mouse events and
+/// ensures proper terminal state management.
 pub struct Prompt<T> {
     renderer: Box<dyn Renderer>,
     evaluator: Box<DynEvaluator>,
@@ -182,6 +187,18 @@ impl<T> Drop for Prompt<T> {
 }
 
 impl<T> Prompt<T> {
+    /// Attempts to create a new `Prompt` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `renderer` - A boxed renderer for drawing the prompt.
+    /// * `evaluator` - A boxed evaluator function to handle events.
+    /// * `producer` - A function to produce the result based on the renderer's state.
+    /// * `capture_mouse_events` - A boolean indicating whether to capture mouse events.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the new `Prompt` instance or an error.
     pub fn try_new(
         renderer: Box<dyn Renderer>,
         evaluator: Box<DynEvaluator>,
@@ -196,6 +213,15 @@ impl<T> Prompt<T> {
         })
     }
 
+    /// Runs the prompt, handling events and producing a result.
+    ///
+    /// This method initializes the terminal, captures mouse events if enabled,
+    /// and enters a loop to handle events until a quit signal is received.
+    /// After exiting the loop, it produces and returns the result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the produced result or an error.
     pub fn run(&mut self) -> Result<T> {
         let mut engine = Engine::new(io::stdout());
 

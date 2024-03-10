@@ -16,8 +16,8 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
 pub fn default(
-    renderer: &mut preset::json::render::Renderer,
     event: &Event,
+    renderer: &mut preset::json::render::Renderer,
 ) -> Result<PromptSignal> {
     let json_after_mut = renderer.json_snapshot.after_mut();
 

@@ -20,8 +20,8 @@ use crate::{
 /// | <kbd>Ctrl + U</kbd>    | Delete all characters in the current line
 /// | <kbd>TAB</kbd>         | Autocomplete the current input based on available suggestions
 pub fn default(
-    renderer: &mut preset::readline::render::Renderer,
     event: &Event,
+    renderer: &mut preset::readline::render::Renderer,
 ) -> Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let error_message_after_mut = renderer.error_message_snapshot.after_mut();
@@ -179,8 +179,8 @@ pub fn default(
 }
 
 pub fn on_suggest(
-    renderer: &mut preset::readline::render::Renderer,
     event: &Event,
+    renderer: &mut preset::readline::render::Renderer,
 ) -> Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let suggest_after_mut = renderer.suggest_snapshot.after_mut();

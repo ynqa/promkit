@@ -6,8 +6,8 @@ use promkit::{
 };
 
 pub fn default(
-    renderer: &mut preset::listbox::render::Renderer,
     event: &Event,
+    renderer: &mut preset::listbox::render::Renderer,
 ) -> Result<PromptSignal> {
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();
 
@@ -56,8 +56,8 @@ pub fn default(
 }
 
 pub fn alternative(
-    renderer: &mut preset::listbox::render::Renderer,
     event: &Event,
+    renderer: &mut preset::listbox::render::Renderer,
 ) -> Result<PromptSignal> {
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();
 

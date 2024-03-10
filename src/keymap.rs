@@ -84,8 +84,8 @@ mod tests {
         #[test]
         fn test() {
             let mut manager =
-                KeymapManager::<()>::new("default", |_: &mut (), _| Ok(PromptSignal::Continue))
-                    .register("key2", |_: &mut (), _| Ok(PromptSignal::Continue));
+                KeymapManager::<()>::new("default", |_, _: &mut ()| Ok(PromptSignal::Continue))
+                    .register("key2", |_, _: &mut ()| Ok(PromptSignal::Continue));
             manager.switch("key2");
             assert_eq!("key2", manager.active_key)
         }

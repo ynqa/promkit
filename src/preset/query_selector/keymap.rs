@@ -4,8 +4,8 @@ use crate::{
 };
 
 pub fn default(
-    renderer: &mut preset::query_selector::render::Renderer,
     event: &Event,
+    renderer: &mut preset::query_selector::render::Renderer,
 ) -> Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();

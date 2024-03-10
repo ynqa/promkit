@@ -16,8 +16,8 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
 pub fn default(
-    renderer: &mut preset::tree::render::Renderer,
     event: &Event,
+    renderer: &mut preset::tree::render::Renderer,
 ) -> Result<PromptSignal> {
     let tree_after_mut = renderer.tree_snapshot.after_mut();
 

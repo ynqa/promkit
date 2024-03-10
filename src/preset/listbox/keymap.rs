@@ -15,8 +15,8 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 pub fn default(
-    renderer: &mut preset::listbox::render::Renderer,
     event: &Event,
+    renderer: &mut preset::listbox::render::Renderer,
 ) -> Result<PromptSignal> {
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();
 

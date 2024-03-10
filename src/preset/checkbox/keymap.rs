@@ -16,8 +16,8 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle the checkbox state for the current item
 pub fn default(
-    renderer: &mut preset::checkbox::render::Renderer,
     event: &Event,
+    renderer: &mut preset::checkbox::render::Renderer,
 ) -> Result<PromptSignal> {
     let checkbox_after_mut = renderer.checkbox_snapshot.after_mut();
 
