@@ -1,4 +1,4 @@
-// pub mod checkbox;
+pub mod checkbox;
 mod cursor;
 // pub mod json;
 pub mod listbox;

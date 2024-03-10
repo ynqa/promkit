@@ -1,11 +1,10 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{event::Event, style::ContentStyle},
+    crossterm::style::ContentStyle,
     grapheme::{trim, Graphemes, StyledGraphemes},
-    keymap::KeymapManager,
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny,
 };
 
 use super::Checkbox;
@@ -20,8 +19,6 @@ use super::Checkbox;
 pub struct Renderer {
     /// The `Checkbox` component to be rendered.
     pub checkbox: Checkbox,
-
-    pub keymap: KeymapManager<Self>,
 
     /// Symbol for the selected line.
     pub cursor: String,
@@ -41,7 +38,7 @@ pub struct Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let f = |idx: usize, item: &String| -> String {
             if self.checkbox.picked_indexes().contains(&idx) {
                 format!("{} {}", self.active_mark, item)
@@ -76,11 +73,7 @@ impl crate::Renderer for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.checkbox.position(), self.lines)
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        vec![Pane::new(trimed, self.checkbox.position(), self.lines)]
     }
 
     fn postrun(&mut self) {

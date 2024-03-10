@@ -4,7 +4,6 @@ use crate::core::listbox::Listbox;
 
 mod render;
 pub use render::Renderer;
-pub mod keymap;
 
 /// A `Checkbox` struct that encapsulates a listbox
 /// for item selection and a set of picked (selected) indices.
