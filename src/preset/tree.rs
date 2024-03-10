@@ -130,9 +130,9 @@ impl Tree {
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
-                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
                     match renderer.keymap.get() {
-                        Some(f) => f(&mut renderer, event),
+                        Some(f) => f(renderer, event),
                         None => Ok(PromptSignal::Quit),
                     }
                 },
