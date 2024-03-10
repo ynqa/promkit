@@ -16,9 +16,9 @@ pub mod render;
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
+    keymap: KeymapManager<self::render::Renderer>,
     title_renderer: text::Renderer,
     json_renderer: json::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -117,9 +117,9 @@ impl Json {
     pub fn prompt(self) -> Result<Prompt<Vec<JsonPathSegment>>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 json_snapshot: Snapshot::<json::Renderer>::new(self.json_renderer),
-                keymap: self.keymap,
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {

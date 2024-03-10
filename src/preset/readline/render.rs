@@ -6,11 +6,11 @@ use crate::{
 };
 
 pub struct Renderer {
+    pub keymap: KeymapManager<Self>,
     pub title_snapshot: Snapshot<text::Renderer>,
     pub text_editor_snapshot: Snapshot<text_editor::Renderer>,
     pub suggest: Option<Suggest>,
     pub suggest_snapshot: Snapshot<listbox::Renderer>,
-    pub keymap: KeymapManager<Self>,
     pub validator: Option<ValidatorManager<str>>,
     pub error_message_snapshot: Snapshot<text::Renderer>,
 }

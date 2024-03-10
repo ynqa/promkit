@@ -5,9 +5,9 @@ use crate::{
 };
 
 pub struct Renderer {
+    pub keymap: KeymapManager<Self>,
     pub title_snapshot: Snapshot<text::Renderer>,
     pub checkbox_snapshot: Snapshot<checkbox::Renderer>,
-    pub keymap: KeymapManager<Self>,
 }
 
 impl Renderer {

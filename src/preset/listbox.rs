@@ -18,11 +18,11 @@ pub mod render;
 
 /// A component for creating and managing a selectable list of options.
 pub struct Listbox {
+    keymap: KeymapManager<self::render::Renderer>,
     /// Renderer for the title displayed above the selectable list.
     title_renderer: text::Renderer,
     /// Renderer for the selectable list itself.
     listbox_renderer: listbox::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -112,9 +112,9 @@ impl Listbox {
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 listbox_snapshot: Snapshot::<listbox::Renderer>::new(self.listbox_renderer),
-                keymap: self.keymap,
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {

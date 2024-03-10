@@ -26,14 +26,13 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 /// for input and a list box
 /// for displaying filtered options based on the input.
 pub struct QuerySelector {
+    keymap: KeymapManager<self::render::Renderer>,
     /// Renderer for the title displayed above the query selection.
     title_renderer: text::Renderer,
     /// Renderer for the text editor component.
     text_editor_renderer: text_editor::Renderer,
     /// Renderer for the list box component.
     listbox_renderer: listbox::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
-
     /// A filter function to apply to the list box items
     /// based on the text editor input.
     filter: Box<Filter>,
@@ -184,12 +183,12 @@ impl QuerySelector {
 
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 text_editor_snapshot: Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
                 ),
                 listbox_snapshot: Snapshot::<listbox::Renderer>::new(self.listbox_renderer),
-                keymap: self.keymap,
             }),
             Box::new(
                 move |event: &Event,

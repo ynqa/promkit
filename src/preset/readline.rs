@@ -25,14 +25,13 @@ pub mod render;
 /// It supports various configurations
 /// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
+    keymap: KeymapManager<self::render::Renderer>,
     /// Renderer for the title displayed above the input field.
     title_renderer: text::Renderer,
     /// Renderer for the text editor where user input is entered.
     text_editor_renderer: text_editor::Renderer,
     suggest: Option<Suggest>,
     suggest_renderer: listbox::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
-
     /// Optional validator for input validation with custom error messages.
     validator: Option<ValidatorManager<str>>,
     /// Renderer for displaying error messages based on input validation.
@@ -42,6 +41,8 @@ pub struct Readline {
 impl Default for Readline {
     fn default() -> Self {
         Self {
+            keymap: KeymapManager::new("default", self::keymap::default)
+                .register("on_suggest", self::keymap::on_suggest),
             title_renderer: text::Renderer {
                 text: Default::default(),
                 style: StyleBuilder::new()
@@ -70,8 +71,6 @@ impl Default for Readline {
                 inactive_item_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
                 lines: Some(3),
             },
-            keymap: KeymapManager::new("default", self::keymap::default)
-                .register("on_suggest", self::keymap::on_suggest),
             validator: Default::default(),
             error_message_renderer: text::Renderer {
                 text: Default::default(),
@@ -175,13 +174,13 @@ impl Readline {
     pub fn prompt(self) -> Result<Prompt<String>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 text_editor_snapshot: Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
                 ),
                 suggest: self.suggest,
                 suggest_snapshot: Snapshot::<listbox::Renderer>::new(self.suggest_renderer),
-                keymap: self.keymap,
                 validator: self.validator,
                 error_message_snapshot: Snapshot::<text::Renderer>::new(
                     self.error_message_renderer,

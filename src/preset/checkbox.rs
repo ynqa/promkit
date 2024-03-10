@@ -19,11 +19,11 @@ pub mod render;
 /// Represents a checkbox component for creating
 /// and managing a list of selectable options.
 pub struct Checkbox {
+    keymap: KeymapManager<self::render::Renderer>,
     /// Renderer for the title displayed above the checkbox list.
     title_renderer: text::Renderer,
     /// Renderer for the checkbox list itself.
     checkbox_renderer: checkbox::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -121,9 +121,9 @@ impl Checkbox {
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 checkbox_snapshot: Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer),
-                keymap: self.keymap,
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {

@@ -18,11 +18,11 @@ pub mod render;
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
 pub struct Tree {
+    keymap: KeymapManager<self::render::Renderer>,
     /// Renderer for the title displayed above the tree.
     title_renderer: text::Renderer,
     /// Renderer for the tree itself.
     tree_renderer: tree::Renderer,
-    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -34,6 +34,7 @@ impl Tree {
     /// * `root` - The root node of the tree.
     pub fn new(root: Node) -> Self {
         Self {
+            keymap: KeymapManager::new("default", self::keymap::default),
             title_renderer: text::Renderer {
                 text: Default::default(),
                 style: StyleBuilder::new()
@@ -49,7 +50,6 @@ impl Tree {
                 lines: Default::default(),
                 indent: 2,
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
             enable_mouse_scroll: false,
         }
     }
@@ -124,9 +124,9 @@ impl Tree {
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
+                keymap: self.keymap,
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 tree_snapshot: Snapshot::<tree::Renderer>::new(self.tree_renderer),
-                keymap: self.keymap,
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
