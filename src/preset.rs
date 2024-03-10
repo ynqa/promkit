@@ -1,5 +1,5 @@
 pub mod checkbox;
-// mod readline;
+pub mod readline;
 // pub use readline::{Confirm, Password, Readline};
 pub mod listbox;
 // mod query_selector;

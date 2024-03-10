@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::Readline, suggest::Suggest};
+use promkit::{error::Result, preset::readline::Readline, suggest::Suggest};
 
 fn main() -> Result {
     let mut p = Readline::default()

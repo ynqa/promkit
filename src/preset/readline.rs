@@ -1,8 +1,6 @@
-use std::cell::RefCell;
-
 use crate::{
     crossterm::{
-        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        event::Event,
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
@@ -14,14 +12,11 @@ use crate::{
     text,
     text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    EventAction, EventHandler, Prompt, Renderer,
+    EventHandler, Prompt, PromptSignal, Renderer,
 };
 
-mod confirm;
-pub use confirm::Confirm;
-mod password;
-pub use password::Password;
-mod suggest;
+pub mod keymap;
+pub mod render;
 
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
@@ -32,12 +27,14 @@ pub struct Readline {
     title_renderer: text::Renderer,
     /// Renderer for the text editor where user input is entered.
     text_editor_renderer: text_editor::Renderer,
-    /// Renderer for displaying error messages based on input validation.
-    error_message_renderer: text::Renderer,
-    suggest: Option<RefCell<Suggest>>,
+    suggest: Option<Suggest>,
     suggest_renderer: listbox::Renderer,
+    keymap: KeymapManager<self::render::Renderer>,
+
     /// Optional validator for input validation with custom error messages.
     validator: Option<ValidatorManager<str>>,
+    /// Renderer for displaying error messages based on input validation.
+    error_message_renderer: text::Renderer,
 }
 
 impl Default for Readline {
@@ -52,7 +49,6 @@ impl Default for Readline {
             text_editor_renderer: text_editor::Renderer {
                 texteditor: Default::default(),
                 history: Default::default(),
-                keymap: KeymapManager::new("default", text_editor::keymap::default_keymap),
                 prefix: String::from("❯❯ "),
                 mask: Default::default(),
                 prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
@@ -61,17 +57,9 @@ impl Default for Readline {
                 edit_mode: Default::default(),
                 lines: Default::default(),
             },
-            error_message_renderer: text::Renderer {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .fgc(Color::DarkRed)
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-            },
             suggest: Default::default(),
             suggest_renderer: listbox::Renderer {
                 listbox: Listbox::from_iter(Vec::<String>::new()),
-                keymap: KeymapManager::new("default", |_, _| Ok(EventAction::Continue)),
                 cursor: String::from("❯ "),
                 active_item_style: StyleBuilder::new()
                     .fgc(Color::DarkGrey)
@@ -80,7 +68,16 @@ impl Default for Readline {
                 inactive_item_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
                 lines: Some(3),
             },
+            keymap: KeymapManager::new("default", self::keymap::default)
+                .register("on_suggest", self::keymap::on_suggest),
             validator: Default::default(),
+            error_message_renderer: text::Renderer {
+                text: Default::default(),
+                style: StyleBuilder::new()
+                    .fgc(Color::DarkRed)
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+            },
         }
     }
 }
@@ -100,17 +97,7 @@ impl Readline {
 
     /// Enables suggestion functionality with the provided `Suggest` instance.
     pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
-        self.text_editor_renderer.keymap = self
-            .text_editor_renderer
-            .keymap
-            .register("default", suggest::default_text_editor_keymap)
-            .register("on_suggest", suggest::on_suggest_text_editor_keymap);
-        self.suggest_renderer.keymap = self
-            .suggest_renderer
-            .keymap
-            .register("default", suggest::default_suggest_keymap)
-            .register("on_suggest", suggest::on_suggest_suggest_keymap);
-        self.suggest = Some(RefCell::new(suggest));
+        self.suggest = Some(suggest);
         self
     }
 
@@ -165,9 +152,9 @@ impl Readline {
     pub fn register_keymap<K: AsRef<str>>(
         mut self,
         key: K,
-        handler: EventHandler<text_editor::Renderer>,
+        handler: EventHandler<self::render::Renderer>,
     ) -> Self {
-        self.text_editor_renderer.keymap = self.text_editor_renderer.keymap.register(key, handler);
+        self.keymap = self.keymap.register(key, handler);
         self
     }
 
@@ -184,129 +171,61 @@ impl Readline {
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
     pub fn prompt(self) -> Result<Prompt<String>> {
-        let validator = self.validator;
-        let suggest = self.suggest;
+        let _validator = self.validator;
 
         Prompt::try_new(
-            vec![
-                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
-                Box::new(Snapshot::<text_editor::Renderer>::new(
+            Box::new(self::render::Renderer {
+                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
+                text_editor_snapshot: Snapshot::<text_editor::Renderer>::new(
                     self.text_editor_renderer,
-                )),
-                Box::new(Snapshot::<text::Renderer>::new(self.error_message_renderer)),
-                Box::new(Snapshot::<listbox::Renderer>::new(self.suggest_renderer)),
-            ],
-            move |event: &Event, renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<bool> {
-                let text_editor_snapshot =
-                    Snapshot::<text_editor::Renderer>::cast(renderers[1].as_ref())?;
-                let error_message_snapshot =
-                    Snapshot::<text::Renderer>::cast(renderers[2].as_ref())?;
-                let suggest_snapshot = Snapshot::<listbox::Renderer>::cast(renderers[3].as_ref())?;
+                ),
+                suggest: self.suggest,
+                suggest_snapshot: Snapshot::<listbox::Renderer>::new(self.suggest_renderer),
+                keymap: self.keymap,
+            }),
+            Box::new(
+                move |event: &Event,
+                      renderer: &mut Box<dyn Renderer + 'static>|
+                      -> Result<PromptSignal> {
+                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    let signal = match renderer.keymap.get() {
+                        Some(f) => f(&mut renderer, event),
+                        None => Ok(PromptSignal::Quit),
+                    }?;
 
-                let mut text_editor_borrowed_after = text_editor_snapshot.borrow_mut_after();
-                let mut suggest_borrowed_after = suggest_snapshot.borrow_mut_after();
+                    // let text = renderer.text_editor_snapshot.after().texteditor.text_without_cursor().to_string();
+                    // let valid = if let Event::Key(KeyEvent {
+                    //     code: KeyCode::Enter,
+                    //     modifiers: KeyModifiers::NONE,
+                    //     kind: KeyEventKind::Press,
+                    //     state: KeyEventState::NONE,
+                    // }) = event
+                    // {
+                    //     validator
+                    //         .as_ref()
+                    //         .map(|validator| {
+                    //             let valid = validator.validate(&text);
+                    //             if !valid {
+                    //                 self.error_message_renderer.text =
+                    //                     validator.generate_error_message(&text);
+                    //             }
+                    //             valid
+                    //         })
+                    //         .unwrap_or(true)
+                    // } else {
+                    //     true
+                    // };
 
-                let text = text_editor_borrowed_after
+                    Ok(signal)
+                },
+            ),
+            |renderer: &Box<dyn Renderer + 'static>| -> Result<String> {
+                Ok(self::render::Renderer::cast(renderer.as_ref())?
+                    .text_editor_snapshot
+                    .after()
                     .texteditor
                     .text_without_cursor()
-                    .to_string();
-                let active_key = text_editor_borrowed_after.keymap.active_key();
-
-                if let Some(suggest) = suggest.as_ref() {
-                    match active_key {
-                        "default" => {
-                            if let Event::Key(KeyEvent {
-                                code: KeyCode::Tab,
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            }) = event
-                            {
-                                if let Some(candidates) = suggest.borrow().prefix_search(&text) {
-                                    suggest_borrowed_after.listbox = Listbox::from_iter(candidates);
-                                    text_editor_borrowed_after
-                                        .texteditor
-                                        .replace(&suggest_borrowed_after.listbox.get());
-
-                                    text_editor_borrowed_after.keymap.switch("on_suggest");
-                                    suggest_borrowed_after.keymap.switch("on_suggest");
-                                }
-                            }
-                        }
-                        "on_suggest" => match event {
-                            Event::Key(KeyEvent {
-                                code: KeyCode::Tab,
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            })
-                            | Event::Key(KeyEvent {
-                                code: KeyCode::Down,
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            })
-                            | Event::Key(KeyEvent {
-                                code: KeyCode::Tab,
-                                modifiers: KeyModifiers::SHIFT,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            })
-                            | Event::Key(KeyEvent {
-                                code: KeyCode::Up,
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            }) => {
-                                text_editor_borrowed_after
-                                    .texteditor
-                                    .replace(&suggest_borrowed_after.listbox.get());
-                            }
-                            _ => {
-                                suggest_borrowed_after.listbox =
-                                    Listbox::from_iter(Vec::<String>::new());
-
-                                text_editor_borrowed_after.keymap.switch("default");
-                                suggest_borrowed_after.keymap.switch("default");
-                            }
-                        },
-                        _ => (),
-                    }
-                }
-
-                Ok(
-                    if let Event::Key(KeyEvent {
-                        code: KeyCode::Enter,
-                        modifiers: KeyModifiers::NONE,
-                        kind: KeyEventKind::Press,
-                        state: KeyEventState::NONE,
-                    }) = event
-                    {
-                        validator
-                            .as_ref()
-                            .map(|validator| {
-                                let valid = validator.validate(&text);
-                                if !valid {
-                                    error_message_snapshot.borrow_mut_after().text =
-                                        validator.generate_error_message(&text);
-                                }
-                                valid
-                            })
-                            .unwrap_or(true)
-                    } else {
-                        true
-                    },
-                )
-            },
-            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<String> {
-                Ok(
-                    Snapshot::<text_editor::Renderer>::cast_and_borrow_after(
-                        renderers[1].as_ref(),
-                    )?
-                    .texteditor
-                    .text_without_cursor()
-                    .to_string(),
-                )
+                    .to_string())
             },
             false,
         )

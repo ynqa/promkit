@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::Readline};
+use promkit::{error::Result, preset::readline::Readline};
 
 fn main() -> Result {
     let mut p = Readline::default().title("Feel free to fill in").prompt()?;
