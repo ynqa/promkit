@@ -4,9 +4,14 @@ use crate::{
     json, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text, AsAny, Error, Result,
 };
 
+/// A `Renderer` responsible for rendering JSON presets.
+/// It manages key mappings, title, and JSON content rendering.
 pub struct Renderer {
+    /// Manages key mappings specific to this renderer.
     pub keymap: KeymapManager<Self>,
+    /// Snapshot of the renderer used for the title.
     pub title_snapshot: Snapshot<text::Renderer>,
+    /// Snapshot of the renderer used for JSON content.
     pub json_snapshot: Snapshot<json::Renderer>,
 }
 

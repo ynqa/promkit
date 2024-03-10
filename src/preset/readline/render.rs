@@ -5,13 +5,22 @@ use crate::{
     text_editor, validate::ValidatorManager, AsAny, Error, Result,
 };
 
+/// A `Renderer` for the readline preset, responsible for managing the rendering process.
+/// It holds references to various components and their states, facilitating the rendering of the readline interface.
 pub struct Renderer {
+    /// Manages key bindings and their associated actions within the readline interface.
     pub keymap: KeymapManager<Self>,
+    /// Holds a snapshot of the title's renderer state, used for rendering the title section.
     pub title_snapshot: Snapshot<text::Renderer>,
+    /// Holds a snapshot of the text editor's renderer state, used for rendering the text input area.
     pub text_editor_snapshot: Snapshot<text_editor::Renderer>,
+    /// Optional suggest component for autocomplete functionality.
     pub suggest: Option<Suggest>,
+    /// Holds a snapshot of the suggest box's renderer state, used when rendering suggestions for autocomplete.
     pub suggest_snapshot: Snapshot<listbox::Renderer>,
+    /// Optional validator manager for input validation.
     pub validator: Option<ValidatorManager<str>>,
+    /// Holds a snapshot of the error message's renderer state, used for rendering error messages.
     pub error_message_snapshot: Snapshot<text::Renderer>,
 }
 
