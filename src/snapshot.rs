@@ -4,7 +4,9 @@ use std::{
 };
 
 use crate::{pane::Pane, AsAny, Renderer};
-
+/// A `Snapshot` struct captures the state of a renderer at three different points:
+/// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).
+/// It is generic over `R` where `R` must implement the `Renderer` and `Clone` traits.
 pub struct Snapshot<R: Renderer + Clone> {
     init: R,
     before: RefCell<R>,
@@ -12,13 +14,16 @@ pub struct Snapshot<R: Renderer + Clone> {
 }
 
 impl<R: Renderer + Clone + 'static> Renderer for Snapshot<R> {
+    /// Creates panes based on the `after` state of the renderer, and updates the `before` state
+    /// to match the `after` state. This method is called to render the current state of the UI.
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         *self.before.borrow_mut() = self.after.clone();
         self.after.create_panes(width)
     }
 
-    /// Finalizes the renderer state after all events have been processed,
-    /// updating the `init` and `before` states to match the final `after` state.
+    /// Finalizes the renderer state after all events have been processed by updating the `init`
+    /// and `before` states to match the final `after` state. This method is called at the end of
+    /// the rendering cycle to prepare the renderer for the next cycle.
     fn postrun(&mut self) {
         self.after.postrun();
         self.init = self.after.clone();
@@ -37,6 +42,8 @@ impl<R: Renderer + Clone + 'static> AsAny for Snapshot<R> {
 }
 
 impl<R: Renderer + Clone + 'static> Snapshot<R> {
+    /// Constructs a new `Snapshot` instance with the given renderer. The `init`, `before`, and
+    /// `after` states are all initialized with clones of the provided renderer.
     pub fn new(renderer: R) -> Self {
         Self {
             init: renderer.clone(),
@@ -45,23 +52,29 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
         }
     }
 
-    /// Returns a reference to the initial state of the renderer.
+    /// Returns a reference to the initial state (`init`) of the renderer.
     pub fn init(&self) -> &R {
         &self.init
     }
 
+    /// Returns a reference to the state of the renderer before any changes were applied (`before`).
     pub fn borrow_before(&self) -> Ref<R> {
         self.before.borrow()
     }
 
+    /// Returns a reference to the state of the renderer after changes have been applied (`after`).
     pub fn after(&self) -> &R {
         &self.after
     }
 
+    /// Returns a mutable reference to the state of the renderer after changes have been applied (`after`).
+    /// This allows for modifications to the `after` state.
     pub fn after_mut(&mut self) -> &mut R {
         &mut self.after
     }
 
+    /// Resets the `after` state to match the initial state (`init`). This method can be used to
+    /// revert any changes made during the rendering cycle.
     pub fn reset_after_to_init(&mut self) {
         self.after = self.init.clone();
     }
