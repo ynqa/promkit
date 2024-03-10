@@ -75,7 +75,7 @@ pub fn default(
                     .texteditor
                     .text_without_cursor()
                     .to_string();
-                if let Some(candidates) = suggest.prefix_search(&text) {
+                if let Some(candidates) = suggest.prefix_search(text) {
                     suggest_after_mut.listbox = Listbox::from_iter(candidates);
                     text_editor_after_mut
                         .texteditor
