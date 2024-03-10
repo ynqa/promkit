@@ -1,4 +1,4 @@
-use promkit::{error::Result, json::JsonNode, preset::Json};
+use promkit::{error::Result, json::JsonNode, preset::json::Json};
 
 fn main() -> Result {
     let mut p = Json::new(JsonNode::try_from(

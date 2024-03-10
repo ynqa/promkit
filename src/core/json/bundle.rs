@@ -2,13 +2,9 @@ use std::any::Any;
 
 use crate::{
     core::cursor::CompositeCursor,
-    crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
-    },
     grapheme::{trim, StyledGraphemes},
     pane::Pane,
-    AsAny, Error, PromptSignal, Result,
+    AsAny,
 };
 
 use super::{JsonNode, JsonPath, JsonSyntaxKind};
@@ -92,80 +88,6 @@ impl JsonBundle {
     pub fn move_to_tail(&mut self) {
         self.cursor.move_to_tail()
     }
-}
-
-/// Default key bindings for JSON navigation and manipulation.
-///
-/// | Key                    | Action
-/// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the JSON viewer
-/// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
-/// | <kbd>↑</kbd>           | Move the cursor up to the previous node
-/// | <kbd>↓</kbd>           | Move the cursor down to the next node
-/// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub fn default_keymap(renderer: &mut Renderer, event: &Event) -> Result<PromptSignal> {
-    match event {
-        Event::Key(KeyEvent {
-            code: KeyCode::Enter,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('c'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
-
-        // Move cursor.
-        Event::Key(KeyEvent {
-            code: KeyCode::Up,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => {
-            renderer.bundle.backward();
-        }
-        Event::Mouse(MouseEvent {
-            kind: MouseEventKind::ScrollUp,
-            column: _,
-            row: _,
-            modifiers: KeyModifiers::NONE,
-        }) => {
-            renderer.bundle.backward();
-        }
-
-        Event::Key(KeyEvent {
-            code: KeyCode::Down,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => {
-            renderer.bundle.forward();
-        }
-        Event::Mouse(MouseEvent {
-            kind: MouseEventKind::ScrollDown,
-            column: _,
-            row: _,
-            modifiers: KeyModifiers::NONE,
-        }) => {
-            renderer.bundle.forward();
-        }
-
-        // Fold/Unfold
-        Event::Key(KeyEvent {
-            code: KeyCode::Char(' '),
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => {
-            renderer.bundle.toggle();
-        }
-
-        _ => (),
-    }
-    Ok(PromptSignal::Continue)
 }
 
 #[derive(Clone)]

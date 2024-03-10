@@ -1,17 +1,24 @@
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+    crossterm::{
+        event::Event,
+        style::{Attribute, Attributes, Color, ContentStyle},
+    },
     error::Result,
     json::{self, JsonNode, JsonPathSegment},
     keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt, Renderer,
+    text, EventHandler, Prompt, PromptSignal, Renderer,
 };
+
+pub mod keymap;
+pub mod render;
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
     title_renderer: text::Renderer,
     json_renderer: json::Renderer,
+    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -31,7 +38,6 @@ impl Json {
             },
             json_renderer: json::Renderer {
                 json: json::Json::new(root),
-                keymap: KeymapManager::new("default", json::keymap::default_keymap),
                 theme: json::Theme {
                     curly_brackets_style: StyleBuilder::new()
                         .attrs(Attributes::from(Attribute::Bold))
@@ -50,6 +56,7 @@ impl Json {
                     indent: 2,
                 },
             },
+            keymap: KeymapManager::new("default", self::keymap::default),
             enable_mouse_scroll: false,
         }
     }
@@ -97,21 +104,39 @@ impl Json {
         self
     }
 
+    pub fn register_keymap<K: AsRef<str>>(
+        mut self,
+        key: K,
+        handler: EventHandler<self::render::Renderer>,
+    ) -> Self {
+        self.keymap = self.keymap.register(key, handler);
+        self
+    }
+
     /// Creates a prompt based on the current configuration of the `Json` instance.
     pub fn prompt(self) -> Result<Prompt<Vec<JsonPathSegment>>> {
         Prompt::try_new(
-            vec![
-                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
-                Box::new(Snapshot::<json::Renderer>::new(self.json_renderer)),
-            ],
-            |_, _| Ok(true),
-            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<JsonPathSegment>> {
-                Ok(
-                    Snapshot::<json::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
-                        .json
-                        .path_from_root()
-                        .unwrap_or_default(),
-                )
+            Box::new(self::render::Renderer {
+                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
+                json_snapshot: Snapshot::<json::Renderer>::new(self.json_renderer),
+                keymap: self.keymap,
+            }),
+            Box::new(
+                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
+                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    match renderer.keymap.get() {
+                        Some(f) => f(&mut renderer, event),
+                        None => Ok(PromptSignal::Quit),
+                    }
+                },
+            ),
+            |renderer: &Box<dyn Renderer + 'static>| -> Result<Vec<JsonPathSegment>> {
+                Ok(self::render::Renderer::cast(renderer.as_ref())?
+                    .json_snapshot
+                    .after()
+                    .json
+                    .path_from_root()
+                    .unwrap_or_default())
             },
             self.enable_mouse_scroll,
         )
