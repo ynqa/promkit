@@ -111,6 +111,7 @@ pub mod error;
 pub mod fake_input;
 mod grapheme;
 pub mod keymap;
+mod macros;
 pub mod pane;
 pub mod preset;
 pub mod snapshot;
