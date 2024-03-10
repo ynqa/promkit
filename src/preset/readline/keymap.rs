@@ -51,6 +51,9 @@ pub fn default(
                 .unwrap_or(true);
             return {
                 if valid {
+                    if let Some(ref mut history) = &mut text_editor_after_mut.history {
+                        history.insert(text);
+                    }
                     Ok(PromptSignal::Quit)
                 } else {
                     Ok(PromptSignal::Continue)

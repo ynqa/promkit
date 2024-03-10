@@ -66,13 +66,6 @@ impl crate::Renderer for Renderer {
             self.lines,
         )]
     }
-
-    fn postrun(&mut self) {
-        if let Some(ref mut history) = &mut self.history {
-            history.insert(self.texteditor.text_without_cursor().to_string());
-        }
-        self.texteditor = TextEditor::default();
-    }
 }
 
 impl AsAny for Renderer {
