@@ -57,4 +57,8 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     pub fn after_mut(&mut self) -> &mut R {
         &mut self.after
     }
+
+    pub fn reset_after_to_init(&mut self) {
+        self.after = self.init.clone();
+    }
 }

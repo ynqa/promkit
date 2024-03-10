@@ -113,7 +113,7 @@ pub mod error;
 pub mod fake_input;
 mod grapheme;
 pub mod keymap;
-mod pane;
+pub mod pane;
 pub mod preset;
 pub mod snapshot;
 pub mod style;
