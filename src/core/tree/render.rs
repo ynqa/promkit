@@ -20,8 +20,6 @@ use super::{Kind, Tree};
 pub struct Renderer {
     pub tree: Tree,
 
-    pub keymap: KeymapManager<Self>,
-
     /// Symbol representing folded items.
     pub folded_symbol: String,
     /// Symbol representing unfolded items.

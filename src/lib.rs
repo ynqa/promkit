@@ -159,7 +159,7 @@ pub trait AsAny {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-type DynEvaluator = dyn Fn(&Event, &Box<dyn Renderer>) -> Result<PromptSignal>;
+type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
 type ResultProducer<T> = fn(&Box<dyn Renderer>) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
@@ -216,7 +216,7 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            if (self.evaluator)(&ev, &self.renderer)? == PromptSignal::Quit {
+            if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
                 break;
             }
 

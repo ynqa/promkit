@@ -1,3 +1,5 @@
+use crossterm::event::Event;
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
@@ -6,8 +8,11 @@ use crate::{
     style::StyleBuilder,
     text,
     tree::{self, Node},
-    Prompt, Renderer,
+    Prompt, PromptSignal, Renderer,
 };
+
+mod keymap;
+mod render;
 
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
@@ -35,7 +40,6 @@ impl Tree {
             },
             tree_renderer: tree::Renderer {
                 tree: tree::Tree::new(root),
-                keymap: KeymapManager::new("default", tree::keymap::default_keymap),
                 folded_symbol: String::from("▶︎ "),
                 unfolded_symbol: String::from("▼ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
@@ -107,17 +111,26 @@ impl Tree {
     /// which is a list of selected options.
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
-            vec![
-                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
-                Box::new(Snapshot::<tree::Renderer>::new(self.tree_renderer)),
-            ],
-            |_, _| Ok(true),
-            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
-                Ok(
-                    Snapshot::<tree::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
-                        .tree
-                        .get(),
-                )
+            Box::new(self::render::Renderer {
+                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
+                tree_snapshot: Snapshot::<tree::Renderer>::new(self.tree_renderer),
+                keymap: KeymapManager::new("default", self::keymap::default),
+            }),
+            Box::new(
+                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
+                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    match renderer.keymap.get() {
+                        Some(f) => f(&mut renderer, event),
+                        None => Ok(PromptSignal::Quit),
+                    }
+                },
+            ),
+            |renderer: &Box<dyn Renderer + 'static>| -> Result<Vec<String>> {
+                Ok(self::render::Renderer::cast(renderer.as_ref())?
+                    .tree_snapshot
+                    .borrow_after()
+                    .tree
+                    .get())
             },
             self.enable_mouse_scroll,
         )
