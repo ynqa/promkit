@@ -1,8 +1,7 @@
-use std::any::Any;
-
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
+    impl_as_any,
     pane::Pane,
     AsAny,
 };
@@ -26,6 +25,8 @@ impl Renderer {
     }
 }
 
+impl_as_any!(Renderer);
+
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         vec![Pane::new(
@@ -36,15 +37,5 @@ impl crate::Renderer for Renderer {
             0,
             None,
         )]
-    }
-}
-
-impl AsAny for Renderer {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
     }
 }

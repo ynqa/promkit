@@ -1,8 +1,7 @@
-use std::any::Any;
-
 use crate::{
     core::cursor::CompositeCursor,
     grapheme::{trim, StyledGraphemes},
+    impl_as_any,
     pane::Pane,
     AsAny,
 };
@@ -96,6 +95,8 @@ pub struct Renderer {
     pub theme: super::Theme,
 }
 
+impl_as_any!(Renderer);
+
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         let layout = self
@@ -130,15 +131,5 @@ impl crate::Renderer for Renderer {
             self.bundle.cursor.cross_contents_position(),
             self.theme.lines,
         )]
-    }
-}
-
-impl AsAny for Renderer {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
     }
 }

@@ -1,8 +1,7 @@
-use std::any::Any;
-
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{trim, Graphemes, StyledGraphemes},
+    impl_as_any,
     pane::Pane,
     AsAny,
 };
@@ -36,6 +35,8 @@ pub struct Renderer {
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
+
+impl_as_any!(Renderer);
 
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
@@ -74,15 +75,5 @@ impl crate::Renderer for Renderer {
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
         vec![Pane::new(trimed, self.checkbox.position(), self.lines)]
-    }
-}
-
-impl AsAny for Renderer {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
     }
 }
