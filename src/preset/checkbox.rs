@@ -2,13 +2,19 @@ use std::fmt::Display;
 
 use crate::{
     checkbox,
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+    crossterm::{
+        event::Event,
+        style::{Attribute, Attributes, Color, ContentStyle},
+    },
     error::Result,
     keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, Prompt, Renderer,
+    text, EventHandler, Prompt, PromptSignal, Renderer,
 };
+
+pub mod keymap;
+pub mod render;
 
 /// Represents a checkbox component for creating
 /// and managing a list of selectable options.
@@ -17,6 +23,7 @@ pub struct Checkbox {
     title_renderer: text::Renderer,
     /// Renderer for the checkbox list itself.
     checkbox_renderer: checkbox::Renderer,
+    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -38,7 +45,6 @@ impl Checkbox {
             },
             checkbox_renderer: checkbox::Renderer {
                 checkbox: checkbox::Checkbox::from_iter(items),
-                keymap: KeymapManager::new("default", checkbox::keymap::default_keymap),
                 cursor: String::from("❯ "),
                 active_mark: '•',
                 inactive_mark: '◦',
@@ -46,6 +52,7 @@ impl Checkbox {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
+            keymap: KeymapManager::new("default", self::keymap::default),
             enable_mouse_scroll: false,
         }
     }
@@ -99,22 +106,40 @@ impl Checkbox {
         self
     }
 
+    pub fn register_keymap<K: AsRef<str>>(
+        mut self,
+        key: K,
+        handler: EventHandler<self::render::Renderer>,
+    ) -> Self {
+        self.keymap = self.keymap.register(key, handler);
+        self
+    }
+
     /// Displays the checkbox prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
     pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
         Prompt::try_new(
-            vec![
-                Box::new(Snapshot::<text::Renderer>::new(self.title_renderer)),
-                Box::new(Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer)),
-            ],
-            |_, _| Ok(true),
-            |renderers: &Vec<Box<dyn Renderer + 'static>>| -> Result<Vec<String>> {
-                Ok(
-                    Snapshot::<checkbox::Renderer>::cast_and_borrow_after(renderers[1].as_ref())?
-                        .checkbox
-                        .get(),
-                )
+            Box::new(self::render::Renderer {
+                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
+                checkbox_snapshot: Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer),
+                keymap: self.keymap,
+            }),
+            Box::new(
+                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
+                    let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
+                    match renderer.keymap.get() {
+                        Some(f) => f(&mut renderer, event),
+                        None => Ok(PromptSignal::Quit),
+                    }
+                },
+            ),
+            |renderer: &Box<dyn Renderer + 'static>| -> Result<Vec<String>> {
+                Ok(self::render::Renderer::cast(renderer.as_ref())?
+                    .checkbox_snapshot
+                    .after()
+                    .checkbox
+                    .get())
             },
             self.enable_mouse_scroll,
         )

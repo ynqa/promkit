@@ -1,5 +1,4 @@
-// mod checkbox;
-// pub use checkbox::Checkbox;
+pub mod checkbox;
 // mod readline;
 // pub use readline::{Confirm, Password, Readline};
 pub mod listbox;

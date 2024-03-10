@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::Checkbox};
+use promkit::{error::Result, preset::checkbox::Checkbox};
 
 fn main() -> Result {
     let mut p = Checkbox::new(vec![
