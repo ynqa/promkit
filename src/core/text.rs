@@ -4,7 +4,7 @@ use crate::{
     crossterm::{event::Event, style::ContentStyle},
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny, PromptSignal, Result,
 };
 
 /// A renderer for displaying text within a pane.
@@ -27,19 +27,15 @@ impl Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
-        Pane::new(
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
+        vec![Pane::new(
             matrixify(
                 width as usize,
                 &StyledGraphemes::from_str(&self.text, self.style),
             ),
             0,
             None,
-        )
-    }
-
-    fn handle_event(&mut self, _event: &Event) -> Result<EventAction> {
-        Ok(EventAction::Continue)
+        )]
     }
 
     fn postrun(&mut self) {}
