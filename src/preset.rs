@@ -5,7 +5,6 @@
 pub mod listbox;
 // mod query_selector;
 // pub use query_selector::QuerySelector;
-mod tree;
-pub use tree::Tree;
+pub mod tree;
 // mod json;
 // pub use json::Json;

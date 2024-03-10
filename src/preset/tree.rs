@@ -8,7 +8,7 @@ use crate::{
     style::StyleBuilder,
     text,
     tree::{self, Node},
-    Prompt, PromptSignal, Renderer,
+    EventHandler, Prompt, PromptSignal, Renderer,
 };
 
 mod keymap;
@@ -21,6 +21,7 @@ pub struct Tree {
     title_renderer: text::Renderer,
     /// Renderer for the tree itself.
     tree_renderer: tree::Renderer,
+    keymap: KeymapManager<self::render::Renderer>,
     enable_mouse_scroll: bool,
 }
 
@@ -47,6 +48,7 @@ impl Tree {
                 lines: Default::default(),
                 indent: 2,
             },
+            keymap: KeymapManager::new("default", self::keymap::default),
             enable_mouse_scroll: false,
         }
     }
@@ -106,6 +108,15 @@ impl Tree {
         self
     }
 
+    pub fn register_keymap<K: AsRef<str>>(
+        mut self,
+        key: K,
+        handler: EventHandler<self::render::Renderer>,
+    ) -> Self {
+        self.keymap = self.keymap.register(key, handler);
+        self
+    }
+
     /// Displays the tree prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
@@ -114,7 +125,7 @@ impl Tree {
             Box::new(self::render::Renderer {
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
                 tree_snapshot: Snapshot::<tree::Renderer>::new(self.tree_renderer),
-                keymap: KeymapManager::new("default", self::keymap::default),
+                keymap: self.keymap,
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
