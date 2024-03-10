@@ -5,7 +5,7 @@ use crate::{
     grapheme::{trim, Graphemes, StyledGraphemes},
     keymap::KeymapManager,
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny, Result,
 };
 
 use super::Listbox;
@@ -20,8 +20,6 @@ pub struct Renderer {
     /// The `Listbox` component to be rendered.
     pub listbox: Listbox,
 
-    pub keymap: KeymapManager<Self>,
-
     /// Symbol for the selected line.
     pub cursor: String,
 
@@ -35,7 +33,7 @@ pub struct Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let matrix = self
             .listbox
             .items()
@@ -62,11 +60,7 @@ impl crate::Renderer for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.listbox.position(), self.lines)
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        vec![Pane::new(trimed, self.listbox.position(), self.lines)]
     }
 
     fn postrun(&mut self) {

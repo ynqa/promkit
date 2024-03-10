@@ -4,7 +4,6 @@ use crate::core::cursor::Cursor;
 
 mod render;
 pub use render::Renderer;
-pub mod keymap;
 
 /// A `Listbox` struct that encapsulates a list of strings,
 /// allowing for navigation and manipulation through a cursor.
