@@ -131,10 +131,6 @@ impl crate::Renderer for Renderer {
             self.theme.lines,
         )]
     }
-
-    fn postrun(&mut self) {
-        self.bundle.move_to_head()
-    }
 }
 
 impl AsAny for Renderer {

@@ -167,8 +167,6 @@ pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
 pub trait Renderer: AsAny {
     /// Creates a pane with the given width.
     fn create_panes(&self, width: u16) -> Vec<Pane>;
-    /// Performs something (e.g. cleanup) after rendering is complete.
-    fn postrun(&mut self);
 }
 
 /// A trait for casting objects to `Any`, allowing for dynamic typing.
@@ -299,8 +297,6 @@ impl<T> Prompt<T> {
             terminal.draw(&mut engine, self.renderer.create_panes(size.0))?;
         }
 
-        let ret = (self.producer)(&*self.renderer);
-        self.renderer.postrun();
-        ret
+        (self.producer)(&*self.renderer)
     }
 }

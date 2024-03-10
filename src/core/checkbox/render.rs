@@ -75,10 +75,6 @@ impl crate::Renderer for Renderer {
 
         vec![Pane::new(trimed, self.checkbox.position(), self.lines)]
     }
-
-    fn postrun(&mut self) {
-        self.checkbox.move_to_head()
-    }
 }
 
 impl AsAny for Renderer {

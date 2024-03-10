@@ -37,8 +37,6 @@ impl crate::Renderer for Renderer {
             None,
         )]
     }
-
-    fn postrun(&mut self) {}
 }
 
 impl AsAny for Renderer {

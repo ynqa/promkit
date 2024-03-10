@@ -61,10 +61,6 @@ impl crate::Renderer for Renderer {
 
         vec![Pane::new(trimed, self.listbox.position(), self.lines)]
     }
-
-    fn postrun(&mut self) {
-        self.listbox.move_to_head()
-    }
 }
 
 impl AsAny for Renderer {

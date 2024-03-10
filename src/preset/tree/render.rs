@@ -40,8 +40,6 @@ impl crate::Renderer for Renderer {
         panes.extend(self.tree_snapshot.create_panes(width));
         panes
     }
-
-    fn postrun(&mut self) {}
 }
 
 impl AsAny for Renderer {

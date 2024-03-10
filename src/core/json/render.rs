@@ -202,10 +202,6 @@ impl crate::Renderer for Renderer {
 
         vec![Pane::new(layout, self.json.position(), self.theme.lines)]
     }
-
-    fn postrun(&mut self) {
-        self.json.move_to_head()
-    }
 }
 
 impl AsAny for Renderer {

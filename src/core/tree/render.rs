@@ -88,10 +88,6 @@ impl crate::Renderer for Renderer {
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
         vec![Pane::new(trimed, self.tree.position(), self.lines)]
     }
-
-    fn postrun(&mut self) {
-        self.tree.move_to_head()
-    }
 }
 
 impl AsAny for Renderer {

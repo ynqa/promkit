@@ -42,8 +42,6 @@ impl crate::Renderer for Renderer {
         panes.extend(self.checkbox_snapshot.create_panes(width));
         panes
     }
-
-    fn postrun(&mut self) {}
 }
 
 impl AsAny for Renderer {

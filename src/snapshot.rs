@@ -20,15 +20,6 @@ impl<R: Renderer + Clone + 'static> Renderer for Snapshot<R> {
         *self.before.borrow_mut() = self.after.clone();
         self.after.create_panes(width)
     }
-
-    /// Finalizes the renderer state after all events have been processed by updating the `init`
-    /// and `before` states to match the final `after` state. This method is called at the end of
-    /// the rendering cycle to prepare the renderer for the next cycle.
-    fn postrun(&mut self) {
-        self.after.postrun();
-        self.init = self.after.clone();
-        self.before = RefCell::new(self.after.clone());
-    }
 }
 
 impl<R: Renderer + Clone + 'static> AsAny for Snapshot<R> {
