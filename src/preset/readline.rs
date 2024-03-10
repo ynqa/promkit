@@ -15,7 +15,9 @@ use crate::{
     EventHandler, Prompt, PromptSignal, Renderer,
 };
 
+pub mod confirm;
 pub mod keymap;
+pub mod password;
 pub mod render;
 
 /// `Readline` struct provides functionality
