@@ -2,8 +2,7 @@
 // pub use checkbox::Checkbox;
 // mod readline;
 // pub use readline::{Confirm, Password, Readline};
-// mod listbox;
-// pub use listbox::Listbox;
+pub mod listbox;
 // mod query_selector;
 // pub use query_selector::QuerySelector;
 mod tree;
