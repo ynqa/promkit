@@ -136,12 +136,32 @@ use crate::{
     terminal::Terminal,
 };
 
+/// Represents the signal to control the flow of a prompt.
+///
+/// This enum is used to indicate whether a prompt should continue running
+/// or quit based on user input or other conditions.
 #[derive(Eq, PartialEq)]
 pub enum PromptSignal {
+    /// Indicates that the prompt should continue to run and handle further events.
     Continue,
+    /// Indicates that the prompt should quit and terminate its execution.
     Quit,
 }
 
+/// Type definition for an event handler function.
+///
+/// This function type is used to handle events within a prompt. It takes a reference to an `Event`
+/// and a mutable reference to a state of type `S`, and returns a `Result` containing a `PromptSignal`.
+/// The `PromptSignal` indicates whether the prompt should continue running or quit.
+///
+/// # Arguments
+///
+/// * `event` - A reference to the event that occurred.
+/// * `state` - A mutable reference to the state `S` of the prompt, allowing the handler to modify it.
+///
+/// # Returns
+///
+/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
 pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
 
 pub trait Renderer: AsAny {
@@ -159,7 +179,36 @@ pub trait AsAny {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
+/// Type alias for a dynamic evaluator function.
+///
+/// This evaluator function is responsible for handling events during the prompt's execution.
+/// It takes a reference to an `Event` and a mutable reference to a boxed `Renderer` instance,
+/// and returns a `Result` containing a `PromptSignal`. The `PromptSignal` indicates whether
+/// the prompt should continue running or quit.
+///
+/// # Arguments
+///
+/// * `event` - A reference to the event that occurred.
+/// * `renderer` - A mutable reference to a boxed instance of a type that implements the `Renderer` trait.
+///
+/// # Returns
+///
+/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
 type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
+
+/// Type alias for a result producer function.
+///
+/// This function is used to produce the final result of the prompt based on the state of the renderer.
+/// It takes a reference to a type that implements the `Renderer` trait and returns a `Result` containing
+/// the final output of the prompt.
+///
+/// # Arguments
+///
+/// * `renderer` - A reference to an instance of a type that implements the `Renderer` trait.
+///
+/// # Returns
+///
+/// Returns a `Result` containing the final output of the prompt.
 type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
 /// Represents a customizable prompt that can handle user input and produce a result.
