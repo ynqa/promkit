@@ -1,11 +1,10 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{event::Event, style::ContentStyle},
+    crossterm::style::ContentStyle,
     grapheme::{trim, Graphemes, StyledGraphemes},
-    keymap::KeymapManager,
     pane::Pane,
-    AsAny, Result,
+    AsAny,
 };
 
 use super::{Kind, Tree};

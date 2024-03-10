@@ -1,10 +1,10 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{event::Event, style::ContentStyle},
+    crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
-    AsAny, PromptSignal, Result,
+    AsAny,
 };
 
 /// A renderer for displaying text within a pane.

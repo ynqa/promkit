@@ -1,12 +1,7 @@
 use std::any::{type_name, Any};
 
 use crate::{
-    crossterm::{event::Event, style::ContentStyle},
-    grapheme::{matrixify, StyledGraphemes},
-    keymap::KeymapManager,
-    pane::Pane,
-    snapshot::Snapshot,
-    text, tree, AsAny, Error, Result,
+    keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text, tree, AsAny, Error, Result,
 };
 
 pub struct Renderer {
