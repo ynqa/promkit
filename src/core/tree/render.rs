@@ -5,7 +5,7 @@ use crate::{
     grapheme::{trim, Graphemes, StyledGraphemes},
     keymap::KeymapManager,
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny, Result,
 };
 
 use super::{Kind, Tree};
@@ -43,7 +43,7 @@ pub struct Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let symbol = |kind: &Kind| -> &str {
             match kind {
                 Kind::Folded { .. } => &self.folded_symbol,
@@ -89,11 +89,7 @@ impl crate::Renderer for Renderer {
             .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed, self.tree.position(), self.lines)
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        vec![Pane::new(trimed, self.tree.position(), self.lines)]
     }
 
     fn postrun(&mut self) {

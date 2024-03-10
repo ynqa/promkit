@@ -5,7 +5,6 @@ use crate::core::cursor::Cursor;
 pub use node::{Kind, Node, Path};
 mod render;
 pub use render::Renderer;
-pub mod keymap;
 
 /// A `Tree` structure that manages a collection of nodes in a hierarchical manner.
 /// It utilizes a cursor to navigate and manipulate the nodes within the tree.
