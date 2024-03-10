@@ -2,20 +2,21 @@ use std::collections::HashMap;
 
 use crate::EventHandler;
 
-/// `KeymapManager` manages a collection of key-event handlers, allowing for dynamic switching
-/// and retrieval of event handlers based on a string key. It supports registering new key-handler
-/// pairs, switching the current active handler, and retrieving the current handler for event processing.
-/// A default handler can be specified for use when no specific handler is available for the current key.
+/// Represents a manager for key-event handler mappings.
+///
+/// This struct is responsible for managing a collection of key-event handler pairs,
+/// allowing for the registration of event handlers associated with specific keys,
+/// switching the active key, and retrieving the currently active event handler.
 ///
 /// # Type Parameters
 ///
-/// * `S`: The type of the state that the event handlers will operate on.
+/// * `S`: The state type that the `EventHandler` functions will receive as a mutable reference.
 ///
 /// # Fields
 ///
-/// * `mapping`: A `HashMap` that associates string keys with their corresponding `EventHandler`.
+/// * `mapping`: A `HashMap` where each key is a `String` representing the event key,
+///   and its value is an `EventHandler` associated with that key.
 /// * `active_key`: A `String` representing the key of the currently active event handler.
-/// * `default`: An `EventHandler` that is used as a fallback when no specific handler is found for the current key.
 #[derive(Clone)]
 pub struct KeymapManager<S> {
     mapping: HashMap<String, EventHandler<S>>,
