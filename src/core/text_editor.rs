@@ -7,7 +7,6 @@ mod history;
 pub use history::History;
 mod render;
 pub use render::Renderer;
-pub mod keymap;
 
 /// Edit mode.
 #[derive(Clone, Default)]

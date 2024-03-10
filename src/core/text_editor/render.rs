@@ -1,11 +1,10 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{event::Event, style::ContentStyle},
+    crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
-    keymap::KeymapManager,
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny,
 };
 
 use super::{History, Mode, TextEditor};
@@ -24,8 +23,6 @@ pub struct Renderer {
     pub texteditor: TextEditor,
     /// Optional history for navigating through previous inputs.
     pub history: Option<History>,
-
-    pub keymap: KeymapManager<Self>,
 
     /// Prompt string displayed before the input text.
     pub prefix: String,
@@ -46,7 +43,7 @@ pub struct Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let mut buf = StyledGraphemes::default();
         buf.append(&mut StyledGraphemes::from_str(
             &self.prefix,
@@ -63,15 +60,11 @@ impl crate::Renderer for Renderer {
 
         buf.append(&mut styled);
 
-        Pane::new(
+        vec![Pane::new(
             matrixify(width as usize, &buf),
             self.texteditor.position() / width as usize,
             self.lines,
-        )
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        )]
     }
 
     fn postrun(&mut self) {
