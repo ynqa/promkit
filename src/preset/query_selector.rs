@@ -221,8 +221,8 @@ impl QuerySelector {
                     signal
                 },
             ),
-            |renderer: &Box<dyn Renderer + 'static>| -> Result<String> {
-                Ok(self::render::Renderer::cast(renderer.as_ref())?
+            |renderer: &(dyn Renderer + '_)| -> Result<String> {
+                Ok(self::render::Renderer::cast(renderer)?
                     .listbox_snapshot
                     .after()
                     .listbox

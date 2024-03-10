@@ -160,7 +160,7 @@ pub trait AsAny {
 }
 
 type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
-type ResultProducer<T> = fn(&Box<dyn Renderer>) -> Result<T>;
+type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
 /// A core data structure to manage the hooks and state.
 pub struct Prompt<T> {
@@ -224,7 +224,7 @@ impl<T> Prompt<T> {
             terminal.draw(&mut engine, self.renderer.create_panes(size.0))?;
         }
 
-        let ret = (self.producer)(&self.renderer);
+        let ret = (self.producer)(&*self.renderer);
         self.renderer.postrun();
         ret
     }

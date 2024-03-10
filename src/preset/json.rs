@@ -130,8 +130,8 @@ impl Json {
                     }
                 },
             ),
-            |renderer: &Box<dyn Renderer + 'static>| -> Result<Vec<JsonPathSegment>> {
-                Ok(self::render::Renderer::cast(renderer.as_ref())?
+            |renderer: &(dyn Renderer + '_)| -> Result<Vec<JsonPathSegment>> {
+                Ok(self::render::Renderer::cast(renderer)?
                     .json_snapshot
                     .after()
                     .json

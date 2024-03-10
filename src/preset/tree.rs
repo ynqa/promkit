@@ -137,8 +137,8 @@ impl Tree {
                     }
                 },
             ),
-            |renderer: &Box<dyn Renderer + 'static>| -> Result<Vec<String>> {
-                Ok(self::render::Renderer::cast(renderer.as_ref())?
+            |renderer: &(dyn Renderer + '_)| -> Result<Vec<String>> {
+                Ok(self::render::Renderer::cast(renderer)?
                     .tree_snapshot
                     .after()
                     .tree

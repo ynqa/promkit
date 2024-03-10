@@ -198,8 +198,8 @@ impl Readline {
                     }
                 },
             ),
-            |renderer: &Box<dyn Renderer + 'static>| -> Result<String> {
-                Ok(self::render::Renderer::cast(renderer.as_ref())?
+            |renderer: &(dyn Renderer + '_)| -> Result<String> {
+                Ok(self::render::Renderer::cast(renderer)?
                     .text_editor_snapshot
                     .after()
                     .texteditor
