@@ -1,7 +1,8 @@
-use crossterm::event::Event;
-
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+    crossterm::{
+        event::Event,
+        style::{Attribute, Attributes, Color, ContentStyle},
+    },
     error::Result,
     keymap::KeymapManager,
     snapshot::Snapshot,
@@ -11,8 +12,8 @@ use crate::{
     EventHandler, Prompt, PromptSignal, Renderer,
 };
 
-mod keymap;
-mod render;
+pub mod keymap;
+pub mod render;
 
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
