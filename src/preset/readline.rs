@@ -171,8 +171,6 @@ impl Readline {
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
     pub fn prompt(self) -> Result<Prompt<String>> {
-        let _validator = self.validator;
-
         Prompt::try_new(
             Box::new(self::render::Renderer {
                 title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
@@ -182,41 +180,20 @@ impl Readline {
                 suggest: self.suggest,
                 suggest_snapshot: Snapshot::<listbox::Renderer>::new(self.suggest_renderer),
                 keymap: self.keymap,
+                validator: self.validator,
+                error_message_snapshot: Snapshot::<text::Renderer>::new(
+                    self.error_message_renderer,
+                ),
             }),
             Box::new(
                 move |event: &Event,
                       renderer: &mut Box<dyn Renderer + 'static>|
                       -> Result<PromptSignal> {
                     let mut renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    let signal = match renderer.keymap.get() {
+                    match renderer.keymap.get() {
                         Some(f) => f(&mut renderer, event),
                         None => Ok(PromptSignal::Quit),
-                    }?;
-
-                    // let text = renderer.text_editor_snapshot.after().texteditor.text_without_cursor().to_string();
-                    // let valid = if let Event::Key(KeyEvent {
-                    //     code: KeyCode::Enter,
-                    //     modifiers: KeyModifiers::NONE,
-                    //     kind: KeyEventKind::Press,
-                    //     state: KeyEventState::NONE,
-                    // }) = event
-                    // {
-                    //     validator
-                    //         .as_ref()
-                    //         .map(|validator| {
-                    //             let valid = validator.validate(&text);
-                    //             if !valid {
-                    //                 self.error_message_renderer.text =
-                    //                     validator.generate_error_message(&text);
-                    //             }
-                    //             valid
-                    //         })
-                    //         .unwrap_or(true)
-                    // } else {
-                    //     true
-                    // };
-
-                    Ok(signal)
+                    }
                 },
             ),
             |renderer: &Box<dyn Renderer + 'static>| -> Result<String> {

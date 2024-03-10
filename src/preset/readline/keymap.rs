@@ -24,6 +24,7 @@ pub fn default(
     event: &Event,
 ) -> Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
+    let error_message_after_mut = renderer.error_message_snapshot.after_mut();
     let suggest_after_mut = renderer.suggest_snapshot.after_mut();
 
     match event {
@@ -32,7 +33,30 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => {
+            let text = text_editor_after_mut
+                .texteditor
+                .text_without_cursor()
+                .to_string();
+            let valid = renderer
+                .validator
+                .as_ref()
+                .map(|validator| {
+                    let valid = validator.validate(&text);
+                    if !valid {
+                        error_message_after_mut.text = validator.generate_error_message(&text);
+                    }
+                    valid
+                })
+                .unwrap_or(true);
+            return {
+                if valid {
+                    Ok(PromptSignal::Quit)
+                } else {
+                    Ok(PromptSignal::Continue)
+                }
+            };
+        }
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,

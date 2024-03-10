@@ -2,7 +2,7 @@ use std::any::{type_name, Any};
 
 use crate::{
     keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, suggest::Suggest, text,
-    text_editor, AsAny, Error, Result,
+    text_editor, validate::ValidatorManager, AsAny, Error, Result,
 };
 
 pub struct Renderer {
@@ -11,6 +11,8 @@ pub struct Renderer {
     pub suggest: Option<Suggest>,
     pub suggest_snapshot: Snapshot<listbox::Renderer>,
     pub keymap: KeymapManager<Self>,
+    pub validator: Option<ValidatorManager<str>>,
+    pub error_message_snapshot: Snapshot<text::Renderer>,
 }
 
 impl Renderer {
@@ -35,6 +37,7 @@ impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         let mut panes = Vec::new();
         panes.extend(self.title_snapshot.create_panes(width));
+        panes.extend(self.error_message_snapshot.create_panes(width));
         panes.extend(self.text_editor_snapshot.create_panes(width));
         panes.extend(self.suggest_snapshot.create_panes(width));
         panes
