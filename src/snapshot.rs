@@ -1,48 +1,19 @@
-// IMPORTANT: To avoid potential borrow conflicts, methods that borrow `after` should only be
-// implemented as `borrow_after` and `borrow_mut_after`. Do not add methods that borrow `after`
-// in any other way, as this could lead to borrow conflicts for the callers.
-
 use std::{
     any::{type_name, Any},
     cell::{Ref, RefCell, RefMut},
 };
 
-use crate::{crossterm::event::Event, pane::Pane, AsAny, Error, EventAction, Renderer, Result};
+use crate::{pane::Pane, AsAny, Error, Renderer, Result};
 
-/// A `Snapshot` captures the state of a renderer at different stages:
-/// initial, before an event, and after an event.
-///
-/// It is designed to facilitate the tracking and comparison of renderer states over time,
-/// especially useful in interactive applications
-/// where the state may change in response to user input or other events.
-///
-/// The `Snapshot` struct is generic over `R`,
-/// where `R` must implement the `Renderer` trait. This allows it to be
-/// used with any renderer implementation.
-///
-/// Fields:
-/// - `init`: The initial state of the renderer.
-/// - `before`: The state of the renderer before the last event was processed.
-/// - `after`: The state of the renderer after the last event was processed,
-/// wrapped in a `RefCell` to allow for mutable borrowing at runtime.
 pub struct Snapshot<R: Renderer> {
     init: R,
-    before: R,
+    before: RefCell<R>,
     after: RefCell<R>,
 }
 
 impl<R: Clone + Renderer + 'static> Renderer for Snapshot<R> {
-    /// Generates a `Pane` based on the current state of the renderer
-    /// after the last event was processed.
-    fn make_pane(&self, width: u16) -> Pane {
-        self.after.borrow().make_pane(width)
-    }
-
-    /// Updates the `before` state to match the `after` state,
-    /// then processes an event and updates the `after` state accordingly.
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        self.before = self.after.borrow().clone();
-        self.after.borrow_mut().handle_event(event)
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
+        self.after.borrow().create_panes(width)
     }
 
     /// Finalizes the renderer state after all events have been processed,
@@ -50,7 +21,7 @@ impl<R: Clone + Renderer + 'static> Renderer for Snapshot<R> {
     fn postrun(&mut self) {
         self.after.borrow_mut().postrun();
         self.init = self.after.borrow().clone();
-        self.before = self.after.borrow().clone();
+        self.before = RefCell::new(self.after.borrow().clone());
     }
 }
 
@@ -65,15 +36,10 @@ impl<R: Renderer + 'static> AsAny for Snapshot<R> {
 }
 
 impl<R: Renderer + Clone + 'static> Snapshot<R> {
-    /// Creates a new `Snapshot` instance with all states
-    /// (`init`, `before`, `after`) initialized to the provided renderer state.
-    ///
-    /// Parameters:
-    /// - `renderer`: The initial state of the renderer to be captured.
     pub fn new(renderer: R) -> Self {
         Self {
             init: renderer.clone(),
-            before: renderer.clone(),
+            before: RefCell::new(renderer.clone()),
             after: RefCell::new(renderer),
         }
     }
@@ -81,10 +47,6 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     /// Returns a reference to the initial state of the renderer.
     pub fn init(&self) -> &R {
         &self.init
-    }
-
-    pub fn before(&self) -> &R {
-        &self.before
     }
 
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>`.
@@ -95,6 +57,7 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
             .ok_or_else(|| Error::TypeCastError(type_name::<R>().to_string()))?;
         Ok(snapshot)
     }
+
     /// Attempts to cast a boxed `Renderer` to a `Snapshot<R>` and borrows its `after` state.
     pub fn cast_and_borrow_after(renderer: &dyn Renderer) -> Result<Ref<R>> {
         let snapshot: &Snapshot<R> = renderer
@@ -102,6 +65,14 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
             .downcast_ref::<Snapshot<R>>()
             .ok_or_else(|| Error::TypeCastError(type_name::<R>().to_string()))?;
         Ok(snapshot.after.borrow())
+    }
+
+    pub fn borrow_before(&self) -> Ref<R> {
+        self.before.borrow()
+    }
+
+    pub fn borrow_mut_before(&self) -> RefMut<R> {
+        self.before.borrow_mut()
     }
 
     /// Borrows the `after` state of the `Snapshot`.
