@@ -6,7 +6,6 @@ mod render;
 pub use render::{Renderer, Theme};
 pub mod bundle;
 pub use bundle::JsonBundle;
-pub mod keymap;
 
 /// A `Json` structure that manages a JSON document as a tree of nodes.
 /// It utilizes a cursor to navigate and manipulate the nodes within the JSON tree.

@@ -1,14 +1,10 @@
 use std::any::Any;
 
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, ContentStyle},
-    },
+    crossterm::style::{Attribute, ContentStyle},
     grapheme::{trim, StyledGraphemes},
-    keymap::KeymapManager,
     pane::Pane,
-    AsAny, EventAction, Result,
+    AsAny,
 };
 
 use super::{Json, JsonSyntaxKind};
@@ -53,8 +49,6 @@ pub struct Theme {
 #[derive(Clone)]
 pub struct Renderer {
     pub json: Json,
-
-    pub keymap: KeymapManager<Self>,
 
     pub theme: Theme,
 }
@@ -182,7 +176,7 @@ impl Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let layout = self
             .json
             .kinds()
@@ -206,11 +200,7 @@ impl crate::Renderer for Renderer {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(layout, self.json.position(), self.theme.lines)
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        vec![Pane::new(layout, self.json.position(), self.theme.lines)]
     }
 
     fn postrun(&mut self) {

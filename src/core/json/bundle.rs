@@ -7,9 +7,8 @@ use crate::{
         MouseEventKind,
     },
     grapheme::{trim, StyledGraphemes},
-    keymap::KeymapManager,
     pane::Pane,
-    AsAny, Error, EventAction, Result,
+    AsAny, Error, PromptSignal, Result,
 };
 
 use super::{JsonNode, JsonPath, JsonSyntaxKind};
@@ -104,14 +103,14 @@ impl JsonBundle {
 /// | <kbd>↑</kbd>           | Move the cursor up to the previous node
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub fn default_keymap(renderer: &mut Renderer, event: &Event) -> Result<EventAction> {
+pub fn default_keymap(renderer: &mut Renderer, event: &Event) -> Result<PromptSignal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(EventAction::Quit),
+        }) => return Ok(PromptSignal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -166,18 +165,17 @@ pub fn default_keymap(renderer: &mut Renderer, event: &Event) -> Result<EventAct
 
         _ => (),
     }
-    Ok(EventAction::Continue)
+    Ok(PromptSignal::Continue)
 }
 
 #[derive(Clone)]
 pub struct Renderer {
     pub bundle: JsonBundle,
-    pub keymap: KeymapManager<Self>,
     pub theme: super::Theme,
 }
 
 impl crate::Renderer for Renderer {
-    fn make_pane(&self, width: u16) -> Pane {
+    fn create_panes(&self, width: u16) -> Vec<Pane> {
         let layout = self
             .bundle
             .flatten_kinds()
@@ -205,15 +203,11 @@ impl crate::Renderer for Renderer {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(
+        vec![Pane::new(
             layout,
             self.bundle.cursor.cross_contents_position(),
             self.theme.lines,
-        )
-    }
-
-    fn handle_event(&mut self, event: &Event) -> Result<EventAction> {
-        (self.keymap.get())(self, event)
+        )]
     }
 
     fn postrun(&mut self) {
