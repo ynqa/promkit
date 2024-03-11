@@ -63,17 +63,6 @@ impl<W: Write> Engine<W> {
         queue!(self.out, Clear(ClearType::FromCursorDown)).map_err(Error::from)
     }
 
-    /// Clears the entire terminal screen
-    /// and moves the cursor to the top-left position.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` indicating the success of the operation,
-    /// or an `Error` if it fails.
-    pub fn clear(&mut self) -> Result {
-        queue!(self.out, Clear(ClearType::All), MoveTo(0, 0)).map_err(Error::from)
-    }
-
     /// Writes a string to the terminal.
     ///
     /// # Arguments
@@ -133,21 +122,6 @@ impl<W: Write> Engine<W> {
 
 #[cfg(test)]
 mod test {
-    mod clear {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let out = vec![];
-            let mut engine = Engine::new(out);
-            assert!(engine.clear().is_ok());
-            assert_eq!(
-                String::from_utf8(strip_ansi_escapes::strip(engine.out)).unwrap(),
-                ""
-            );
-        }
-    }
-
     mod write {
         use super::super::*;
 

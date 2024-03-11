@@ -20,7 +20,7 @@ impl Terminal {
     /// # Returns
     ///
     /// A result containing the new Terminal instance or an error.
-    pub fn start_session<W: Write>(engine: &mut Engine<W>, panes: &Vec<Pane>) -> Result<Self> {
+    pub fn start_session<W: Write>(engine: &mut Engine<W>, panes: &[Pane]) -> Result<Self> {
         let position = engine.position()?;
         let size = engine.size()?;
 
