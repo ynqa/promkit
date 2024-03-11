@@ -120,7 +120,7 @@ pub mod suggest;
 mod terminal;
 pub mod validate;
 
-use std::{any::Any, io, sync::Once};
+use std::{any::Any, io};
 
 use crate::{
     crossterm::{
@@ -221,8 +221,6 @@ pub struct Prompt<T> {
     capture_mouse_events: bool,
 }
 
-static ONCE: Once = Once::new();
-
 impl<T> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
@@ -270,10 +268,6 @@ impl<T> Prompt<T> {
     /// Returns a `Result` containing the produced result or an error.
     pub fn run(&mut self) -> Result<T> {
         let mut engine = Engine::new(io::stdout());
-
-        ONCE.call_once(|| {
-            engine.clear().ok();
-        });
 
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
