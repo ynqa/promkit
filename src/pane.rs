@@ -32,10 +32,8 @@ impl Pane {
     }
 
     /// Checks if the pane is empty.
-    /// A pane is considered empty if it contains exactly one layout element with a width of 0.
-    /// - Returns: `true` if the pane is empty, otherwise `false`.
     pub fn is_empty(&self) -> bool {
-        self.layout.len() == 1 && self.layout[0].widths() == 0
+        self.layout.is_empty()
     }
 
     /// Extracts a slice of the pane's layout to be displayed, based on the current offset and the viewport height.

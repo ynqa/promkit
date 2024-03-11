@@ -170,7 +170,9 @@ pub fn matrixify(width: usize, g: &StyledGraphemes) -> Vec<StyledGraphemes> {
             row.push_back(styled.clone());
         }
     }
-    ret.push(row);
+    if !row.is_empty() {
+        ret.push(row);
+    }
     ret
 }
 
@@ -210,6 +212,11 @@ mod test {
                 StyledGraphemes::from(" "),
             ];
             assert_eq!(expect, matrixify(2, &StyledGraphemes::from(">> aaa ")),);
+        }
+
+        #[test]
+        fn test_with_empty() {
+            assert!(matrixify(1, &StyledGraphemes::default()).is_empty());
         }
 
         #[test]
