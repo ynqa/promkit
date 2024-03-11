@@ -1,4 +1,5 @@
 use crate::grapheme::StyledGraphemes;
+
 pub struct Pane {
     /// The layout of graphemes within the pane.
     /// This vector stores the styled graphemes that make up the content of the pane.
@@ -28,7 +29,9 @@ impl Pane {
     /// This is determined by the fixed height if it is set,
     /// otherwise by the length of the layout.
     pub fn visible_row_count(&self) -> usize {
-        self.fixed_height.unwrap_or(self.layout.len())
+        self.fixed_height
+            .unwrap_or(self.layout.len())
+            .min(self.layout.len())
     }
 
     /// Checks if the pane is empty.
@@ -64,6 +67,26 @@ impl Pane {
 
 #[cfg(test)]
 mod test {
+    mod visible_row_count {
+        use crate::{crossterm::style::ContentStyle, text, Renderer};
+
+        #[test]
+        fn test() {
+            let renderer = text::Renderer {
+                text: "".to_string(),
+                style: ContentStyle::default(),
+            };
+            assert_eq!(
+                0,
+                renderer
+                    .create_panes(10)
+                    .iter()
+                    .map(|pane| pane.visible_row_count())
+                    .sum::<usize>()
+            )
+        }
+    }
+
     mod is_empty {
         use crate::grapheme::matrixify;
 
