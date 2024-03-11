@@ -25,7 +25,7 @@ impl Pane {
     }
 
     pub fn rows(&self) -> usize {
-        self.layout.len()
+        self.fixed_height.unwrap_or(self.layout.len())
     }
 
     /// Checks if the pane is empty.
