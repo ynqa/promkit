@@ -24,6 +24,10 @@ impl Pane {
         }
     }
 
+    pub fn rows(&self) -> usize {
+        self.layout.len()
+    }
+
     /// Checks if the pane is empty.
     /// A pane is considered empty if it contains exactly one layout element with a width of 0.
     /// - Returns: `true` if the pane is empty, otherwise `false`.

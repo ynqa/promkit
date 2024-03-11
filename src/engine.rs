@@ -125,6 +125,10 @@ impl<W: Write> Engine<W> {
     pub fn move_to_next_line(&mut self) -> Result {
         queue!(self.out, cursor::MoveToNextLine(1)).map_err(Error::from)
     }
+
+    pub fn move_to_prev_line(&mut self, times: u16) -> Result {
+        queue!(self.out, cursor::MoveToPreviousLine(times)).map_err(Error::from)
+    }
 }
 
 #[cfg(test)]

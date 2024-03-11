@@ -1,6 +1,10 @@
 use std::io::Write;
 
-use crate::{engine::Engine, error::Result, pane::Pane};
+use crate::{
+    engine::Engine,
+    error::Result,
+    pane::Pane,
+};
 
 /// Represents a terminal session,
 /// managing the display of panes within the terminal window.
@@ -20,7 +24,34 @@ impl Terminal {
     /// # Returns
     ///
     /// A result containing the new Terminal instance or an error.
-    pub fn start_session<W: Write>(engine: &mut Engine<W>) -> Result<Self> {
+    pub fn start_session<W: Write>(engine: &mut Engine<W>, panes: &Vec<Pane>) -> Result<Self> {
+        let position = engine.position()?;
+        let size = engine.size()?;
+
+        // If the cursor is not at the beginning of a line (position.0 != 0),
+        // there are two scenarios to consider:
+        // 1. If the cursor is also at the last line of the terminal (size.1 == position.1 + 1),
+        //    the terminal is scrolled up by one line to make room (engine.scroll_up(1)?;).
+        // 2. Regardless of whether a scroll occurred, move the cursor to the beginning of the next line
+        //    to ensure the next output starts correctly (engine.move_to_next_line()?;).
+        if position.0 != 0 {
+            if size.1 == position.1 + 1 {
+                engine.scroll_up(1)?;
+            }
+            engine.move_to_next_line()?;
+        }
+
+        // Calculate the total number of rows required by all panes.
+        let lines = panes.iter().map(|pane| pane.rows()).sum::<usize>();
+        // If the cursor is at the last line of the terminal,
+        // scroll up by the number of lines required by all panes,
+        // and then move the cursor up by the same number of lines
+        // to maintain its relative position.
+        if size.1 == position.1 + 1 {
+            engine.scroll_up(lines as u16)?;
+            engine.move_to_prev_line(lines as u16)?;
+        }
+
         Ok(Self {
             position: engine.position()?,
         })
@@ -73,10 +104,11 @@ impl Terminal {
                 engine.write(row.styled_display())?;
                 current_cursor_y = current_cursor_y.saturating_sub(1);
 
-                if current_cursor_y + 1 == 0 && self.position.1 != 0 {
+                if current_cursor_y == 0 {
                     engine.scroll_up(1)?;
-                    self.position.1 -= 1;
+                    self.position.1 = self.position.1.saturating_sub(1);
                 }
+
                 engine.move_to_next_line()?;
             }
         }

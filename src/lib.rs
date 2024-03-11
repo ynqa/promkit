@@ -281,9 +281,10 @@ impl<T> Prompt<T> {
             execute!(io::stdout(), event::EnableMouseCapture)?;
         }
 
-        let mut terminal = Terminal::start_session(&mut engine)?;
         let size = engine.size()?;
-        terminal.draw(&mut engine, self.renderer.create_panes(size.0))?;
+        let panes = self.renderer.create_panes(size.0);
+        let mut terminal = Terminal::start_session(&mut engine, &panes)?;
+        terminal.draw(&mut engine, panes)?;
 
         loop {
             let ev = event::read()?;
