@@ -24,7 +24,10 @@ impl Pane {
         }
     }
 
-    pub fn rows(&self) -> usize {
+    /// Returns the number of rows that are visible in the pane.
+    /// This is determined by the fixed height if it is set,
+    /// otherwise by the length of the layout.
+    pub fn visible_row_count(&self) -> usize {
         self.fixed_height.unwrap_or(self.layout.len())
     }
 

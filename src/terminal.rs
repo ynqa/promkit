@@ -1,10 +1,6 @@
 use std::io::Write;
 
-use crate::{
-    engine::Engine,
-    error::Result,
-    pane::Pane,
-};
+use crate::{engine::Engine, error::Result, pane::Pane};
 
 /// Represents a terminal session,
 /// managing the display of panes within the terminal window.
@@ -42,7 +38,10 @@ impl Terminal {
         }
 
         // Calculate the total number of rows required by all panes.
-        let lines = panes.iter().map(|pane| pane.rows()).sum::<usize>();
+        let lines = panes
+            .iter()
+            .map(|pane| pane.visible_row_count())
+            .sum::<usize>();
         // If the cursor is at the last line of the terminal,
         // scroll up by the number of lines required by all panes,
         // and then move the cursor up by the same number of lines
