@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::listbox::Listbox};
+use promkit::{preset::listbox::Listbox, Result};
 
 fn main() -> Result {
     let mut p = Listbox::new(0..100)

@@ -1,8 +1,7 @@
 use promkit::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    error::{Error, Result},
     preset::{self, listbox::Listbox},
-    PromptSignal,
+    Error, PromptSignal, Result,
 };
 
 pub fn default(

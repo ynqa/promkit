@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::tree::Tree, tree::Node};
+use promkit::{preset::tree::Tree, tree::Node, Result};
 
 fn main() -> Result {
     let mut p = Tree::new(Node::try_from(&std::env::current_dir()?.join("src"))?)

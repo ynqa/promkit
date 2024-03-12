@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::confirm::Confirm};
+use promkit::{preset::confirm::Confirm, Result};
 
 fn main() -> Result {
     let mut p = Confirm::new("Do you like programming?").prompt()?;

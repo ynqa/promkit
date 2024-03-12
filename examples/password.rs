@@ -1,4 +1,4 @@
-use promkit::{error::Result, preset::password::Password};
+use promkit::{preset::password::Password, Result};
 
 fn main() -> Result {
     let mut p = Password::default()

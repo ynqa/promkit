@@ -107,7 +107,8 @@ pub use serde_json;
 mod core;
 pub use core::*;
 mod engine;
-pub mod error;
+mod error;
+pub use error::{Error, Result};
 pub mod fake_input;
 mod grapheme;
 pub mod keymap;
@@ -130,7 +131,6 @@ use crate::{
         terminal::{disable_raw_mode, enable_raw_mode},
     },
     engine::Engine,
-    error::{Error, Result},
     pane::Pane,
     terminal::Terminal,
 };

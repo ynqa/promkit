@@ -1,7 +1,7 @@
 use promkit::{
-    error::Result,
     json::JsonNode,
     preset::{json::Json, listbox::Listbox, readline::Readline},
+    Result,
 };
 
 fn main() -> Result {
