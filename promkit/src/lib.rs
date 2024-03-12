@@ -109,7 +109,7 @@ pub use core::*;
 pub mod engine;
 mod error;
 pub use error::{Error, Result};
-mod grapheme;
+pub mod grapheme;
 pub mod keymap;
 mod macros;
 pub mod pane;
