@@ -21,7 +21,7 @@ macro_rules! impl_cast {
                 let snapshot = renderer
                     .as_any_mut()
                     .downcast_mut::<Self>()
-                    .ok_or_else(|| Error::TypeCastError(type_name::<Self>().to_string()))?;
+                    .ok_or_else(|| Error::DowncastError(type_name::<Self>().to_string()))?;
                 Ok(snapshot)
             }
 
@@ -29,7 +29,7 @@ macro_rules! impl_cast {
                 let snapshot = renderer
                     .as_any()
                     .downcast_ref::<Self>()
-                    .ok_or_else(|| Error::TypeCastError(type_name::<Self>().to_string()))?;
+                    .ok_or_else(|| Error::DowncastError(type_name::<Self>().to_string()))?;
                 Ok(snapshot)
             }
         }

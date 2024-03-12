@@ -21,18 +21,15 @@ use crate::serde_json;
 /// Contains an error message.
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("IO error: {0}")]
+    #[error(transparent)]
     IO(#[from] std::io::Error),
 
-    #[error("serde json error: {0}")]
+    #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
 
-    #[error("{0} interrupted")]
+    #[error("Type downcast attempt failed: {0}")]
+    DowncastError(String),
+
+    #[error("Operation interrupted: {0}")]
     Interrupted(String),
-
-    #[error("evaluation error: {0}")]
-    EvaluatorError(String),
-
-    #[error("failed to downcast to {0}")]
-    TypeCastError(String),
 }
