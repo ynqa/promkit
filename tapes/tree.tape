@@ -9,6 +9,7 @@ Set Width 1200
 Set Height 600
 
 Type@50ms "cargo run -q --example tree" Enter Sleep 1s
+Sleep 1s
 Space Sleep 1s
 Down@300ms 2 Sleep 1s
 Space Sleep 1s

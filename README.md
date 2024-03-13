@@ -282,7 +282,7 @@ fn main() -> Result {
 ```
 </details>
 
-![tree](https://github.com/ynqa/promkit/assets/6745370/624cd902-5362-4baf-ad5a-f3478ed6b579)
+![tree](https://github.com/ynqa/promkit/assets/6745370/61aefcd0-080a-443e-9dc6-ac627d306f55)
 
 ### JSON
 
