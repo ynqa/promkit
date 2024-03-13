@@ -99,11 +99,11 @@ impl Terminal {
                 ),
             );
             used += rows.len();
-            for row in &rows {
+            for (i, row) in rows.iter().enumerate() {
                 engine.write(row.styled_display())?;
                 current_cursor_y = current_cursor_y.saturating_sub(1);
 
-                if current_cursor_y == 0 {
+                if i != rows.len() - 1 && current_cursor_y == 0 {
                     engine.scroll_up(1)?;
                     self.position.1 = self.position.1.saturating_sub(1);
                 }
