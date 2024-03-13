@@ -13,7 +13,7 @@ fn main() -> Result {
         "Kiwi",
         "Pear",
     ])
-    .title("Please list as many of your favorite fruits as you can.")
+    .title("What are your favorite fruits?")
     .checkbox_lines(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
