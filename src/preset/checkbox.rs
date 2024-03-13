@@ -46,8 +46,8 @@ impl Checkbox {
             checkbox_renderer: checkbox::Renderer {
                 checkbox: checkbox::Checkbox::from_iter(items),
                 cursor: String::from("❯ "),
-                active_mark: '•',
-                inactive_mark: '◦',
+                active_mark: '☒',
+                inactive_mark: '☐',
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
