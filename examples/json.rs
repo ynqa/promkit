@@ -3,32 +3,19 @@ use promkit::{json::JsonNode, preset::json::Json, Result};
 fn main() -> Result {
     let mut p = Json::new(JsonNode::try_from(
         r#"{
-          "number": 1,
+          "number": 9,
           "map": {
-            "string1": "aaa",
-            "string2": "bbb"
+            "entry1": "first",
+            "entry2": "second"
           },
           "list": [
             "abc",
             "def"
-          ],
-          "map_in_map": {
-            "nested": {
-              "leaf": "eof"
-            }
-          },
-          "map_in_list": [
-            {
-              "map1": 1
-            },
-            {
-              "map2": 2
-            }
           ]
         }"#,
     )?)
     .title("JSON viewer")
-    .json_lines(10)
+    .json_lines(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())

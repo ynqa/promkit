@@ -63,17 +63,29 @@ cargo run --example readline
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Readline};
+use promkit::{preset::readline::Readline, suggest::Suggest, Result};
 
 fn main() -> Result {
-    let mut p = Readline::default().title("Feel free to fill in").prompt()?;
+    let mut p = Readline::default()
+        .title("Hi!")
+        .enable_suggest(Suggest::from_iter([
+            "apple",
+            "applet",
+            "application",
+            "banana",
+        ]))
+        .validator(
+            |text| text.len() > 10,
+            |text| format!("Length must be over 10 but got {}", text.len()),
+        )
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
 ```
 </details>
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/7f791483-2a66-4f55-86fc-e6235f021dd2)
+![readline](https://github.com/ynqa/promkit/assets/6745370/d124268e-9496-4c4b-83be-c734e4d03591)
 
 ### Confirm
 
@@ -90,17 +102,17 @@ cargo run --example confirm
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Confirm};
+use promkit::{preset::confirm::Confirm, Result};
 
 fn main() -> Result {
-    let mut p = Confirm::new("Do you like programming?").prompt()?;
+    let mut p = Confirm::new("Do you have a pet?").prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
 ```
 </details>
 
-![confirm](https://github.com/ynqa/promkit/assets/6745370/061de1db-08e6-4d6b-8c33-04b81c15b47a)
+![confirm](https://github.com/ynqa/promkit/assets/6745370/ac9bac78-66cd-4653-a39f-6c9c0c24131f)
 
 ### Password
 
@@ -117,7 +129,7 @@ cargo run --example password
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Password};
+use promkit::{preset::password::Password, Result};
 
 fn main() -> Result {
     let mut p = Password::default()
@@ -133,7 +145,7 @@ fn main() -> Result {
 ```
 </details>
 
-![password](https://github.com/ynqa/promkit/assets/6745370/6f96276a-be18-4f14-bba3-b7db1dc8b5ee)
+![password](https://github.com/ynqa/promkit/assets/6745370/396356ef-47de-44bc-a8d4-d03c7ac66a2f)
 
 ### Listbox
 
@@ -149,7 +161,7 @@ cargo run --example listbox
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Listbox};
+use promkit::{preset::listbox::Listbox, Result};
 
 fn main() -> Result {
     let mut p = Listbox::new(0..100)
@@ -162,7 +174,7 @@ fn main() -> Result {
 ```
 </details>
 
-![listbox](https://github.com/ynqa/promkit/assets/6745370/1da81584-7703-4424-b595-8f7de403e53d)
+![listbox](https://github.com/ynqa/promkit/assets/6745370/0da1b1d0-bb17-4951-8ea8-3b09cd2eb86a)
 
 ### QuerySelector
 
@@ -178,7 +190,7 @@ cargo run --example query_selector
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::QuerySelector};
+use promkit::{preset::query_selector::QuerySelector, Result};
 
 fn main() -> Result {
     let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
@@ -201,7 +213,7 @@ fn main() -> Result {
 ```
 </details>
 
-![query_selector](https://github.com/ynqa/promkit/assets/6745370/750c4964-44f7-4dbd-98b3-338d59be1bef)
+![query_selector](https://github.com/ynqa/promkit/assets/6745370/7ac2ed54-9f9e-4735-bffb-72f7cee06f6d)
 
 ### Checkbox
 
@@ -217,31 +229,31 @@ cargo run --example checkbox
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Checkbox};
+use promkit::{preset::checkbox::Checkbox, Result};
 
 fn main() -> Result {
     let mut p = Checkbox::new(vec![
-            "Apple",
-            "Banana",
-            "Orange",
-            "Mango",
-            "Strawberry",
-            "Pineapple",
-            "Grape",
-            "Watermelon",
-            "Kiwi",
-            "Pear",
-        ])
-        .title("Please list as many of your favorite fruits as you can.")
-        .checkbox_lines(5)
-        .prompt()?;
+        "Apple",
+        "Banana",
+        "Orange",
+        "Mango",
+        "Strawberry",
+        "Pineapple",
+        "Grape",
+        "Watermelon",
+        "Kiwi",
+        "Pear",
+    ])
+    .title("What are your favorite fruits?")
+    .checkbox_lines(5)
+    .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
 ```
 </details>
 
-![checkbox](https://github.com/ynqa/promkit/assets/6745370/e9c41dab-d0a4-45c2-91d4-4517c5970ffb)
+![checkbox](https://github.com/ynqa/promkit/assets/6745370/350b16ce-6ef4-46f2-9466-d01b9dab4eaf)
 
 ### Tree
 
@@ -257,7 +269,7 @@ cargo run --example tree
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, preset::Tree, tree::Node};
+use promkit::{preset::tree::Tree, tree::Node, Result};
 
 fn main() -> Result {
     let mut p = Tree::new(Node::try_from(&std::env::current_dir()?.join("src"))?)
@@ -270,7 +282,7 @@ fn main() -> Result {
 ```
 </details>
 
-![tree](https://github.com/ynqa/promkit/assets/6745370/fb720ac7-398f-459c-99f0-f453963f9c11)
+![tree](https://github.com/ynqa/promkit/assets/6745370/624cd902-5362-4baf-ad5a-f3478ed6b579)
 
 ### JSON
 
@@ -286,37 +298,24 @@ cargo run --example json
 <summary>Code</summary>
 
 ```rust
-use promkit::{error::Result, json::JsonNode, preset::Json};
+use promkit::{json::JsonNode, preset::json::Json, Result};
 
 fn main() -> Result {
     let mut p = Json::new(JsonNode::try_from(
         r#"{
-          "number": 1,
+          "number": 9,
           "map": {
-            "string1": "aaa",
-            "string2": "bbb"
+            "entry1": "first",
+            "entry2": "second"
           },
           "list": [
             "abc",
             "def"
-          ],
-          "map_in_map": {
-            "nested": {
-              "leaf": "eof"
-            }
-          },
-          "map_in_list": [
-            {
-              "map1": 1
-            },
-            {
-              "map2": 2
-            }
           ]
         }"#,
     )?)
     .title("JSON viewer")
-    .json_lines(10)
+    .json_lines(5)
     .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
@@ -324,7 +323,7 @@ fn main() -> Result {
 ```
 </details>
 
-![json](https://github.com/ynqa/promkit/assets/6745370/fb2afca1-1407-49ee-bd78-1a46c05f24b6)
+![json](https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9)
 
 ## Why *promkit*?
 
