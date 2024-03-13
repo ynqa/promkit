@@ -13,11 +13,9 @@ use crate::{
 /// Provides functionality for executing terminal commands
 /// and managing terminal state.
 ///
-/// The `Engine` struct encapsulates methods for interacting
+/// The `Engine` struct provides methods for interacting
 /// with the terminal, such as moving the cursor,
 /// clearing the screen, writing text, and more.
-/// It leverages the `crossterm` crate to provide cross-platform
-/// terminal operations.
 #[derive(Clone)]
 pub struct Engine<W: Write> {
     out: W,

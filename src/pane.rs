@@ -8,7 +8,7 @@ pub struct Pane {
     /// This value determines the starting point for grapheme extraction, allowing for scrolling behavior.
     offset: usize,
     /// An optional fixed height for the pane. If set, this limits the number of graphemes extracted.
-    /// When specified, this restricts the maximum number of graphemes to be displayed, effectively setting the pane's height.
+    /// When specified, this restricts the maximum number of graphemes to be displayed.
     fixed_height: Option<usize>,
 }
 

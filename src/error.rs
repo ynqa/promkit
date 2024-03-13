@@ -4,19 +4,20 @@ use thiserror::Error;
 
 use crate::serde_json;
 
-/// Represents all possible errors that can occur in the application.
+/// Represents all possible errors that can occur within the application.
 ///
-/// This enum encapsulates different types of errors by leveraging the `thiserror` crate
-/// for easy error handling and propagation. The errors include IO errors, serde json errors,
-/// interruption errors, and evaluator phase errors.
+/// This enum categorizes various types of errors by leveraging the `thiserror` crate
+/// for efficient error handling and propagation.
 ///
 /// # Variants
 ///
-/// - `IO`: Wraps `std::io::Error`. Occurs during input/output operations.
-/// - `SerdeJson`: Wraps `serde_json::Error`.
-/// Occurs during serialization or deserialization with serde_json.
-/// - `Interrupted`: Represents an error where an operation was interrupted.
-/// Contains a message describing the interruption.
+/// - `IO`: Represents `std::io::Error`. Arises during input/output operations.
+/// - `SerdeJson`: Represents `serde_json::Error`.
+///   Arises during serialization or deserialization processes with serde_json.
+/// - `Interrupted`: Indicates an operation was prematurely interrupted.
+///   Contains a message detailing the interruption.
+/// - `DowncastError`: Indicates a failure in type downcasting.
+///   Contains a message detailing the failure.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
