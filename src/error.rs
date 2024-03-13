@@ -17,8 +17,6 @@ use crate::serde_json;
 /// Occurs during serialization or deserialization with serde_json.
 /// - `Interrupted`: Represents an error where an operation was interrupted.
 /// Contains a message describing the interruption.
-/// - `EvaluatorError`: Represents errors that occur during the evaluator phase of the application.
-/// Contains an error message.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
