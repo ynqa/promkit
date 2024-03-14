@@ -36,7 +36,6 @@ pub struct QuerySelector {
     /// A filter function to apply to the list box items
     /// based on the text editor input.
     filter: Box<Filter>,
-    enable_mouse_scroll: bool,
 }
 
 impl QuerySelector {
@@ -83,15 +82,7 @@ impl QuerySelector {
             },
             keymap: KeymapManager::new("default", self::keymap::default),
             filter: Box::new(filter),
-            enable_mouse_scroll: false,
         }
-    }
-
-    /// Enables mouse scroll functionality for the component.
-    /// When enabled, users can scroll through the items of list using the mouse wheel.
-    pub fn enable_mouse_scroll(mut self) -> Self {
-        self.enable_mouse_scroll = true;
-        self
     }
 
     /// Sets the title text displayed above the query selection.
@@ -227,7 +218,6 @@ impl QuerySelector {
                     .listbox
                     .get())
             },
-            self.enable_mouse_scroll,
         )
     }
 }

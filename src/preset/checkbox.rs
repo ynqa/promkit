@@ -24,7 +24,6 @@ pub struct Checkbox {
     title_renderer: text::Renderer,
     /// Renderer for the checkbox list itself.
     checkbox_renderer: checkbox::Renderer,
-    enable_mouse_scroll: bool,
 }
 
 impl Checkbox {
@@ -53,15 +52,7 @@ impl Checkbox {
                 lines: Default::default(),
             },
             keymap: KeymapManager::new("default", self::keymap::default),
-            enable_mouse_scroll: false,
         }
-    }
-
-    /// Enables mouse scroll functionality for the component.
-    /// When enabled, users can scroll through the items of list using the mouse wheel.
-    pub fn enable_mouse_scroll(mut self) -> Self {
-        self.enable_mouse_scroll = true;
-        self
     }
 
     /// Sets the title text displayed above the checkbox list.
@@ -141,7 +132,6 @@ impl Checkbox {
                     .checkbox
                     .get())
             },
-            self.enable_mouse_scroll,
         )
     }
 }

@@ -212,13 +212,10 @@ type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-/// It supports capturing mouse events and
-/// ensures proper terminal state management.
 pub struct Prompt<T> {
     renderer: Box<dyn Renderer>,
     evaluator: Box<DynEvaluator>,
     producer: ResultProducer<T>,
-    capture_mouse_events: bool,
 }
 
 impl<T> Drop for Prompt<T> {
@@ -238,7 +235,6 @@ impl<T> Prompt<T> {
     /// * `renderer` - A boxed renderer for drawing the prompt.
     /// * `evaluator` - A boxed evaluator function to handle events.
     /// * `producer` - A function to produce the result based on the renderer's state.
-    /// * `capture_mouse_events` - A boolean indicating whether to capture mouse events.
     ///
     /// # Returns
     ///
@@ -247,20 +243,18 @@ impl<T> Prompt<T> {
         renderer: Box<dyn Renderer>,
         evaluator: Box<DynEvaluator>,
         producer: ResultProducer<T>,
-        capture_mouse_events: bool,
     ) -> Result<Self> {
         Ok(Self {
             renderer,
             evaluator,
             producer,
-            capture_mouse_events,
         })
     }
 
     /// Runs the prompt, handling events and producing a result.
     ///
-    /// This method initializes the terminal, captures mouse events if enabled,
-    /// and enters a loop to handle events until a quit signal is received.
+    /// This method initializes the terminal, and enters a loop
+    /// to handle events until a quit signal is received.
     /// After exiting the loop, it produces and returns the result.
     ///
     /// # Returns
@@ -271,9 +265,6 @@ impl<T> Prompt<T> {
 
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
-        if self.capture_mouse_events {
-            execute!(io::stdout(), event::EnableMouseCapture)?;
-        }
 
         let size = engine.size()?;
         let panes = self.renderer.create_panes(size.0);

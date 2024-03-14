@@ -205,7 +205,6 @@ impl Readline {
                     .text_without_cursor()
                     .to_string())
             },
-            false,
         )
     }
 }

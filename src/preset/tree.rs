@@ -23,7 +23,6 @@ pub struct Tree {
     title_renderer: text::Renderer,
     /// Renderer for the tree itself.
     tree_renderer: tree::Renderer,
-    enable_mouse_scroll: bool,
 }
 
 impl Tree {
@@ -50,15 +49,7 @@ impl Tree {
                 lines: Default::default(),
                 indent: 2,
             },
-            enable_mouse_scroll: false,
         }
-    }
-
-    /// Enables mouse scroll functionality for the component.
-    /// When enabled, users can scroll through the items of list using the mouse wheel.
-    pub fn enable_mouse_scroll(mut self) -> Self {
-        self.enable_mouse_scroll = true;
-        self
     }
 
     /// Sets the title text displayed above the tree.
@@ -144,7 +135,6 @@ impl Tree {
                     .tree
                     .get())
             },
-            self.enable_mouse_scroll,
         )
     }
 }

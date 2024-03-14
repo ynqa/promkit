@@ -19,7 +19,6 @@ pub struct Json {
     keymap: KeymapManager<self::render::Renderer>,
     title_renderer: text::Renderer,
     json_renderer: json::Renderer,
-    enable_mouse_scroll: bool,
 }
 
 impl Json {
@@ -57,15 +56,7 @@ impl Json {
                 },
             },
             keymap: KeymapManager::new("default", self::keymap::default),
-            enable_mouse_scroll: false,
         }
-    }
-
-    /// Enables mouse scroll functionality for the component.
-    /// When enabled, users can scroll through the items of list using the mouse wheel.
-    pub fn enable_mouse_scroll(mut self) -> Self {
-        self.enable_mouse_scroll = true;
-        self
     }
 
     /// Sets the title text for the JSON preset.
@@ -138,7 +129,6 @@ impl Json {
                     .path_from_root()
                     .unwrap_or_default())
             },
-            self.enable_mouse_scroll,
         )
     }
 }
