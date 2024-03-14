@@ -1,8 +1,14 @@
-use promkit::{error::Result, preset::Readline};
+use promkit::{preset::readline::Readline, suggest::Suggest, Result};
 
 fn main() -> Result {
     let mut p = Readline::default()
-        .title("Feel free to fill in")
+        .title("Hi!")
+        .enable_suggest(Suggest::from_iter([
+            "apple",
+            "applet",
+            "application",
+            "banana",
+        ]))
         .validator(
             |text| text.len() > 10,
             |text| format!("Length must be over 10 but got {}", text.len()),

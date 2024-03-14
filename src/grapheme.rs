@@ -1,11 +1,5 @@
-//! # Grapheme
-//!
-//! `grapheme` manages the characters and their width at the display.
-//!
-//! Note that to manage the width of character is
-//! in order to consider how many the positions of cursor should be moved
-//! when e.g. emojis and the special characters are displayed on the terminal.
 use std::{
+    collections::VecDeque,
     fmt,
     iter::FromIterator,
     ops::{Deref, DerefMut},
@@ -13,193 +7,124 @@ use std::{
 
 use unicode_width::UnicodeWidthChar;
 
-use crate::crossterm::style::ContentStyle;
+mod styled;
+pub use styled::{matrixify, trim, StyledGraphemes};
 
-/// A character and its width.
+impl From<char> for Grapheme {
+    fn from(ch: char) -> Self {
+        Self {
+            ch,
+            width: UnicodeWidthChar::width(ch).unwrap_or(0),
+        }
+    }
+}
+/// Represents a single grapheme with its character and display width.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grapheme {
     ch: char,
     width: usize,
-    style: ContentStyle,
 }
 
 impl Grapheme {
-    pub fn new(ch: char) -> Self {
-        Grapheme::new_with_style(ch, ContentStyle::new())
-    }
-
-    pub fn new_with_style(ch: char, style: ContentStyle) -> Self {
-        Self {
-            ch,
-            width: UnicodeWidthChar::width(ch).unwrap_or(0),
-            style,
-        }
+    /// Returns the display width of the grapheme.
+    pub fn width(&self) -> usize {
+        self.width
     }
 }
 
-/// Characters and their width.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Graphemes(pub Vec<Grapheme>);
-
-impl Graphemes {
-    pub fn new<S: AsRef<str>>(string: S) -> Self {
-        Graphemes::new_with_style(string, ContentStyle::new())
-    }
-
-    pub fn new_with_style<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
-        string
-            .as_ref()
-            .chars()
-            .map(|ch| Grapheme::new_with_style(ch, style))
-            .collect()
-    }
-
-    pub fn widths(&self) -> usize {
-        self.0.iter().map(|grapheme| grapheme.width).sum()
-    }
-
-    pub fn stylize(mut self, idx: usize, style: ContentStyle) -> Self {
-        self.get_mut(idx).map(|grapheme| {
-            grapheme.style = style;
-            grapheme
-        });
-        self
-    }
-
-    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
-        StyledGraphemesDisplay { graphemes: self }
-    }
-}
+/// A collection of `Grapheme` instances, stored in a `VecDeque`.
+#[derive(Clone, Default, PartialEq, Eq)]
+pub struct Graphemes(pub VecDeque<Grapheme>);
 
 impl Deref for Graphemes {
-    type Target = Vec<Grapheme>;
+    type Target = VecDeque<Grapheme>;
+
+    /// Dereferences to the underlying `VecDeque<Grapheme>`.
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl DerefMut for Graphemes {
+    /// Mutable dereference to the underlying `VecDeque<Grapheme>`.
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
+impl FromIterator<Graphemes> for Graphemes {
+    /// Creates a single `Graphemes` instance by concatenating multiple `Graphemes`.
+    fn from_iter<I: IntoIterator<Item = Graphemes>>(iter: I) -> Self {
+        let concatenated = iter.into_iter().flat_map(|g| g.0).collect();
+        Graphemes(concatenated)
+    }
+}
+
 impl FromIterator<Grapheme> for Graphemes {
+    /// Creates a `Graphemes` instance from an iterator of `Grapheme`.
     fn from_iter<I: IntoIterator<Item = Grapheme>>(iter: I) -> Self {
         let mut g = Graphemes::default();
         for i in iter {
-            g.push(i);
+            g.push_back(i);
         }
         g
     }
 }
 
-pub struct StyledGraphemesDisplay<'a> {
-    graphemes: &'a Graphemes,
+impl Iterator for Graphemes {
+    type Item = Grapheme;
+
+    /// Pops a `Grapheme` from the front of the collection.
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_front()
+    }
 }
 
-impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
+impl<S: AsRef<str>> From<S> for Graphemes {
+    /// Creates a `Graphemes` instance from a string slice, converting each char to a `Grapheme`.
+    fn from(string: S) -> Self {
+        string.as_ref().chars().map(Grapheme::from).collect()
+    }
+}
+
+impl fmt::Display for Graphemes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for grapheme in self.graphemes.iter() {
-            write!(f, "{}", grapheme.style.apply(grapheme.ch))?;
+        let string: String = self.chars().iter().collect();
+        write!(f, "{}", string)
+    }
+}
+
+impl fmt::Debug for Graphemes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for grapheme in self.iter() {
+            write!(f, "{}", grapheme.ch)?;
         }
         Ok(())
     }
 }
 
-pub fn matrixify(width: usize, g: &Graphemes) -> Vec<Graphemes> {
-    let mut ret = vec![];
-    let mut row = Graphemes::default();
-    for ch in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + ch.width;
-        if !row.is_empty() && width < width_with_next_char {
-            ret.push(row);
-            row = Graphemes::default();
-        }
-        if width >= ch.width {
-            row.push(ch.clone());
-        }
-    }
-    ret.push(row);
-    ret
-}
-
-pub fn trim(width: usize, g: &Graphemes) -> Graphemes {
-    let mut row = Graphemes::default();
-    for ch in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + ch.width;
-        if width < width_with_next_char {
-            break;
-        }
-        if width >= ch.width {
-            row.push(ch.clone());
-        }
-    }
-    row
-}
-
-#[cfg(test)]
-mod test {
-    mod matrixify {
-        use super::super::*;
-
-        #[test]
-        fn test() {
-            let expect = vec![
-                Graphemes::new(">>"),
-                Graphemes::new(" a"),
-                Graphemes::new("aa"),
-                Graphemes::new(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &Graphemes::new(">> aaa ")),);
-        }
-
-        #[test]
-        fn test_with_emoji() {
-            let expect = vec![
-                Graphemes::new(">>"),
-                Graphemes::new(" "),
-                Graphemes::new("😎"),
-                Graphemes::new("😎"),
-                Graphemes::new(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &Graphemes::new(">> 😎😎 ")),);
-        }
-
-        #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            let expect = vec![
-                Graphemes::new(">"),
-                Graphemes::new(">"),
-                Graphemes::new(" "),
-                Graphemes::new(" "),
-            ];
-            assert_eq!(expect, matrixify(1, &Graphemes::new(">> 😎😎 ")),);
-        }
+impl Graphemes {
+    /// Calculates the total display width of all `Grapheme` instances in the collection.
+    pub fn widths(&self) -> usize {
+        self.0.iter().map(|grapheme| grapheme.width).sum()
     }
 
-    mod trim {
-        use super::super::*;
+    /// Returns a `Vec<char>` containing the characters of all `Grapheme` instances in the collection.
+    pub fn chars(&self) -> Vec<char> {
+        self.0.iter().map(|grapheme| grapheme.ch).collect()
+    }
 
-        #[test]
-        fn test() {
-            assert_eq!(Graphemes::new(">> a"), trim(4, &Graphemes::new(">> aaa ")));
+    /// Replaces the specified range with the given string.
+    pub fn replace_range<S: AsRef<str>>(&mut self, range: std::ops::Range<usize>, replacement: S) {
+        // Remove the specified range.
+        for _ in range.clone() {
+            self.0.remove(range.start);
         }
 
-        #[test]
-        fn test_with_emoji() {
-            assert_eq!(Graphemes::new("😎"), trim(2, &Graphemes::new("😎")));
-        }
-
-        #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            assert_eq!(Graphemes::new(""), trim(1, &Graphemes::new("😎")));
+        // Insert the replacement at the start of the range.
+        let replacement_graphemes: Graphemes = replacement.as_ref().into();
+        for grapheme in replacement_graphemes.0.iter().rev() {
+            self.0.insert(range.start, grapheme.clone());
         }
     }
 }

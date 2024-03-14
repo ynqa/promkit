@@ -1,13 +1,23 @@
-use crate::grapheme::Graphemes;
+use crate::grapheme::StyledGraphemes;
 
 pub struct Pane {
-    layout: Vec<Graphemes>,
+    /// The layout of graphemes within the pane.
+    /// This vector stores the styled graphemes that make up the content of the pane.
+    layout: Vec<StyledGraphemes>,
+    /// The offset from the top of the pane, used when extracting graphemes to display.
+    /// This value determines the starting point for grapheme extraction, allowing for scrolling behavior.
     offset: usize,
+    /// An optional fixed height for the pane. If set, this limits the number of graphemes extracted.
+    /// When specified, this restricts the maximum number of graphemes to be displayed.
     fixed_height: Option<usize>,
 }
 
 impl Pane {
-    pub fn new(layout: Vec<Graphemes>, offset: usize, fixed_height: Option<usize>) -> Self {
+    /// Constructs a new `Pane` with the specified layout, offset, and optional fixed height.
+    /// - `layout`: A vector of `StyledGraphemes` representing the content of the pane.
+    /// - `offset`: The initial offset from the top of the pane.
+    /// - `fixed_height`: An optional fixed height for the pane.
+    pub fn new(layout: Vec<StyledGraphemes>, offset: usize, fixed_height: Option<usize>) -> Self {
         Pane {
             layout,
             offset,
@@ -15,11 +25,24 @@ impl Pane {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.layout.len() == 1 && self.layout[0].widths() == 0
+    /// Returns the number of rows that are visible in the pane.
+    /// This is determined by the fixed height if it is set,
+    /// otherwise by the length of the layout.
+    pub fn visible_row_count(&self) -> usize {
+        self.fixed_height
+            .unwrap_or(self.layout.len())
+            .min(self.layout.len())
     }
 
-    pub fn extract(&self, viewport_height: usize) -> Vec<Graphemes> {
+    /// Checks if the pane is empty.
+    pub fn is_empty(&self) -> bool {
+        self.layout.is_empty()
+    }
+
+    /// Extracts a slice of the pane's layout to be displayed, based on the current offset and the viewport height.
+    /// - `viewport_height`: The height of the viewport in which the pane is being displayed.
+    /// - Returns: A vector of `StyledGraphemes` representing the visible portion of the pane.
+    pub fn extract(&self, viewport_height: usize) -> Vec<StyledGraphemes> {
         let lines = self.layout.len().min(
             self.fixed_height
                 .unwrap_or(viewport_height)
@@ -44,6 +67,26 @@ impl Pane {
 
 #[cfg(test)]
 mod test {
+    mod visible_row_count {
+        use crate::{crossterm::style::ContentStyle, text, Renderer};
+
+        #[test]
+        fn test() {
+            let renderer = text::Renderer {
+                text: "".to_string(),
+                style: ContentStyle::default(),
+            };
+            assert_eq!(
+                0,
+                renderer
+                    .create_panes(10)
+                    .iter()
+                    .map(|pane| pane.visible_row_count())
+                    .sum::<usize>()
+            )
+        }
+    }
+
     mod is_empty {
         use crate::grapheme::matrixify;
 
@@ -54,7 +97,7 @@ mod test {
             assert_eq!(
                 true,
                 Pane {
-                    layout: matrixify(10, &Graphemes::new("")),
+                    layout: matrixify(10, &StyledGraphemes::from("")),
                     offset: 0,
                     fixed_height: None,
                 }
@@ -68,19 +111,19 @@ mod test {
         #[test]
         fn test_with_less_extraction_size_than_layout() {
             let expect = vec![
-                Graphemes::new("aa"),
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
+                StyledGraphemes::from("aa"),
+                StyledGraphemes::from("bb"),
+                StyledGraphemes::from("cc"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 0,
                     fixed_height: None,
@@ -92,21 +135,21 @@ mod test {
         #[test]
         fn test_with_much_extraction_size_than_layout() {
             let expect = vec![
-                Graphemes::new("aa"),
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                StyledGraphemes::from("aa"),
+                StyledGraphemes::from("bb"),
+                StyledGraphemes::from("cc"),
+                StyledGraphemes::from("dd"),
+                StyledGraphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 0,
                     fixed_height: None,
@@ -117,16 +160,16 @@ mod test {
 
         #[test]
         fn test_with_within_extraction_size_and_offset_non_zero() {
-            let expect = vec![Graphemes::new("cc"), Graphemes::new("dd")];
+            let expect = vec![StyledGraphemes::from("cc"), StyledGraphemes::from("dd")];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 2, // indicate `cc`
                     fixed_height: None,
@@ -138,19 +181,19 @@ mod test {
         #[test]
         fn test_with_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                StyledGraphemes::from("cc"),
+                StyledGraphemes::from("dd"),
+                StyledGraphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: None,
@@ -162,20 +205,20 @@ mod test {
         #[test]
         fn test_with_small_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                StyledGraphemes::from("bb"),
+                StyledGraphemes::from("cc"),
+                StyledGraphemes::from("dd"),
+                StyledGraphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: Some(5),
@@ -187,20 +230,20 @@ mod test {
         #[test]
         fn test_with_large_fixed_height_and_beyond_extraction_size_and_offset_non_zero() {
             let expect = vec![
-                Graphemes::new("bb"),
-                Graphemes::new("cc"),
-                Graphemes::new("dd"),
-                Graphemes::new("ee"),
+                StyledGraphemes::from("bb"),
+                StyledGraphemes::from("cc"),
+                StyledGraphemes::from("dd"),
+                StyledGraphemes::from("ee"),
             ];
             assert_eq!(
                 expect,
                 Pane {
                     layout: vec![
-                        Graphemes::new("aa"),
-                        Graphemes::new("bb"),
-                        Graphemes::new("cc"),
-                        Graphemes::new("dd"),
-                        Graphemes::new("ee"),
+                        StyledGraphemes::from("aa"),
+                        StyledGraphemes::from("bb"),
+                        StyledGraphemes::from("cc"),
+                        StyledGraphemes::from("dd"),
+                        StyledGraphemes::from("ee"),
                     ],
                     offset: 3, // indicate `dd`
                     fixed_height: Some(4),

@@ -1,9 +1,9 @@
 # promkit
 
-[![.github/workflows/promkit.yml](https://github.com/ynqa/promkit/actions/workflows/promkit.yml/badge.svg)](https://github.com/ynqa/promkit/actions/workflows/promkit.yml)
+[![ci](https://github.com/ynqa/promkit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ynqa/promkit/actions/workflows/ci.yml)
 [![docs.rs](https://img.shields.io/docsrs/promkit)](https://docs.rs/promkit)
 
-A toolkit for building your own interactive command-line tools in Rust.
+A toolkit for building your own interactive prompt in Rust.
 
 ## Getting Started
 
@@ -11,40 +11,355 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.2.0"
+promkit = "0.3.0"
 ```
 
 ## Features
 
-- Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
+- Support cross-platform both UNIX and Windows owing to
+[crossterm](https://github.com/crossterm-rs/crossterm)
 - Various building methods
-  - Support ranging from presets for easy use to layout building using `Component`s, and even for displaying your own data structures
+  - Preset; Support for quickly setting up a UI by providing simple parameters
+    - [Readline](#readline)
+    - [Confirm](#confirm)
+    - [Password](#password)
+    - [Listbox](#listbox)
+    - [QuerySelector](#queryselector)
+    - [Checkbox](#checkbox)
+    - [Tree](#tree)
+    - [JSON](#json)
+  - Combining various UI components
+    - They are provided with the same interface, allowing users to choose and
+      assemble them according to their preferences
+  - (Upcoming) Stronger support to display yor own data structures
 - Versatile customization capabilities
-  - Themes for defining the outer shell style, including text and cursor colors
+  - Theme for designing the appearance of the prompt
+    - e.g. cursor, text and prompt string
   - Validation for user input and error message construction
-  - and so on...
+  - Customizable key mappings
+- Mouse support (partially)
+  - Allows scrolling through lists with the mouse wheel
 
-## Examples
+## Examples/Demos
 
-*promkit* provides presets so that users can utilize prompts immediately without
-having to build complex Components for specific use cases.  
+*promkit* provides presets so that users can try prompts immediately without
+having to build complex components for specific use cases.
 
-```
+Show you commands, code, and actual demo screens for examples
+that can be executed immediately below.
+
+### Readline
+
+<details>
+<summary>Command</summary>
+
+```bash
 cargo run --example readline
 ```
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/afa75a49-f84b-444f-88e3-3dabca959164)
+</details>
 
-See [examples](https://github.com/ynqa/promkit/tree/main/examples/README.md)
-for more examples.
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::readline::Readline, suggest::Suggest, Result};
+
+fn main() -> Result {
+    let mut p = Readline::default()
+        .title("Hi!")
+        .enable_suggest(Suggest::from_iter([
+            "apple",
+            "applet",
+            "application",
+            "banana",
+        ]))
+        .validator(
+            |text| text.len() > 10,
+            |text| format!("Length must be over 10 but got {}", text.len()),
+        )
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![readline](https://github.com/ynqa/promkit/assets/6745370/d124268e-9496-4c4b-83be-c734e4d03591)
+
+### Confirm
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example confirm
+```
+
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::confirm::Confirm, Result};
+
+fn main() -> Result {
+    let mut p = Confirm::new("Do you have a pet?").prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![confirm](https://github.com/ynqa/promkit/assets/6745370/ac9bac78-66cd-4653-a39f-6c9c0c24131f)
+
+### Password
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example password
+```
+
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::password::Password, Result};
+
+fn main() -> Result {
+    let mut p = Password::default()
+        .title("Put your password")
+        .validator(
+            |text| 4 < text.len() && text.len() < 10,
+            |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
+        )
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![password](https://github.com/ynqa/promkit/assets/6745370/396356ef-47de-44bc-a8d4-d03c7ac66a2f)
+
+### Listbox
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example listbox
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::listbox::Listbox, Result};
+
+fn main() -> Result {
+    let mut p = Listbox::new(0..100)
+        .title("What number do you like?")
+        .listbox_lines(5)
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![listbox](https://github.com/ynqa/promkit/assets/6745370/0da1b1d0-bb17-4951-8ea8-3b09cd2eb86a)
+
+### QuerySelector
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example query_selector
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::query_selector::QuerySelector, Result};
+
+fn main() -> Result {
+    let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
+        text.parse::<usize>()
+            .map(|query| {
+                items
+                    .iter()
+                    .filter(|num| query <= num.parse::<usize>().unwrap_or_default())
+                    .map(|num| num.to_string())
+                    .collect::<Vec<String>>()
+            })
+            .unwrap_or(items.clone())
+    })
+    .title("What number do you like?")
+    .listbox_lines(5)
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![query_selector](https://github.com/ynqa/promkit/assets/6745370/7ac2ed54-9f9e-4735-bffb-72f7cee06f6d)
+
+### Checkbox
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example checkbox
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::checkbox::Checkbox, Result};
+
+fn main() -> Result {
+    let mut p = Checkbox::new(vec![
+        "Apple",
+        "Banana",
+        "Orange",
+        "Mango",
+        "Strawberry",
+        "Pineapple",
+        "Grape",
+        "Watermelon",
+        "Kiwi",
+        "Pear",
+    ])
+    .title("What are your favorite fruits?")
+    .checkbox_lines(5)
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![checkbox](https://github.com/ynqa/promkit/assets/6745370/350b16ce-6ef4-46f2-9466-d01b9dab4eaf)
+
+### Tree
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example tree
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{preset::tree::Tree, tree::Node, Result};
+
+fn main() -> Result {
+    let mut p = Tree::new(Node::try_from(&std::env::current_dir()?.join("src"))?)
+        .title("Select a directory or file")
+        .tree_lines(10)
+        .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![tree](https://github.com/ynqa/promkit/assets/6745370/61aefcd0-080a-443e-9dc6-ac627d306f55)
+
+### JSON
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example json
+```
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{json::JsonNode, preset::json::Json, Result};
+
+fn main() -> Result {
+    let mut p = Json::new(JsonNode::try_from(
+        r#"{
+          "number": 9,
+          "map": {
+            "entry1": "first",
+            "entry2": "second"
+          },
+          "list": [
+            "abc",
+            "def"
+          ]
+        }"#,
+    )?)
+    .title("JSON viewer")
+    .json_lines(5)
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+</details>
+
+![json](https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9)
 
 ## Why *promkit*?
 
-Similar libraries in this category include the following:
+Related libraries in this category include the following:
 - [console-rs/dialoguer](https://github.com/console-rs/dialoguer)
 - [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire)
 
 *promkit* offers several advantages over these libraries:
+
+### Unified interface approach for UI components
+
+*promkit* takes a unified approach by having all of its components inherit the
+same `Renderer` trait. This design choice enables users to seamlessly support
+their custom data structures for display, similar to the relationships seen in
+TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
+and
+[EdJoPaTo/tui-rs-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget).
+In other words, it's straightforward for anyone to display their own data
+structures using widgets within promkit.  
+In contrast, other libraries tend to treat each prompt as a mostly independent
+entity. If you want to display a new data structure, you often have to build the
+UI from scratch, which can be a time-consuming and less flexible process.
+
+  ```rust
+  pub trait Renderer {
+      fn create_panes(&self, width: u16) -> Vec<Pane>;
+  }
+  ```
+
+### Variety of Pre-built UI Preset Components
+
+One of the compelling reasons to choose *promkit* is its extensive range of pre-built UI preset components.
+These presets allow developers to quickly implement various interactive prompts without the need to design and
+build each component from scratch. The availability of these presets not only speeds up the development process
+but also ensures consistency and reliability across different applications.
+Here are some of the preset components available, see [Examples](#examplesdemos)
 
 ### Resilience to terminal resizing
 
@@ -57,101 +372,15 @@ interaction difficult or impossible. For example:
 
  - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
 
-*promkit* processes the data to fit the screen size, reducing the likelihood of
-rendering issues, such as misalignment. This approach ensures that UI elements
-remain consistent even when the terminal is resized, providing a smoother user
-experience.
-
-### Unified component approach
-
-*promkit* takes a unified approach by having all of its components inherit the
-same `Component` trait. This design choice enables users to seamlessly support
-their custom data structures for display, similar to the relationships seen in
-TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
-and
-[EdJoPaTo/tui-rs-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget).
-In other words, it's straightforward for anyone to display their own data
-structures using widgets within promkit.  
-In contrast, other libraries tend to treat each prompt as a mostly independent
-entity. If you want to display a new data structure, you often have to build the
-UI from scratch, which can be a time-consuming and less flexible process.
-
-  ```rust
-  pub trait Component {
-      fn make_pane(&self, width: u16) -> Pane;
-      fn handle_event(&mut self, event: &Event);
-      fn postrun(&mut self);
-  }
-  ```
-
-In the provided presets of *promkit*, this mechanism is implemented. If you'd
-like to try it out, you can refer to
-the implementations of
-[components](https://github.com/ynqa/promkit/tree/v0.2.0/src/components)
-and
-[preset](https://github.com/ynqa/promkit/tree/v0.2.0/src/preset)
-for guidance.
-
-In summary, *promkit*'s resilience to terminal resizing and its unified component
-approach make it a compelling choice for interactive command-line applications,
-especially when compared to
-[console-rs/dialoguer](https://github.com/console-rs/dialoguer) and
-[mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire).
-These features provide a more reliable and extensible experience for developers,
-allowing them to focus on building powerful command-line interfaces.
-
-## Understanding dataflow and component interactions
-
-### Dataflow from receiving events to rendering
-
-This diagram shows the data flow for `TextEditor` component.
-
-```mermaid
-graph
-  subgraph Dataflow
-    Event --> EventHandler
-    subgraph TextEditor as Compoent
-      EventHandler --> |edit| TextBuffer
-      TextBuffer --> |matrixify| Pane
-    end
-      Pane -->|extract| Lines
-    Lines --> F([Draw])
-  end
-```
-
-When an event comes in, it is handled by the handler inside the `TextEditor`
-component. The handler then edits (e.g. insert character) `TextBuffer`.
-This `TextBuffer` is used to construct a `Pane`, which is essentially a matrix of
-lines divided by a specific width. The panes are extracted a certain number of
-lines in order to fit within the terminal screen when rendering.
-Finally, these Lines are passed to a `draw` function which renders them on the screen.
-
-### Relationship between TextBuffer, TextEditor, and Readline
-
-A preset is composed of a combination of multiple components.
-Let's take the Readline preset as an example to explain.
-
-- Readline (preset)
-  - Readline is a high-level preset component designed for text input.
-    It provides a convenient interface for soliciting and managing user text
-    input, error message presentation, and validation.
-    Readline leverages the capabilities of TextEditor and State\<TextEditor\> for
-    text editing and state management.
-- TextBuffer
-  - TextBuffer is a low-level component responsible for managing text content.
-    It handles tasks related to storing, editing, and tracking the cursor
-    position of text data.
-- TextEditor, State\<TextEditor\> (component)
-  - TextEditor is a component that operates and displays text data
-    through TextBuffer.
-    It accepts user text input, manages editing, and displays the content
-    while reflecting changes back to TextBuffer.
-  - State\<TextEditor\> represents the state of TextEditor at different stages,
-    including the initial state, the state before editing, and the state after
-    editing. It holds snapshots of the TextEditor at these different stages.
+*promkit* introduces a step to align data with the screen size before rendering.
+This approach ensures consistency in UI elements even when
+the terminal size changes, providing a smoother user experience.
 
 ## License
 
 This project is licensed under the MIT License.
 See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
 file for details.
+
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
