@@ -1,8 +1,6 @@
-use std::any::type_name;
-
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
-    text_editor, AsAny, Error, Result,
+    text_editor, Error,
 };
 
 /// Represents a renderer for the query selector.

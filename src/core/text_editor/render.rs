@@ -3,7 +3,6 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     impl_as_any,
     pane::Pane,
-    AsAny,
 };
 
 use super::{History, Mode, TextEditor};

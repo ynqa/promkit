@@ -1,8 +1,6 @@
-use std::any::type_name;
-
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot,
-    suggest::Suggest, text, text_editor, validate::ValidatorManager, AsAny, Error, Result,
+    suggest::Suggest, text, text_editor, validate::ValidatorManager, Error,
 };
 
 /// A `Renderer` for the readline preset, responsible for managing the rendering process.

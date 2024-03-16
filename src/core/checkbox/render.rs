@@ -3,7 +3,6 @@ use crate::{
     grapheme::{trim, Graphemes, StyledGraphemes},
     impl_as_any,
     pane::Pane,
-    AsAny,
 };
 
 use super::Checkbox;

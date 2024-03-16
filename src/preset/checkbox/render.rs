@@ -1,8 +1,6 @@
-use std::any::type_name;
-
 use crate::{
     checkbox, impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
-    AsAny, Error, Result,
+    Error,
 };
 
 /// A `Renderer` for rendering checkbox presets.
