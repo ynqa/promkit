@@ -1,6 +1,5 @@
 use crate::{
     impl_as_any, impl_cast, json, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
-    Error,
 };
 
 /// A `Renderer` responsible for rendering JSON presets.

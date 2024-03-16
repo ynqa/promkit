@@ -1,6 +1,6 @@
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
-    text_editor, Error,
+    text_editor,
 };
 
 /// Represents a renderer for the query selector.

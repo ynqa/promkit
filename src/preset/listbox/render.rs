@@ -1,6 +1,5 @@
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
-    Error,
 };
 
 pub struct Renderer {

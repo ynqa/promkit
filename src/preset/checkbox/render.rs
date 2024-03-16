@@ -1,6 +1,5 @@
 use crate::{
     checkbox, impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
-    Error,
 };
 
 /// A `Renderer` for rendering checkbox presets.

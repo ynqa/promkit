@@ -1,6 +1,5 @@
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text, tree,
-    Error,
 };
 
 /// A `Renderer` responsible for rendering the tree structure.

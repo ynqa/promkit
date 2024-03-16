@@ -22,14 +22,14 @@ macro_rules! impl_cast {
                     .as_any_mut()
                     .downcast_mut::<Self>()
                     .ok_or_else(|| {
-                        Error::DowncastError(std::any::type_name::<Self>().to_string())
+                        $crate::Error::DowncastError(std::any::type_name::<Self>().to_string())
                     })?;
                 Ok(snapshot)
             }
 
             pub fn cast(renderer: &dyn $crate::Renderer) -> $crate::Result<&Self> {
                 let snapshot = renderer.as_any().downcast_ref::<Self>().ok_or_else(|| {
-                    Error::DowncastError(std::any::type_name::<Self>().to_string())
+                    $crate::Error::DowncastError(std::any::type_name::<Self>().to_string())
                 })?;
                 Ok(snapshot)
             }
