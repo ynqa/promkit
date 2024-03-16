@@ -109,7 +109,6 @@ pub use core::*;
 mod engine;
 mod error;
 pub use error::{Error, Result};
-pub mod fake_input;
 mod grapheme;
 pub mod keymap;
 mod macros;
