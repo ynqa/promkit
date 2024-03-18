@@ -55,6 +55,27 @@ impl Checkbox {
         }
     }
 
+    pub fn new_with_checked<T: Display, I: IntoIterator<Item = (T, bool)>>(items: I) -> Self {
+        Self {
+            title_renderer: text::Renderer {
+                text: Default::default(),
+                style: StyleBuilder::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+            },
+            checkbox_renderer: checkbox::Renderer {
+                checkbox: checkbox::Checkbox::new_with_checked(items),
+                cursor: String::from("❯ "),
+                active_mark: '☒',
+                inactive_mark: '☐',
+                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
+                inactive_item_style: StyleBuilder::new().build(),
+                lines: Default::default(),
+            },
+            keymap: KeymapManager::new("default", self::keymap::default),
+        }
+    }
+
     /// Sets the title text displayed above the checkbox list.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title_renderer.text = text.as_ref().to_string();
