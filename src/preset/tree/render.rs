@@ -1,8 +1,5 @@
-use std::any::type_name;
-
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text, tree,
-    AsAny, Error, Result,
 };
 
 /// A `Renderer` responsible for rendering the tree structure.

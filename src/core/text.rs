@@ -3,7 +3,6 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     impl_as_any,
     pane::Pane,
-    AsAny,
 };
 
 /// A renderer for displaying text within a pane.

@@ -1,8 +1,5 @@
-use std::any::type_name;
-
 use crate::{
     impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
-    AsAny, Error, Result,
 };
 
 pub struct Renderer {

@@ -1,8 +1,5 @@
-use std::any::type_name;
-
 use crate::{
     impl_as_any, impl_cast, json, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
-    AsAny, Error, Result,
 };
 
 /// A `Renderer` responsible for rendering JSON presets.

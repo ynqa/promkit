@@ -30,6 +30,42 @@ impl<T: fmt::Display> FromIterator<T> for Checkbox {
 }
 
 impl Checkbox {
+    /// Creates a `Checkbox` from an iterator of tuples where the first element
+    /// implements the `Display` trait and the second element is a bool indicating
+    /// if the item is picked (selected).
+    /// Each item is added to the listbox, and the set of picked indices is
+    /// initialized based on the bool values.
+    pub fn new_with_checked<T: fmt::Display, I: IntoIterator<Item = (T, bool)>>(iter: I) -> Self {
+        let (listbox, picked): (Vec<_>, Vec<_>) = iter
+            .into_iter()
+            .enumerate()
+            .map(|(index, (item, is_picked))| ((index, item), is_picked))
+            .unzip(); // `unzip` を使用して、アイテムと選択状態を分けます。
+
+        let listbox_items = listbox
+            .into_iter()
+            .map(|(_, item)| item)
+            .collect::<Vec<_>>();
+        let picked_indices = picked
+            .into_iter()
+            .enumerate()
+            .filter_map(
+                |(index, is_picked)| {
+                    if is_picked {
+                        Some(index)
+                    } else {
+                        None
+                    }
+                },
+            )
+            .collect::<HashSet<usize>>();
+
+        Self {
+            listbox: Listbox::from_iter(listbox_items),
+            picked: picked_indices,
+        }
+    }
+
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<String> {
         self.listbox.items()
@@ -84,5 +120,37 @@ impl Checkbox {
     /// Moves the cursor to the tail of the listbox.
     pub fn move_to_tail(&mut self) {
         self.listbox.move_to_tail()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod new_with_checked {
+        use super::*;
+
+        #[test]
+        fn test() {
+            // Prepare a list of items with their checked status
+            let items = vec![
+                (String::from("1"), true),
+                (String::from("2"), false),
+                (String::from("3"), true),
+            ];
+
+            // Create a Checkbox using `new_with_checked`
+            let checkbox = Checkbox::new_with_checked(items);
+
+            // Verify the items in the listbox
+            assert_eq!(
+                checkbox.items(),
+                &vec!["1".to_string(), "2".to_string(), "3".to_string()]
+            );
+
+            // Verify the picked (selected) indices
+            let expected_picked_indexes: HashSet<usize> = [0, 2].iter().cloned().collect();
+            assert_eq!(checkbox.picked_indexes(), &expected_picked_indexes);
+        }
     }
 }
