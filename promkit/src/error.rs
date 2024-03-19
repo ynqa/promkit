@@ -23,6 +23,9 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
 
+    #[error("Parse failed: {0}")]
+    ParseError(String),
+
     #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
 
