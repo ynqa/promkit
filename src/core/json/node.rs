@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 
-use crate::{serde_json, Error, Result};
+use crate::serde_json;
 
 /// Represents the various kinds of syntax elements found in a JSON document.
 /// This includes the start and end of maps and arrays, entries within maps and arrays,
@@ -106,18 +106,6 @@ pub enum JsonNode {
     Leaf(serde_json::Value),
 }
 
-impl TryFrom<&str> for JsonNode {
-    /// Attempts to create a `JsonNode` from a JSON string.
-    ///
-    /// # Errors
-    /// Returns an error if the string is not valid JSON.
-    type Error = Error;
-
-    fn try_from(json_str: &str) -> Result<Self> {
-        Self::try_new(json_str, None)
-    }
-}
-
 impl JsonNode {
     /// Creates a `JsonNode` from a `serde_json::Value` with visibility for all children set to true if `depth` is `None`,
     /// or up to a specified depth if `depth` is `Some(usize)`.
@@ -153,26 +141,6 @@ impl JsonNode {
             }
             _ => JsonNode::Leaf(value),
         }
-    }
-
-    /// Attempts to create a `JsonNode` from a JSON string with visibility for all children set according to a specified depth.
-    ///
-    /// This function parses the given JSON string into a `serde_json::Value`, then converts it into a `JsonNode`
-    /// with children visibility determined by the `depth` parameter. A depth of `Some(0)` means only the root node is visible.
-    /// `None` means all children are visible, regardless of their depth.
-    ///
-    /// # Arguments
-    /// * `json_str` - A JSON string to be converted into a `JsonNode`.
-    /// * `depth` - An `Option<usize>` representing the depth up to which child nodes should be visible.
-    ///
-    /// # Returns
-    /// A `Result` containing the created `JsonNode` or an error if the string is not valid JSON.
-    ///
-    /// # Errors
-    /// Returns an error if the given string is not valid JSON.
-    pub fn try_new<J: AsRef<str>>(json_str: J, depth: Option<usize>) -> Result<Self> {
-        let value: serde_json::Value = serde_json::from_str(json_str.as_ref())?;
-        Ok(Self::new(value, depth))
     }
 
     /// Retrieves a reference to a `JsonNode` at a specified JSON path.
@@ -366,6 +334,8 @@ impl JsonNode {
 
 #[cfg(test)]
 mod test {
+    use crate::{json::JsonStream, serde_json::Deserializer};
+
     use super::*;
 
     const JSON_STR: &str = r#"{
@@ -377,6 +347,13 @@ mod test {
           "abc"
         ]
     }"#;
+
+    fn test_json_node() -> JsonNode {
+        let stream = Deserializer::from_str(JSON_STR)
+            .into_iter::<serde_json::Value>()
+            .filter_map(Result::ok);
+        JsonStream::new(stream, None).get_root(0).unwrap().clone()
+    }
 
     fn as_object(node: &JsonNode) -> Option<(&IndexMap<String, JsonNode>, bool)> {
         if let JsonNode::Object {
@@ -430,7 +407,7 @@ mod test {
 
         #[test]
         fn test() {
-            let node = JsonNode::try_from(JSON_STR).unwrap();
+            let node = test_json_node();
             assert_eq!(
                 vec![
                     // {
@@ -506,7 +483,7 @@ mod test {
 
         #[test]
         fn test_after_toggle() {
-            let mut node = JsonNode::try_from(JSON_STR).unwrap();
+            let mut node = test_json_node();
             node.toggle(&vec![]);
             assert_eq!(
                 vec![JsonSyntaxKind::MapFolded {
@@ -518,21 +495,6 @@ mod test {
                 node.flatten_visibles(),
             );
         }
-
-        #[test]
-        fn test_string() {
-            let mut node = JsonNode::try_from("\"string\"").unwrap();
-            node.toggle(&vec![]);
-            assert_eq!(
-                vec![JsonSyntaxKind::ArrayEntry {
-                    v: serde_json::Value::String("string".to_string()),
-                    path: vec![],
-                    is_last: true,
-                    indent: 0,
-                },],
-                node.flatten_visibles(),
-            );
-        }
     }
 
     mod toggle {
@@ -540,7 +502,7 @@ mod test {
 
         #[test]
         fn test() {
-            let mut node = JsonNode::try_from(JSON_STR).unwrap();
+            let mut node = test_json_node();
             node.toggle(&vec![JsonPathSegment::Key("map".to_string())]);
             assert!(
                 !as_object(
@@ -558,13 +520,13 @@ mod test {
 
         #[test]
         fn test() {
-            let node = JsonNode::try_from(JSON_STR).unwrap();
+            let node = test_json_node();
             assert_eq!(Some(&node.clone()), node.get(&vec![]));
         }
 
         #[test]
         fn test_with_invalid_path() {
-            let node = JsonNode::try_from(JSON_STR).unwrap();
+            let node = test_json_node();
             assert_eq!(
                 None,
                 node.get(&vec![
@@ -580,13 +542,13 @@ mod test {
 
         #[test]
         fn test() {
-            let mut node = JsonNode::try_from(JSON_STR).unwrap();
+            let mut node = test_json_node();
             assert_eq!(Some(&mut node.clone()), node.get_mut(&vec![]));
         }
 
         #[test]
         fn test_with_invalid_path() {
-            let mut node = JsonNode::try_from(JSON_STR).unwrap();
+            let mut node = test_json_node();
             assert_eq!(
                 None,
                 node.get_mut(&vec![
@@ -632,7 +594,7 @@ mod test {
                     ]),
                     children_visible: true,
                 },
-                JsonNode::try_from(JSON_STR).unwrap(),
+                test_json_node(),
             );
         }
     }

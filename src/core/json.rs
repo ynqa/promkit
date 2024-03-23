@@ -1,56 +1,84 @@
-use crate::core::cursor::Cursor;
+use crate::core::cursor::CompositeCursor;
 
 mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
 mod render;
 pub use render::{Renderer, Theme};
-pub mod bundle;
-pub use bundle::JsonBundle;
 
-/// A `Json` structure that manages a JSON document as a tree of nodes.
-/// It utilizes a cursor to navigate and manipulate the nodes within the JSON tree.
+/// Represents a stream of JSON data, allowing for efficient navigation and manipulation.
+///
+/// `JsonStream` holds a collection of root JSON nodes and a cursor for navigating through
+/// the JSON syntax kinds present in the stream. It supports operations like toggling visibility
+/// of nodes, moving the cursor, and accessing specific nodes.
 #[derive(Clone)]
-pub struct Json {
-    root: JsonNode,
-    cursor: Cursor<Vec<JsonSyntaxKind>>,
+pub struct JsonStream {
+    roots: Vec<JsonNode>,
+    cursor: CompositeCursor<Vec<JsonSyntaxKind>>,
 }
 
-impl Json {
-    /// Creates a new `Json` with a given root node.
+impl JsonStream {
+    pub fn new<I: IntoIterator<Item = serde_json::Value>>(iter: I, depth: Option<usize>) -> Self {
+        let roots: Vec<JsonNode> = iter.into_iter().map(|v| JsonNode::new(v, depth)).collect();
+        Self {
+            roots: roots.clone(),
+            cursor: CompositeCursor::new(roots.iter().map(|r| r.flatten_visibles()), 0),
+        }
+    }
+}
+
+impl JsonStream {
+    /// Retrieves a reference to a root `JsonNode` by its index.
     ///
     /// # Arguments
     ///
-    /// * `root` - The root node of the JSON tree.
-    pub fn new(root: JsonNode) -> Self {
-        Self {
-            root: root.clone(),
-            cursor: Cursor::new(root.flatten_visibles(), 0, false),
-        }
+    /// * `index` - The index of the root node to retrieve.
+    ///
+    /// # Returns
+    ///
+    /// An `Option` containing a reference to the `JsonNode` if it exists, or `None` if the index is out of bounds.
+    pub fn get_root(&self, index: usize) -> Option<&JsonNode> {
+        self.roots.get(index)
     }
 
-    /// Returns a reference to the root node of the JSON tree.
-    pub fn root(&self) -> &JsonNode {
-        &self.root
+    /// Provides a reference to the vector of root `JsonNode`s.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the vector containing all root nodes in the JSON stream.
+    pub fn roots(&self) -> &Vec<JsonNode> {
+        &self.roots
     }
 
-    /// Returns a vector of all `JsonSyntaxKind` in the tree, representing the visible nodes.
-    pub fn kinds(&self) -> Vec<JsonSyntaxKind> {
-        self.cursor.contents().clone()
+    /// Flattens the visible JSON syntax kinds into a vector.
+    ///
+    /// This method traverses all visible nodes in the JSON stream and collects their syntax kinds into a flat vector.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<JsonSyntaxKind>` containing all visible syntax kinds from the JSON stream.
+    pub fn flatten_kinds(&self) -> Vec<JsonSyntaxKind> {
+        self.roots
+            .iter()
+            .flat_map(|root| root.flatten_visibles().into_iter())
+            .collect()
     }
 
-    fn current_kind(&self) -> &JsonSyntaxKind {
-        &self.cursor.contents()[self.position()]
+    /// Retrieves the current root node and its path from the root based on the cursor's position.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing the current `JsonNode` and an `Option<JsonPath>` indicating the path from the root to this node.
+    pub fn current_root_and_path_from_root(&self) -> (JsonNode, Option<JsonPath>) {
+        let (index, inner) = self.cursor.current_bundle_index_and_inner_position();
+        let kind = self.cursor.bundle()[index][inner].clone();
+        (self.roots[index].clone(), kind.path().cloned())
     }
 
-    /// Retrieves the `JsonPath` of the current node pointed by the cursor.
-    pub fn path_from_root(&self) -> Option<JsonPath> {
-        let kind = self.current_kind().clone();
-        kind.path().cloned()
-    }
-
-    /// Toggles the state of the current node (e.g., from expanded to folded) and updates the cursor position accordingly.
+    /// Toggles the visibility of a node at the cursor's current position.
     pub fn toggle(&mut self) {
-        let kind = self.current_kind().clone();
+        let (index, inner) = self.cursor.current_bundle_index_and_inner_position();
+
+        let kind = self.cursor.bundle()[index][inner].clone();
         let route = match kind {
             JsonSyntaxKind::ArrayStart { path, .. } => path,
             JsonSyntaxKind::ArrayFolded { path, .. } => path,
@@ -59,35 +87,78 @@ impl Json {
             _ => return,
         };
 
-        self.root.toggle(&route);
-        self.cursor = Cursor::new(self.root.flatten_visibles(), self.position(), false);
+        self.roots[index].toggle(&route);
+        self.cursor = CompositeCursor::new(
+            self.roots.iter().map(|r| r.flatten_visibles()),
+            self.cursor.cross_contents_position(),
+        );
     }
 
-    /// Returns the current position of the cursor within the JSON tree.
-    pub fn position(&self) -> usize {
-        self.cursor.position()
-    }
-
-    /// Moves the cursor backward in the JSON tree, if possible.
+    /// Toggles the visibility of all nodes in the JSON tree.
     ///
-    /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
+    /// # Arguments
+    ///
+    /// * `expand` - A boolean indicating whether to expand (true) or collapse (false) all nodes.
+    fn toggle_all_visibility(&mut self, expand: bool) {
+        fn toggle_visibility(node: &mut JsonNode, expand: bool) {
+            match node {
+                JsonNode::Object {
+                    children,
+                    children_visible,
+                } => {
+                    *children_visible = expand;
+                    for child in children.values_mut() {
+                        toggle_visibility(child, expand);
+                    }
+                }
+                JsonNode::Array {
+                    children,
+                    children_visible,
+                } => {
+                    *children_visible = expand;
+                    for child in children.iter_mut() {
+                        toggle_visibility(child, expand);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for root in &mut self.roots {
+            toggle_visibility(root, expand);
+        }
+        self.cursor = CompositeCursor::new(
+            self.roots.iter().map(|r| r.flatten_visibles()),
+            self.cursor.cross_contents_position(),
+        );
+    }
+
+    /// Collapses all nodes in the JSON tree.
+    pub fn collapse_all(&mut self) {
+        self.toggle_all_visibility(false);
+    }
+
+    /// Expands all nodes in the JSON tree.
+    pub fn expand_all(&mut self) {
+        self.toggle_all_visibility(true);
+    }
+
+    /// Moves the cursor backward through the JSON stream.
     pub fn backward(&mut self) -> bool {
         self.cursor.backward()
     }
 
-    /// Moves the cursor forward in the JSON tree, if possible.
-    ///
-    /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
+    /// Moves the cursor forward through the JSON stream.
     pub fn forward(&mut self) -> bool {
         self.cursor.forward()
     }
 
-    /// Moves the cursor to the head of the JSON tree.
+    /// Moves the cursor to the head of the JSON stream.
     pub fn move_to_head(&mut self) {
         self.cursor.move_to_head()
     }
 
-    /// Moves the cursor to the tail of the JSON tree.
+    /// Moves the cursor to the tail of the JSON stream.
     pub fn move_to_tail(&mut self) {
         self.cursor.move_to_tail()
     }

@@ -4,7 +4,7 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    json::{self, JsonNode, JsonPathSegment},
+    json::{self, JsonNode, JsonPath, JsonStream},
     keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
@@ -22,12 +22,7 @@ pub struct Json {
 }
 
 impl Json {
-    /// Creates a new `Json` instance with a specified root JSON node.
-    ///
-    /// # Arguments
-    ///
-    /// * `root` - A `JsonNode` that represents the root of the JSON data to be rendered.
-    pub fn new(root: JsonNode) -> Self {
+    pub fn new(stream: JsonStream) -> Self {
         Self {
             title_renderer: text::Renderer {
                 text: Default::default(),
@@ -36,7 +31,7 @@ impl Json {
                     .build(),
             },
             json_renderer: json::Renderer {
-                json: json::Json::new(root),
+                stream,
                 theme: json::Theme {
                     curly_brackets_style: StyleBuilder::new()
                         .attrs(Attributes::from(Attribute::Bold))
@@ -105,7 +100,7 @@ impl Json {
     }
 
     /// Creates a prompt based on the current configuration of the `Json` instance.
-    pub fn prompt(self) -> Result<Prompt<Vec<JsonPathSegment>>> {
+    pub fn prompt(self) -> Result<Prompt<(JsonNode, Option<JsonPath>)>> {
         Prompt::try_new(
             Box::new(self::render::Renderer {
                 keymap: self.keymap,
@@ -121,13 +116,12 @@ impl Json {
                     }
                 },
             ),
-            |renderer: &(dyn Renderer + '_)| -> Result<Vec<JsonPathSegment>> {
+            |renderer: &(dyn Renderer + '_)| -> Result<(JsonNode, Option<JsonPath>)> {
                 Ok(self::render::Renderer::cast(renderer)?
                     .json_snapshot
                     .after()
-                    .json
-                    .path_from_root()
-                    .unwrap_or_default())
+                    .stream
+                    .current_root_and_path_from_root())
             },
         )
     }
