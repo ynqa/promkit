@@ -8,6 +8,7 @@ use crate::{pane::Pane, AsAny, Error, Renderer, Result};
 /// A `Snapshot` struct captures the state of a renderer at three different points:
 /// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).
 /// It is generic over `R` where `R` must implement the `Renderer` and `Clone` traits.
+#[derive(Clone)]
 pub struct Snapshot<R: Renderer + Clone> {
     init: R,
     before: RefCell<R>,
