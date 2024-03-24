@@ -26,6 +26,9 @@ pub enum Error {
     #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
 
+    #[error(transparent)]
+    Anyhow(#[from] anyhow::Error),
+
     #[error("Type downcast attempt failed: {0}")]
     DowncastError(String),
 
