@@ -103,6 +103,15 @@ impl<C: Len> Cursor<C> {
     pub fn is_tail(&self) -> bool {
         self.position == self.contents.len().saturating_sub(1)
     }
+
+    pub fn move_to(&mut self, position: usize) -> bool {
+        if position < self.contents.len() {
+            self.position = position;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]

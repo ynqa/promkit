@@ -119,6 +119,16 @@ pub fn default(
             state: KeyEventState::NONE,
         }) => text_editor_after_mut.texteditor.move_to_tail(),
 
+        // Move cursor to the nearest character.
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('b'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .move_to_previous_nearest(&text_editor_after_mut.nearest_characters),
+
         // Erase char(s).
         Event::Key(KeyEvent {
             code: KeyCode::Backspace,

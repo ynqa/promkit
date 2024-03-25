@@ -105,6 +105,26 @@ impl TextEditor {
         *self = Self::default();
     }
 
+    /// Finds the nearest previous index of any character in `items` from the cursor position.
+    fn find_previous_nearest_index(&self, items: &[char]) -> usize {
+        let current_position = self.position();
+        self.text()
+            .chars()
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i < current_position.saturating_sub(1))
+            .rev()
+            .find(|&(_, c)| items.contains(c))
+            .map(|(i, _)| i + 1)
+            .unwrap_or(0)
+    }
+
+    /// Moves the cursor to the nearest previous character in `items`.
+    pub fn move_to_previous_nearest(&mut self, items: &[char]) {
+        let pos = self.find_previous_nearest_index(items);
+        self.0.move_to(pos);
+    }
+
     /// Moves the cursor to the beginning of the text.
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()
@@ -196,6 +216,24 @@ mod test {
             );
             assert_eq!(Graphemes::from("abc "), txt.text());
             assert_eq!(0, txt.position());
+        }
+    }
+
+    mod find_previous_nearest_index {
+        use crate::text_editor::test::new_with_position;
+
+        #[test]
+        fn test() {
+            let mut txt = new_with_position(String::from("koko momo jojo "), 11); // indicate `o`.
+            assert_eq!(10, txt.find_previous_nearest_index(&[' ']));
+            txt.0.move_to(10);
+            assert_eq!(5, txt.find_previous_nearest_index(&[' ']));
+        }
+
+        #[test]
+        fn test_with_no_target() {
+            let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+            assert_eq!(0, txt.find_previous_nearest_index(&['z']));
         }
     }
 

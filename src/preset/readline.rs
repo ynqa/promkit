@@ -58,6 +58,7 @@ impl Default for Readline {
                 active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
+                nearest_characters: vec![' '],
                 lines: Default::default(),
             },
             suggest: Default::default(),
@@ -141,6 +142,12 @@ impl Readline {
     /// Sets the edit mode for the text editor, either insert or overwrite.
     pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
         self.text_editor_renderer.edit_mode = mode;
+        self
+    }
+
+    /// Sets the characters to be considered for nearest navigation.
+    pub fn nearest_characters(mut self, characters: Vec<char>) -> Self {
+        self.text_editor_renderer.nearest_characters = characters;
         self
     }
 

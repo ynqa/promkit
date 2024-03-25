@@ -36,6 +36,8 @@ pub struct Renderer {
 
     /// Current edit mode, determining whether input inserts or overwrites existing text.
     pub edit_mode: Mode,
+    /// Characters to be considered for nearest navigation.
+    pub nearest_characters: Vec<char>,
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
