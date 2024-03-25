@@ -48,7 +48,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            json_after_mut.json.backward();
+            json_after_mut.stream.backward();
         }
 
         Event::Key(KeyEvent {
@@ -63,7 +63,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            json_after_mut.json.forward();
+            json_after_mut.stream.forward();
         }
 
         // Fold/Unfold
@@ -73,7 +73,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            json_after_mut.json.toggle();
+            json_after_mut.stream.toggle();
         }
 
         _ => (),

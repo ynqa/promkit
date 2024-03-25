@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.3.1"
+promkit = "0.3.2"
 ```
 
 ## Features
@@ -298,25 +298,32 @@ cargo run --example json
 <summary>Code</summary>
 
 ```rust
-use promkit::{json::JsonNode, preset::json::Json, Result};
+use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer, Result};
 
 fn main() -> Result {
-    let mut p = Json::new(JsonNode::try_from(
-        r#"{
-          "number": 9,
-          "map": {
-            "entry1": "first",
-            "entry2": "second"
-          },
-          "list": [
-            "abc",
-            "def"
-          ]
-        }"#,
-    )?)
-    .title("JSON viewer")
-    .json_lines(5)
-    .prompt()?;
+    let stream = JsonStream::new(
+        Deserializer::from_str(
+            r#"{
+              "number": 9,
+              "map": {
+                "entry1": "first",
+                "entry2": "second"
+              },
+              "list": [
+                "abc",
+                "def"
+              ]
+            }"#,
+        )
+        .into_iter::<serde_json::Value>()
+        .filter_map(serde_json::Result::ok),
+        None,
+    );
+
+    let mut p = Json::new(stream)
+        .title("JSON viewer")
+        .json_lines(5)
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
