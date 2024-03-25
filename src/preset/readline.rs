@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     crossterm::{
         event::Event,
@@ -58,7 +60,7 @@ impl Default for Readline {
                 active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
-                nearest_characters: vec![' '],
+                word_break_chars: HashSet::from([' ']),
                 lines: Default::default(),
             },
             suggest: Default::default(),
@@ -145,9 +147,9 @@ impl Readline {
         self
     }
 
-    /// Sets the characters to be considered for nearest navigation.
-    pub fn nearest_characters(mut self, characters: Vec<char>) -> Self {
-        self.text_editor_renderer.nearest_characters = characters;
+    /// Sets the characters to be for word break.
+    pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
+        self.text_editor_renderer.word_break_chars = characters;
         self
     }
 

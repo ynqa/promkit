@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     core::cursor::Cursor,
     grapheme::{Grapheme, Graphemes},
@@ -117,8 +119,8 @@ impl TextEditor {
         }
     }
 
-    /// Finds the nearest previous index of any character in `items` from the cursor position.
-    fn find_previous_nearest_index(&self, items: &[char]) -> usize {
+    /// Finds the nearest previous index of any character in `word_break_chars` from the cursor position.
+    fn find_previous_nearest_index(&self, word_break_chars: &HashSet<char>) -> usize {
         let current_position = self.position();
         self.text()
             .chars()
@@ -126,32 +128,32 @@ impl TextEditor {
             .enumerate()
             .filter(|&(i, _)| i < current_position.saturating_sub(1))
             .rev()
-            .find(|&(_, c)| items.contains(c))
+            .find(|&(_, c)| word_break_chars.contains(c))
             .map(|(i, _)| i + 1)
             .unwrap_or(0)
     }
 
-    /// Erases the text from the current cursor position to the nearest previous character in `items`.
-    pub fn erase_to_previous_nearest(&mut self, items: &[char]) {
-        let pos = self.find_previous_nearest_index(items);
+    /// Erases the text from the current cursor position to the nearest previous character in `word_break_chars`.
+    pub fn erase_to_previous_nearest(&mut self, word_break_chars: &HashSet<char>) {
+        let pos = self.find_previous_nearest_index(word_break_chars);
         self.erase_to_position(pos);
     }
 
-    /// Moves the cursor to the nearest previous character in `items`.
-    pub fn move_to_previous_nearest(&mut self, items: &[char]) {
-        let pos = self.find_previous_nearest_index(items);
+    /// Moves the cursor to the nearest previous character in `word_break_chars`.
+    pub fn move_to_previous_nearest(&mut self, word_break_chars: &HashSet<char>) {
+        let pos = self.find_previous_nearest_index(word_break_chars);
         self.0.move_to(pos);
     }
 
-    /// Finds the nearest next index of any character in `items` from the cursor position.
-    fn find_next_nearest_index(&self, items: &[char]) -> usize {
+    /// Finds the nearest next index of any character in `word_break_chars` from the cursor position.
+    fn find_next_nearest_index(&self, word_break_chars: &HashSet<char>) -> usize {
         let current_position = self.position();
         self.text()
             .chars()
             .iter()
             .enumerate()
             .filter(|&(i, _)| i > current_position)
-            .find(|&(_, c)| items.contains(c))
+            .find(|&(_, c)| word_break_chars.contains(c))
             .map(|(i, _)| {
                 if i < self.0.contents().len() - 1 {
                     i + 1
@@ -162,15 +164,15 @@ impl TextEditor {
             .unwrap_or(self.0.contents().len() - 1)
     }
 
-    /// Erases the text from the current cursor position to the nearest next character in `items`.
-    pub fn erase_to_next_nearest(&mut self, items: &[char]) {
-        let pos = self.find_next_nearest_index(items);
+    /// Erases the text from the current cursor position to the nearest next character in `word_break_chars`.
+    pub fn erase_to_next_nearest(&mut self, word_break_chars: &HashSet<char>) {
+        let pos = self.find_next_nearest_index(word_break_chars);
         self.erase_to_position(pos);
     }
 
-    /// Moves the cursor to the nearest next character in `items`.
-    pub fn move_to_next_nearest(&mut self, items: &[char]) {
-        let pos = self.find_next_nearest_index(items);
+    /// Moves the cursor to the nearest next character in `word_break_chars`.
+    pub fn move_to_next_nearest(&mut self, word_break_chars: &HashSet<char>) {
+        let pos = self.find_next_nearest_index(word_break_chars);
         self.0.move_to(pos);
     }
 
@@ -269,38 +271,42 @@ mod test {
     }
 
     mod find_previous_nearest_index {
+        use std::collections::HashSet;
+
         use crate::text_editor::test::new_with_position;
 
         #[test]
         fn test() {
             let mut txt = new_with_position(String::from("koko momo jojo "), 11); // indicate `o`.
-            assert_eq!(10, txt.find_previous_nearest_index(&[' ']));
+            assert_eq!(10, txt.find_previous_nearest_index(&HashSet::from([' '])));
             txt.0.move_to(10);
-            assert_eq!(5, txt.find_previous_nearest_index(&[' ']));
+            assert_eq!(5, txt.find_previous_nearest_index(&HashSet::from([' '])));
         }
 
         #[test]
         fn test_with_no_target() {
             let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(0, txt.find_previous_nearest_index(&['z']));
+            assert_eq!(0, txt.find_previous_nearest_index(&HashSet::from(['z'])));
         }
     }
 
     mod find_next_nearest_index {
+        use std::collections::HashSet;
+
         use crate::text_editor::test::new_with_position;
 
         #[test]
         fn test() {
             let mut txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(10, txt.find_next_nearest_index(&[' ']));
+            assert_eq!(10, txt.find_next_nearest_index(&HashSet::from([' '])));
             txt.0.move_to(10);
-            assert_eq!(14, txt.find_next_nearest_index(&[' ']));
+            assert_eq!(14, txt.find_next_nearest_index(&HashSet::from([' '])));
         }
 
         #[test]
         fn test_with_no_target() {
             let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(14, txt.find_next_nearest_index(&['z']));
+            assert_eq!(14, txt.find_next_nearest_index(&HashSet::from(['z'])));
         }
     }
 

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
@@ -36,8 +38,8 @@ pub struct Renderer {
 
     /// Current edit mode, determining whether input inserts or overwrites existing text.
     pub edit_mode: Mode,
-    /// Characters to be considered for nearest navigation.
-    pub nearest_characters: Vec<char>,
+    /// Characters to be for word break.
+    pub word_break_chars: HashSet<char>,
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
 }
