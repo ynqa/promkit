@@ -105,6 +105,18 @@ impl TextEditor {
         *self = Self::default();
     }
 
+    /// Erases the text from the current cursor position to the specified position,
+    /// considering whether pos is greater or smaller than the current position.
+    fn erase_to_position(&mut self, pos: usize) {
+        let current_pos = self.position();
+        if pos > current_pos {
+            self.0.contents_mut().drain(current_pos..pos);
+        } else {
+            self.0.contents_mut().drain(pos..current_pos);
+            self.0.move_to(pos);
+        }
+    }
+
     /// Finds the nearest previous index of any character in `items` from the cursor position.
     fn find_previous_nearest_index(&self, items: &[char]) -> usize {
         let current_position = self.position();
@@ -117,6 +129,12 @@ impl TextEditor {
             .find(|&(_, c)| items.contains(c))
             .map(|(i, _)| i + 1)
             .unwrap_or(0)
+    }
+
+    /// Erases the text from the current cursor position to the nearest previous character in `items`.
+    pub fn erase_to_previous_nearest(&mut self, items: &[char]) {
+        let pos = self.find_previous_nearest_index(items);
+        self.erase_to_position(pos);
     }
 
     /// Moves the cursor to the nearest previous character in `items`.
@@ -142,6 +160,12 @@ impl TextEditor {
                 }
             })
             .unwrap_or(self.0.contents().len() - 1)
+    }
+
+    /// Erases the text from the current cursor position to the nearest next character in `items`.
+    pub fn erase_to_next_nearest(&mut self, items: &[char]) {
+        let pos = self.find_next_nearest_index(items);
+        self.erase_to_position(pos);
     }
 
     /// Moves the cursor to the nearest next character in `items`.

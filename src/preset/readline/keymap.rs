@@ -152,6 +152,25 @@ pub fn default(
             state: KeyEventState::NONE,
         }) => text_editor_after_mut.texteditor.erase_all(),
 
+        // Erase to the nearest character.
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('w'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .erase_to_previous_nearest(&text_editor_after_mut.nearest_characters),
+
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('d'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .erase_to_next_nearest(&text_editor_after_mut.nearest_characters),
+
         // Choose history
         Event::Key(KeyEvent {
             code: KeyCode::Up,
