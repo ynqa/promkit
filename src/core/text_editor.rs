@@ -125,6 +125,31 @@ impl TextEditor {
         self.0.move_to(pos);
     }
 
+    /// Finds the nearest next index of any character in `items` from the cursor position.
+    fn find_next_nearest_index(&self, items: &[char]) -> usize {
+        let current_position = self.position();
+        self.text()
+            .chars()
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i > current_position)
+            .find(|&(_, c)| items.contains(c))
+            .map(|(i, _)| {
+                if i < self.0.contents().len() - 1 {
+                    i + 1
+                } else {
+                    self.0.contents().len() - 1
+                }
+            })
+            .unwrap_or(self.0.contents().len() - 1)
+    }
+
+    /// Moves the cursor to the nearest next character in `items`.
+    pub fn move_to_next_nearest(&mut self, items: &[char]) {
+        let pos = self.find_next_nearest_index(items);
+        self.0.move_to(pos);
+    }
+
     /// Moves the cursor to the beginning of the text.
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()
@@ -234,6 +259,24 @@ mod test {
         fn test_with_no_target() {
             let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
             assert_eq!(0, txt.find_previous_nearest_index(&['z']));
+        }
+    }
+
+    mod find_next_nearest_index {
+        use crate::text_editor::test::new_with_position;
+
+        #[test]
+        fn test() {
+            let mut txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+            assert_eq!(10, txt.find_next_nearest_index(&[' ']));
+            txt.0.move_to(10);
+            assert_eq!(14, txt.find_next_nearest_index(&[' ']));
+        }
+
+        #[test]
+        fn test_with_no_target() {
+            let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+            assert_eq!(14, txt.find_next_nearest_index(&['z']));
         }
     }
 

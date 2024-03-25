@@ -129,6 +129,15 @@ pub fn default(
             .texteditor
             .move_to_previous_nearest(&text_editor_after_mut.nearest_characters),
 
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('f'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .move_to_next_nearest(&text_editor_after_mut.nearest_characters),
+
         // Erase char(s).
         Event::Key(KeyEvent {
             code: KeyCode::Backspace,
