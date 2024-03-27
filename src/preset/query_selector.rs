@@ -71,6 +71,7 @@ impl QuerySelector {
                 active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
+                word_break_chars: Default::default(),
                 lines: Default::default(),
             },
             listbox_renderer: listbox::Renderer {

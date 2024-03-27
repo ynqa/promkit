@@ -8,7 +8,7 @@ use crate::{
 ///
 /// | Key                    | Action
 /// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the editor
+/// | <kbd>Enter</kbd>       | Exit the editor if input is valid, otherwise show error message
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>←</kbd>           | Move the cursor one character to the left
 /// | <kbd>→</kbd>           | Move the cursor one character to the right
@@ -18,7 +18,11 @@ use crate::{
 /// | <kbd>↓</kbd>           | Recall the next entry from history
 /// | <kbd>Backspace</kbd>   | Delete the character before the cursor
 /// | <kbd>Ctrl + U</kbd>    | Delete all characters in the current line
-/// | <kbd>TAB</kbd>         | Autocomplete the current input based on available suggestions
+/// | <kbd>Tab</kbd>         | Autocomplete the current input based on available suggestions
+/// | <kbd>Alt + B</kbd>     | Move the cursor to the previous nearest character within set (default: whitespace)
+/// | <kbd>Alt + F</kbd>     | Move the cursor to the next nearest character within set (default: whitespace)
+/// | <kbd>Ctrl + W</kbd>    | Erase to the previous nearest character within set (default: whitespace)
+/// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
 pub fn default(
     event: &Event,
     renderer: &mut preset::readline::render::Renderer,
@@ -119,6 +123,25 @@ pub fn default(
             state: KeyEventState::NONE,
         }) => text_editor_after_mut.texteditor.move_to_tail(),
 
+        // Move cursor to the nearest character.
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('b'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .move_to_previous_nearest(&text_editor_after_mut.word_break_chars),
+
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('f'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .move_to_next_nearest(&text_editor_after_mut.word_break_chars),
+
         // Erase char(s).
         Event::Key(KeyEvent {
             code: KeyCode::Backspace,
@@ -132,6 +155,25 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => text_editor_after_mut.texteditor.erase_all(),
+
+        // Erase to the nearest character.
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('w'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .erase_to_previous_nearest(&text_editor_after_mut.word_break_chars),
+
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('d'),
+            modifiers: KeyModifiers::ALT,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => text_editor_after_mut
+            .texteditor
+            .erase_to_next_nearest(&text_editor_after_mut.word_break_chars),
 
         // Choose history
         Event::Key(KeyEvent {

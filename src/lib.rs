@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.3.2"
+//! promkit = "0.3.3"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.2#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.2#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.2#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.2#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.2#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.2#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.2#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.3#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.3#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.3#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.3#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.3#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.3#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.3#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -91,15 +91,6 @@
 //! *promkit* introduces a step to align data with the screen size before rendering.
 //! This approach ensures consistency in UI elements even when
 //! the terminal size changes, providing a smoother user experience.
-//!
-//! ## License
-//!
-//! This project is licensed under the MIT License.
-//! See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
-//! file for details.
-//!
-//! ## Stargazers over time
-//! [![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
 
 pub use crossterm;
 pub use serde_json;

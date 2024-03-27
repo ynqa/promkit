@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     crossterm::{
         event::Event,
@@ -58,6 +60,7 @@ impl Default for Readline {
                 active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
                 inactive_char_style: StyleBuilder::new().build(),
                 edit_mode: Default::default(),
+                word_break_chars: HashSet::from([' ']),
                 lines: Default::default(),
             },
             suggest: Default::default(),
@@ -141,6 +144,12 @@ impl Readline {
     /// Sets the edit mode for the text editor, either insert or overwrite.
     pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
         self.text_editor_renderer.edit_mode = mode;
+        self
+    }
+
+    /// Sets the characters to be for word break.
+    pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
+        self.text_editor_renderer.word_break_chars = characters;
         self
     }
 
