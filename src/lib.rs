@@ -97,10 +97,10 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-mod engine;
+pub mod engine;
 mod error;
 pub use error::{Error, Result};
-mod grapheme;
+pub mod grapheme;
 pub mod keymap;
 mod macros;
 pub mod pane;
@@ -181,7 +181,7 @@ pub trait AsAny {
 /// # Returns
 ///
 /// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
+pub type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
 
 /// Type alias for a result producer function.
 ///
@@ -196,7 +196,7 @@ type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSigna
 /// # Returns
 ///
 /// Returns a `Result` containing the final output of the prompt.
-type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
+pub type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
 /// Represents a customizable prompt that can handle user input and produce a result.
 ///
