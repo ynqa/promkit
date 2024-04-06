@@ -61,6 +61,10 @@ impl<W: Write> Engine<W> {
         queue!(self.out, Clear(ClearType::FromCursorDown)).map_err(Error::from)
     }
 
+    pub fn clear_current_line(&mut self) -> Result {
+        queue!(self.out, Clear(ClearType::CurrentLine)).map_err(Error::from)
+    }
+
     /// Writes a string to the terminal.
     ///
     /// # Arguments

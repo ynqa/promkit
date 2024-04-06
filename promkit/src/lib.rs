@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.3.3"
+//! promkit = "0.3.4"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.3#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.3#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.3#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.3#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.3#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.3#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.3#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.4#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.4#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.4#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.4#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.4#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.4#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.4#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.3.2#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.3.4#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
@@ -97,10 +97,10 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-mod engine;
+pub mod engine;
 mod error;
 pub use error::{Error, Result};
-mod grapheme;
+pub mod grapheme;
 pub mod keymap;
 mod macros;
 pub mod pane;
@@ -181,7 +181,7 @@ pub trait AsAny {
 /// # Returns
 ///
 /// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
+pub type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
 
 /// Type alias for a result producer function.
 ///
@@ -196,7 +196,7 @@ type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSigna
 /// # Returns
 ///
 /// Returns a `Result` containing the final output of the prompt.
-type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
+pub type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
 /// Represents a customizable prompt that can handle user input and produce a result.
 ///

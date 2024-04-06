@@ -93,6 +93,12 @@ impl fmt::Debug for StyledGraphemes {
     }
 }
 
+impl ToString for StyledGraphemes {
+    fn to_string(&self) -> String {
+        self.iter().map(|g| g.ch).collect()
+    }
+}
+
 impl StyledGraphemes {
     pub fn from_str<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
         string

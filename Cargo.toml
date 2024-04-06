@@ -1,26 +1,5 @@
-[package]
-name = "promkit"
-version = "0.3.3"
-authors = ["ynqa <un.pensiero.vano@gmail.com>"]
-edition = "2021"
-description = "A toolkit for building your own interactive command-line tools"
-repository = "https://github.com/ynqa/promkit"
-license = "MIT"
-readme = "README.md"
-
-[lib]
-name = "promkit"
-path = "src/lib.rs"
-
-[dependencies]
-anyhow = "1.0.81"
-crossterm = { version = "0.27.0", features = ["use-dev-tty"] }
-indexmap = "2.2.3"
-radix_trie = "0.2.1"
-serde = { version = "1.0.197" }
-serde_json = { version = "1.0.114", features = ["preserve_order"] }
-thiserror = "1.0.50"
-unicode-width = "0.1.8"
-
-[dev-dependencies]
-strip-ansi-escapes = "0.2.0"
+[workspace]
+resolver = "2"
+members = [
+  "promkit",
+]

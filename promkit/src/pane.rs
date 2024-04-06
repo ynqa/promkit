@@ -1,5 +1,6 @@
 use crate::grapheme::StyledGraphemes;
 
+#[derive(Clone)]
 pub struct Pane {
     /// The layout of graphemes within the pane.
     /// This vector stores the styled graphemes that make up the content of the pane.
