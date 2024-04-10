@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::io::{self, Write};
 
 use crate::{engine::Engine, error::Result, pane::Pane};
 
@@ -80,7 +80,8 @@ impl Terminal {
             .collect::<Vec<&Pane>>();
 
         if terminal_height < viewable_panes.len() {
-            return engine.write("⚠️ Insufficient Space");
+            engine.clear_from_cursor_down()?;
+            return engine.write("⚠️  Insufficient Space");
         }
 
         engine.move_to(self.position)?;
@@ -110,6 +111,7 @@ impl Terminal {
                 engine.move_to_next_line()?;
             }
         }
+        io::stdout().flush()?;
         Ok(())
     }
 }
