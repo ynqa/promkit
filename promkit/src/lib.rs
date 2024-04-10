@@ -260,8 +260,19 @@ impl<T> Prompt<T> {
         loop {
             let ev = event::read()?;
 
-            if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
-                break;
+            match &ev {
+                Event::Resize(_, _) => {
+                    terminal.position = (0, 0);
+                    crossterm::execute!(
+                        io::stdout(),
+                        crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
+                    )?;
+                }
+                _ => {
+                    if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
+                        break;
+                    }
+                }
             }
 
             let size = crossterm::terminal::size()?;

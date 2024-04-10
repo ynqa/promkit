@@ -9,7 +9,7 @@ use crate::{
 
 pub struct Terminal {
     /// The current cursor position within the terminal.
-    position: (u16, u16),
+    pub position: (u16, u16),
 }
 
 impl Terminal {
