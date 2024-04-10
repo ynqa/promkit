@@ -80,8 +80,7 @@ impl Terminal {
             .collect::<Vec<&Pane>>();
 
         if terminal_height < viewable_panes.len() {
-            return engine
-                .write("Terminal window does not have enough vertical space to render UI.");
+            return engine.write("⚠️ Insufficient Space");
         }
 
         engine.move_to(self.position)?;
