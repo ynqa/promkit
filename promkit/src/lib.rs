@@ -97,7 +97,6 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-pub mod engine;
 mod error;
 pub use error::{Error, Result};
 pub mod grapheme;
@@ -120,7 +119,6 @@ use crate::{
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
-    engine::Engine,
     pane::Pane,
     terminal::Terminal,
 };
@@ -251,15 +249,13 @@ impl<T> Prompt<T> {
     ///
     /// Returns a `Result` containing the produced result or an error.
     pub fn run(&mut self) -> Result<T> {
-        let mut engine = Engine::new(io::stdout());
-
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        let size = engine.size()?;
+        let size = crossterm::terminal::size()?;
         let panes = self.renderer.create_panes(size.0);
-        let mut terminal = Terminal::start_session(&mut engine, &panes)?;
-        terminal.draw(&mut engine, panes)?;
+        let mut terminal = Terminal::start_session(&panes)?;
+        terminal.draw(&panes)?;
 
         loop {
             let ev = event::read()?;
@@ -268,8 +264,8 @@ impl<T> Prompt<T> {
                 break;
             }
 
-            let size = engine.size()?;
-            terminal.draw(&mut engine, self.renderer.create_panes(size.0))?;
+            let size = crossterm::terminal::size()?;
+            terminal.draw(&self.renderer.create_panes(size.0))?;
         }
 
         (self.producer)(&*self.renderer)
