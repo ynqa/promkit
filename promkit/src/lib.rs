@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.3.4"
+//! promkit = "0.3.5"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.4#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.4#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.4#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.4#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.4#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.4#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.4#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.5#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.5#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.5#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.5#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.5#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.5#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.5#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.3.4#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.3.5#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
@@ -97,7 +97,6 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-pub mod engine;
 mod error;
 pub use error::{Error, Result};
 pub mod grapheme;
@@ -120,7 +119,6 @@ use crate::{
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
-    engine::Engine,
     pane::Pane,
     terminal::Terminal,
 };
@@ -210,9 +208,13 @@ pub struct Prompt<T> {
 
 impl<T> Drop for Prompt<T> {
     fn drop(&mut self) {
-        execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
-        execute!(io::stdout(), cursor::Show).ok();
-        execute!(io::stdout(), event::DisableMouseCapture).ok();
+        execute!(
+            io::stdout(),
+            cursor::Show,
+            event::DisableMouseCapture,
+            cursor::MoveToNextLine(1),
+        )
+        .ok();
         disable_raw_mode().ok();
     }
 }
@@ -251,25 +253,34 @@ impl<T> Prompt<T> {
     ///
     /// Returns a `Result` containing the produced result or an error.
     pub fn run(&mut self) -> Result<T> {
-        let mut engine = Engine::new(io::stdout());
-
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        let size = engine.size()?;
+        let size = crossterm::terminal::size()?;
         let panes = self.renderer.create_panes(size.0);
-        let mut terminal = Terminal::start_session(&mut engine, &panes)?;
-        terminal.draw(&mut engine, panes)?;
+        let mut terminal = Terminal::start_session(&panes)?;
+        terminal.draw(&panes)?;
 
         loop {
             let ev = event::read()?;
 
-            if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
-                break;
+            match &ev {
+                Event::Resize(_, _) => {
+                    terminal.position = (0, 0);
+                    crossterm::execute!(
+                        io::stdout(),
+                        crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
+                    )?;
+                }
+                _ => {
+                    if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
+                        break;
+                    }
+                }
             }
 
-            let size = engine.size()?;
-            terminal.draw(&mut engine, self.renderer.create_panes(size.0))?;
+            let size = crossterm::terminal::size()?;
+            terminal.draw(&self.renderer.create_panes(size.0))?;
         }
 
         (self.producer)(&*self.renderer)
