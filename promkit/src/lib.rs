@@ -208,9 +208,13 @@ pub struct Prompt<T> {
 
 impl<T> Drop for Prompt<T> {
     fn drop(&mut self) {
-        execute!(io::stdout(), cursor::MoveToNextLine(1)).ok();
-        execute!(io::stdout(), cursor::Show).ok();
-        execute!(io::stdout(), event::DisableMouseCapture).ok();
+        execute!(
+            io::stdout(),
+            cursor::Show,
+            event::DisableMouseCapture,
+            cursor::MoveToNextLine(1),
+        )
+        .ok();
         disable_raw_mode().ok();
     }
 }
