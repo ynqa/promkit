@@ -27,12 +27,12 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 /// for displaying filtered options based on the input.
 pub struct QuerySelector {
     keymap: KeymapManager<self::render::Renderer>,
-    /// Renderer for the title displayed above the query selection.
-    title_renderer: text::Renderer,
-    /// Renderer for the text editor component.
-    text_editor_renderer: text_editor::Renderer,
-    /// Renderer for the list box component.
-    listbox_renderer: listbox::Renderer,
+    /// State for the title displayed above the query selection.
+    title_state: text::State,
+    /// State for the text editor component.
+    text_editor_state: text_editor::State,
+    /// State for the list box component.
+    listbox_state: listbox::State,
     /// A filter function to apply to the list box items
     /// based on the text editor input.
     filter: Box<Filter>,
@@ -56,13 +56,13 @@ impl QuerySelector {
         F: Fn(&str, &Vec<String>) -> Vec<String> + 'static,
     {
         Self {
-            title_renderer: text::Renderer {
+            title_state: text::State {
                 text: Default::default(),
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
-            text_editor_renderer: text_editor::Renderer {
+            text_editor_state: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
                 prefix: String::from("❯❯ "),
@@ -74,7 +74,7 @@ impl QuerySelector {
                 word_break_chars: Default::default(),
                 lines: Default::default(),
             },
-            listbox_renderer: listbox::Renderer {
+            listbox_state: listbox::State {
                 listbox: Listbox::from_iter(items),
                 cursor: String::from("❯ "),
                 active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
@@ -88,73 +88,73 @@ impl QuerySelector {
 
     /// Sets the title text displayed above the query selection.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_renderer.text = text.as_ref().to_string();
+        self.title_state.text = text.as_ref().to_string();
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_renderer.style = style;
+        self.title_state.style = style;
         self
     }
 
     /// Sets the prefix string displayed before the input text in the text editor component.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.text_editor_renderer.prefix = prefix.as_ref().to_string();
+        self.text_editor_state.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the style for the prefix string in the text editor component.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_renderer.prefix_style = style;
+        self.text_editor_state.prefix_style = style;
         self
     }
 
     /// Sets the style for the active character (the character at the cursor position) in the text editor component.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_renderer.active_char_style = style;
+        self.text_editor_state.active_char_style = style;
         self
     }
 
     /// Sets the style for inactive characters (characters not at the cursor position) in the text editor component.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_renderer.inactive_char_style = style;
+        self.text_editor_state.inactive_char_style = style;
         self
     }
 
     /// Sets the editing mode for the text editor component.
     pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.text_editor_renderer.edit_mode = mode;
+        self.text_editor_state.edit_mode = mode;
         self
     }
 
     /// Sets the number of lines available for the text editor component.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.text_editor_renderer.lines = Some(lines);
+        self.text_editor_state.lines = Some(lines);
         self
     }
 
     /// Sets the cursor symbol used in the list box component.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.listbox_renderer.cursor = cursor.as_ref().to_string();
+        self.listbox_state.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items in the list box component.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_renderer.active_item_style = style;
+        self.listbox_state.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items in the list box component.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_renderer.inactive_item_style = style;
+        self.listbox_state.inactive_item_style = style;
         self
     }
 
     /// Sets the number of lines available for the list box component.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
-        self.listbox_renderer.lines = Some(lines);
+        self.listbox_state.lines = Some(lines);
         self
     }
 
@@ -176,11 +176,9 @@ impl QuerySelector {
         Prompt::try_new(
             Box::new(self::render::Renderer {
                 keymap: self.keymap,
-                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
-                text_editor_snapshot: Snapshot::<text_editor::Renderer>::new(
-                    self.text_editor_renderer,
-                ),
-                listbox_snapshot: Snapshot::<listbox::Renderer>::new(self.listbox_renderer),
+                title_snapshot: Snapshot::<text::State>::new(self.title_state),
+                text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
+                listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
             }),
             Box::new(
                 move |event: &Event,

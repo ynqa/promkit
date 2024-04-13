@@ -3,17 +3,16 @@ use crate::{
     grapheme::{trim, Graphemes, StyledGraphemes},
     impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::Listbox;
 
-/// Represents a renderer for the `Listbox` component,
-/// capable of visualizing a list of items in a pane.
-/// It supports a custom symbol for the selected line,
-/// styles for active and inactive items,
-/// and a configurable number of lines for rendering.
+/// Represents the state of a `Listbox` component, including its appearance and behavior.
+/// This state includes the currently selected item, styles for active and inactive items,
+/// and the number of lines available for rendering the listbox.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     /// The `Listbox` component to be rendered.
     pub listbox: Listbox,
 
@@ -29,10 +28,10 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl_as_any!(Renderer);
+impl_as_any!(State);
 
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16) -> Pane {
         let matrix = self
             .listbox
             .items()
@@ -59,6 +58,6 @@ impl crate::Renderer for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        vec![Pane::new(trimed, self.listbox.position(), self.lines)]
+        Pane::new(trimed, self.listbox.position(), self.lines)
     }
 }

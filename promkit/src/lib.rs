@@ -104,7 +104,6 @@ pub mod keymap;
 mod macros;
 pub mod pane;
 pub mod preset;
-pub mod snapshot;
 pub mod style;
 pub mod suggest;
 pub mod terminal;

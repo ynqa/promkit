@@ -2,8 +2,8 @@ use std::{collections::HashSet, fmt, iter::FromIterator};
 
 use crate::core::listbox::Listbox;
 
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// A `Checkbox` struct that encapsulates a listbox
 /// for item selection and a set of picked (selected) indices.

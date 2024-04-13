@@ -3,6 +3,7 @@ use crate::{
     grapheme::{trim, StyledGraphemes},
     impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::{JsonStream, JsonSyntaxKind};
@@ -39,16 +40,22 @@ pub struct Theme {
     pub indent: usize,
 }
 
+/// Represents the state of a JSON stream within the application.
+///
+/// This struct holds the current JSON stream being processed and provides
+/// methods to interact with and manipulate the stream according to the
+/// application's needs. It also contains a theme configuration for styling
+/// the JSON output.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     pub stream: JsonStream,
 
     pub theme: Theme,
 }
 
-impl_as_any!(Renderer);
+impl_as_any!(State);
 
-impl Renderer {
+impl State {
     pub fn indent_level(kind: &JsonSyntaxKind, theme: &Theme) -> usize {
         match kind {
             JsonSyntaxKind::MapStart { indent, .. }
@@ -170,8 +177,8 @@ impl Renderer {
     }
 }
 
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16) -> Pane {
         let layout = self
             .stream
             .flatten_kinds()
@@ -181,17 +188,17 @@ impl crate::Renderer for Renderer {
                 if i == self.stream.cursor.cross_contents_position() {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(
-                            " ".repeat(super::Renderer::indent_level(kind, &self.theme)),
+                            " ".repeat(super::State::indent_level(kind, &self.theme)),
                         ),
-                        super::Renderer::gen_syntax_style(kind, &self.theme)
+                        super::State::gen_syntax_style(kind, &self.theme)
                             .apply_attribute_to_all(self.theme.active_item_attribute),
                     ])
                 } else {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(
-                            " ".repeat(super::Renderer::indent_level(kind, &self.theme)),
+                            " ".repeat(super::State::indent_level(kind, &self.theme)),
                         ),
-                        super::Renderer::gen_syntax_style(kind, &self.theme),
+                        super::State::gen_syntax_style(kind, &self.theme),
                     ])
                     .apply_attribute_to_all(self.theme.inactive_item_attribute)
                 }
@@ -199,10 +206,10 @@ impl crate::Renderer for Renderer {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        vec![Pane::new(
+        Pane::new(
             layout,
             self.stream.cursor.cross_contents_position(),
             self.theme.lines,
-        )]
+        )
     }
 }

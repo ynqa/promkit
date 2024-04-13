@@ -2,8 +2,8 @@ use std::{fmt, iter::FromIterator};
 
 use crate::core::cursor::Cursor;
 
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// A `Listbox` struct that encapsulates a list of strings,
 /// allowing for navigation and manipulation through a cursor.

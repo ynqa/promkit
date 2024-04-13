@@ -20,10 +20,10 @@ pub mod render;
 /// and managing a list of selectable options.
 pub struct Checkbox {
     keymap: KeymapManager<self::render::Renderer>,
-    /// Renderer for the title displayed above the checkbox list.
-    title_renderer: text::Renderer,
-    /// Renderer for the checkbox list itself.
-    checkbox_renderer: checkbox::Renderer,
+    /// State for the title displayed above the checkbox list.
+    title_state: text::State,
+    /// State for the checkbox list itself.
+    checkbox_state: checkbox::State,
 }
 
 impl Checkbox {
@@ -36,13 +36,13 @@ impl Checkbox {
     /// that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
-            title_renderer: text::Renderer {
+            title_state: text::State {
                 text: Default::default(),
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
-            checkbox_renderer: checkbox::Renderer {
+            checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::from_iter(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
@@ -57,13 +57,13 @@ impl Checkbox {
 
     pub fn new_with_checked<T: Display, I: IntoIterator<Item = (T, bool)>>(items: I) -> Self {
         Self {
-            title_renderer: text::Renderer {
+            title_state: text::State {
                 text: Default::default(),
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
-            checkbox_renderer: checkbox::Renderer {
+            checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::new_with_checked(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
@@ -78,43 +78,43 @@ impl Checkbox {
 
     /// Sets the title text displayed above the checkbox list.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_renderer.text = text.as_ref().to_string();
+        self.title_state.text = text.as_ref().to_string();
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_renderer.style = style;
+        self.title_state.style = style;
         self
     }
 
     /// Sets the cursor symbol used to indicate the current selection.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.checkbox_renderer.cursor = cursor.as_ref().to_string();
+        self.checkbox_state.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the mark symbol used to indicate selected items.
     pub fn active_mark(mut self, mark: char) -> Self {
-        self.checkbox_renderer.active_mark = mark;
+        self.checkbox_state.active_mark = mark;
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.checkbox_renderer.active_item_style = style;
+        self.checkbox_state.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.checkbox_renderer.inactive_item_style = style;
+        self.checkbox_state.inactive_item_style = style;
         self
     }
 
     /// Sets the number of lines to be used for displaying the checkbox list.
     pub fn checkbox_lines(mut self, lines: usize) -> Self {
-        self.checkbox_renderer.lines = Some(lines);
+        self.checkbox_state.lines = Some(lines);
         self
     }
 
@@ -134,8 +134,8 @@ impl Checkbox {
         Prompt::try_new(
             Box::new(self::render::Renderer {
                 keymap: self.keymap,
-                title_snapshot: Snapshot::<text::Renderer>::new(self.title_renderer),
-                checkbox_snapshot: Snapshot::<checkbox::Renderer>::new(self.checkbox_renderer),
+                title_snapshot: Snapshot::<text::State>::new(self.title_state),
+                checkbox_snapshot: Snapshot::<checkbox::State>::new(self.checkbox_state),
             }),
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {

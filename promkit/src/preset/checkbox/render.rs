@@ -1,5 +1,6 @@
 use crate::{
     checkbox, impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
+    PaneFactory,
 };
 
 /// A `Renderer` for rendering checkbox presets.
@@ -10,9 +11,9 @@ pub struct Renderer {
     /// Manages key mappings for the renderer.
     pub keymap: KeymapManager<Self>,
     /// A snapshot of the title's renderer state.
-    pub title_snapshot: Snapshot<text::Renderer>,
+    pub title_snapshot: Snapshot<text::State>,
     /// A snapshot of the checkbox's renderer state.
-    pub checkbox_snapshot: Snapshot<checkbox::Renderer>,
+    pub checkbox_snapshot: Snapshot<checkbox::State>,
 }
 
 impl_as_any!(Renderer);
@@ -21,8 +22,8 @@ impl_cast!(Renderer);
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         let mut panes = Vec::new();
-        panes.extend(self.title_snapshot.create_panes(width));
-        panes.extend(self.checkbox_snapshot.create_panes(width));
+        panes.push(self.title_snapshot.create_pane(width));
+        panes.push(self.checkbox_snapshot.create_pane(width));
         panes
     }
 }

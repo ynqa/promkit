@@ -3,29 +3,27 @@ use std::{
     cell::{Ref, RefCell},
 };
 
-use crate::{pane::Pane, AsAny, Error, Renderer, Result};
+use crate::{pane::Pane, AsAny, Error, PaneFactory, Result};
 
 /// A `Snapshot` struct captures the state of a renderer at three different points:
 /// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).
 /// It is generic over `R` where `R` must implement the `Renderer` and `Clone` traits.
 #[derive(Clone)]
-pub struct Snapshot<R: Renderer + Clone> {
+pub struct Snapshot<R: PaneFactory + Clone> {
     init: R,
     before: RefCell<R>,
     after: R,
 }
 
-impl<R: Renderer + Clone + 'static> Renderer for Snapshot<R> {
-    /// Creates panes based on the `after` state of the renderer, and updates the `before` state
-    /// to match the `after` state. This method is called to render the current state of the UI.
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl<R: PaneFactory + Clone + 'static> PaneFactory for Snapshot<R> {
+    fn create_pane(&self, width: u16) -> Pane {
         *self.before.borrow_mut() = self.after.clone();
-        self.after.create_panes(width)
+        self.after.create_pane(width)
     }
 }
 
 // TODO: enable Snapshot<R> to use impl_as_any macro.
-impl<R: Renderer + Clone + 'static> AsAny for Snapshot<R> {
+impl<R: PaneFactory + Clone + 'static> AsAny for Snapshot<R> {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -36,7 +34,7 @@ impl<R: Renderer + Clone + 'static> AsAny for Snapshot<R> {
 }
 
 // TODO: enable Snapshot<R> to use impl_cast macro.
-impl<R: Renderer + Clone + 'static> Snapshot<R> {
+impl<R: PaneFactory + Clone + 'static> Snapshot<R> {
     pub fn cast_mut(renderer: &mut dyn crate::Renderer) -> Result<&mut Self> {
         let snapshot = renderer
             .as_any_mut()
@@ -54,7 +52,7 @@ impl<R: Renderer + Clone + 'static> Snapshot<R> {
     }
 }
 
-impl<R: Renderer + Clone + 'static> Snapshot<R> {
+impl<R: PaneFactory + Clone + 'static> Snapshot<R> {
     /// Constructs a new `Snapshot` instance with the given renderer. The `init`, `before`, and
     /// `after` states are all initialized with clones of the provided renderer.
     pub fn new(renderer: R) -> Self {

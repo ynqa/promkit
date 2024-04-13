@@ -69,22 +69,15 @@ impl Pane {
 #[cfg(test)]
 mod test {
     mod visible_row_count {
-        use crate::{crossterm::style::ContentStyle, text, Renderer};
+        use crate::{crossterm::style::ContentStyle, text, PaneFactory};
 
         #[test]
         fn test() {
-            let renderer = text::Renderer {
+            let state = text::State {
                 text: "".to_string(),
                 style: ContentStyle::default(),
             };
-            assert_eq!(
-                0,
-                renderer
-                    .create_panes(10)
-                    .iter()
-                    .map(|pane| pane.visible_row_count())
-                    .sum::<usize>()
-            )
+            assert_eq!(0, state.create_pane(10).visible_row_count())
         }
     }
 

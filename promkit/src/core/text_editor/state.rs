@@ -5,20 +5,13 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::{History, Mode, TextEditor};
 
-/// Represents a renderer for the `TextEditor` component,
-/// capable of visualizing text input in a pane.
-/// It supports a variety of features including history navigation,
-/// input suggestions, input masking,
-/// customizable prompt strings,
-/// and styles for different parts of the input. It also handles different
-/// edit modes such as insert and overwrite,
-/// and can be configured to render a specific number of lines.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     /// The `TextEditor` component to be rendered.
     pub texteditor: TextEditor,
     /// Optional history for navigating through previous inputs.
@@ -44,10 +37,10 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl_as_any!(Renderer);
+impl_as_any!(State);
 
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16) -> Pane {
         let mut buf = StyledGraphemes::default();
         buf.append(&mut StyledGraphemes::from_str(
             &self.prefix,
@@ -64,10 +57,10 @@ impl crate::Renderer for Renderer {
 
         buf.append(&mut styled);
 
-        vec![Pane::new(
+        Pane::new(
             matrixify(width as usize, &buf),
             self.texteditor.position() / width as usize,
             self.lines,
-        )]
+        )
     }
 }

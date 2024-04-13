@@ -3,18 +3,20 @@ use crate::{
     grapheme::{trim, Graphemes, StyledGraphemes},
     impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::{Kind, Tree};
 
-/// Represents a renderer for a tree structure,
-/// capable of visualizing the tree in a pane.
-/// It supports custom symbols for folded and unfolded items,
-/// styles for active and inactive items,
-/// and a configurable number of lines for rendering.
-/// It also handles key events for navigation and folding/unfolding.
+/// Represents the state of a tree structure within the application.
+///
+/// This state includes not only the tree itself but also various properties
+/// that affect how the tree is displayed and interacted with. These properties
+/// include symbols for folded and unfolded items, styles for active and inactive
+/// items, the number of lines available for rendering, and the indentation level
+/// for child items in the tree.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     pub tree: Tree,
 
     /// Symbol representing folded items.
@@ -37,10 +39,10 @@ pub struct Renderer {
     pub indent: usize,
 }
 
-impl_as_any!(Renderer);
+impl_as_any!(State);
 
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {
                 Kind::Folded { .. } => &self.folded_symbol,
@@ -86,6 +88,6 @@ impl crate::Renderer for Renderer {
             .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        vec![Pane::new(trimed, self.tree.position(), self.lines)]
+        Pane::new(trimed, self.tree.position(), self.lines)
     }
 }

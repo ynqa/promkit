@@ -7,8 +7,8 @@ use crate::{
 
 mod history;
 pub use history::History;
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// Edit mode.
 #[derive(Clone, Default)]

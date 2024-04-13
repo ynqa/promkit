@@ -3,14 +3,15 @@ use crate::{
     grapheme::{matrixify, StyledGraphemes},
     impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
-/// A renderer for displaying text within a pane.
+/// Represents the state of a text-based component within the application.
 ///
-/// This struct is responsible for rendering text with a specific style
-/// and handling events that are relevant to the rendered text.
+/// This state encapsulates the properties and
+/// behaviors specific to text handling,
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     /// The text to be rendered.
     pub text: String,
 
@@ -18,23 +19,23 @@ pub struct Renderer {
     pub style: ContentStyle,
 }
 
-impl Renderer {
+impl State {
     pub fn replace(&mut self, renderer: Self) {
         *self = renderer;
     }
 }
 
-impl_as_any!(Renderer);
+impl_as_any!(State);
 
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
-        vec![Pane::new(
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16) -> Pane {
+        Pane::new(
             matrixify(
                 width as usize,
                 &StyledGraphemes::from_str(&self.text, self.style),
             ),
             0,
             None,
-        )]
+        )
     }
 }
