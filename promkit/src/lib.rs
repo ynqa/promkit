@@ -107,7 +107,7 @@ pub mod preset;
 pub mod snapshot;
 pub mod style;
 pub mod suggest;
-mod terminal;
+pub mod terminal;
 pub mod validate;
 
 use std::{any::Any, io};
