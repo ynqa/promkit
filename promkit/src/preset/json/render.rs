@@ -19,9 +19,9 @@ impl_cast!(Renderer);
 
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
-        let mut panes = Vec::new();
-        panes.push(self.title_snapshot.create_pane(width));
-        panes.push(self.json_snapshot.create_pane(width));
-        panes
+        vec![
+            self.title_snapshot.create_pane(width),
+            self.json_snapshot.create_pane(width),
+        ]
     }
 }

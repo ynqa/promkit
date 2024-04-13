@@ -27,11 +27,11 @@ impl_cast!(Renderer);
 
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
-        let mut panes = Vec::new();
-        panes.push(self.title_snapshot.create_pane(width));
-        panes.push(self.error_message_snapshot.create_pane(width));
-        panes.push(self.text_editor_snapshot.create_pane(width));
-        panes.push(self.suggest_snapshot.create_pane(width));
-        panes
+        vec![
+            self.title_snapshot.create_pane(width),
+            self.error_message_snapshot.create_pane(width),
+            self.text_editor_snapshot.create_pane(width),
+            self.suggest_snapshot.create_pane(width),
+        ]
     }
 }
