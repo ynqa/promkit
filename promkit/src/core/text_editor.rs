@@ -80,6 +80,12 @@ impl TextEditor {
         self.forward();
     }
 
+    pub fn insert_chars(&mut self, vch: &Vec<char>) {
+        for ch in vch {
+            self.insert(*ch);
+        }
+    }
+
     /// Overwrites the character at the current cursor position with the specified character.
     pub fn overwrite(&mut self, ch: char) {
         if self.0.is_tail() {
@@ -90,6 +96,12 @@ impl TextEditor {
                 .contents_mut()
                 .replace_range(pos..pos + 1, &ch.to_string());
             self.forward();
+        }
+    }
+
+    pub fn overwrite_chars(&mut self, vch: &Vec<char>) {
+        for ch in vch {
+            self.overwrite(*ch);
         }
     }
 
