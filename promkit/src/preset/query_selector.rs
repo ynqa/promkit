@@ -6,10 +6,10 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
     listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
+    switch::ActiveKeySwitcher,
     text,
     text_editor::{self, Mode},
     EventHandler, Prompt, PromptSignal, Renderer,
@@ -26,7 +26,7 @@ type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
 /// for input and a list box
 /// for displaying filtered options based on the input.
 pub struct QuerySelector {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// State for the title displayed above the query selection.
     title_state: text::State,
     /// State for the text editor component.
@@ -81,7 +81,7 @@ impl QuerySelector {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             filter: Box::new(filter),
         }
     }
@@ -185,10 +185,7 @@ impl QuerySelector {
                       renderer: &mut Box<dyn Renderer + 'static>|
                       -> Result<PromptSignal> {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    let signal = match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    };
+                    let signal = renderer.keymap.get()(event, renderer);
 
                     if renderer.text_editor_snapshot.after().texteditor.text()
                         != renderer

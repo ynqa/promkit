@@ -1,10 +1,12 @@
 use crate::{
-    impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
-    PaneFactory,
+    impl_as_any, impl_cast, listbox, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
+    text, PaneFactory,
 };
 
+use super::keymap;
+
 pub struct Renderer {
-    pub keymap: KeymapManager<Self>,
+    pub keymap: ActiveKeySwitcher<keymap::Keymap>,
     pub title_snapshot: Snapshot<text::State>,
     pub listbox_snapshot: Snapshot<listbox::State>,
 }

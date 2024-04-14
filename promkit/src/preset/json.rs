@@ -5,10 +5,10 @@ use crate::{
     },
     error::Result,
     json::{self, JsonNode, JsonPath, JsonStream},
-    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, EventHandler, Prompt, PromptSignal, Renderer,
+    switch::ActiveKeySwitcher,
+    text, EventHandler, Prompt, Renderer,
 };
 
 pub mod keymap;
@@ -16,7 +16,7 @@ pub mod render;
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     title_state: text::State,
     json_state: json::State,
 }
@@ -50,7 +50,7 @@ impl Json {
                     indent: 2,
                 },
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
@@ -110,10 +110,7 @@ impl Json {
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    }
+                    renderer.keymap.get()(event, renderer)
                 },
             ),
             |renderer: &(dyn Renderer + '_)| -> Result<(JsonNode, Option<JsonPath>)> {

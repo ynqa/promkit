@@ -1,13 +1,15 @@
 use crate::{
-    impl_as_any, impl_cast, json, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
+    impl_as_any, impl_cast, json, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher, text,
     PaneFactory,
 };
+
+use super::keymap;
 
 /// A `Renderer` responsible for rendering JSON presets.
 /// It manages key mappings, title, and JSON content rendering.
 pub struct Renderer {
     /// Manages key mappings specific to this renderer.
-    pub keymap: KeymapManager<Self>,
+    pub keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// Snapshot of the renderer used for the title.
     pub title_snapshot: Snapshot<text::State>,
     /// Snapshot of the renderer used for JSON content.

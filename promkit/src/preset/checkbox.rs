@@ -7,10 +7,10 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, EventHandler, Prompt, PromptSignal, Renderer,
+    switch::ActiveKeySwitcher,
+    text, EventHandler, Prompt, Renderer,
 };
 
 pub mod keymap;
@@ -19,7 +19,7 @@ pub mod render;
 /// Represents a checkbox component for creating
 /// and managing a list of selectable options.
 pub struct Checkbox {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// State for the title displayed above the checkbox list.
     title_state: text::State,
     /// State for the checkbox list itself.
@@ -51,7 +51,7 @@ impl Checkbox {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
@@ -72,7 +72,7 @@ impl Checkbox {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
@@ -140,10 +140,7 @@ impl Checkbox {
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    }
+                    renderer.keymap.get()(event, renderer)
                 },
             ),
             |renderer: &(dyn Renderer + '_)| -> Result<Vec<String>> {

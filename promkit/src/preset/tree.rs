@@ -4,12 +4,12 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
     snapshot::Snapshot,
     style::StyleBuilder,
+    switch::ActiveKeySwitcher,
     text,
     tree::{self, Node},
-    EventHandler, Prompt, PromptSignal, Renderer,
+    EventHandler, Prompt, Renderer,
 };
 
 pub mod keymap;
@@ -18,7 +18,7 @@ pub mod render;
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
 pub struct Tree {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// State for the title displayed above the tree.
     title_state: text::State,
     /// State for the tree itself.
@@ -33,7 +33,7 @@ impl Tree {
     /// * `root` - The root node of the tree.
     pub fn new(root: Node) -> Self {
         Self {
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             title_state: text::State {
                 text: Default::default(),
                 style: StyleBuilder::new()
@@ -122,10 +122,7 @@ impl Tree {
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    }
+                    renderer.keymap.get()(event, renderer)
                 },
             ),
             |renderer: &(dyn Renderer + '_)| -> Result<Vec<String>> {

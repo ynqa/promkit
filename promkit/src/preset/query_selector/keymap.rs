@@ -3,6 +3,11 @@ use crate::{
     preset, text_editor, Error, PromptSignal, Result,
 };
 
+pub type Keymap = fn(
+    event: &Event,
+    renderer: &mut preset::query_selector::render::Renderer,
+) -> Result<PromptSignal>;
+
 pub fn default(
     event: &Event,
     renderer: &mut preset::query_selector::render::Renderer,

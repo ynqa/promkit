@@ -100,12 +100,12 @@ pub use core::*;
 mod error;
 pub use error::{Error, Result};
 pub mod grapheme;
-pub mod keymap;
 mod macros;
 pub mod pane;
 pub mod preset;
 pub mod style;
 pub mod suggest;
+pub mod switch;
 pub mod terminal;
 pub mod validate;
 

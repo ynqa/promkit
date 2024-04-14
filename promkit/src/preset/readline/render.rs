@@ -1,13 +1,15 @@
 use crate::{
-    impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot,
-    suggest::Suggest, text, text_editor, validate::ValidatorManager, PaneFactory,
+    impl_as_any, impl_cast, listbox, pane::Pane, snapshot::Snapshot, suggest::Suggest,
+    switch::ActiveKeySwitcher, text, text_editor, validate::ValidatorManager, PaneFactory,
 };
+
+use super::keymap;
 
 /// A `Renderer` for the readline preset, responsible for managing the rendering process.
 /// It holds references to various components and their states, facilitating the rendering of the readline interface.
 pub struct Renderer {
     /// Manages key bindings and their associated actions within the readline interface.
-    pub keymap: KeymapManager<Self>,
+    pub keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// Holds a snapshot of the title's renderer state, used for rendering the title section.
     pub title_snapshot: Snapshot<text::State>,
     /// Holds a snapshot of the text editor's renderer state, used for rendering the text input area.

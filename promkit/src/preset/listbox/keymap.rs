@@ -6,6 +6,9 @@ use crate::{
     preset, Error, PromptSignal, Result,
 };
 
+pub type Keymap =
+    fn(event: &Event, renderer: &mut preset::listbox::render::Renderer) -> Result<PromptSignal>;
+
 /// Default key bindings for the listbox.
 ///
 /// | Key                    | Action

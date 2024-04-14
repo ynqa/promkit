@@ -6,11 +6,11 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
     listbox,
     snapshot::Snapshot,
     style::StyleBuilder,
-    text, EventHandler, Prompt, PromptSignal, Renderer,
+    switch::ActiveKeySwitcher,
+    text, EventHandler, Prompt, Renderer,
 };
 
 pub mod keymap;
@@ -18,7 +18,7 @@ pub mod render;
 
 /// A component for creating and managing a selectable list of options.
 pub struct Listbox {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// State for the title displayed above the selectable list.
     title_state: text::State,
     /// State for the selectable list itself.
@@ -48,7 +48,7 @@ impl Listbox {
                 inactive_item_style: StyleBuilder::new().build(),
                 lines: Default::default(),
             },
-            keymap: KeymapManager::new("default", self::keymap::default),
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
@@ -110,10 +110,7 @@ impl Listbox {
             Box::new(
                 |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    }
+                    renderer.keymap.get()(event, renderer)
                 },
             ),
             |renderer: &(dyn Renderer + '_)| -> Result<String> {

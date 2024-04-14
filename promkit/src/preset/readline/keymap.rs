@@ -4,6 +4,9 @@ use crate::{
     preset, text_editor, Error, PromptSignal, Result,
 };
 
+pub type Keymap =
+    fn(event: &Event, renderer: &mut preset::readline::render::Renderer) -> Result<PromptSignal>;
+
 /// Default key bindings for the text editor.
 ///
 /// | Key                    | Action

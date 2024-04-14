@@ -6,11 +6,11 @@ use crate::{
         style::{Attribute, Attributes, Color, ContentStyle},
     },
     error::Result,
-    keymap::KeymapManager,
     listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
     suggest::Suggest,
+    switch::ActiveKeySwitcher,
     text,
     text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
@@ -27,7 +27,7 @@ pub mod render;
 /// It supports various configurations
 /// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
-    keymap: KeymapManager<self::render::Renderer>,
+    keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// State for the title displayed above the input field.
     title_state: text::State,
     /// State for the text editor where user input is entered.
@@ -43,7 +43,7 @@ pub struct Readline {
 impl Default for Readline {
     fn default() -> Self {
         Self {
-            keymap: KeymapManager::new("default", self::keymap::default)
+            keymap: ActiveKeySwitcher::new("default", self::keymap::default as keymap::Keymap)
                 .register("on_suggest", self::keymap::on_suggest),
             title_state: text::State {
                 text: Default::default(),
@@ -196,10 +196,7 @@ impl Readline {
                       renderer: &mut Box<dyn Renderer + 'static>|
                       -> Result<PromptSignal> {
                     let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    match renderer.keymap.get() {
-                        Some(f) => f(event, renderer),
-                        None => Ok(PromptSignal::Quit),
-                    }
+                    renderer.keymap.get()(event, renderer)
                 },
             ),
             |renderer: &(dyn Renderer + '_)| -> Result<String> {

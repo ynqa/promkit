@@ -6,6 +6,9 @@ use crate::{
     preset, Error, PromptSignal, Result,
 };
 
+pub type Keymap =
+    fn(event: &Event, renderer: &mut preset::json::render::Renderer) -> Result<PromptSignal>;
+
 /// Default key bindings for JSON navigation and manipulation.
 ///
 /// | Key                    | Action

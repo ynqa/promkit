@@ -1,7 +1,9 @@
 use crate::{
-    checkbox, impl_as_any, impl_cast, keymap::KeymapManager, pane::Pane, snapshot::Snapshot, text,
-    PaneFactory,
+    checkbox, impl_as_any, impl_cast, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
+    text, PaneFactory,
 };
+
+use super::keymap;
 
 /// A `Renderer` for rendering checkbox presets.
 ///
@@ -9,7 +11,7 @@ use crate::{
 /// including handling keymaps, and managing snapshots of the title and checkbox states.
 pub struct Renderer {
     /// Manages key mappings for the renderer.
-    pub keymap: KeymapManager<Self>,
+    pub keymap: ActiveKeySwitcher<keymap::Keymap>,
     /// A snapshot of the title's renderer state.
     pub title_snapshot: Snapshot<text::State>,
     /// A snapshot of the checkbox's renderer state.
