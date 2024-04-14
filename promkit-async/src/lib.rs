@@ -80,7 +80,6 @@ impl<T: PaneSyncer> Prompt<T> {
         });
 
         let mut merger = PaneMerger::new(self.renderer.init_panes(size.0));
-        // let terminal = Terminal::init_draw(merger.panes)?;
         let mut terminal = Terminal::start_session(&merger.panes)?;
         terminal.draw(&merger.panes)?;
         let shared_terminal = Arc::new(Mutex::new(terminal));
