@@ -29,9 +29,20 @@ pub struct Renderer {
 
 impl_as_any!(Renderer);
 
-impl crate::Renderer for Renderer {
+impl crate::Finalizer for Renderer {
     type Return = String;
 
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
+        Ok(self
+            .text_editor_snapshot
+            .after()
+            .texteditor
+            .text_without_cursor()
+            .to_string())
+    }
+}
+
+impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         vec![
             self.title_snapshot.create_pane(width),
@@ -44,14 +55,5 @@ impl crate::Renderer for Renderer {
     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
         let keymap = *self.keymap.borrow_mut().get();
         keymap(event, self)
-    }
-
-    fn finalize(&self) -> anyhow::Result<Self::Return> {
-        Ok(self
-            .text_editor_snapshot
-            .after()
-            .texteditor
-            .text_without_cursor()
-            .to_string())
     }
 }

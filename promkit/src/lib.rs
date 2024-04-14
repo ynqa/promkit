@@ -64,10 +64,7 @@
 //! UI from scratch, which can be a time-consuming and less flexible process.
 //!
 //! ```ignore
-//! pub trait Renderer: AsAny {
-//!     /// The type of the result produced by the renderer.
-//!     type Return;
-//!
+//! pub trait Renderer: AsAny + Finalizer {
 //!     /// Creates a collection of panes based on the specified width.
 //!     ///
 //!     /// This method is responsible for generating the layout of the UI components
@@ -98,18 +95,7 @@
 //!     /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
 //!     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
 //!     /// the prompt should terminate its execution.
-//!     fn evaluate(&mut self, event: &Event) -> Result<PromptSignal>;
-//!
-//!     /// Finalizes the prompt and produces a result.
-//!     ///
-//!     /// This method is called after the prompt has been instructed to quit. It allows
-//!     /// the renderer to perform any necessary cleanup and produce a final result.
-//!     ///
-//!     /// # Returns
-//!     ///
-//!     /// Returns a `Result` containing the final result of the prompt. The type of the result
-//!     /// is defined by the `Return` associated type.
-//!     fn finalize(&self) -> Result<Self::Return>;
+//!     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
 //! }
 //! ```
 //!
@@ -176,15 +162,28 @@ pub enum PromptSignal {
     Quit,
 }
 
+pub trait Finalizer {
+    /// The type of the result produced by the renderer.
+    type Return;
+
+    /// Finalizes the prompt and produces a result.
+    ///
+    /// This method is called after the prompt has been instructed to quit. It allows
+    /// the renderer to perform any necessary cleanup and produce a final result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the final result of the prompt. The type of the result
+    /// is defined by the `Return` associated type.
+    fn finalize(&self) -> anyhow::Result<Self::Return>;
+}
+
 /// A trait for rendering components within a prompt.
 ///
 /// This trait defines the essential functions required for rendering custom UI components
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
-pub trait Renderer: AsAny {
-    /// The type of the result produced by the renderer.
-    type Return;
-
+pub trait Renderer: AsAny + Finalizer {
     /// Creates a collection of panes based on the specified width.
     ///
     /// This method is responsible for generating the layout of the UI components
@@ -216,17 +215,6 @@ pub trait Renderer: AsAny {
     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
     /// the prompt should terminate its execution.
     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
-
-    /// Finalizes the prompt and produces a result.
-    ///
-    /// This method is called after the prompt has been instructed to quit. It allows
-    /// the renderer to perform any necessary cleanup and produce a final result.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing the final result of the prompt. The type of the result
-    /// is defined by the `Return` associated type.
-    fn finalize(&self) -> anyhow::Result<Self::Return>;
 }
 
 /// A trait for casting objects to `Any`, allowing for dynamic typing.
