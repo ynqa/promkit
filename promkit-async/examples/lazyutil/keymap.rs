@@ -15,14 +15,10 @@ pub fn default(
     fin_sender: &Sender<()>,
 ) -> anyhow::Result<()> {
     match event {
-        WrappedEvent::KeyBuffer(chars) => {
-            for ch in chars {
-                match state.edit_mode {
-                    text_editor::Mode::Insert => state.texteditor.insert(*ch),
-                    text_editor::Mode::Overwrite => state.texteditor.overwrite(*ch),
-                }
-            }
-        }
+        WrappedEvent::KeyBuffer(chars) => match state.edit_mode {
+            text_editor::Mode::Insert => state.texteditor.insert_chars(&chars),
+            text_editor::Mode::Overwrite => state.texteditor.overwrite_chars(&chars),
+        },
         WrappedEvent::Other(e) => match e {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
