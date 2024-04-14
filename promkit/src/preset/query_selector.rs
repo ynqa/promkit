@@ -1,10 +1,7 @@
-use std::{fmt::Display, iter::FromIterator};
+use std::{cell::RefCell, fmt::Display, iter::FromIterator};
 
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     listbox::{self, Listbox},
     snapshot::Snapshot,
@@ -12,7 +9,7 @@ use crate::{
     switch::ActiveKeySwitcher,
     text,
     text_editor::{self, Mode},
-    EventHandler, Prompt, PromptSignal, Renderer,
+    EventHandler, Prompt,
 };
 
 pub mod keymap;
@@ -170,50 +167,15 @@ impl QuerySelector {
     /// Displays the query select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
-    pub fn prompt(self) -> Result<Prompt<String>> {
-        let filter = self.filter;
-
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
-            }),
-            Box::new(
-                move |event: &Event,
-                      renderer: &mut Box<dyn Renderer + 'static>|
-                      -> Result<PromptSignal> {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    let signal = renderer.keymap.get()(event, renderer);
-
-                    if renderer.text_editor_snapshot.after().texteditor.text()
-                        != renderer
-                            .text_editor_snapshot
-                            .borrow_before()
-                            .texteditor
-                            .text()
-                    {
-                        let query = renderer
-                            .text_editor_snapshot
-                            .after()
-                            .texteditor
-                            .text_without_cursor()
-                            .to_string();
-
-                        let list = filter(&query, renderer.listbox_snapshot.init().listbox.items());
-                        renderer.listbox_snapshot.after_mut().listbox = Listbox::from_iter(list);
-                    }
-                    signal
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<String> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .listbox_snapshot
-                    .after()
-                    .listbox
-                    .get())
+                filter: self.filter,
             },
-        )
+        })
     }
 }

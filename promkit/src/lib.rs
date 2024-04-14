@@ -151,8 +151,11 @@ pub enum PromptSignal {
 pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
 
 pub trait Renderer: AsAny {
+    type Return;
     /// Creates panes with the given width.
     fn create_panes(&self, width: u16) -> Vec<Pane>;
+    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal>;
+    fn finalize(&self) -> Result<Self::Return>;
 }
 
 /// A trait for casting objects to `Any`, allowing for dynamic typing.
@@ -163,49 +166,15 @@ pub trait AsAny {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-/// Type alias for a dynamic evaluator function.
-///
-/// This evaluator function is responsible for handling events during the prompt's execution.
-/// It takes a reference to an `Event` and a mutable reference to a boxed `Renderer` instance,
-/// and returns a `Result` containing a `PromptSignal`. The `PromptSignal` indicates whether
-/// the prompt should continue running or quit.
-///
-/// # Arguments
-///
-/// * `event` - A reference to the event that occurred.
-/// * `renderer` - A mutable reference to a boxed instance of a type that implements the `Renderer` trait.
-///
-/// # Returns
-///
-/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-pub type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
-
-/// Type alias for a result producer function.
-///
-/// This function is used to produce the final result of the prompt based on the state of the renderer.
-/// It takes a reference to a type that implements the `Renderer` trait and returns a `Result` containing
-/// the final output of the prompt.
-///
-/// # Arguments
-///
-/// * `renderer` - A reference to an instance of a type that implements the `Renderer` trait.
-///
-/// # Returns
-///
-/// Returns a `Result` containing the final output of the prompt.
-pub type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
-
 /// Represents a customizable prompt that can handle user input and produce a result.
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-pub struct Prompt<T> {
-    renderer: Box<dyn Renderer>,
-    evaluator: Box<DynEvaluator>,
-    producer: ResultProducer<T>,
+pub struct Prompt<T: Renderer> {
+    pub renderer: T,
 }
 
-impl<T> Drop for Prompt<T> {
+impl<T: Renderer> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(
             io::stdout(),
@@ -218,30 +187,7 @@ impl<T> Drop for Prompt<T> {
     }
 }
 
-impl<T> Prompt<T> {
-    /// Attempts to create a new `Prompt` instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `renderer` - A boxed renderer for drawing the prompt.
-    /// * `evaluator` - A boxed evaluator function to handle events.
-    /// * `producer` - A function to produce the result based on the renderer's state.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing the new `Prompt` instance or an error.
-    pub fn try_new(
-        renderer: Box<dyn Renderer>,
-        evaluator: Box<DynEvaluator>,
-        producer: ResultProducer<T>,
-    ) -> Result<Self> {
-        Ok(Self {
-            renderer,
-            evaluator,
-            producer,
-        })
-    }
-
+impl<T: Renderer> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -251,7 +197,7 @@ impl<T> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub fn run(&mut self) -> Result<T> {
+    pub fn run(&mut self) -> Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
@@ -272,7 +218,7 @@ impl<T> Prompt<T> {
                     )?;
                 }
                 _ => {
-                    if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
+                    if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
                         break;
                     }
                 }
@@ -282,6 +228,6 @@ impl<T> Prompt<T> {
             terminal.draw(&self.renderer.create_panes(size.0))?;
         }
 
-        (self.producer)(&*self.renderer)
+        self.renderer.finalize()
     }
 }

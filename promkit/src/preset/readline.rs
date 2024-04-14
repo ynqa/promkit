@@ -1,10 +1,7 @@
-use std::collections::HashSet;
+use std::{cell::RefCell, collections::HashSet};
 
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     listbox::{self, Listbox},
     snapshot::Snapshot,
@@ -14,7 +11,7 @@ use crate::{
     text,
     text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    EventHandler, Prompt, PromptSignal, Renderer,
+    EventHandler, Prompt,
 };
 
 pub mod confirm;
@@ -180,33 +177,17 @@ impl Readline {
 
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
-    pub fn prompt(self) -> Result<Prompt<String>> {
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
                 suggest: self.suggest,
                 suggest_snapshot: Snapshot::<listbox::State>::new(self.suggest_state),
                 validator: self.validator,
                 error_message_snapshot: Snapshot::<text::State>::new(self.error_message_state),
-            }),
-            Box::new(
-                move |event: &Event,
-                      renderer: &mut Box<dyn Renderer + 'static>|
-                      -> Result<PromptSignal> {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    renderer.keymap.get()(event, renderer)
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<String> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .text_editor_snapshot
-                    .after()
-                    .texteditor
-                    .text_without_cursor()
-                    .to_string())
             },
-        )
+        })
     }
 }

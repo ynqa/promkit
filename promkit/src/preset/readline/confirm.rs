@@ -1,6 +1,6 @@
 use crate::{error::Result, Prompt};
 
-use super::Readline;
+use super::{render, Readline};
 
 /// A wrapper around `Readline` for creating simple yes/no confirmation prompts.
 pub struct Confirm(Readline);
@@ -31,7 +31,7 @@ impl Confirm {
     /// Displays the confirmation prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the user's input.
-    pub fn prompt(self) -> Result<Prompt<String>> {
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
         self.0.prompt()
     }
 }

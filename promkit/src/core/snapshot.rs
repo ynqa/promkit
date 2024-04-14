@@ -1,9 +1,9 @@
 use std::{
-    any::{type_name, Any},
+    any::Any,
     cell::{Ref, RefCell},
 };
 
-use crate::{pane::Pane, AsAny, Error, PaneFactory, Result};
+use crate::{pane::Pane, AsAny, PaneFactory};
 
 /// A `Snapshot` struct captures the state of a renderer at three different points:
 /// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).
@@ -30,25 +30,6 @@ impl<R: PaneFactory + Clone + 'static> AsAny for Snapshot<R> {
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
-    }
-}
-
-// TODO: enable Snapshot<R> to use impl_cast macro.
-impl<R: PaneFactory + Clone + 'static> Snapshot<R> {
-    pub fn cast_mut(renderer: &mut dyn crate::Renderer) -> Result<&mut Self> {
-        let snapshot = renderer
-            .as_any_mut()
-            .downcast_mut::<Self>()
-            .ok_or_else(|| Error::DowncastError(type_name::<Self>().to_string()))?;
-        Ok(snapshot)
-    }
-
-    pub fn cast(renderer: &dyn crate::Renderer) -> Result<&Self> {
-        let snapshot = renderer
-            .as_any()
-            .downcast_ref::<Self>()
-            .ok_or_else(|| Error::DowncastError(type_name::<Self>().to_string()))?;
-        Ok(snapshot)
     }
 }
 

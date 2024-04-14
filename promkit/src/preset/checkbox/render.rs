@@ -1,6 +1,8 @@
+use std::cell::RefCell;
+
 use crate::{
-    checkbox, impl_as_any, impl_cast, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
-    text, PaneFactory,
+    checkbox, crossterm::event::Event, impl_as_any, pane::Pane, snapshot::Snapshot,
+    switch::ActiveKeySwitcher, text, PaneFactory, PromptSignal, Result,
 };
 
 use super::keymap;
@@ -11,7 +13,7 @@ use super::keymap;
 /// including handling keymaps, and managing snapshots of the title and checkbox states.
 pub struct Renderer {
     /// Manages key mappings for the renderer.
-    pub keymap: ActiveKeySwitcher<keymap::Keymap>,
+    pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
     /// A snapshot of the title's renderer state.
     pub title_snapshot: Snapshot<text::State>,
     /// A snapshot of the checkbox's renderer state.
@@ -19,13 +21,23 @@ pub struct Renderer {
 }
 
 impl_as_any!(Renderer);
-impl_cast!(Renderer);
 
 impl crate::Renderer for Renderer {
+    type Return = Vec<String>;
+
     fn create_panes(&self, width: u16) -> Vec<Pane> {
         vec![
             self.title_snapshot.create_pane(width),
             self.checkbox_snapshot.create_pane(width),
         ]
+    }
+
+    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal> {
+        let keymap = *self.keymap.borrow_mut().get();
+        keymap(event, self)
+    }
+
+    fn finalize(&self) -> Result<Self::Return> {
+        Ok(self.checkbox_snapshot.after().checkbox.get())
     }
 }

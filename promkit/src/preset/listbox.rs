@@ -1,16 +1,13 @@
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     listbox,
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, EventHandler, Prompt, Renderer,
+    text, EventHandler, Prompt,
 };
 
 pub mod keymap;
@@ -100,26 +97,13 @@ impl Listbox {
     /// Displays the select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
-    pub fn prompt(self) -> Result<Prompt<String>> {
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
-            }),
-            Box::new(
-                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    renderer.keymap.get()(event, renderer)
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<String> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .listbox_snapshot
-                    .after()
-                    .listbox
-                    .get())
             },
-        )
+        })
     }
 }

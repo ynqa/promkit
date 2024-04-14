@@ -1,15 +1,14 @@
+use std::cell::RefCell;
+
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text,
     tree::{self, Node},
-    EventHandler, Prompt, Renderer,
+    EventHandler, Prompt,
 };
 
 pub mod keymap;
@@ -112,26 +111,13 @@ impl Tree {
     /// Displays the tree prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
-    pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 tree_snapshot: Snapshot::<tree::State>::new(self.tree_state),
-            }),
-            Box::new(
-                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    renderer.keymap.get()(event, renderer)
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<Vec<String>> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .tree_snapshot
-                    .after()
-                    .tree
-                    .get())
             },
-        )
+        })
     }
 }

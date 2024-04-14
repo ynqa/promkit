@@ -1,14 +1,13 @@
+use std::cell::RefCell;
+
 use crate::{
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
-    json::{self, JsonNode, JsonPath, JsonStream},
+    json::{self, JsonStream},
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, EventHandler, Prompt, Renderer,
+    text, EventHandler, Prompt,
 };
 
 pub mod keymap;
@@ -100,26 +99,13 @@ impl Json {
     }
 
     /// Creates a prompt based on the current configuration of the `Json` instance.
-    pub fn prompt(self) -> Result<Prompt<(JsonNode, Option<JsonPath>)>> {
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 json_snapshot: Snapshot::<json::State>::new(self.json_state),
-            }),
-            Box::new(
-                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    renderer.keymap.get()(event, renderer)
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<(JsonNode, Option<JsonPath>)> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .json_snapshot
-                    .after()
-                    .stream
-                    .current_root_and_path_from_root())
             },
-        )
+        })
     }
 }

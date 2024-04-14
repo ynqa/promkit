@@ -91,7 +91,7 @@ pub fn default(
                         .texteditor
                         .replace(&suggest_after_mut.listbox.get());
 
-                    renderer.keymap.switch("on_suggest");
+                    renderer.keymap.borrow_mut().switch("on_suggest");
                 }
             }
         }
@@ -274,7 +274,7 @@ pub fn on_suggest(
         _ => {
             suggest_after_mut.listbox = Listbox::from_iter(Vec::<String>::new());
 
-            renderer.keymap.switch("default");
+            renderer.keymap.borrow_mut().switch("default");
         }
     }
     Ok(PromptSignal::Continue)

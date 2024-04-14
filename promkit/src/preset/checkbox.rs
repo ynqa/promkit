@@ -1,16 +1,13 @@
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
     checkbox,
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, Color, ContentStyle},
-    },
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     error::Result,
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, EventHandler, Prompt, Renderer,
+    text, EventHandler, Prompt,
 };
 
 pub mod keymap;
@@ -130,26 +127,13 @@ impl Checkbox {
     /// Displays the checkbox prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
-    pub fn prompt(self) -> Result<Prompt<Vec<String>>> {
-        Prompt::try_new(
-            Box::new(self::render::Renderer {
-                keymap: self.keymap,
+    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+        Ok(Prompt {
+            renderer: render::Renderer {
+                keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 checkbox_snapshot: Snapshot::<checkbox::State>::new(self.checkbox_state),
-            }),
-            Box::new(
-                |event: &Event, renderer: &mut Box<dyn Renderer + 'static>| {
-                    let renderer = self::render::Renderer::cast_mut(renderer.as_mut())?;
-                    renderer.keymap.get()(event, renderer)
-                },
-            ),
-            |renderer: &(dyn Renderer + '_)| -> Result<Vec<String>> {
-                Ok(self::render::Renderer::cast(renderer)?
-                    .checkbox_snapshot
-                    .after()
-                    .checkbox
-                    .get())
             },
-        )
+        })
     }
 }
