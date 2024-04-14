@@ -1,6 +1,6 @@
-use promkit::{preset::checkbox::Checkbox, Result};
+use promkit::preset::checkbox::Checkbox;
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let mut p = Checkbox::new(vec![
         "Apple",
         "Banana",

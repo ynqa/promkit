@@ -2,7 +2,6 @@ use std::{cell::RefCell, collections::HashSet};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    error::Result,
     listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
@@ -173,7 +172,7 @@ impl Readline {
 
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),

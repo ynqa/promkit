@@ -1,6 +1,6 @@
-use promkit::{preset::readline::Readline, suggest::Suggest, Result};
+use promkit::{preset::readline::Readline, suggest::Suggest};
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let mut p = Readline::default()
         .title("Hi!")
         .enable_suggest(Suggest::from_iter([

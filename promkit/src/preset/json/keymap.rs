@@ -3,11 +3,13 @@ use crate::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, Error, PromptSignal, Result,
+    preset, PromptSignal,
 };
 
-pub type Keymap =
-    fn(event: &Event, renderer: &mut preset::json::render::Renderer) -> Result<PromptSignal>;
+pub type Keymap = fn(
+    event: &Event,
+    renderer: &mut preset::json::render::Renderer,
+) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for JSON navigation and manipulation.
 ///
@@ -21,7 +23,7 @@ pub type Keymap =
 pub fn default(
     event: &Event,
     renderer: &mut preset::json::render::Renderer,
-) -> Result<PromptSignal> {
+) -> anyhow::Result<PromptSignal> {
     let json_after_mut = renderer.json_snapshot.after_mut();
 
     match event {
@@ -36,7 +38,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
         // Move cursor.
         Event::Key(KeyEvent {

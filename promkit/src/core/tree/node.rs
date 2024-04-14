@@ -1,7 +1,5 @@
 use std::{fs, path};
 
-use crate::error::{Error, Result};
-
 /// Represents the kind of a node in a tree structure.
 ///
 /// This enum is used to distinguish between nodes that are currently
@@ -66,9 +64,9 @@ impl TryFrom<&path::PathBuf> for Node {
     /// - The path does not exist or is not a directory.
     /// - There is an error reading the directory contents.
     /// - A file name cannot be converted to a UTF-8 string.
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(dir_path: &path::PathBuf) -> Result<Self> {
+    fn try_from(dir_path: &path::PathBuf) -> anyhow::Result<Self> {
         let mut directories = Vec::new();
         let mut files = Vec::new();
 

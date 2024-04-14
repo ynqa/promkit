@@ -1,6 +1,6 @@
-use promkit::{preset::confirm::Confirm, Result};
+use promkit::preset::confirm::Confirm;
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let mut p = Confirm::new("Do you have a pet?").prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())

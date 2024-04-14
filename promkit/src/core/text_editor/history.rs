@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{core::cursor::Cursor, Result};
+use crate::core::cursor::Cursor;
 
 /// Manages the history of user inputs for a text editor.
 /// This structure allows for the storage,
@@ -48,7 +48,7 @@ impl History {
     /// # Returns
     ///
     /// Returns `Ok(())` if the history was successfully saved, or an `io::Error` otherwise.
-    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result {
+    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
         let mut file = File::create(path)?;
         let mut contents = self.cursor.contents().clone();
 
@@ -83,7 +83,10 @@ impl History {
     /// # Returns
     ///
     /// Returns `Ok(History)` with the loaded history if successful, or an `io::Error` otherwise.
-    pub fn load_from_file<P: AsRef<Path>>(path: P, limit_size: Option<usize>) -> Result<Self> {
+    pub fn load_from_file<P: AsRef<Path>>(
+        path: P,
+        limit_size: Option<usize>,
+    ) -> anyhow::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
 

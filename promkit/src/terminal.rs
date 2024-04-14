@@ -2,9 +2,7 @@ use std::io::{self, Write};
 
 use crate::{
     crossterm::{cursor, style, terminal},
-    error::Result,
     pane::Pane,
-    Error,
 };
 
 pub struct Terminal {
@@ -13,7 +11,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn start_session(panes: &[Pane]) -> Result<Self> {
+    pub fn start_session(panes: &[Pane]) -> anyhow::Result<Self> {
         let position = cursor::position()?;
         let size = terminal::size()?;
 
@@ -54,7 +52,7 @@ impl Terminal {
         })
     }
 
-    pub fn draw(&mut self, panes: &[Pane]) -> Result {
+    pub fn draw(&mut self, panes: &[Pane]) -> anyhow::Result<()> {
         let height = terminal::size()?.1;
 
         let viewable_panes = panes
@@ -68,7 +66,7 @@ impl Terminal {
                 terminal::Clear(terminal::ClearType::FromCursorDown),
                 style::Print("⚠️  Insufficient Space"),
             )
-            .map_err(Error::from);
+            .map_err(anyhow::Error::from);
         }
 
         crossterm::queue!(
@@ -102,6 +100,7 @@ impl Terminal {
                 crossterm::queue!(io::stdout(), cursor::MoveToNextLine(1))?;
             }
         }
-        io::stdout().flush().map_err(Error::from)
+        io::stdout().flush()?;
+        Ok(())
     }
 }

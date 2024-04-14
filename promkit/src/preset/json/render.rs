@@ -7,7 +7,7 @@ use crate::{
     pane::Pane,
     snapshot::Snapshot,
     switch::ActiveKeySwitcher,
-    text, PaneFactory, PromptSignal, Result,
+    text, PaneFactory, PromptSignal,
 };
 
 use super::keymap;
@@ -35,12 +35,12 @@ impl crate::Renderer for Renderer {
         ]
     }
 
-    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal> {
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
         let keymap = *self.keymap.borrow_mut().get();
         keymap(event, self)
     }
 
-    fn finalize(&self) -> Result<Self::Return> {
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
         Ok(self
             .json_snapshot
             .after()

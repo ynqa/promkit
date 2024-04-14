@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::event::Event, impl_as_any, listbox, pane::Pane, snapshot::Snapshot,
-    switch::ActiveKeySwitcher, text, PaneFactory, PromptSignal, Result,
+    switch::ActiveKeySwitcher, text, PaneFactory, PromptSignal,
 };
 
 use super::keymap;
@@ -25,12 +25,12 @@ impl crate::Renderer for Renderer {
         ]
     }
 
-    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal> {
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
         let keymap = *self.keymap.borrow_mut().get();
         keymap(event, self)
     }
 
-    fn finalize(&self) -> Result<Self::Return> {
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
         Ok(self.listbox_snapshot.after().listbox.get())
     }
 }

@@ -1,17 +1,17 @@
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    preset, text_editor, Error, PromptSignal, Result,
+    preset, text_editor, PromptSignal,
 };
 
 pub type Keymap = fn(
     event: &Event,
     renderer: &mut preset::query_selector::render::Renderer,
-) -> Result<PromptSignal>;
+) -> anyhow::Result<PromptSignal>;
 
 pub fn default(
     event: &Event,
     renderer: &mut preset::query_selector::render::Renderer,
-) -> Result<PromptSignal> {
+) -> anyhow::Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();
 
@@ -27,7 +27,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
         // Move cursor.
         Event::Key(KeyEvent {

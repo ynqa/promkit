@@ -2,7 +2,6 @@ use std::{cell::RefCell, fmt::Display, iter::FromIterator};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    error::Result,
     listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
@@ -158,7 +157,7 @@ impl QuerySelector {
     /// Displays the query select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),

@@ -3,7 +3,6 @@ use std::{cell::RefCell, fmt::Display};
 use crate::{
     checkbox,
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    error::Result,
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
@@ -123,7 +122,7 @@ impl Checkbox {
     /// Displays the checkbox prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),

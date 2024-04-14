@@ -1,11 +1,13 @@
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     listbox::Listbox,
-    preset, text_editor, Error, PromptSignal, Result,
+    preset, text_editor, PromptSignal,
 };
 
-pub type Keymap =
-    fn(event: &Event, renderer: &mut preset::readline::render::Renderer) -> Result<PromptSignal>;
+pub type Keymap = fn(
+    event: &Event,
+    renderer: &mut preset::readline::render::Renderer,
+) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the text editor.
 ///
@@ -29,7 +31,7 @@ pub type Keymap =
 pub fn default(
     event: &Event,
     renderer: &mut preset::readline::render::Renderer,
-) -> Result<PromptSignal> {
+) -> anyhow::Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let error_message_after_mut = renderer.error_message_snapshot.after_mut();
     let suggest_after_mut = renderer.suggest_snapshot.after_mut();
@@ -72,7 +74,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
@@ -229,7 +231,7 @@ pub fn default(
 pub fn on_suggest(
     event: &Event,
     renderer: &mut preset::readline::render::Renderer,
-) -> Result<PromptSignal> {
+) -> anyhow::Result<PromptSignal> {
     let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
     let suggest_after_mut = renderer.suggest_snapshot.after_mut();
 
@@ -239,7 +241,7 @@ pub fn on_suggest(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
         Event::Key(KeyEvent {
             code: KeyCode::Tab,

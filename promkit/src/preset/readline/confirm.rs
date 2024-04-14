@@ -1,4 +1,4 @@
-use crate::{error::Result, Prompt};
+use crate::Prompt;
 
 use super::{render, Readline};
 
@@ -31,7 +31,7 @@ impl Confirm {
     /// Displays the confirmation prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the user's input.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         self.0.prompt()
     }
 }

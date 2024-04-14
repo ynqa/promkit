@@ -19,7 +19,6 @@ indexmap = "2.2.3"
 radix_trie = "0.2.1"
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114", features = ["preserve_order"] }
-thiserror = "1.0.50"
 unicode-width = "0.1.8"
 
 [dev-dependencies]

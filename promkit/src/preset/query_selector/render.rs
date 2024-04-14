@@ -7,7 +7,7 @@ use crate::{
     pane::Pane,
     snapshot::Snapshot,
     switch::ActiveKeySwitcher,
-    text, text_editor, PaneFactory, PromptSignal, Result,
+    text, text_editor, PaneFactory, PromptSignal,
 };
 
 /// Used to process and filter a list of options
@@ -44,7 +44,7 @@ impl crate::Renderer for Renderer {
         ]
     }
 
-    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal> {
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
         let keymap = *self.keymap.borrow_mut().get();
         let signal = keymap(event, self);
         if self.text_editor_snapshot.after().texteditor.text()
@@ -63,7 +63,7 @@ impl crate::Renderer for Renderer {
         signal
     }
 
-    fn finalize(&self) -> Result<Self::Return> {
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
         Ok(self.listbox_snapshot.after().listbox.get())
     }
 }

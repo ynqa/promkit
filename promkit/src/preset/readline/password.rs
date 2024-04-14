@@ -1,6 +1,5 @@
 use crate::{
     crossterm::style::ContentStyle,
-    error::Result,
     validate::{ErrorMessageGenerator, Validator},
     Prompt,
 };
@@ -68,7 +67,7 @@ impl Password {
     /// Displays the password prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the user's input.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         self.0.prompt()
     }
 }

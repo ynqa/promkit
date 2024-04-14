@@ -141,8 +141,6 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-mod error;
-pub use error::{Error, Result};
 pub mod grapheme;
 mod macros;
 pub mod pane;
@@ -217,7 +215,7 @@ pub trait Renderer: AsAny {
     /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
     /// the prompt should terminate its execution.
-    fn evaluate(&mut self, event: &Event) -> Result<PromptSignal>;
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
 
     /// Finalizes the prompt and produces a result.
     ///
@@ -228,7 +226,7 @@ pub trait Renderer: AsAny {
     ///
     /// Returns a `Result` containing the final result of the prompt. The type of the result
     /// is defined by the `Return` associated type.
-    fn finalize(&self) -> Result<Self::Return>;
+    fn finalize(&self) -> anyhow::Result<Self::Return>;
 }
 
 /// A trait for casting objects to `Any`, allowing for dynamic typing.
@@ -270,7 +268,7 @@ impl<T: Renderer> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub fn run(&mut self) -> Result<T::Return> {
+    pub fn run(&mut self) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 

@@ -2,7 +2,6 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    error::Result,
     json::{self, JsonStream},
     snapshot::Snapshot,
     style::StyleBuilder,
@@ -95,7 +94,7 @@ impl Json {
     }
 
     /// Creates a prompt based on the current configuration of the `Json` instance.
-    pub fn prompt(self) -> Result<Prompt<render::Renderer>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
