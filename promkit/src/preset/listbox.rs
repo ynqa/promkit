@@ -7,7 +7,7 @@ use crate::{
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, EventHandler, Prompt,
+    text, Prompt,
 };
 
 pub mod keymap;
@@ -85,11 +85,7 @@ impl Listbox {
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(
-        mut self,
-        key: K,
-        handler: EventHandler<self::render::Renderer>,
-    ) -> Self {
+    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
         self.keymap = self.keymap.register(key, handler);
         self
     }

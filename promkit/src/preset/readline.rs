@@ -11,7 +11,7 @@ use crate::{
     text,
     text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    EventHandler, Prompt,
+    Prompt,
 };
 
 pub mod confirm;
@@ -156,11 +156,7 @@ impl Readline {
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(
-        mut self,
-        key: K,
-        handler: EventHandler<self::render::Renderer>,
-    ) -> Self {
+    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
         self.keymap = self.keymap.register(key, handler);
         self
     }

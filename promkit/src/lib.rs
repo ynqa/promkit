@@ -134,22 +134,6 @@ pub enum PromptSignal {
     Quit,
 }
 
-/// Type definition for an event handler function.
-///
-/// This function type is used to handle events within a prompt. It takes a reference to an `Event`
-/// and a mutable reference to a state of type `S`, and returns a `Result` containing a `PromptSignal`.
-/// The `PromptSignal` indicates whether the prompt should continue running or quit.
-///
-/// # Arguments
-///
-/// * `event` - A reference to the event that occurred.
-/// * `state` - A mutable reference to the state `S` of the prompt, allowing the handler to modify it.
-///
-/// # Returns
-///
-/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
-
 pub trait Renderer: AsAny {
     type Return;
     /// Creates panes with the given width.

@@ -8,7 +8,7 @@ use crate::{
     switch::ActiveKeySwitcher,
     text,
     tree::{self, Node},
-    EventHandler, Prompt,
+    Prompt,
 };
 
 pub mod keymap;
@@ -99,11 +99,7 @@ impl Tree {
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(
-        mut self,
-        key: K,
-        handler: EventHandler<self::render::Renderer>,
-    ) -> Self {
+    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
         self.keymap = self.keymap.register(key, handler);
         self
     }
