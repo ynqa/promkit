@@ -15,10 +15,6 @@ use crate::{
 pub mod keymap;
 pub mod render;
 
-/// Used to process and filter a list of options
-/// based on the input text in the `QuerySelector` component.
-type Filter = dyn Fn(&str, &Vec<String>) -> Vec<String>;
-
 /// Represents a query selection component that combines a text editor
 /// for input and a list box
 /// for displaying filtered options based on the input.
@@ -32,7 +28,7 @@ pub struct QuerySelector {
     listbox_state: listbox::State,
     /// A filter function to apply to the list box items
     /// based on the text editor input.
-    filter: Box<Filter>,
+    filter: render::Filter,
 }
 
 impl QuerySelector {
@@ -46,11 +42,10 @@ impl QuerySelector {
     /// * `filter` - A function that takes the current input
     /// from the text editor and the list of items,
     /// returning a filtered list of items to display.
-    pub fn new<T, I, F>(items: I, filter: F) -> Self
+    pub fn new<T, I>(items: I, filter: render::Filter) -> Self
     where
         T: Display,
         I: IntoIterator<Item = T>,
-        F: Fn(&str, &Vec<String>) -> Vec<String> + 'static,
     {
         Self {
             title_state: text::State {
@@ -79,7 +74,7 @@ impl QuerySelector {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            filter: Box::new(filter),
+            filter,
         }
     }
 

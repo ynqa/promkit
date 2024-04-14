@@ -10,7 +10,11 @@ use crate::{
     text, text_editor, PaneFactory, PromptSignal, Result,
 };
 
-use super::{keymap, Filter};
+/// Used to process and filter a list of options
+/// based on the input text in the `QuerySelector` component.
+pub type Filter = fn(&str, &Vec<String>) -> Vec<String>;
+
+use super::keymap;
 
 /// Represents a renderer for the query selector.
 /// This struct manages the rendering process of different components within the query selector,
@@ -24,7 +28,7 @@ pub struct Renderer {
     pub text_editor_snapshot: Snapshot<text_editor::State>,
     /// Snapshot of the listbox renderer.
     pub listbox_snapshot: Snapshot<listbox::State>,
-    pub filter: Box<Filter>,
+    pub filter: Filter,
 }
 
 impl_as_any!(Renderer);
