@@ -1,0 +1,21 @@
+[package]
+name = "promkit-async"
+version = "0.1.0"
+authors = ["ynqa <un.pensiero.vano@gmail.com>"]
+edition = "2021"
+description = "Async for promkit"
+repository = "https://github.com/ynqa/promkit"
+license = "MIT"
+readme = "README.md"
+
+[lib]
+name = "promkit_async"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1.0.81"
+crossterm = { version = "0.27.0", features = ["use-dev-tty", "event-stream"] }
+futures = "0.3.30"
+futures-timer = "3.0.3"
+promkit = { git = "https://github.com/ynqa/promkit", branch = "dev-0.4.0/main" }
+tokio = { version = "1.36.0", features = ["full"] }
