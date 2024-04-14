@@ -50,9 +50,21 @@ impl Renderer {
     }
 }
 
-impl PaneSyncer for Renderer {
+impl promkit::Finalizer for Renderer {
     type Return = String;
 
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
+        Ok(self
+            .state
+            .lock()
+            .unwrap()
+            .texteditor
+            .text_without_cursor()
+            .to_string())
+    }
+}
+
+impl PaneSyncer for Renderer {
     fn init_panes(&self, width: u16) -> Vec<Pane> {
         vec![
             self.state.lock().unwrap().create_pane(width),
@@ -98,15 +110,5 @@ impl PaneSyncer for Renderer {
 
             Ok(())
         }
-    }
-
-    fn output(&self) -> anyhow::Result<Self::Return> {
-        Ok(self
-            .state
-            .lock()
-            .unwrap()
-            .texteditor
-            .text_without_cursor()
-            .to_string())
     }
 }

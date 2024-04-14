@@ -32,15 +32,13 @@ pub enum WrappedEvent {
     Other(Event),
 }
 
-pub trait PaneSyncer {
-    type Return;
+pub trait PaneSyncer: promkit::Finalizer {
     fn init_panes(&self, width: u16) -> Vec<Pane>;
     fn sync(
         &mut self,
         event: &WrappedEvent,
         width: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
-    fn output(&self) -> anyhow::Result<Self::Return>;
 }
 
 pub struct Prompt<T: PaneSyncer> {
@@ -141,6 +139,6 @@ impl<T: PaneSyncer> Prompt<T> {
             }
         }
 
-        self.renderer.output()
+        self.renderer.finalize()
     }
 }
