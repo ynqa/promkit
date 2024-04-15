@@ -198,6 +198,10 @@ impl TextEditor {
         self.0.move_to_tail()
     }
 
+    pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
+        self.0.shift(backward, forward)
+    }
+
     /// Moves the cursor one position backward, if possible.
     pub fn backward(&mut self) -> bool {
         self.0.backward()
