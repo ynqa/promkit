@@ -143,6 +143,10 @@ impl JsonStream {
         self.toggle_all_visibility(true);
     }
 
+    pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
+        self.cursor.shift(backward, forward)
+    }
+
     /// Moves the cursor backward through the JSON stream.
     pub fn backward(&mut self) -> bool {
         self.cursor.backward()
