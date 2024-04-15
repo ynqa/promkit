@@ -20,17 +20,13 @@ use promkit::{
 
 mod char_buffer;
 use char_buffer::CharBuffer;
+mod event_buffer;
+pub use event_buffer::WrappedEvent;
 mod resize_debounce;
 use resize_debounce::ResizeDebounce;
 mod merge;
 use merge::PaneMerger;
 pub mod spinner;
-
-#[derive(Clone)]
-pub enum WrappedEvent {
-    KeyBuffer(Vec<char>),
-    Other(Event),
-}
 
 pub trait PaneSyncer: promkit::Finalizer {
     fn init_panes(&self, width: u16) -> Vec<Pane>;
@@ -91,17 +87,23 @@ impl<T: PaneSyncer> Prompt<T> {
                 maybe_event = stream.next().fuse() => {
                     if let Some(Ok(event)) = maybe_event {
                         match event {
-                            Event::Key(KeyEvent {
-                                code: KeyCode::Char(c),
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            }) => {
-                                let _ = char_sender.send(c).await;
-                            },
                             Event::Resize(width, height) => {
                                 let _ = resize_sender.send((width, height)).await;
                             }
+                            Event::Key(KeyEvent {
+                                code: KeyCode::Char(ch),
+                                modifiers: KeyModifiers::NONE,
+                                kind: KeyEventKind::Press,
+                                state: KeyEventState::NONE,
+                            })
+                            | Event::Key(KeyEvent {
+                                code: KeyCode::Char(ch),
+                                modifiers: KeyModifiers::SHIFT,
+                                kind: KeyEventKind::Press,
+                                state: KeyEventState::NONE,
+                            }) => {
+                                let _ = char_sender.send(ch).await;
+                            },
                             other => {
                                 self.renderer.sync(&WrappedEvent::Other(other), size.0).await?;
                             }

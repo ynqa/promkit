@@ -21,7 +21,7 @@ impl CharBuffer {
         mut char_receiver: Receiver<char>,
         buffer_sender: Sender<Vec<char>>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
-        let mut buffer = self.buffer.clone();
+        let mut buffer = Vec::new();
         let delay_duration = self.delay_duration;
 
         async move {

@@ -19,6 +19,8 @@ pub fn default(
             text_editor::Mode::Insert => state.texteditor.insert_chars(&chars),
             text_editor::Mode::Overwrite => state.texteditor.overwrite_chars(&chars),
         },
+        WrappedEvent::VerticalCursorBuffer(_up, _down) => {}
+        WrappedEvent::HorizontalCursorBuffer(_right, _left) => {}
         WrappedEvent::Other(e) => match e {
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -79,6 +81,7 @@ pub fn default(
             }) => state.texteditor.erase_all(),
             _ => {}
         },
+        _ => {}
     }
     Ok(())
 }
