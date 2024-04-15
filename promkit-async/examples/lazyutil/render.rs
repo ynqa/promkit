@@ -74,7 +74,7 @@ impl PaneSyncer for Renderer {
 
     fn sync(
         &mut self,
-        event: &WrappedEvent,
+        events: &[WrappedEvent],
         width: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let state = Arc::clone(&self.state);
@@ -82,13 +82,13 @@ impl PaneSyncer for Renderer {
         let fin_sender = self.fin_sender.clone();
         let pane_sender = self.pane_sender.clone();
         let spinner_signal_sender = self.spinner_signal_sender.clone();
-        let event = event.clone();
+        let events = events.to_vec();
         let keymap = self.keymap.clone();
 
         async move {
             tokio::spawn(async move {
                 let mut state = state.lock().unwrap();
-                keymap.get()(&event, &mut state, &fin_sender)?;
+                keymap.get()(&events, &mut state, &fin_sender)?;
                 pane_sender.try_send((state.create_pane(width), 0))?;
 
                 let edited = state.clone();

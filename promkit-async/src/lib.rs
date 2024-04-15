@@ -10,7 +10,7 @@ use tokio::sync::mpsc::Receiver;
 use promkit::{
     crossterm::{
         cursor,
-        event::{Event, EventStream, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        event::{Event, EventStream},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
@@ -18,10 +18,8 @@ use promkit::{
     terminal::Terminal,
 };
 
-mod char_buffer;
-use char_buffer::CharBuffer;
 mod event_buffer;
-pub use event_buffer::WrappedEvent;
+pub use event_buffer::{EventBuffer, WrappedEvent};
 mod resize_debounce;
 use resize_debounce::ResizeDebounce;
 mod merge;
@@ -32,7 +30,7 @@ pub trait PaneSyncer: promkit::Finalizer {
     fn init_panes(&self, width: u16) -> Vec<Pane>;
     fn sync(
         &mut self,
-        event: &WrappedEvent,
+        events: &[WrappedEvent],
         width: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
@@ -60,10 +58,10 @@ impl<T: PaneSyncer> Prompt<T> {
 
         let mut size = crossterm::terminal::size()?;
 
-        let mut char_buffer = CharBuffer::new();
-        let (char_sender, char_receiver) = tokio::sync::mpsc::channel(1);
-        let (char_buffer_sender, mut char_buffer_receiver) = tokio::sync::mpsc::channel(1);
-        tokio::spawn(async move { char_buffer.run(char_receiver, char_buffer_sender).await });
+        let mut event_buffer = EventBuffer::default();
+        let (event_sender, event_receiver) = tokio::sync::mpsc::channel(1);
+        let (event_buffer_sender, mut event_buffer_receiver) = tokio::sync::mpsc::channel(1);
+        tokio::spawn(async move { event_buffer.run(event_receiver, event_buffer_sender).await });
 
         let resize_debouncer = ResizeDebounce::new();
         let (resize_sender, resize_receiver) = tokio::sync::mpsc::channel(1);
@@ -90,22 +88,8 @@ impl<T: PaneSyncer> Prompt<T> {
                             Event::Resize(width, height) => {
                                 let _ = resize_sender.send((width, height)).await;
                             }
-                            Event::Key(KeyEvent {
-                                code: KeyCode::Char(ch),
-                                modifiers: KeyModifiers::NONE,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            })
-                            | Event::Key(KeyEvent {
-                                code: KeyCode::Char(ch),
-                                modifiers: KeyModifiers::SHIFT,
-                                kind: KeyEventKind::Press,
-                                state: KeyEventState::NONE,
-                            }) => {
-                                let _ = char_sender.send(ch).await;
-                            },
                             other => {
-                                self.renderer.sync(&WrappedEvent::Other(other), size.0).await?;
+                                event_sender.send(other).await?;
                             }
                         }
                     }
@@ -115,10 +99,9 @@ impl<T: PaneSyncer> Prompt<T> {
                         size = (width, height);
                     }
                 },
-                maybe_char_buffer = char_buffer_receiver.recv().fuse() => {
-                    if let Some(char_buffer) = maybe_char_buffer {
-                        let size = crossterm::terminal::size()?;
-                        self.renderer.sync(&WrappedEvent::KeyBuffer(char_buffer), size.0).await?;
+                maybe_event_buffer = event_buffer_receiver.recv().fuse() => {
+                    if let Some(event_buffer) = maybe_event_buffer {
+                        self.renderer.sync(&event_buffer, size.0).await?;
                     }
                 },
                 maybe_fin = fin_receiver.recv().fuse() => {
