@@ -10,7 +10,7 @@ pub enum WrappedEvent {
     KeyBuffer(Vec<char>),
     VerticalCursorBuffer(usize, usize),   // (up, down)
     HorizontalCursorBuffer(usize, usize), // (left, right)
-    Other(Event),
+    Others(Event, usize),
 }
 
 pub struct EventBuffer {
@@ -64,6 +64,7 @@ impl EventBuffer {
         let mut charbuf = Vec::new();
         let mut vertical_cursor = (0, 0); // (up, down)
         let mut horizontal_cursor = (0, 0); // (left, right)
+        let mut others_buffer = Vec::new();
 
         for event in events {
             if let Some(ch) = Self::extract_char(&event) {
@@ -79,10 +80,14 @@ impl EventBuffer {
                         horizontal_cursor.0,
                         horizontal_cursor.1,
                     ));
+                } else if !others_buffer.is_empty() {
+                    let times = others_buffer.len();
+                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 vertical_cursor = (0, 0);
                 horizontal_cursor = (0, 0);
+                others_buffer.clear();
             } else if let Some(direction) = Self::detect_vertical_direction(&event) {
                 vertical_cursor.0 += direction.0;
                 vertical_cursor.1 += direction.1;
@@ -94,10 +99,14 @@ impl EventBuffer {
                         horizontal_cursor.0,
                         horizontal_cursor.1,
                     ));
+                } else if !others_buffer.is_empty() {
+                    let times = others_buffer.len();
+                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 charbuf.clear();
                 horizontal_cursor = (0, 0);
+                others_buffer.clear();
             } else if let Some(direction) = Self::detect_horizontal_direction(&event) {
                 horizontal_cursor.0 += direction.0;
                 horizontal_cursor.1 += direction.1;
@@ -109,11 +118,31 @@ impl EventBuffer {
                         vertical_cursor.0,
                         vertical_cursor.1,
                     ));
+                } else if !others_buffer.is_empty() {
+                    let times = others_buffer.len();
+                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 charbuf.clear();
                 vertical_cursor = (0, 0);
+                others_buffer.clear();
             } else {
+                match others_buffer.last() {
+                    Some(last_event) => {
+                        if last_event == &event {
+                            others_buffer.push(event);
+                        } else {
+                            ret.push(WrappedEvent::Others(
+                                last_event.clone(),
+                                others_buffer.len(),
+                            ));
+                            others_buffer.clear();
+                            others_buffer.push(event);
+                        }
+                    }
+                    None => others_buffer.push(event),
+                }
+
                 // Check and insert if other aggregates are not edited
                 if !charbuf.is_empty() {
                     ret.push(WrappedEvent::KeyBuffer(charbuf.clone()));
@@ -128,8 +157,6 @@ impl EventBuffer {
                         horizontal_cursor.1,
                     ));
                 }
-                // Without buffering for other events
-                ret.push(WrappedEvent::Other(event));
                 // Initialize other aggregates
                 charbuf.clear();
                 vertical_cursor = (0, 0);
@@ -272,6 +299,24 @@ mod tests {
                     state: KeyEventState::NONE,
                 }),
                 Event::Key(KeyEvent {
+                    code: KeyCode::Char('f'),
+                    modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('f'),
+                    modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }),
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('d'),
+                    modifiers: KeyModifiers::CONTROL,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }),
+                Event::Key(KeyEvent {
                     code: KeyCode::Up,
                     modifiers: KeyModifiers::NONE,
                     kind: KeyEventKind::Press,
@@ -289,12 +334,24 @@ mod tests {
                 WrappedEvent::KeyBuffer(vec!['a', 'B', 'c']),
                 WrappedEvent::VerticalCursorBuffer(2, 1),
                 WrappedEvent::HorizontalCursorBuffer(2, 1),
-                WrappedEvent::Other(Event::Key(KeyEvent {
-                    code: KeyCode::Char('f'),
-                    modifiers: KeyModifiers::CONTROL,
-                    kind: KeyEventKind::Press,
-                    state: KeyEventState::NONE,
-                })),
+                WrappedEvent::Others(
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Char('f'),
+                        modifiers: KeyModifiers::CONTROL,
+                        kind: KeyEventKind::Press,
+                        state: KeyEventState::NONE,
+                    }),
+                    3,
+                ),
+                WrappedEvent::Others(
+                    Event::Key(KeyEvent {
+                        code: KeyCode::Char('d'),
+                        modifiers: KeyModifiers::CONTROL,
+                        kind: KeyEventKind::Press,
+                        state: KeyEventState::NONE,
+                    }),
+                    1,
+                ),
                 WrappedEvent::VerticalCursorBuffer(1, 0),
                 WrappedEvent::KeyBuffer(vec!['d']),
             ];

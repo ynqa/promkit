@@ -23,7 +23,7 @@ pub fn default(
             WrappedEvent::HorizontalCursorBuffer(left, right) => {
                 state.texteditor.shift(*left, *right);
             }
-            WrappedEvent::Other(e) => match e {
+            WrappedEvent::Others(e, times) => match e {
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
@@ -37,23 +37,6 @@ pub fn default(
                     state: KeyEventState::NONE,
                 }) => {
                     fin_sender.try_send(())?;
-                }
-                // Move cursor.
-                Event::Key(KeyEvent {
-                    code: KeyCode::Left,
-                    modifiers: KeyModifiers::NONE,
-                    kind: KeyEventKind::Press,
-                    state: KeyEventState::NONE,
-                }) => {
-                    state.texteditor.backward();
-                }
-                Event::Key(KeyEvent {
-                    code: KeyCode::Right,
-                    modifiers: KeyModifiers::NONE,
-                    kind: KeyEventKind::Press,
-                    state: KeyEventState::NONE,
-                }) => {
-                    state.texteditor.forward();
                 }
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('a'),
@@ -74,7 +57,11 @@ pub fn default(
                     modifiers: KeyModifiers::NONE,
                     kind: KeyEventKind::Press,
                     state: KeyEventState::NONE,
-                }) => state.texteditor.erase(),
+                }) => {
+                    for _ in 0..*times {
+                        state.texteditor.erase();
+                    }
+                }
                 Event::Key(KeyEvent {
                     code: KeyCode::Char('u'),
                     modifiers: KeyModifiers::CONTROL,
