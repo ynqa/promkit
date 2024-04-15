@@ -9,7 +9,7 @@ use promkit_async::Prompt;
 use tokio::sync::mpsc;
 
 mod lazyutil;
-use lazyutil::keymap;
+use lazyutil::{keymap, render};
 
 pub struct Lazy {
     keymap: ActiveKeySwitcher<keymap::Handler>,
@@ -77,7 +77,7 @@ impl Lazy {
         let (fin_sender, fin_receiver) = mpsc::channel(1);
         let (pane_sender, pane_receiver) = mpsc::channel(1);
 
-        let renderer = lazyutil::render::Renderer::new(
+        let renderer = render::Renderer::new(
             self.keymap,
             self.text_editor_state.clone(),
             self.text_editor_state.clone(),
