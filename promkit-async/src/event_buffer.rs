@@ -177,6 +177,9 @@ impl EventBuffer {
                 horizontal_cursor.0,
                 horizontal_cursor.1,
             ));
+        } else if !others_buffer.is_empty() {
+            let times = others_buffer.len();
+            ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
         }
 
         ret
@@ -355,6 +358,28 @@ mod tests {
                 WrappedEvent::VerticalCursorBuffer(1, 0),
                 WrappedEvent::KeyBuffer(vec!['d']),
             ];
+
+            assert_eq!(EventBuffer::sequential_buffer(events), expected);
+        }
+
+        #[test]
+        fn test_only_others() {
+            let events = vec![Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            })];
+
+            let expected = vec![WrappedEvent::Others(
+                Event::Key(KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::NONE,
+                    kind: KeyEventKind::Press,
+                    state: KeyEventState::NONE,
+                }),
+                1,
+            )];
 
             assert_eq!(EventBuffer::sequential_buffer(events), expected);
         }
