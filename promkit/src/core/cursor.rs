@@ -85,7 +85,7 @@ impl<C: Len> Cursor<C> {
 
     /// Moves the cursor to the head (start) of the contents.
     pub fn move_to_head(&mut self) {
-        self.position = 0
+        self.move_to(0);
     }
 
     /// Checks if the cursor is at the head (start) of the contents.
@@ -95,12 +95,7 @@ impl<C: Len> Cursor<C> {
 
     /// Moves the cursor to the tail (end) of the contents.
     pub fn move_to_tail(&mut self) {
-        let l = self.contents.len();
-        if l == 0 {
-            self.position = 0
-        } else {
-            self.position = l.saturating_sub(1);
-        }
+        self.move_to(self.contents.len().saturating_sub(1));
     }
 
     /// Checks if the cursor is at the tail (end) of the contents.
