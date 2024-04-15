@@ -43,12 +43,12 @@ impl crate::Finalizer for Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width),
-            self.error_message_snapshot.create_pane(width),
-            self.text_editor_snapshot.create_pane(width),
-            self.suggest_snapshot.create_pane(width),
+            self.title_snapshot.create_pane(width, height),
+            self.error_message_snapshot.create_pane(width, height),
+            self.text_editor_snapshot.create_pane(width, height),
+            self.suggest_snapshot.create_pane(width, height),
         ]
     }
 

@@ -31,10 +31,10 @@ impl crate::Finalizer for Renderer {
 }
 
 impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width),
-            self.checkbox_snapshot.create_pane(width),
+            self.title_snapshot.create_pane(width, height),
+            self.checkbox_snapshot.create_pane(width, height),
         ]
     }
 

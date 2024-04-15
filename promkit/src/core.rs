@@ -11,5 +11,5 @@ use crate::{AsAny, Pane};
 
 pub trait PaneFactory: AsAny {
     /// Creates pane with the given width.
-    fn create_pane(&self, width: u16) -> Pane;
+    fn create_pane(&self, width: u16, height: u16) -> Pane;
 }

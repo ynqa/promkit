@@ -188,16 +188,17 @@ pub trait Renderer: AsAny + Finalizer {
     ///
     /// This method is responsible for generating the layout of the UI components
     /// that will be displayed in the prompt. The width parameter allows the layout
-    /// to adapt to the current terminal width.
+    /// to adapt to the current terminal width and height.
     ///
     /// # Parameters
     ///
     /// * `width`: The width of the terminal in characters.
+    /// * `height`: The height of the terminal in characters.
     ///
     /// # Returns
     ///
     /// Returns a vector of `Pane` objects that represent the layout of the UI components.
-    fn create_panes(&self, width: u16) -> Vec<Pane>;
+    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane>;
 
     /// Evaluates an event and determines the next action for the prompt.
     ///
@@ -261,7 +262,7 @@ impl<T: Renderer> Prompt<T> {
         execute!(io::stdout(), cursor::Hide)?;
 
         let size = crossterm::terminal::size()?;
-        let panes = self.renderer.create_panes(size.0);
+        let panes = self.renderer.create_panes(size.0, size.1);
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
 
@@ -284,7 +285,7 @@ impl<T: Renderer> Prompt<T> {
             }
 
             let size = crossterm::terminal::size()?;
-            terminal.draw(&self.renderer.create_panes(size.0))?;
+            terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
         self.renderer.finalize()

@@ -77,7 +77,7 @@ mod test {
                 text: "".to_string(),
                 style: ContentStyle::default(),
             };
-            assert_eq!(0, state.create_pane(10).visible_row_count())
+            assert_eq!(0, state.create_pane(10, 10).visible_row_count())
         }
     }
 
