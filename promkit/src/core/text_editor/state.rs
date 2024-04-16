@@ -57,15 +57,16 @@ impl PaneFactory for State {
 
         buf.append(&mut styled);
 
-        Pane::new(
-            matrixify(
-                width as usize,
-                height as usize,
-                self.texteditor.position() / width as usize,
-                &buf,
-            ),
-            0,
-            self.lines,
-        )
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        Pane::new(matrixify(
+            width as usize,
+            height,
+            self.texteditor.position() / width as usize,
+            &buf,
+        ))
     }
 }

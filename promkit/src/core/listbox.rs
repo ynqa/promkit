@@ -70,4 +70,8 @@ impl Listbox {
     pub fn move_to_tail(&mut self) {
         self.0.move_to_tail()
     }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        self.0.viewport_range(height)
+    }
 }

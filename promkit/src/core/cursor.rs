@@ -111,10 +111,18 @@ impl<C: Len> Cursor<C> {
             false
         }
     }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        let end = std::cmp::min(self.position + height, self.contents.len());
+        let start = if end > height { end - height } else { 0 };
+        (start, end)
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     mod shift {
         use super::super::*;
 
@@ -187,6 +195,38 @@ mod test {
             assert!(b.forward());
             b.position = b.contents.len() - 1;
             assert!(!b.forward());
+        }
+    }
+
+    mod viewport_range {
+        use super::*;
+
+        #[test]
+        fn test_within_bounds() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 2, false);
+            let (start, end) = cursor.viewport_range(2);
+            assert_eq!((start, end), (2, 4));
+        }
+
+        #[test]
+        fn test_at_start() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 0, false);
+            let (start, end) = cursor.viewport_range(3);
+            assert_eq!((start, end), (0, 3));
+        }
+
+        #[test]
+        fn test_at_end() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 4, false);
+            let (start, end) = cursor.viewport_range(2);
+            assert_eq!((start, end), (3, 5));
+        }
+
+        #[test]
+        fn test_exceeds_bounds() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 3, false);
+            let (start, end) = cursor.viewport_range(5);
+            assert_eq!((start, end), (0, 5));
         }
     }
 }

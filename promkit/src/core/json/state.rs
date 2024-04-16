@@ -178,7 +178,14 @@ impl State {
 }
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16, _height: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.theme.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let _viewport = self.stream.viewport_range(height);
+
         let layout = self
             .stream
             .flatten_kinds()
@@ -206,10 +213,6 @@ impl PaneFactory for State {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(
-            layout,
-            self.stream.cursor.cross_contents_position(),
-            self.theme.lines,
-        )
+        Pane::new(layout)
     }
 }

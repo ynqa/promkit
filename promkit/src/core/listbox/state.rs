@@ -31,12 +31,20 @@ pub struct State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16, _height: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let viewport = self.listbox.viewport_range(height);
+
         let matrix = self
             .listbox
             .items()
             .iter()
             .enumerate()
+            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
                     StyledGraphemes::from_str(
@@ -58,6 +66,6 @@ impl PaneFactory for State {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed, self.listbox.position(), self.lines)
+        Pane::new(trimed)
     }
 }

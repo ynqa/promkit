@@ -42,7 +42,7 @@ pub struct State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16, _height: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {
                 Kind::Folded { .. } => &self.folded_symbol,
@@ -62,11 +62,19 @@ impl PaneFactory for State {
             }
         };
 
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let viewport = self.tree.viewport_range(height);
+
         let matrix = self
             .tree
             .kinds()
             .iter()
             .enumerate()
+            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
             .map(|(i, kind)| {
                 if i == self.tree.position() {
                     StyledGraphemes::from_str(
@@ -88,6 +96,6 @@ impl PaneFactory for State {
             .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed, self.tree.position(), self.lines)
+        Pane::new(trimed)
     }
 }
