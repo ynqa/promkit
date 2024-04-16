@@ -84,6 +84,7 @@ impl Spinner {
                                             StyleBuilder::new().build(),
                                         ),
                                     ),
+                                    0,
                                 ), index));
                                 Delay::new(spinner_duration).await;
                             }
