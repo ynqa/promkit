@@ -186,6 +186,12 @@ impl PaneFactory for State {
 
         let viewport = self.stream.viewport_range(height);
 
+        let relative_position = self
+            .stream
+            .cursor
+            .cross_contents_position()
+            .saturating_sub(viewport.0);
+
         let layout = self
             .stream
             .flatten_kinds()
@@ -214,6 +220,6 @@ impl PaneFactory for State {
             .map(|row| trim(width as usize, &row))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(layout)
+        Pane::new(layout, relative_position)
     }
 }

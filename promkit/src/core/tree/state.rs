@@ -69,6 +69,8 @@ impl PaneFactory for State {
 
         let viewport = self.tree.viewport_range(height);
 
+        let relative_position = self.tree.position().saturating_sub(viewport.0);
+
         let matrix = self
             .tree
             .kinds()
@@ -96,6 +98,6 @@ impl PaneFactory for State {
             .collect::<Vec<StyledGraphemes>>();
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed)
+        Pane::new(trimed, relative_position)
     }
 }

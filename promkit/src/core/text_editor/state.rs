@@ -62,11 +62,15 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        Pane::new(matrixify(
-            width as usize,
-            height,
-            self.texteditor.position() / width as usize,
-            &buf,
-        ))
+        // TODO
+        Pane::new(
+            matrixify(
+                width as usize,
+                height,
+                self.texteditor.position() / width as usize,
+                &buf,
+            ),
+            0,
+        )
     }
 }

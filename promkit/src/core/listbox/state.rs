@@ -39,6 +39,8 @@ impl PaneFactory for State {
 
         let viewport = self.listbox.viewport_range(height);
 
+        let relative_position = self.listbox.position().saturating_sub(viewport.0);
+
         let matrix = self
             .listbox
             .items()
@@ -66,6 +68,6 @@ impl PaneFactory for State {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        Pane::new(trimed)
+        Pane::new(trimed, relative_position)
     }
 }
