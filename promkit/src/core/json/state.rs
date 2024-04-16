@@ -184,13 +184,14 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let _viewport = self.stream.viewport_range(height);
+        let viewport = self.stream.viewport_range(height);
 
         let layout = self
             .stream
             .flatten_kinds()
             .iter()
             .enumerate()
+            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
             .map(|(i, kind)| {
                 if i == self.stream.cursor.cross_contents_position() {
                     StyledGraphemes::from_iter([
