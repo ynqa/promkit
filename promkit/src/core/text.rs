@@ -28,10 +28,12 @@ impl State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         Pane::new(
             matrixify(
                 width as usize,
+                height as usize,
+                0,
                 &StyledGraphemes::from_str(&self.text, self.style),
             ),
             0,

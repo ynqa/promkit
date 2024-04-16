@@ -40,7 +40,7 @@ pub struct State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         let mut buf = StyledGraphemes::default();
         buf.append(&mut StyledGraphemes::from_str(
             &self.prefix,
@@ -58,8 +58,13 @@ impl PaneFactory for State {
         buf.append(&mut styled);
 
         Pane::new(
-            matrixify(width as usize, &buf),
-            self.texteditor.position() / width as usize,
+            matrixify(
+                width as usize,
+                height as usize,
+                self.texteditor.position() / width as usize,
+                &buf,
+            ),
+            0,
             self.lines,
         )
     }

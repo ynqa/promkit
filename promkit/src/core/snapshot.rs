@@ -16,9 +16,9 @@ pub struct Snapshot<R: PaneFactory + Clone> {
 }
 
 impl<R: PaneFactory + Clone + 'static> PaneFactory for Snapshot<R> {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         *self.before.borrow_mut() = self.after.clone();
-        self.after.create_pane(width)
+        self.after.create_pane(width, height)
     }
 }
 

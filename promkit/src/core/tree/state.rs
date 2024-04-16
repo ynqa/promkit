@@ -42,7 +42,7 @@ pub struct State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, _height: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {
                 Kind::Folded { .. } => &self.folded_symbol,

@@ -178,7 +178,7 @@ impl State {
 }
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, _height: u16) -> Pane {
         let layout = self
             .stream
             .flatten_kinds()

@@ -39,7 +39,7 @@ pub struct State {
 impl_as_any!(State);
 
 impl PaneFactory for State {
-    fn create_pane(&self, width: u16) -> Pane {
+    fn create_pane(&self, width: u16, _height: u16) -> Pane {
         let f = |idx: usize, item: &String| -> String {
             if self.checkbox.picked_indexes().contains(&idx) {
                 format!("{} {}", self.active_mark, item)

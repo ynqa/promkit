@@ -91,7 +91,7 @@ mod test {
             assert_eq!(
                 true,
                 Pane {
-                    layout: matrixify(10, &StyledGraphemes::from("")),
+                    layout: matrixify(10, 10, 0, &StyledGraphemes::from("")),
                     offset: 0,
                     fixed_height: None,
                 }
