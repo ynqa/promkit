@@ -65,10 +65,10 @@ impl promkit::Finalizer for Renderer {
 }
 
 impl PaneSyncer for Renderer {
-    fn init_panes(&self, width: u16) -> Vec<Pane> {
+    fn init_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.state.lock().unwrap().create_pane(width),
-            self.lazy_state.lock().unwrap().create_pane(width),
+            self.state.lock().unwrap().create_pane(width, height),
+            self.lazy_state.lock().unwrap().create_pane(width, height),
         ]
     }
 
@@ -76,6 +76,7 @@ impl PaneSyncer for Renderer {
         &mut self,
         events: &[WrappedEvent],
         width: u16,
+        height: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let state = Arc::clone(&self.state);
         let lazy_state = Arc::clone(&self.lazy_state);
@@ -89,7 +90,7 @@ impl PaneSyncer for Renderer {
             tokio::spawn(async move {
                 let mut state = state.lock().unwrap();
                 keymap.get()(&events, &mut state, &fin_sender)?;
-                pane_sender.try_send((state.create_pane(width), 0))?;
+                pane_sender.try_send((state.create_pane(width, height), 0))?;
 
                 let edited = state.clone();
                 tokio::spawn(async move {
@@ -100,7 +101,7 @@ impl PaneSyncer for Renderer {
                     let mut lazy_state = lazy_state.lock().unwrap();
                     lazy_state.texteditor = edited.texteditor;
                     spinner_signal_sender.try_send(spinner::Signal::SuspendAndSend(
-                        lazy_state.create_pane(width),
+                        lazy_state.create_pane(width, height),
                     ))?;
                     Ok::<(), anyhow::Error>(())
                 });

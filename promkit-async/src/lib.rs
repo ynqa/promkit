@@ -27,11 +27,12 @@ use merge::PaneMerger;
 pub mod spinner;
 
 pub trait PaneSyncer: promkit::Finalizer {
-    fn init_panes(&self, width: u16) -> Vec<Pane>;
+    fn init_panes(&self, width: u16, height: u16) -> Vec<Pane>;
     fn sync(
         &mut self,
         events: &[WrappedEvent],
         width: u16,
+        height: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
@@ -73,7 +74,7 @@ impl<T: PaneSyncer> Prompt<T> {
                 .await
         });
 
-        let mut merger = PaneMerger::new(self.renderer.init_panes(size.0));
+        let mut merger = PaneMerger::new(self.renderer.init_panes(size.0, size.1));
         let mut terminal = Terminal::start_session(&merger.panes)?;
         terminal.draw(&merger.panes)?;
         let shared_terminal = Arc::new(Mutex::new(terminal));
@@ -101,7 +102,7 @@ impl<T: PaneSyncer> Prompt<T> {
                 },
                 maybe_event_buffer = event_buffer_receiver.recv().fuse() => {
                     if let Some(event_buffer) = maybe_event_buffer {
-                        self.renderer.sync(&event_buffer, size.0).await?;
+                        self.renderer.sync(&event_buffer, size.0, size.1).await?;
                     }
                 },
                 maybe_fin = fin_receiver.recv().fuse() => {

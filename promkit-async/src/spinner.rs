@@ -73,17 +73,17 @@ impl Spinner {
                                 if !active.load(Ordering::SeqCst) {
                                     break;
                                 }
-                                let width = terminal::size()?.1;
+                                let (width, height) = terminal::size()?;
                                 let _ = pane_sender.try_send((Pane::new(
                                     matrixify(
                                         width as usize,
+                                        height as usize,
+                                        0,
                                         &StyledGraphemes::from_str(
                                             frame,
                                             StyleBuilder::new().build(),
                                         ),
                                     ),
-                                    0,
-                                    None,
                                 ), index));
                                 Delay::new(spinner_duration).await;
                             }
