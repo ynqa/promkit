@@ -166,7 +166,7 @@ pub fn matrixify(
     height: usize,
     offset: usize,
     g: &StyledGraphemes,
-) -> Vec<StyledGraphemes> {
+) -> (Vec<StyledGraphemes>, usize) {
     let mut all = vec![];
     let mut row = StyledGraphemes::default();
     for styled in g.iter() {
@@ -186,23 +186,19 @@ pub fn matrixify(
         all.push(row);
     }
 
-    // Adjusting the start and end indices for slicing the `all` vector.
-    // The goal is to filter the vector to include elements from `offset` to `offset + height`.
-    // However, if `offset + height` exceeds the length of `all`, we adjust to ensure the slice
-    // does not go out of bounds. The `end` is set to the minimum of `offset + height` and `all.len()`,
-    // ensuring we do not exceed the vector's length. The `start` is calculated to ensure we capture
-    // a slice of length up to `height`, but adjusted to not underflow if `end` is less than `height`.
-    // If the calculated range exceeds the vector's bounds, `start` defaults to 0, effectively
-    // adjusting the range to fit within `0..all.len()`, thus ensuring we always return a valid slice
-    // of the vector, either fitting the desired range or adjusted to the vector's size if the range is too large.
-    let end = std::cmp::min(offset + height, all.len());
-    let start = if end > height { end - height } else { 0 };
+    if all.is_empty() {
+        return (vec![], 0);
+    }
 
-    all.iter()
-        .enumerate()
-        .filter(|(i, _)| start <= *i && *i < end)
-        .map(|(_, row)| row.clone())
-        .collect::<Vec<_>>()
+    let chunks: Vec<Vec<StyledGraphemes>> =
+        all.chunks(height).map(|chunk| chunk.to_vec()).collect();
+
+    let chunk_index = std::cmp::min(offset / height, chunks.len().saturating_sub(1));
+    let selected_chunk = chunks.get(chunk_index).cloned().unwrap_or_default();
+
+    let local_offset = offset % height;
+
+    (selected_chunk, local_offset)
 }
 
 /// Trims a collection of graphemes to fit within a specified width.
@@ -235,74 +231,43 @@ mod test {
         use super::*;
 
         #[test]
-        fn test_with_single_line() {
-            let input = StyledGraphemes::from("Hello, world!");
-            let result = matrixify(12, 1, 0, &input);
-            assert_eq!(1, result.len());
-            assert_eq!("Hello, world", result[0].to_string());
+        fn test_with_single_line_no_offset() {
+            let input =
+                StyledGraphemes::from("Hello, world! This is a longer test without offset.");
+            let (matrix, offset) = matrixify(50, 1, 0, &input);
+            assert_eq!(1, matrix.len());
+            assert_eq!(
+                "Hello, world! This is a longer test without offset",
+                matrix[0].to_string()
+            );
+            assert_eq!(0, offset);
         }
 
         #[test]
-        fn test_with_multiple_lines() {
-            let input = StyledGraphemes::from("Hello, world! This is a test.");
-            let result = matrixify(10, 3, 0, &input);
-            assert_eq!(3, result.len());
-            assert_eq!("Hello, wor", result[0].to_string());
-            assert_eq!("ld! This i", result[1].to_string());
-            assert_eq!("s a test.", result[2].to_string());
-        }
-
-        #[test]
-        fn test_with_offset() {
-            let input = StyledGraphemes::from("One Two Three Four Five");
-            let result = matrixify(8, 2, 1, &input);
-            assert_eq!(2, result.len());
-            assert_eq!("Three Fo", result[0].to_string());
-            assert_eq!("ur Five", result[1].to_string());
-        }
-
-        #[test]
-        fn test_with_offset_and_compensation() {
-            let input = StyledGraphemes::from("One Two Three Four Five");
-            let result = matrixify(8, 100, 1, &input);
-            assert_eq!(3, result.len());
-            assert_eq!("One Two ", result[0].to_string());
-            assert_eq!("Three Fo", result[1].to_string());
-            assert_eq!("ur Five", result[2].to_string());
+        fn test_with_multiple_lines_and_offset() {
+            let input = StyledGraphemes::from("One Two Three Four Five Six Seven Eight Nine Ten");
+            let (matrix, offset) = matrixify(10, 3, 10, &input);
+            assert_eq!(2, matrix.len());
+            assert_eq!("ven Eight ", matrix[0].to_string());
+            assert_eq!("Nine Ten", matrix[1].to_string());
+            assert_eq!(1, offset);
         }
 
         #[test]
         fn test_with_empty_input() {
             let input = StyledGraphemes::default();
-            let result = matrixify(10, 2, 0, &input);
-            assert!(result.is_empty());
+            let (matrix, offset) = matrixify(10, 2, 0, &input);
+            assert!(matrix.is_empty());
+            assert_eq!(0, offset);
         }
 
         #[test]
-        fn test_with_width_smaller_than_any_grapheme() {
-            let input = StyledGraphemes::from("12345");
-            let result = matrixify(1, 5, 0, &input);
-            assert_eq!(5, result.len());
-            for (i, line) in result.iter().enumerate() {
-                assert_eq!(input[i].to_string(), line.to_string());
-            }
-        }
-
-        #[test]
-        fn test_with_height_less_than_needed() {
-            let input = StyledGraphemes::from("Hello, world! This is a test.");
-            let result = matrixify(10, 1, 0, &input);
-            assert_eq!(1, result.len());
-            assert_eq!("Hello, wor", result[0].to_string());
-        }
-
-        #[test]
-        fn test_with_large_offset() {
-            let input = StyledGraphemes::from("Hello, world! This is a test.");
-            let result = matrixify(10, 2, 5, &input);
-            assert_eq!(2, result.len());
-            assert_eq!("ld! This i", result[0].to_string());
-            assert_eq!("s a test.", result[1].to_string());
+        fn test_with_large_offset_beyond_content() {
+            let input = StyledGraphemes::from("Short text");
+            let (matrix, offset) = matrixify(10, 2, 20, &input);
+            assert_eq!(1, matrix.len());
+            assert_eq!("Short text", matrix[0].to_string());
+            assert_eq!(0, offset);
         }
     }
 
