@@ -42,10 +42,10 @@ impl_as_any!(State);
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         let mut buf = StyledGraphemes::default();
-        // buf.append(&mut StyledGraphemes::from_str(
-        //     &self.prefix,
-        //     self.prefix_style,
-        // ));
+
+        let mut styled_prefix = StyledGraphemes::from_str(&self.prefix, self.prefix_style);
+
+        buf.append(&mut styled_prefix);
 
         let text = match self.mask {
             Some(mask) => self.texteditor.masking(mask),
@@ -65,7 +65,7 @@ impl PaneFactory for State {
         let (matrix, offset) = matrixify(
             width as usize,
             height,
-            self.texteditor.position() / width as usize,
+            (styled_prefix.widths() + self.texteditor.position()) / width as usize,
             &buf,
         );
         Pane::new(matrix, offset)
