@@ -1,7 +1,6 @@
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
-    impl_as_any,
     pane::Pane,
     PaneFactory,
 };
@@ -24,8 +23,6 @@ impl State {
         *self = renderer;
     }
 }
-
-impl_as_any!(State);
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {

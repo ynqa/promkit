@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    crossterm::event::Event, impl_as_any, pane::Pane, snapshot::Snapshot,
-    switch::ActiveKeySwitcher, text, tree, PaneFactory, PromptSignal,
+    crossterm::event::Event, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher, text, tree,
+    PaneFactory, PromptSignal,
 };
 
 use super::keymap;
@@ -17,8 +17,6 @@ pub struct Renderer {
     /// Snapshot of the tree renderer.
     pub tree_snapshot: Snapshot<tree::State>,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = Vec<String>;

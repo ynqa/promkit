@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    checkbox, crossterm::event::Event, impl_as_any, pane::Pane, snapshot::Snapshot,
-    switch::ActiveKeySwitcher, text, PaneFactory, PromptSignal,
+    checkbox, crossterm::event::Event, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
+    text, PaneFactory, PromptSignal,
 };
 
 use super::keymap;
@@ -19,8 +19,6 @@ pub struct Renderer {
     /// A snapshot of the checkbox's renderer state.
     pub checkbox_snapshot: Snapshot<checkbox::State>,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = Vec<String>;

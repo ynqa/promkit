@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    crossterm::event::Event, impl_as_any, listbox, pane::Pane, snapshot::Snapshot,
-    switch::ActiveKeySwitcher, text, PaneFactory, PromptSignal,
+    crossterm::event::Event, listbox, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
+    text, PaneFactory, PromptSignal,
 };
 
 use super::keymap;
@@ -12,8 +12,6 @@ pub struct Renderer {
     pub title_snapshot: Snapshot<text::State>,
     pub listbox_snapshot: Snapshot<listbox::State>,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = String;

@@ -128,7 +128,6 @@ pub use serde_json;
 mod core;
 pub use core::*;
 pub mod grapheme;
-mod macros;
 pub mod pane;
 pub mod preset;
 pub mod style;
@@ -137,7 +136,7 @@ pub mod switch;
 pub mod terminal;
 pub mod validate;
 
-use std::{any::Any, io};
+use std::io;
 
 use crate::{
     crossterm::{
@@ -183,7 +182,7 @@ pub trait Finalizer {
 /// This trait defines the essential functions required for rendering custom UI components
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
-pub trait Renderer: AsAny + Finalizer {
+pub trait Renderer: Finalizer {
     /// Creates a collection of panes based on the specified width.
     ///
     /// This method is responsible for generating the layout of the UI components
@@ -216,14 +215,6 @@ pub trait Renderer: AsAny + Finalizer {
     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
     /// the prompt should terminate its execution.
     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
-}
-
-/// A trait for casting objects to `Any`, allowing for dynamic typing.
-pub trait AsAny {
-    /// Returns `Any`.
-    fn as_any(&self) -> &dyn Any;
-
-    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 /// Represents a customizable prompt that can handle user input and produce a result.

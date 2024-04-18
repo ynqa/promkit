@@ -7,9 +7,9 @@ pub mod text;
 pub mod text_editor;
 pub mod tree;
 
-use crate::{AsAny, Pane};
+use crate::Pane;
 
-pub trait PaneFactory: AsAny {
+pub trait PaneFactory {
     /// Creates pane with the given width.
     fn create_pane(&self, width: u16, height: u16) -> Pane;
 }

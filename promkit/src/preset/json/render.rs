@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::event::Event,
-    impl_as_any, json,
+    json,
     json::{JsonNode, JsonPath},
     pane::Pane,
     snapshot::Snapshot,
@@ -22,8 +22,6 @@ pub struct Renderer {
     /// Snapshot of the renderer used for JSON content.
     pub json_snapshot: Snapshot<json::State>,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = (JsonNode, Option<JsonPath>);

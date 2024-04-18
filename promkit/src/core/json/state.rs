@@ -1,7 +1,6 @@
 use crate::{
     crossterm::style::{Attribute, ContentStyle},
     grapheme::{trim, StyledGraphemes},
-    impl_as_any,
     pane::Pane,
     PaneFactory,
 };
@@ -52,8 +51,6 @@ pub struct State {
 
     pub theme: Theme,
 }
-
-impl_as_any!(State);
 
 impl State {
     pub fn indent_level(kind: &JsonSyntaxKind, theme: &Theme) -> usize {

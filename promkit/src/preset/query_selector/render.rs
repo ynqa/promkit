@@ -2,7 +2,6 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::event::Event,
-    impl_as_any,
     listbox::{self, Listbox},
     pane::Pane,
     snapshot::Snapshot,
@@ -30,8 +29,6 @@ pub struct Renderer {
     pub listbox_snapshot: Snapshot<listbox::State>,
     pub filter: Filter,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = String;

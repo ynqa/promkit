@@ -1,9 +1,9 @@
 use std::cell::RefCell;
 
 use crate::{
-    crossterm::event::Event, impl_as_any, listbox, pane::Pane, snapshot::Snapshot,
-    suggest::Suggest, switch::ActiveKeySwitcher, text, text_editor, validate::ValidatorManager,
-    PaneFactory, PromptSignal,
+    crossterm::event::Event, listbox, pane::Pane, snapshot::Snapshot, suggest::Suggest,
+    switch::ActiveKeySwitcher, text, text_editor, validate::ValidatorManager, PaneFactory,
+    PromptSignal,
 };
 
 use super::keymap;
@@ -26,8 +26,6 @@ pub struct Renderer {
     /// Holds a snapshot of the error message's renderer state, used for rendering error messages.
     pub error_message_snapshot: Snapshot<text::State>,
 }
-
-impl_as_any!(Renderer);
 
 impl crate::Finalizer for Renderer {
     type Return = String;

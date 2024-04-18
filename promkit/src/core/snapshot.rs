@@ -1,9 +1,6 @@
-use std::{
-    any::Any,
-    cell::{Ref, RefCell},
-};
+use std::cell::{Ref, RefCell};
 
-use crate::{pane::Pane, AsAny, PaneFactory};
+use crate::{pane::Pane, PaneFactory};
 
 /// A `Snapshot` struct captures the state of a renderer at three different points:
 /// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).
@@ -19,17 +16,6 @@ impl<R: PaneFactory + Clone + 'static> PaneFactory for Snapshot<R> {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         *self.before.borrow_mut() = self.after.clone();
         self.after.create_pane(width, height)
-    }
-}
-
-// TODO: enable Snapshot<R> to use impl_as_any macro.
-impl<R: PaneFactory + Clone + 'static> AsAny for Snapshot<R> {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
     }
 }
 

@@ -1,7 +1,6 @@
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{trim, Graphemes, StyledGraphemes},
-    impl_as_any,
     pane::Pane,
     PaneFactory,
 };
@@ -38,8 +37,6 @@ pub struct State {
     /// indentation typically represents a deeper level in the tree hierarchy.
     pub indent: usize,
 }
-
-impl_as_any!(State);
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
