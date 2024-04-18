@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use promkit::{pane::Pane, switch::ActiveKeySwitcher, text_editor, PaneFactory};
 
@@ -35,7 +38,7 @@ impl Renderer {
         let (spinner_signal_sender, spinner_signal_receiver) = mpsc::channel(10);
         let pane_sender_clone = pane_sender.clone();
         tokio::spawn(async move {
-            Spinner::default()
+            Spinner::new(Duration::from_millis(10))
                 .run(1, pane_sender_clone, spinner_signal_receiver)
                 .await
         });

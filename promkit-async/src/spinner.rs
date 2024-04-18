@@ -18,6 +18,7 @@ use promkit::{
 };
 
 pub struct Spinner {
+    delay_duration: Duration,
     frames: Vec<String>,
     active: Arc<AtomicBool>,
 }
@@ -27,9 +28,10 @@ pub enum Signal {
     SuspendAndSend(Pane),
 }
 
-impl Default for Spinner {
-    fn default() -> Self {
+impl Spinner {
+    pub fn new(delay_duration: Duration) -> Self {
         Self {
+            delay_duration,
             frames: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
                 .iter()
                 .map(|&s| s.to_string())
@@ -37,16 +39,14 @@ impl Default for Spinner {
             active: Arc::new(AtomicBool::new(false)),
         }
     }
-}
 
-impl Spinner {
     pub fn run(
         &mut self,
         index: usize,
         pane_sender: Sender<(Pane, usize)>,
         mut signal_receiver: Receiver<Signal>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
-        let spinner_duration = Duration::from_millis(10);
+        let spinner_duration = self.delay_duration;
         let frames = self.frames.clone();
         let active = self.active.clone();
         let pane_sender = pane_sender.clone();
