@@ -116,8 +116,7 @@ impl<T: PaneSyncer> Prompt<T> {
                 maybe_pane = pane_receiver.recv().fuse() => {
                     match maybe_pane {
                         Some((pane, index)) => {
-                            let local_terminal = Arc::clone(&shared_terminal);
-                            let mut terminal = local_terminal.lock().unwrap();
+                            let mut terminal = shared_terminal.lock().unwrap();
                             let panes = merger.merge(index, pane);
                             terminal.draw(panes)?;
                         },
