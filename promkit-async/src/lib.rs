@@ -1,6 +1,7 @@
 use std::{
     io,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use futures::{future::FutureExt, stream::StreamExt, Future};
@@ -51,6 +52,8 @@ impl<T: PaneSyncer> Drop for Prompt<T> {
 impl<T: PaneSyncer> Prompt<T> {
     pub async fn run(
         &mut self,
+        event_buffer_delay_duration: Duration,
+        resize_debounce_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
         mut pane_receiver: Receiver<(Pane, usize)>,
     ) -> anyhow::Result<T::Return> {
@@ -59,12 +62,12 @@ impl<T: PaneSyncer> Prompt<T> {
 
         let mut size = crossterm::terminal::size()?;
 
-        let mut event_buffer = EventBuffer::default();
+        let mut event_buffer = EventBuffer::new(event_buffer_delay_duration);
         let (event_sender, event_receiver) = tokio::sync::mpsc::channel(1);
         let (event_buffer_sender, mut event_buffer_receiver) = tokio::sync::mpsc::channel(1);
         tokio::spawn(async move { event_buffer.run(event_receiver, event_buffer_sender).await });
 
-        let resize_debouncer = ResizeDebounce::new();
+        let resize_debouncer = ResizeDebounce::new(resize_debounce_delay_duration);
         let (resize_sender, resize_receiver) = tokio::sync::mpsc::channel(1);
         let (debounced_resize_sender, mut debounced_resize_receiver) =
             tokio::sync::mpsc::channel(1);

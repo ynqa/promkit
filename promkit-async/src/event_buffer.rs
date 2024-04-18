@@ -17,15 +17,11 @@ pub struct EventBuffer {
     delay_duration: Duration,
 }
 
-impl Default for EventBuffer {
-    fn default() -> Self {
-        EventBuffer {
-            delay_duration: Duration::from_millis(10),
-        }
-    }
-}
-
 impl EventBuffer {
+    pub fn new(delay_duration: Duration) -> Self {
+        EventBuffer { delay_duration }
+    }
+
     pub fn run(
         &mut self,
         mut event_receiver: Receiver<Event>,

@@ -9,10 +9,8 @@ pub struct ResizeDebounce {
 }
 
 impl ResizeDebounce {
-    pub fn new() -> Self {
-        ResizeDebounce {
-            delay_duration: Duration::from_millis(10),
-        }
+    pub fn new(delay_duration: Duration) -> Self {
+        ResizeDebounce { delay_duration }
     }
 
     pub fn run(

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use promkit::{
     crossterm::style::{Color, ContentStyle},
     style::StyleBuilder,
@@ -87,7 +89,14 @@ impl Lazy {
 
         let mut prompt = Prompt { renderer };
 
-        prompt.run(fin_receiver, pane_receiver).await
+        prompt
+            .run(
+                Duration::from_millis(10),
+                Duration::from_millis(10),
+                fin_receiver,
+                pane_receiver,
+            )
+            .await
     }
 }
 
