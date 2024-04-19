@@ -52,6 +52,7 @@ impl Spinner {
         let pane_sender = pane_sender.clone();
 
         async move {
+            let mut frame_index = 0;
             loop {
                 let delay = Delay::new(spinner_duration).fuse();
                 futures::pin_mut!(delay);
@@ -69,26 +70,23 @@ impl Spinner {
                     },
                     _ = delay => {
                         if active.load(Ordering::SeqCst) {
-                            for frame in &frames {
-                                if !active.load(Ordering::SeqCst) {
-                                    break;
-                                }
-                                let (width, height) = terminal::size()?;
-                                let (matrix, _) = matrixify(
-                                    width as usize,
-                                    height as usize,
-                                    0,
-                                    &StyledGraphemes::from_str(
-                                        frame,
-                                        StyleBuilder::new().build(),
-                                    ),
-                                );
-                                let _ = pane_sender.try_send((Pane::new(
-                                    matrix,
-                                    0,
-                                ), index));
-                                Delay::new(spinner_duration).await;
-                            }
+                            let frame = &frames[frame_index % frames.len()];
+                            let (width, height) = terminal::size()?;
+                            let (matrix, _) = matrixify(
+                                width as usize,
+                                height as usize,
+                                0,
+                                &StyledGraphemes::from_str(
+                                    frame,
+                                    StyleBuilder::new().build(),
+                                ),
+                            );
+                            let _ = pane_sender.try_send((Pane::new(
+                                matrix,
+                                0,
+                            ), index));
+
+                            frame_index = (frame_index + 1) % frames.len();
                         }
                     },
                 }
