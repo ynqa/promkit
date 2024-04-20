@@ -77,14 +77,14 @@ impl Lazy {
 
     pub async fn run(self) -> anyhow::Result<String> {
         let (fin_sender, fin_receiver) = mpsc::channel(1);
-        let (pane_sender, pane_receiver) = mpsc::channel(1);
+        let (versioned_each_pane_sender, versioned_each_pane_receiver) = mpsc::channel(1);
 
         let renderer = render::Renderer::new(
             self.keymap,
             self.text_editor_state.clone(),
             self.text_editor_state.clone(),
             fin_sender,
-            pane_sender,
+            versioned_each_pane_sender,
         )?;
 
         let mut prompt = Prompt { renderer };
@@ -95,7 +95,7 @@ impl Lazy {
                 Duration::from_millis(10),
                 Duration::from_millis(10),
                 fin_receiver,
-                pane_receiver,
+                versioned_each_pane_receiver,
             )
             .await
     }

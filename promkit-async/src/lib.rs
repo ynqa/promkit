@@ -60,7 +60,7 @@ impl<T: PaneSyncer> Prompt<T> {
         resize_debounce_delay_duration: Duration,
         merger_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
-        versioned_pane_receiver: Receiver<(usize, usize, Pane)>,
+        versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
     ) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
@@ -97,7 +97,7 @@ impl<T: PaneSyncer> Prompt<T> {
             merger
                 .run(
                     version_change_receiver,
-                    versioned_pane_receiver,
+                    versioned_each_pane_receiver,
                     panes_sender,
                 )
                 .await
