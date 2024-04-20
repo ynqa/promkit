@@ -15,8 +15,8 @@ pub struct Renderer {
     lazy_state: Arc<Mutex<text_editor::State>>,
 
     fin_sender: Sender<()>,
-    versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
-    versioned_loading_indicator_sender: Sender<(usize, usize)>,
+    indexed_pane_sender: Sender<(usize, usize, Pane)>,
+    loading_activation_sender: Sender<(usize, usize)>,
 }
 
 impl Renderer {
@@ -25,16 +25,16 @@ impl Renderer {
         state: text_editor::State,
         lazy_state: text_editor::State,
         fin_sender: Sender<()>,
-        versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
-        versioned_loading_indicator_sender: Sender<(usize, usize)>,
+        indexed_pane_sender: Sender<(usize, usize, Pane)>,
+        loading_activation_sender: Sender<(usize, usize)>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             keymap,
             state: Arc::new(Mutex::new(state)),
             lazy_state: Arc::new(Mutex::new(lazy_state)),
             fin_sender,
-            versioned_each_pane_sender,
-            versioned_loading_indicator_sender,
+            indexed_pane_sender,
+            loading_activation_sender,
         })
     }
 }
@@ -71,25 +71,23 @@ impl PaneSyncer for Renderer {
         let state = Arc::clone(&self.state);
         let lazy_state = Arc::clone(&self.lazy_state);
         let fin_sender = self.fin_sender.clone();
-        let versioned_each_pane_sender = self.versioned_each_pane_sender.clone();
-        let versioned_loading_indicator_sender = self.versioned_loading_indicator_sender.clone();
+        let indexed_pane_sender = self.indexed_pane_sender.clone();
+        let loading_activation_sender = self.loading_activation_sender.clone();
         let event_buffer = event_buffer.to_vec();
         let keymap = self.keymap.clone();
 
         async move {
-            versioned_loading_indicator_sender
-                .send((version, 1))
-                .await?;
+            loading_activation_sender.send((version, 1)).await?;
             let mut state = state.lock().unwrap();
             keymap.get()(&event_buffer, &mut state, &fin_sender)?;
-            versioned_each_pane_sender.try_send((version, 0, state.create_pane(width, height)))?;
+            indexed_pane_sender.try_send((version, 0, state.create_pane(width, height)))?;
 
             let edited = state.clone();
             tokio::spawn(async move {
                 tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
                 let mut lazy_state = lazy_state.lock().unwrap();
                 lazy_state.texteditor = edited.texteditor;
-                versioned_each_pane_sender.try_send((
+                indexed_pane_sender.try_send((
                     version,
                     1,
                     lazy_state.create_pane(width, height),

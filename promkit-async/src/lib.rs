@@ -60,8 +60,8 @@ impl<T: PaneSyncer> Prompt<T> {
         resize_debounce_delay_duration: Duration,
         coordinate_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
-        versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
-        versioned_loading_indicator_receiver: Receiver<(usize, usize)>,
+        indexed_pane_receiver: Receiver<(usize, usize, Pane)>,
+        loading_activation_receiver: Receiver<(usize, usize)>,
     ) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
@@ -91,10 +91,7 @@ impl<T: PaneSyncer> Prompt<T> {
         let coordinator = DisplayCoordinator::new(terminal, coordinate_delay_duration, panes);
         tokio::spawn(async move {
             coordinator
-                .run(
-                    versioned_each_pane_receiver,
-                    versioned_loading_indicator_receiver,
-                )
+                .run(indexed_pane_receiver, loading_activation_receiver)
                 .await
         });
 

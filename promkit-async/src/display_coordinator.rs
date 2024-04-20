@@ -56,8 +56,8 @@ impl DisplayCoordinator {
 
     pub fn run(
         &self,
-        mut versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
-        mut versioned_loading_indicator_receiver: Receiver<(usize, usize)>,
+        mut indexed_pane_receiver: Receiver<(usize, usize, Pane)>,
+        mut loading_activation_receiver: Receiver<(usize, usize)>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let global = self.version.clone();
         let shared_panes = Arc::clone(&self.panes);
@@ -73,7 +73,7 @@ impl DisplayCoordinator {
                 futures::pin_mut!(delay);
 
                 futures::select! {
-                    maybe_tuple = versioned_loading_indicator_receiver.recv().fuse() => {
+                    maybe_tuple = loading_activation_receiver.recv().fuse() => {
                         match maybe_tuple {
                             Some((version, index)) => {
                                 if version > global.load(Ordering::SeqCst) {
@@ -84,7 +84,7 @@ impl DisplayCoordinator {
                             None => break,
                         }
                     },
-                    maybe_triplet = versioned_each_pane_receiver.recv().fuse() => {
+                    maybe_triplet = indexed_pane_receiver.recv().fuse() => {
                         match maybe_triplet {
                             Some((version, index, pane)) => {
                                 if version >= global.load(Ordering::SeqCst) {

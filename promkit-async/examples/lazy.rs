@@ -41,17 +41,16 @@ impl Default for Lazy {
 impl Lazy {
     pub async fn run(self) -> anyhow::Result<String> {
         let (fin_sender, fin_receiver) = mpsc::channel(1);
-        let (versioned_each_pane_sender, versioned_each_pane_receiver) = mpsc::channel(1);
-        let (versioned_loading_indicator_sender, versioned_loading_indicator_receiver) =
-            mpsc::channel(1);
+        let (indexed_pane_sender, indexed_pane_receiver) = mpsc::channel(1);
+        let (loading_activation_sender, loading_activation_receiver) = mpsc::channel(1);
 
         let renderer = render::Renderer::new(
             self.keymap,
             self.text_editor_state.clone(),
             self.text_editor_state.clone(),
             fin_sender,
-            versioned_each_pane_sender,
-            versioned_loading_indicator_sender,
+            indexed_pane_sender,
+            loading_activation_sender,
         )?;
 
         let mut prompt = Prompt { renderer };
@@ -62,8 +61,8 @@ impl Lazy {
                 Duration::from_millis(10),
                 Duration::from_millis(10),
                 fin_receiver,
-                versioned_each_pane_receiver,
-                versioned_loading_indicator_receiver,
+                indexed_pane_receiver,
+                loading_activation_receiver,
             )
             .await
     }
