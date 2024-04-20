@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use promkit::{
-    crossterm::style::{Color, ContentStyle},
+    crossterm::style::Color,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text_editor::{self, Mode},
+    text_editor::{self},
 };
 use promkit_async::Prompt;
 
@@ -39,42 +39,6 @@ impl Default for Lazy {
 }
 
 impl Lazy {
-    /// Sets the prefix string displayed before the input text.
-    pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.text_editor_state.prefix = prefix.as_ref().to_string();
-        self
-    }
-
-    /// Sets the style for the prefix string.
-    pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.prefix_style = style;
-        self
-    }
-
-    /// Sets the style for the currently active character in the input field.
-    pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.active_char_style = style;
-        self
-    }
-
-    /// Sets the style for characters that are not currently active in the input field.
-    pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.inactive_char_style = style;
-        self
-    }
-
-    /// Sets the edit mode for the text editor, either insert or overwrite.
-    pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.text_editor_state.edit_mode = mode;
-        self
-    }
-
-    /// Sets the number of lines available for rendering the text editor.
-    pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.text_editor_state.lines = Some(lines);
-        self
-    }
-
     pub async fn run(self) -> anyhow::Result<String> {
         let (fin_sender, fin_receiver) = mpsc::channel(1);
         let (versioned_each_pane_sender, versioned_each_pane_receiver) = mpsc::channel(1);

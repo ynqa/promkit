@@ -100,7 +100,7 @@ impl<T: PaneSyncer> Prompt<T> {
 
         let mut stream = EventStream::new();
 
-        let version = Arc::new(AtomicUsize::new(0));
+        let version = Arc::new(AtomicUsize::new(1));
 
         loop {
             futures::select! {
