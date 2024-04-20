@@ -9,15 +9,17 @@ use std::{
 use crossterm::terminal;
 use futures::{Future, FutureExt};
 use futures_timer::Delay;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::mpsc::Receiver;
 
 use promkit::{
     grapheme::{matrixify, StyledGraphemes},
     pane::Pane,
     style::StyleBuilder,
+    terminal::Terminal,
 };
 
-pub struct Merger {
+pub struct DisplayCoordinator {
+    shared_terminal: Arc<Mutex<Terminal>>,
     version: Arc<AtomicUsize>,
     panes: Arc<Mutex<Vec<Pane>>>,
     delay_duration: Duration,
@@ -26,8 +28,8 @@ pub struct Merger {
     frame_indexes: Vec<Arc<AtomicUsize>>,
 }
 
-impl Merger {
-    pub fn new(delay_duration: Duration, panes: Vec<Pane>) -> Self {
+impl DisplayCoordinator {
+    pub fn new(terminal: Terminal, delay_duration: Duration, panes: Vec<Pane>) -> Self {
         let actives = {
             let mut v = Vec::with_capacity(panes.len());
             (0..panes.len()).for_each(|_| v.push(Arc::new(AtomicBool::new(false))));
@@ -39,6 +41,7 @@ impl Merger {
             v
         };
         Self {
+            shared_terminal: Arc::new(Mutex::new(terminal)),
             version: Arc::new(AtomicUsize::new(0)),
             panes: Arc::new(Mutex::new(panes)),
             delay_duration,
@@ -55,7 +58,6 @@ impl Merger {
         &self,
         mut version_change_receiver: Receiver<usize>,
         mut pane_receiver: Receiver<(usize, usize, Pane)>,
-        panes_sender: Sender<Vec<Pane>>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let global = self.version.clone();
         let shared_panes = Arc::clone(&self.panes);
@@ -63,6 +65,7 @@ impl Merger {
         let mut actives = self.actives.clone();
         let frames = self.frames.clone();
         let frame_indexes = self.frame_indexes.clone();
+        let shared_terminal = Arc::clone(&self.shared_terminal);
 
         async move {
             loop {
@@ -88,7 +91,7 @@ impl Merger {
                                     let mut panes = shared_panes.lock().unwrap();
                                     actives[index].store(false, Ordering::SeqCst);
                                     panes[index] = pane;
-                                    panes_sender.try_send(panes.to_vec())?;
+                                    shared_terminal.lock().unwrap().draw(&panes)?;
                                 }
                             }
                             None => break,
@@ -97,9 +100,9 @@ impl Merger {
                     _ = delay => {
                         let tasks: Vec<_> = actives.iter().enumerate().map(|(index, active)| {
                             let frames = frames.clone();
-                            let panes_sender = panes_sender.clone();
                             let shared_panes = Arc::clone(&shared_panes);
                             let frame_indexes = frame_indexes.clone();
+                            let shared_terminal = Arc::clone(&shared_terminal);
                             async move {
                                 if active.load(Ordering::SeqCst) {
                                     let frame_index = frame_indexes[index].load(Ordering::SeqCst);
@@ -116,7 +119,7 @@ impl Merger {
                                     );
                                     let mut panes = shared_panes.lock().unwrap();
                                     panes[index] = Pane::new(matrix, 0);
-                                    panes_sender.try_send(panes.to_vec())?;
+                                    shared_terminal.lock().unwrap().draw(&panes)?;
                                     frame_indexes[index].store((frame_index + 1) % frames.len(), Ordering::SeqCst);
                                 }
                                 Ok::<(), anyhow::Error>(())

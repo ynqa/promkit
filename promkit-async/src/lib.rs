@@ -2,7 +2,7 @@ use std::{
     io,
     sync::{
         atomic::{AtomicUsize, Ordering},
-        Arc, Mutex,
+        Arc,
     },
     time::Duration,
 };
@@ -27,8 +27,8 @@ use event_buffer::EventBuffer;
 pub use event_buffer::WrappedEvent;
 mod resize_debounce;
 use resize_debounce::ResizeDebounce;
-mod merge;
-use merge::Merger;
+mod display_coordinator;
+use display_coordinator::DisplayCoordinator;
 
 pub trait PaneSyncer: promkit::Finalizer {
     fn init_panes(&self, width: u16, height: u16) -> Vec<Pane>;
@@ -86,20 +86,12 @@ impl<T: PaneSyncer> Prompt<T> {
 
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
-        let shared_terminal = Arc::new(Mutex::new(terminal));
 
-        let merger = Merger::new(merger_delay_duration, panes);
+        let coordinator = DisplayCoordinator::new(terminal, merger_delay_duration, panes);
         let (version_change_sender, version_change_receiver) = tokio::sync::mpsc::channel(1);
-        // Under investigation: reducing the size of the channel to a very small value
-        // results in `Error: channel closed`.
-        let (panes_sender, mut panes_receiver) = tokio::sync::mpsc::channel(100);
         tokio::spawn(async move {
-            merger
-                .run(
-                    version_change_receiver,
-                    versioned_each_pane_receiver,
-                    panes_sender,
-                )
+            coordinator
+                .run(version_change_receiver, versioned_each_pane_receiver)
                 .await
         });
 
@@ -136,12 +128,6 @@ impl<T: PaneSyncer> Prompt<T> {
                 maybe_fin = fin_receiver.recv().fuse() => {
                     if maybe_fin.is_some() {
                         break;
-                    }
-                },
-                maybe_panes = panes_receiver.recv().fuse() => {
-                    if let Some(panes) = maybe_panes {
-                        let mut terminal = shared_terminal.lock().unwrap();
-                        terminal.draw(&panes)?;
                     }
                 },
             }
