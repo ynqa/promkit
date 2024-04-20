@@ -77,31 +77,23 @@ impl PaneSyncer for Renderer {
         let keymap = self.keymap.clone();
 
         async move {
+            versioned_loading_indicator_sender
+                .send((version, 1))
+                .await?;
+            let mut state = state.lock().unwrap();
+            keymap.get()(&events, &mut state, &fin_sender)?;
+            versioned_each_pane_sender.try_send((version, 0, state.create_pane(width, height)))?;
+
+            let edited = state.clone();
             tokio::spawn(async move {
-                versioned_loading_indicator_sender
-                    .send((version, 1))
-                    .await?;
-                let mut state = state.lock().unwrap();
-                keymap.get()(&events, &mut state, &fin_sender)?;
+                tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+                let mut lazy_state = lazy_state.lock().unwrap();
+                lazy_state.texteditor = edited.texteditor;
                 versioned_each_pane_sender.try_send((
                     version,
-                    0,
-                    state.create_pane(width, height),
+                    1,
+                    lazy_state.create_pane(width, height),
                 ))?;
-
-                let edited = state.clone();
-                tokio::spawn(async move {
-                    tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
-                    let mut lazy_state = lazy_state.lock().unwrap();
-                    lazy_state.texteditor = edited.texteditor;
-                    versioned_each_pane_sender.try_send((
-                        version,
-                        1,
-                        lazy_state.create_pane(width, height),
-                    ))?;
-                    Ok::<(), anyhow::Error>(())
-                });
-
                 Ok::<(), anyhow::Error>(())
             });
 
