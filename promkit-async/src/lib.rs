@@ -58,7 +58,7 @@ impl<T: PaneSyncer> Prompt<T> {
         &mut self,
         event_buffer_delay_duration: Duration,
         resize_debounce_delay_duration: Duration,
-        merger_delay_duration: Duration,
+        coordinate_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
         versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
         versioned_loading_indicator_receiver: Receiver<(usize, usize)>,
@@ -88,7 +88,7 @@ impl<T: PaneSyncer> Prompt<T> {
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
 
-        let coordinator = DisplayCoordinator::new(terminal, merger_delay_duration, panes);
+        let coordinator = DisplayCoordinator::new(terminal, coordinate_delay_duration, panes);
         tokio::spawn(async move {
             coordinator
                 .run(
