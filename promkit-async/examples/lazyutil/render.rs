@@ -1,17 +1,11 @@
-use std::{
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::sync::{Arc, Mutex};
 
 use promkit::{pane::Pane, switch::ActiveKeySwitcher, text_editor, PaneFactory};
 
 use futures::Future;
-use tokio::sync::mpsc::{self, Sender};
+use tokio::sync::mpsc::Sender;
 
-use promkit_async::{
-    spinner::{self, Spinner},
-    PaneSyncer, WrappedEvent,
-};
+use promkit_async::{PaneSyncer, WrappedEvent};
 
 use crate::lazyutil::keymap;
 
@@ -21,8 +15,7 @@ pub struct Renderer {
     lazy_state: Arc<Mutex<text_editor::State>>,
 
     fin_sender: Sender<()>,
-    spinner_signal_sender: Sender<spinner::Signal>,
-    pane_sender: Sender<(Pane, usize)>,
+    versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
 }
 
 impl Renderer {
@@ -31,24 +24,14 @@ impl Renderer {
         state: text_editor::State,
         lazy_state: text_editor::State,
         fin_sender: Sender<()>,
-        pane_sender: Sender<(Pane, usize)>,
+        versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
     ) -> anyhow::Result<Self> {
-        // Under investigation: reducing the size of the channel to a very small value
-        // results in missing characters in the string rendered by lazy_renderer.
-        let (spinner_signal_sender, spinner_signal_receiver) = mpsc::channel(10);
-        let pane_sender_clone = pane_sender.clone();
-        tokio::spawn(async move {
-            Spinner::new(Duration::from_millis(10))
-                .run(1, pane_sender_clone, spinner_signal_receiver)
-                .await
-        });
         Ok(Self {
             keymap,
             state: Arc::new(Mutex::new(state)),
             lazy_state: Arc::new(Mutex::new(lazy_state)),
             fin_sender,
-            spinner_signal_sender,
-            pane_sender,
+            versioned_each_pane_sender,
         })
     }
 }
@@ -77,6 +60,7 @@ impl PaneSyncer for Renderer {
 
     fn sync(
         &mut self,
+        version: usize,
         events: &[WrappedEvent],
         width: u16,
         height: u16,
@@ -84,8 +68,7 @@ impl PaneSyncer for Renderer {
         let state = Arc::clone(&self.state);
         let lazy_state = Arc::clone(&self.lazy_state);
         let fin_sender = self.fin_sender.clone();
-        let pane_sender = self.pane_sender.clone();
-        let spinner_signal_sender = self.spinner_signal_sender.clone();
+        let versioned_each_pane_sender = self.versioned_each_pane_sender.clone();
         let events = events.to_vec();
         let keymap = self.keymap.clone();
 
@@ -93,17 +76,20 @@ impl PaneSyncer for Renderer {
             tokio::spawn(async move {
                 let mut state = state.lock().unwrap();
                 keymap.get()(&events, &mut state, &fin_sender)?;
-                pane_sender.try_send((state.create_pane(width, height), 0))?;
+                versioned_each_pane_sender.try_send((
+                    version,
+                    0,
+                    state.create_pane(width, height),
+                ))?;
 
                 let edited = state.clone();
                 tokio::spawn(async move {
-                    spinner_signal_sender.try_send(spinner::Signal::Activate)?;
-
                     tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
-
                     let mut lazy_state = lazy_state.lock().unwrap();
                     lazy_state.texteditor = edited.texteditor;
-                    spinner_signal_sender.try_send(spinner::Signal::SuspendAndSend(
+                    versioned_each_pane_sender.try_send((
+                        version,
+                        1,
                         lazy_state.create_pane(width, height),
                     ))?;
                     Ok::<(), anyhow::Error>(())

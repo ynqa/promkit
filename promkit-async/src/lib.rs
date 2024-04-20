@@ -1,6 +1,9 @@
 use std::{
     io,
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, Mutex,
+    },
     time::Duration,
 };
 
@@ -20,17 +23,18 @@ use promkit::{
 };
 
 mod event_buffer;
-pub use event_buffer::{EventBuffer, WrappedEvent};
+use event_buffer::EventBuffer;
+pub use event_buffer::WrappedEvent;
 mod resize_debounce;
 use resize_debounce::ResizeDebounce;
 mod merge;
-use merge::PaneMerger;
-pub mod spinner;
+use merge::Merger;
 
 pub trait PaneSyncer: promkit::Finalizer {
     fn init_panes(&self, width: u16, height: u16) -> Vec<Pane>;
     fn sync(
         &mut self,
+        version: usize,
         events: &[WrappedEvent],
         width: u16,
         height: u16,
@@ -54,8 +58,9 @@ impl<T: PaneSyncer> Prompt<T> {
         &mut self,
         event_buffer_delay_duration: Duration,
         resize_debounce_delay_duration: Duration,
+        merger_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
-        mut pane_receiver: Receiver<(Pane, usize)>,
+        versioned_pane_receiver: Receiver<(usize, usize, Pane)>,
     ) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
@@ -77,12 +82,30 @@ impl<T: PaneSyncer> Prompt<T> {
                 .await
         });
 
-        let mut merger = PaneMerger::new(self.renderer.init_panes(size.0, size.1));
-        let mut terminal = Terminal::start_session(&merger.panes)?;
-        terminal.draw(&merger.panes)?;
+        let panes = self.renderer.init_panes(size.0, size.1);
+
+        let mut terminal = Terminal::start_session(&panes)?;
+        terminal.draw(&panes)?;
         let shared_terminal = Arc::new(Mutex::new(terminal));
 
+        let merger = Merger::new(merger_delay_duration, panes);
+        let (version_change_sender, version_change_receiver) = tokio::sync::mpsc::channel(1);
+        // Under investigation: reducing the size of the channel to a very small value
+        // results in `Error: channel closed`.
+        let (panes_sender, mut panes_receiver) = tokio::sync::mpsc::channel(100);
+        tokio::spawn(async move {
+            merger
+                .run(
+                    version_change_receiver,
+                    versioned_pane_receiver,
+                    panes_sender,
+                )
+                .await
+        });
+
         let mut stream = EventStream::new();
+
+        let version = Arc::new(AtomicUsize::new(0));
 
         loop {
             futures::select! {
@@ -105,7 +128,9 @@ impl<T: PaneSyncer> Prompt<T> {
                 },
                 maybe_event_buffer = event_buffer_receiver.recv().fuse() => {
                     if let Some(event_buffer) = maybe_event_buffer {
-                        self.renderer.sync(&event_buffer, size.0, size.1).await?;
+                        let next = version.fetch_add(1, Ordering::SeqCst);
+                        self.renderer.sync(next, &event_buffer, size.0, size.1).await?;
+                        version_change_sender.send(next).await?;
                     }
                 },
                 maybe_fin = fin_receiver.recv().fuse() => {
@@ -113,14 +138,10 @@ impl<T: PaneSyncer> Prompt<T> {
                         break;
                     }
                 },
-                maybe_pane = pane_receiver.recv().fuse() => {
-                    match maybe_pane {
-                        Some((pane, index)) => {
-                            let mut terminal = shared_terminal.lock().unwrap();
-                            let panes = merger.merge(index, pane);
-                            terminal.draw(panes)?;
-                        },
-                        None => break,
+                maybe_panes = panes_receiver.recv().fuse() => {
+                    if let Some(panes) = maybe_panes {
+                        let mut terminal = shared_terminal.lock().unwrap();
+                        terminal.draw(&panes)?;
                     }
                 },
             }

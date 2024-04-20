@@ -93,6 +93,7 @@ impl Lazy {
             .run(
                 Duration::from_millis(10),
                 Duration::from_millis(10),
+                Duration::from_millis(10),
                 fin_receiver,
                 pane_receiver,
             )
