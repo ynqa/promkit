@@ -61,7 +61,7 @@ impl<T: PaneSyncer> Prompt<T> {
         merger_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
         versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
-        loading_indicator_enabled: Vec<usize>,
+        versioned_loading_indicator_receiver: Receiver<(usize, usize)>,
     ) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
@@ -88,16 +88,13 @@ impl<T: PaneSyncer> Prompt<T> {
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
 
-        let coordinator = DisplayCoordinator::new(
-            terminal,
-            merger_delay_duration,
-            panes,
-            loading_indicator_enabled,
-        );
-        let (version_change_sender, version_change_receiver) = tokio::sync::mpsc::channel(1);
+        let coordinator = DisplayCoordinator::new(terminal, merger_delay_duration, panes);
         tokio::spawn(async move {
             coordinator
-                .run(version_change_receiver, versioned_each_pane_receiver)
+                .run(
+                    versioned_each_pane_receiver,
+                    versioned_loading_indicator_receiver,
+                )
                 .await
         });
 
@@ -128,7 +125,6 @@ impl<T: PaneSyncer> Prompt<T> {
                     if let Some(event_buffer) = maybe_event_buffer {
                         let next = version.fetch_add(1, Ordering::SeqCst);
                         self.renderer.sync(next, &event_buffer, size.0, size.1).await?;
-                        version_change_sender.send(next).await?;
                     }
                 },
                 maybe_fin = fin_receiver.recv().fuse() => {

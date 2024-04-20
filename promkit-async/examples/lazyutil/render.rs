@@ -16,6 +16,7 @@ pub struct Renderer {
 
     fin_sender: Sender<()>,
     versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
+    versioned_loading_indicator_sender: Sender<(usize, usize)>,
 }
 
 impl Renderer {
@@ -25,6 +26,7 @@ impl Renderer {
         lazy_state: text_editor::State,
         fin_sender: Sender<()>,
         versioned_each_pane_sender: Sender<(usize, usize, Pane)>,
+        versioned_loading_indicator_sender: Sender<(usize, usize)>,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             keymap,
@@ -32,6 +34,7 @@ impl Renderer {
             lazy_state: Arc::new(Mutex::new(lazy_state)),
             fin_sender,
             versioned_each_pane_sender,
+            versioned_loading_indicator_sender,
         })
     }
 }
@@ -69,11 +72,15 @@ impl PaneSyncer for Renderer {
         let lazy_state = Arc::clone(&self.lazy_state);
         let fin_sender = self.fin_sender.clone();
         let versioned_each_pane_sender = self.versioned_each_pane_sender.clone();
+        let versioned_loading_indicator_sender = self.versioned_loading_indicator_sender.clone();
         let events = events.to_vec();
         let keymap = self.keymap.clone();
 
         async move {
             tokio::spawn(async move {
+                versioned_loading_indicator_sender
+                    .send((version, 1))
+                    .await?;
                 let mut state = state.lock().unwrap();
                 keymap.get()(&events, &mut state, &fin_sender)?;
                 versioned_each_pane_sender.try_send((

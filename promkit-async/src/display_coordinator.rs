@@ -26,16 +26,10 @@ pub struct DisplayCoordinator {
     frames: Vec<String>,
     actives: Vec<Arc<AtomicBool>>,
     frame_indexes: Vec<Arc<AtomicUsize>>,
-    loading_indicator_enabled: Vec<usize>,
 }
 
 impl DisplayCoordinator {
-    pub fn new(
-        terminal: Terminal,
-        delay_duration: Duration,
-        panes: Vec<Pane>,
-        loading_indicator_enabled: Vec<usize>,
-    ) -> Self {
+    pub fn new(terminal: Terminal, delay_duration: Duration, panes: Vec<Pane>) -> Self {
         let actives = {
             let mut v = Vec::with_capacity(panes.len());
             (0..panes.len()).for_each(|_| v.push(Arc::new(AtomicBool::new(false))));
@@ -57,23 +51,21 @@ impl DisplayCoordinator {
                 .collect(),
             actives,
             frame_indexes,
-            loading_indicator_enabled,
         }
     }
 
     pub fn run(
         &self,
-        mut version_change_receiver: Receiver<usize>,
-        mut pane_receiver: Receiver<(usize, usize, Pane)>,
+        mut versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
+        mut versioned_loading_indicator_receiver: Receiver<(usize, usize)>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let global = self.version.clone();
         let shared_panes = Arc::clone(&self.panes);
         let delay_duration = self.delay_duration;
-        let mut actives = self.actives.clone();
+        let actives = self.actives.clone();
         let frames = self.frames.clone();
         let frame_indexes = self.frame_indexes.clone();
         let shared_terminal = Arc::clone(&self.shared_terminal);
-        let loading_indicator_enabled = self.loading_indicator_enabled.clone();
 
         async move {
             loop {
@@ -81,18 +73,18 @@ impl DisplayCoordinator {
                 futures::pin_mut!(delay);
 
                 futures::select! {
-                    maybe_version = version_change_receiver.recv().fuse() => {
-                        match maybe_version {
-                            Some(version) => {
+                    maybe_tuple = versioned_loading_indicator_receiver.recv().fuse() => {
+                        match maybe_tuple {
+                            Some((version, index)) => {
                                 if version > global.load(Ordering::SeqCst) {
                                     global.store(version, Ordering::SeqCst);
-                                    actives.iter_mut().for_each(|active| active.store(true, Ordering::SeqCst));
+                                    actives[index].store(true, Ordering::SeqCst);
                                 }
                             }
                             None => break,
                         }
                     },
-                    maybe_triplet = pane_receiver.recv().fuse() => {
+                    maybe_triplet = versioned_each_pane_receiver.recv().fuse() => {
                         match maybe_triplet {
                             Some((version, index, pane)) => {
                                 if version >= global.load(Ordering::SeqCst) {
@@ -109,7 +101,7 @@ impl DisplayCoordinator {
                         let tasks: Vec<_> = actives
                             .iter()
                             .enumerate()
-                            .filter(|(index, _)| loading_indicator_enabled.contains(index))
+                            .filter(|(index, _)| actives[*index].load(Ordering::SeqCst))
                             .map(|(index, active)| {
                                 let frames = frames.clone();
                                 let shared_panes = Arc::clone(&shared_panes);
