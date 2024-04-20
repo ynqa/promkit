@@ -61,6 +61,7 @@ impl<T: PaneSyncer> Prompt<T> {
         merger_delay_duration: Duration,
         mut fin_receiver: Receiver<()>,
         versioned_each_pane_receiver: Receiver<(usize, usize, Pane)>,
+        loading_indicator_enabled: Vec<usize>,
     ) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
@@ -87,7 +88,12 @@ impl<T: PaneSyncer> Prompt<T> {
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
 
-        let coordinator = DisplayCoordinator::new(terminal, merger_delay_duration, panes);
+        let coordinator = DisplayCoordinator::new(
+            terminal,
+            merger_delay_duration,
+            panes,
+            loading_indicator_enabled,
+        );
         let (version_change_sender, version_change_receiver) = tokio::sync::mpsc::channel(1);
         tokio::spawn(async move {
             coordinator

@@ -26,10 +26,16 @@ pub struct DisplayCoordinator {
     frames: Vec<String>,
     actives: Vec<Arc<AtomicBool>>,
     frame_indexes: Vec<Arc<AtomicUsize>>,
+    loading_indicator_enabled: Vec<usize>,
 }
 
 impl DisplayCoordinator {
-    pub fn new(terminal: Terminal, delay_duration: Duration, panes: Vec<Pane>) -> Self {
+    pub fn new(
+        terminal: Terminal,
+        delay_duration: Duration,
+        panes: Vec<Pane>,
+        loading_indicator_enabled: Vec<usize>,
+    ) -> Self {
         let actives = {
             let mut v = Vec::with_capacity(panes.len());
             (0..panes.len()).for_each(|_| v.push(Arc::new(AtomicBool::new(false))));
@@ -51,6 +57,7 @@ impl DisplayCoordinator {
                 .collect(),
             actives,
             frame_indexes,
+            loading_indicator_enabled,
         }
     }
 
@@ -66,6 +73,7 @@ impl DisplayCoordinator {
         let frames = self.frames.clone();
         let frame_indexes = self.frame_indexes.clone();
         let shared_terminal = Arc::clone(&self.shared_terminal);
+        let loading_indicator_enabled = self.loading_indicator_enabled.clone();
 
         async move {
             loop {
@@ -98,33 +106,38 @@ impl DisplayCoordinator {
                         }
                     },
                     _ = delay => {
-                        let tasks: Vec<_> = actives.iter().enumerate().map(|(index, active)| {
-                            let frames = frames.clone();
-                            let shared_panes = Arc::clone(&shared_panes);
-                            let frame_indexes = frame_indexes.clone();
-                            let shared_terminal = Arc::clone(&shared_terminal);
-                            async move {
-                                if active.load(Ordering::SeqCst) {
-                                    let frame_index = frame_indexes[index].load(Ordering::SeqCst);
-                                    let frame = &frames[frame_index % frames.len()];
-                                    let (width, height) = terminal::size()?;
-                                    let (matrix, _) = matrixify(
-                                        width as usize,
-                                        height as usize,
-                                        0,
-                                        &StyledGraphemes::from_str(
-                                            frame,
-                                            StyleBuilder::new().build(),
-                                        ),
-                                    );
-                                    let mut panes = shared_panes.lock().unwrap();
-                                    panes[index] = Pane::new(matrix, 0);
-                                    shared_terminal.lock().unwrap().draw(&panes)?;
-                                    frame_indexes[index].store((frame_index + 1) % frames.len(), Ordering::SeqCst);
+                        let tasks: Vec<_> = actives
+                            .iter()
+                            .enumerate()
+                            .filter(|(index, _)| loading_indicator_enabled.contains(index))
+                            .map(|(index, active)| {
+                                let frames = frames.clone();
+                                let shared_panes = Arc::clone(&shared_panes);
+                                let frame_indexes = frame_indexes.clone();
+                                let shared_terminal = Arc::clone(&shared_terminal);
+                                async move {
+                                    if active.load(Ordering::SeqCst) {
+                                        let frame_index = frame_indexes[index].load(Ordering::SeqCst);
+                                        let frame = &frames[frame_index % frames.len()];
+                                        let (width, height) = terminal::size()?;
+                                        let (matrix, _) = matrixify(
+                                            width as usize,
+                                            height as usize,
+                                            0,
+                                            &StyledGraphemes::from_str(
+                                                frame,
+                                                StyleBuilder::new().build(),
+                                            ),
+                                        );
+                                        let mut panes = shared_panes.lock().unwrap();
+                                        panes[index] = Pane::new(matrix, 0);
+                                        shared_terminal.lock().unwrap().draw(&panes)?;
+                                        frame_indexes[index].store((frame_index + 1) % frames.len(), Ordering::SeqCst);
+                                    }
+                                    Ok::<(), anyhow::Error>(())
                                 }
-                                Ok::<(), anyhow::Error>(())
-                            }
-                        }).collect();
+                            })
+                        .collect();
                         futures::future::join_all(tasks).await;
                     },
                 }

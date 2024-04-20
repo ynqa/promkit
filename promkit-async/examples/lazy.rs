@@ -96,6 +96,7 @@ impl Lazy {
                 Duration::from_millis(10),
                 fin_receiver,
                 versioned_each_pane_receiver,
+                vec![1],
             )
             .await
     }
