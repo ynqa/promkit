@@ -5,7 +5,7 @@ use promkit::{pane::Pane, switch::ActiveKeySwitcher, text_editor, PaneFactory};
 use futures::Future;
 use tokio::sync::mpsc::Sender;
 
-use promkit_async::{PaneSyncer, WrappedEvent};
+use promkit_async::{EventBundle, PaneSyncer};
 
 use crate::lazyutil::keymap;
 
@@ -64,7 +64,7 @@ impl PaneSyncer for Renderer {
     fn sync(
         &mut self,
         version: usize,
-        events: &[WrappedEvent],
+        event_buffer: &[EventBundle],
         width: u16,
         height: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
@@ -73,7 +73,7 @@ impl PaneSyncer for Renderer {
         let fin_sender = self.fin_sender.clone();
         let versioned_each_pane_sender = self.versioned_each_pane_sender.clone();
         let versioned_loading_indicator_sender = self.versioned_loading_indicator_sender.clone();
-        let events = events.to_vec();
+        let event_buffer = event_buffer.to_vec();
         let keymap = self.keymap.clone();
 
         async move {
@@ -81,7 +81,7 @@ impl PaneSyncer for Renderer {
                 .send((version, 1))
                 .await?;
             let mut state = state.lock().unwrap();
-            keymap.get()(&events, &mut state, &fin_sender)?;
+            keymap.get()(&event_buffer, &mut state, &fin_sender)?;
             versioned_each_pane_sender.try_send((version, 0, state.create_pane(width, height)))?;
 
             let edited = state.clone();

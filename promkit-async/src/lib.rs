@@ -24,7 +24,7 @@ use promkit::{
 
 mod event_buffer;
 use event_buffer::EventBuffer;
-pub use event_buffer::WrappedEvent;
+pub use event_buffer::EventBundle;
 mod resize_debounce;
 use resize_debounce::ResizeDebounce;
 mod display_coordinator;
@@ -35,7 +35,7 @@ pub trait PaneSyncer: promkit::Finalizer {
     fn sync(
         &mut self,
         version: usize,
-        events: &[WrappedEvent],
+        event_buffer: &[EventBundle],
         width: u16,
         height: u16,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;

@@ -6,7 +6,7 @@ use futures_timer::Delay;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum WrappedEvent {
+pub enum EventBundle {
     KeyBuffer(Vec<char>),
     VerticalCursorBuffer(usize, usize),   // (up, down)
     HorizontalCursorBuffer(usize, usize), // (left, right)
@@ -25,7 +25,7 @@ impl EventBuffer {
     pub fn run(
         &mut self,
         mut event_receiver: Receiver<Event>,
-        sequential_events_sender: Sender<Vec<WrappedEvent>>,
+        event_buffer_sender: Sender<Vec<EventBundle>>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send {
         let mut buffer = Vec::new();
         let delay_duration = self.delay_duration;
@@ -45,7 +45,7 @@ impl EventBuffer {
                     },
                     _ = delay => {
                         if !buffer.is_empty() {
-                            sequential_events_sender.send(Self::sequential_buffer(buffer.clone())).await?;
+                            event_buffer_sender.send(Self::sequential_buffer(buffer.clone())).await?;
                             buffer.clear();
                         }
                     },
@@ -55,7 +55,7 @@ impl EventBuffer {
         }
     }
 
-    fn sequential_buffer(events: Vec<Event>) -> Vec<WrappedEvent> {
+    fn sequential_buffer(events: Vec<Event>) -> Vec<EventBundle> {
         let mut ret = Vec::new();
         let mut charbuf = Vec::new();
         let mut vertical_cursor = (0, 0); // (up, down)
@@ -67,18 +67,18 @@ impl EventBuffer {
                 charbuf.push(ch);
                 // Check and insert if other aggregates are not edited
                 if vertical_cursor != (0, 0) {
-                    ret.push(WrappedEvent::VerticalCursorBuffer(
+                    ret.push(EventBundle::VerticalCursorBuffer(
                         vertical_cursor.0,
                         vertical_cursor.1,
                     ));
                 } else if horizontal_cursor != (0, 0) {
-                    ret.push(WrappedEvent::HorizontalCursorBuffer(
+                    ret.push(EventBundle::HorizontalCursorBuffer(
                         horizontal_cursor.0,
                         horizontal_cursor.1,
                     ));
                 } else if !others_buffer.is_empty() {
                     let times = others_buffer.len();
-                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
+                    ret.push(EventBundle::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 vertical_cursor = (0, 0);
@@ -89,15 +89,15 @@ impl EventBuffer {
                 vertical_cursor.1 += direction.1;
                 // Check and insert if other aggregates are not edited
                 if !charbuf.is_empty() {
-                    ret.push(WrappedEvent::KeyBuffer(charbuf.clone()));
+                    ret.push(EventBundle::KeyBuffer(charbuf.clone()));
                 } else if horizontal_cursor != (0, 0) {
-                    ret.push(WrappedEvent::HorizontalCursorBuffer(
+                    ret.push(EventBundle::HorizontalCursorBuffer(
                         horizontal_cursor.0,
                         horizontal_cursor.1,
                     ));
                 } else if !others_buffer.is_empty() {
                     let times = others_buffer.len();
-                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
+                    ret.push(EventBundle::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 charbuf.clear();
@@ -108,15 +108,15 @@ impl EventBuffer {
                 horizontal_cursor.1 += direction.1;
                 // Check and insert if other aggregates are not edited
                 if !charbuf.is_empty() {
-                    ret.push(WrappedEvent::KeyBuffer(charbuf.clone()));
+                    ret.push(EventBundle::KeyBuffer(charbuf.clone()));
                 } else if vertical_cursor != (0, 0) {
-                    ret.push(WrappedEvent::VerticalCursorBuffer(
+                    ret.push(EventBundle::VerticalCursorBuffer(
                         vertical_cursor.0,
                         vertical_cursor.1,
                     ));
                 } else if !others_buffer.is_empty() {
                     let times = others_buffer.len();
-                    ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
+                    ret.push(EventBundle::Others(others_buffer.pop().unwrap(), times));
                 }
                 // Initialize other aggregates
                 charbuf.clear();
@@ -128,10 +128,7 @@ impl EventBuffer {
                         if last_event == &event {
                             others_buffer.push(event);
                         } else {
-                            ret.push(WrappedEvent::Others(
-                                last_event.clone(),
-                                others_buffer.len(),
-                            ));
+                            ret.push(EventBundle::Others(last_event.clone(), others_buffer.len()));
                             others_buffer.clear();
                             others_buffer.push(event);
                         }
@@ -141,14 +138,14 @@ impl EventBuffer {
 
                 // Check and insert if other aggregates are not edited
                 if !charbuf.is_empty() {
-                    ret.push(WrappedEvent::KeyBuffer(charbuf.clone()));
+                    ret.push(EventBundle::KeyBuffer(charbuf.clone()));
                 } else if vertical_cursor != (0, 0) {
-                    ret.push(WrappedEvent::VerticalCursorBuffer(
+                    ret.push(EventBundle::VerticalCursorBuffer(
                         vertical_cursor.0,
                         vertical_cursor.1,
                     ));
                 } else if horizontal_cursor != (0, 0) {
-                    ret.push(WrappedEvent::HorizontalCursorBuffer(
+                    ret.push(EventBundle::HorizontalCursorBuffer(
                         horizontal_cursor.0,
                         horizontal_cursor.1,
                     ));
@@ -162,20 +159,20 @@ impl EventBuffer {
 
         // Handle the last event
         if !charbuf.is_empty() {
-            ret.push(WrappedEvent::KeyBuffer(charbuf.clone()));
+            ret.push(EventBundle::KeyBuffer(charbuf.clone()));
         } else if vertical_cursor != (0, 0) {
-            ret.push(WrappedEvent::VerticalCursorBuffer(
+            ret.push(EventBundle::VerticalCursorBuffer(
                 vertical_cursor.0,
                 vertical_cursor.1,
             ));
         } else if horizontal_cursor != (0, 0) {
-            ret.push(WrappedEvent::HorizontalCursorBuffer(
+            ret.push(EventBundle::HorizontalCursorBuffer(
                 horizontal_cursor.0,
                 horizontal_cursor.1,
             ));
         } else if !others_buffer.is_empty() {
             let times = others_buffer.len();
-            ret.push(WrappedEvent::Others(others_buffer.pop().unwrap(), times));
+            ret.push(EventBundle::Others(others_buffer.pop().unwrap(), times));
         }
 
         ret
@@ -330,10 +327,10 @@ mod tests {
             ];
 
             let expected = vec![
-                WrappedEvent::KeyBuffer(vec!['a', 'B', 'c']),
-                WrappedEvent::VerticalCursorBuffer(2, 1),
-                WrappedEvent::HorizontalCursorBuffer(2, 1),
-                WrappedEvent::Others(
+                EventBundle::KeyBuffer(vec!['a', 'B', 'c']),
+                EventBundle::VerticalCursorBuffer(2, 1),
+                EventBundle::HorizontalCursorBuffer(2, 1),
+                EventBundle::Others(
                     Event::Key(KeyEvent {
                         code: KeyCode::Char('f'),
                         modifiers: KeyModifiers::CONTROL,
@@ -342,7 +339,7 @@ mod tests {
                     }),
                     3,
                 ),
-                WrappedEvent::Others(
+                EventBundle::Others(
                     Event::Key(KeyEvent {
                         code: KeyCode::Char('d'),
                         modifiers: KeyModifiers::CONTROL,
@@ -351,8 +348,8 @@ mod tests {
                     }),
                     1,
                 ),
-                WrappedEvent::VerticalCursorBuffer(1, 0),
-                WrappedEvent::KeyBuffer(vec!['d']),
+                EventBundle::VerticalCursorBuffer(1, 0),
+                EventBundle::KeyBuffer(vec!['d']),
             ];
 
             assert_eq!(EventBuffer::sequential_buffer(events), expected);
@@ -367,7 +364,7 @@ mod tests {
                 state: KeyEventState::NONE,
             })];
 
-            let expected = vec![WrappedEvent::Others(
+            let expected = vec![EventBundle::Others(
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
