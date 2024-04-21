@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.3.5"
+//! promkit = "0.4.0"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.3.5#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.3.5#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.3.5#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.3.5#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.3.5#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.3.5#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.3.5#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.4.0#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.4.0#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.4.0#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.4.0#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.4.0#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.4.0#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.4.0#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.3.5#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.4.0#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
@@ -63,11 +63,41 @@
 //! entity. If you want to display a new data structure, you often have to build the
 //! UI from scratch, which can be a time-consuming and less flexible process.
 //!
-//!   ```ignore
-//!   pub trait Renderer {
-//!       fn create_panes(&self, width: u16) -> Vec<Pane>;
-//!   }
-//!   ```
+//! ```ignore
+//! pub trait Renderer: AsAny + Finalizer {
+//!     /// Creates a collection of panes based on the specified width.
+//!     ///
+//!     /// This method is responsible for generating the layout of the UI components
+//!     /// that will be displayed in the prompt. The width parameter allows the layout
+//!     /// to adapt to the current terminal width.
+//!     ///
+//!     /// # Parameters
+//!     ///
+//!     /// * `width`: The width of the terminal in characters.
+//!     ///
+//!     /// # Returns
+//!     ///
+//!     /// Returns a vector of `Pane` objects that represent the layout of the UI components.
+//!     fn create_panes(&self, width: u16) -> Vec<Pane>;
+//!
+//!     /// Evaluates an event and determines the next action for the prompt.
+//!     ///
+//!     /// This method is called whenever an event occurs (e.g., user input). It allows
+//!     /// the renderer to react to the event and decide whether the prompt should continue
+//!     /// running or quit.
+//!     ///
+//!     /// # Parameters
+//!     ///
+//!     /// * `event`: A reference to the event that occurred.
+//!     ///
+//!     /// # Returns
+//!     ///
+//!     /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
+//!     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
+//!     /// the prompt should terminate its execution.
+//!     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
+//! }
+//! ```
 //!
 //! ### Variety of Pre-built UI Preset Components
 //!
@@ -97,20 +127,16 @@ pub use serde_json;
 
 mod core;
 pub use core::*;
-mod error;
-pub use error::{Error, Result};
 pub mod grapheme;
-pub mod keymap;
-mod macros;
 pub mod pane;
 pub mod preset;
-pub mod snapshot;
 pub mod style;
 pub mod suggest;
-mod terminal;
+pub mod switch;
+pub mod terminal;
 pub mod validate;
 
-use std::{any::Any, io};
+use std::io;
 
 use crate::{
     crossterm::{
@@ -135,78 +161,71 @@ pub enum PromptSignal {
     Quit,
 }
 
-/// Type definition for an event handler function.
-///
-/// This function type is used to handle events within a prompt. It takes a reference to an `Event`
-/// and a mutable reference to a state of type `S`, and returns a `Result` containing a `PromptSignal`.
-/// The `PromptSignal` indicates whether the prompt should continue running or quit.
-///
-/// # Arguments
-///
-/// * `event` - A reference to the event that occurred.
-/// * `state` - A mutable reference to the state `S` of the prompt, allowing the handler to modify it.
-///
-/// # Returns
-///
-/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-pub type EventHandler<S> = fn(&Event, &mut S) -> Result<PromptSignal>;
+pub trait Finalizer {
+    /// The type of the result produced by the renderer.
+    type Return;
 
-pub trait Renderer: AsAny {
-    /// Creates panes with the given width.
-    fn create_panes(&self, width: u16) -> Vec<Pane>;
+    /// Finalizes the prompt and produces a result.
+    ///
+    /// This method is called after the prompt has been instructed to quit. It allows
+    /// the renderer to perform any necessary cleanup and produce a final result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the final result of the prompt. The type of the result
+    /// is defined by the `Return` associated type.
+    fn finalize(&self) -> anyhow::Result<Self::Return>;
 }
 
-/// A trait for casting objects to `Any`, allowing for dynamic typing.
-pub trait AsAny {
-    /// Returns `Any`.
-    fn as_any(&self) -> &dyn Any;
+/// A trait for rendering components within a prompt.
+///
+/// This trait defines the essential functions required for rendering custom UI components
+/// in a prompt. Implementors of this trait can define how panes are created, how events
+/// are evaluated, and how the final result is produced.
+pub trait Renderer: Finalizer {
+    /// Creates a collection of panes based on the specified width.
+    ///
+    /// This method is responsible for generating the layout of the UI components
+    /// that will be displayed in the prompt. The width parameter allows the layout
+    /// to adapt to the current terminal width and height.
+    ///
+    /// # Parameters
+    ///
+    /// * `width`: The width of the terminal in characters.
+    /// * `height`: The height of the terminal in characters.
+    ///
+    /// # Returns
+    ///
+    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
+    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane>;
 
-    fn as_any_mut(&mut self) -> &mut dyn Any;
+    /// Evaluates an event and determines the next action for the prompt.
+    ///
+    /// This method is called whenever an event occurs (e.g., user input). It allows
+    /// the renderer to react to the event and decide whether the prompt should continue
+    /// running or quit.
+    ///
+    /// # Parameters
+    ///
+    /// * `event`: A reference to the event that occurred.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
+    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
+    /// the prompt should terminate its execution.
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
 }
-
-/// Type alias for a dynamic evaluator function.
-///
-/// This evaluator function is responsible for handling events during the prompt's execution.
-/// It takes a reference to an `Event` and a mutable reference to a boxed `Renderer` instance,
-/// and returns a `Result` containing a `PromptSignal`. The `PromptSignal` indicates whether
-/// the prompt should continue running or quit.
-///
-/// # Arguments
-///
-/// * `event` - A reference to the event that occurred.
-/// * `renderer` - A mutable reference to a boxed instance of a type that implements the `Renderer` trait.
-///
-/// # Returns
-///
-/// Returns a `Result` with a `PromptSignal`, indicating the next action for the prompt.
-pub type DynEvaluator = dyn Fn(&Event, &mut Box<dyn Renderer>) -> Result<PromptSignal>;
-
-/// Type alias for a result producer function.
-///
-/// This function is used to produce the final result of the prompt based on the state of the renderer.
-/// It takes a reference to a type that implements the `Renderer` trait and returns a `Result` containing
-/// the final output of the prompt.
-///
-/// # Arguments
-///
-/// * `renderer` - A reference to an instance of a type that implements the `Renderer` trait.
-///
-/// # Returns
-///
-/// Returns a `Result` containing the final output of the prompt.
-pub type ResultProducer<T> = fn(&dyn Renderer) -> Result<T>;
 
 /// Represents a customizable prompt that can handle user input and produce a result.
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-pub struct Prompt<T> {
-    renderer: Box<dyn Renderer>,
-    evaluator: Box<DynEvaluator>,
-    producer: ResultProducer<T>,
+pub struct Prompt<T: Renderer> {
+    pub renderer: T,
 }
 
-impl<T> Drop for Prompt<T> {
+impl<T: Renderer> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(
             io::stdout(),
@@ -219,30 +238,7 @@ impl<T> Drop for Prompt<T> {
     }
 }
 
-impl<T> Prompt<T> {
-    /// Attempts to create a new `Prompt` instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `renderer` - A boxed renderer for drawing the prompt.
-    /// * `evaluator` - A boxed evaluator function to handle events.
-    /// * `producer` - A function to produce the result based on the renderer's state.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing the new `Prompt` instance or an error.
-    pub fn try_new(
-        renderer: Box<dyn Renderer>,
-        evaluator: Box<DynEvaluator>,
-        producer: ResultProducer<T>,
-    ) -> Result<Self> {
-        Ok(Self {
-            renderer,
-            evaluator,
-            producer,
-        })
-    }
-
+impl<T: Renderer> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -252,12 +248,12 @@ impl<T> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub fn run(&mut self) -> Result<T> {
+    pub fn run(&mut self) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
         let size = crossterm::terminal::size()?;
-        let panes = self.renderer.create_panes(size.0);
+        let panes = self.renderer.create_panes(size.0, size.1);
         let mut terminal = Terminal::start_session(&panes)?;
         terminal.draw(&panes)?;
 
@@ -273,16 +269,16 @@ impl<T> Prompt<T> {
                     )?;
                 }
                 _ => {
-                    if (self.evaluator)(&ev, &mut self.renderer)? == PromptSignal::Quit {
+                    if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
                         break;
                     }
                 }
             }
 
             let size = crossterm::terminal::size()?;
-            terminal.draw(&self.renderer.create_panes(size.0))?;
+            terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
-        (self.producer)(&*self.renderer)
+        self.renderer.finalize()
     }
 }

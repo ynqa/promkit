@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.3.5"
+promkit = "0.4.0"
 ```
 
 ## Features
@@ -354,11 +354,41 @@ In contrast, other libraries tend to treat each prompt as a mostly independent
 entity. If you want to display a new data structure, you often have to build the
 UI from scratch, which can be a time-consuming and less flexible process.
 
-  ```rust
-  pub trait Renderer {
-      fn create_panes(&self, width: u16) -> Vec<Pane>;
-  }
-  ```
+```rust
+pub trait Renderer: AsAny + Finalizer {
+    /// Creates a collection of panes based on the specified width.
+    ///
+    /// This method is responsible for generating the layout of the UI components
+    /// that will be displayed in the prompt. The width parameter allows the layout
+    /// to adapt to the current terminal width.
+    ///
+    /// # Parameters
+    ///
+    /// * `width`: The width of the terminal in characters.
+    ///
+    /// # Returns
+    ///
+    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
+    fn create_panes(&self, width: u16) -> Vec<Pane>;
+
+    /// Evaluates an event and determines the next action for the prompt.
+    ///
+    /// This method is called whenever an event occurs (e.g., user input). It allows
+    /// the renderer to react to the event and decide whether the prompt should continue
+    /// running or quit.
+    ///
+    /// # Parameters
+    ///
+    /// * `event`: A reference to the event that occurred.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
+    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
+    /// the prompt should terminate its execution.
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
+}
+```
 
 ### Variety of Pre-built UI Preset Components
 

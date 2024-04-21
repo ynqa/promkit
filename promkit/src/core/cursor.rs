@@ -50,38 +50,42 @@ impl<C: Len> Cursor<C> {
         self.position
     }
 
+    pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
+        let len = self.contents.len();
+        if self.cyclic {
+            let total_move = forward as isize - backward as isize;
+            let new_position =
+                (self.position as isize + total_move).rem_euclid(len as isize) as usize;
+            self.position = new_position;
+            true
+        } else if backward > self.position {
+            false
+        } else {
+            let new_position = self.position - backward;
+            if new_position + forward < len {
+                self.position = new_position + forward;
+                true
+            } else {
+                false
+            }
+        }
+    }
+
     /// Moves the cursor one position backward, if possible. Returns `true` if successful.
     /// If `cyclic` is true and the cursor is at the head, it moves to the tail.
     pub fn backward(&mut self) -> bool {
-        if self.position > 0 {
-            self.position = self.position.saturating_sub(1);
-            true
-        } else if self.cyclic && self.contents.len() > 0 {
-            self.position = self.contents.len().saturating_sub(1);
-            true
-        } else {
-            false
-        }
+        self.shift(1, 0)
     }
 
     /// Moves the cursor one position forward, if possible. Returns `true` if successful.
     /// If `cyclic` is true and the cursor is at the tail, it moves to the head.
     pub fn forward(&mut self) -> bool {
-        let l = self.contents.len();
-        if l != 0 && self.position < l.saturating_sub(1) {
-            self.position += 1;
-            true
-        } else if self.cyclic && l != 0 {
-            self.position = 0;
-            true
-        } else {
-            false
-        }
+        self.shift(0, 1)
     }
 
     /// Moves the cursor to the head (start) of the contents.
     pub fn move_to_head(&mut self) {
-        self.position = 0
+        self.move_to(0);
     }
 
     /// Checks if the cursor is at the head (start) of the contents.
@@ -91,12 +95,7 @@ impl<C: Len> Cursor<C> {
 
     /// Moves the cursor to the tail (end) of the contents.
     pub fn move_to_tail(&mut self) {
-        let l = self.contents.len();
-        if l == 0 {
-            self.position = 0
-        } else {
-            self.position = l.saturating_sub(1);
-        }
+        self.move_to(self.contents.len().saturating_sub(1));
     }
 
     /// Checks if the cursor is at the tail (end) of the contents.
@@ -112,10 +111,69 @@ impl<C: Len> Cursor<C> {
             false
         }
     }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        let end = std::cmp::min(self.position + height, self.contents.len());
+        let start = if end > height { end - height } else { 0 };
+        (start, end)
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
+    mod shift {
+        use super::super::*;
+
+        #[test]
+        fn test_cyclic_forward() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 0, true);
+            assert!(cursor.shift(0, 2)); // 0 -> 2
+            assert_eq!(cursor.position(), 2);
+        }
+
+        #[test]
+        fn test_cyclic_backward() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 2, true);
+            assert!(cursor.shift(2, 0)); // 2 -> 0
+            assert_eq!(cursor.position(), 0);
+        }
+
+        #[test]
+        fn test_cyclic_wrap_around() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 2, true);
+            assert!(cursor.shift(0, 1)); // 2 -> 0 (wrap around)
+            assert_eq!(cursor.position(), 0);
+        }
+
+        #[test]
+        fn test_non_cyclic_forward_fail() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 2, false);
+            assert!(!cursor.shift(0, 1)); // 2 -> fail, no wrap around
+        }
+
+        #[test]
+        fn test_non_cyclic_backward_fail() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 0, false);
+            assert!(!cursor.shift(1, 0)); // 0 -> fail, can't move backward
+        }
+
+        #[test]
+        fn test_non_cyclic_forward_success() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 1, false);
+            assert!(cursor.shift(0, 1)); // 1 -> 2
+            assert_eq!(cursor.position(), 2);
+        }
+
+        #[test]
+        fn test_non_cyclic_backward_success() {
+            let mut cursor = Cursor::new(vec!["a", "b", "c"], 2, false);
+            assert!(cursor.shift(1, 0)); // 2 -> 1
+            assert_eq!(cursor.position(), 1);
+        }
+    }
+
     mod backward {
         use super::super::*;
 
@@ -137,6 +195,38 @@ mod test {
             assert!(b.forward());
             b.position = b.contents.len() - 1;
             assert!(!b.forward());
+        }
+    }
+
+    mod viewport_range {
+        use super::*;
+
+        #[test]
+        fn test_within_bounds() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 2, false);
+            let (start, end) = cursor.viewport_range(2);
+            assert_eq!((start, end), (2, 4));
+        }
+
+        #[test]
+        fn test_at_start() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 0, false);
+            let (start, end) = cursor.viewport_range(3);
+            assert_eq!((start, end), (0, 3));
+        }
+
+        #[test]
+        fn test_at_end() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 4, false);
+            let (start, end) = cursor.viewport_range(2);
+            assert_eq!((start, end), (3, 5));
+        }
+
+        #[test]
+        fn test_exceeds_bounds() {
+            let cursor = Cursor::new(vec![1, 2, 3, 4, 5], 3, false);
+            let (start, end) = cursor.viewport_range(5);
+            assert_eq!((start, end), (0, 5));
         }
     }
 }

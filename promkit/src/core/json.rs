@@ -2,8 +2,8 @@ use crate::core::cursor::CompositeCursor;
 
 mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
-mod render;
-pub use render::{Renderer, Theme};
+mod state;
+pub use state::{State, Theme};
 
 /// Represents a stream of JSON data, allowing for efficient navigation and manipulation.
 ///
@@ -143,6 +143,10 @@ impl JsonStream {
         self.toggle_all_visibility(true);
     }
 
+    pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
+        self.cursor.shift(backward, forward)
+    }
+
     /// Moves the cursor backward through the JSON stream.
     pub fn backward(&mut self) -> bool {
         self.cursor.backward()
@@ -161,5 +165,9 @@ impl JsonStream {
     /// Moves the cursor to the tail of the JSON stream.
     pub fn move_to_tail(&mut self) {
         self.cursor.move_to_tail()
+    }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        self.cursor.viewport_range(height)
     }
 }

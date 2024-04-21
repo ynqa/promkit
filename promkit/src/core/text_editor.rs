@@ -7,8 +7,8 @@ use crate::{
 
 mod history;
 pub use history::History;
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// Edit mode.
 #[derive(Clone, Default)]
@@ -80,6 +80,12 @@ impl TextEditor {
         self.forward();
     }
 
+    pub fn insert_chars(&mut self, vch: &Vec<char>) {
+        for ch in vch {
+            self.insert(*ch);
+        }
+    }
+
     /// Overwrites the character at the current cursor position with the specified character.
     pub fn overwrite(&mut self, ch: char) {
         if self.0.is_tail() {
@@ -90,6 +96,12 @@ impl TextEditor {
                 .contents_mut()
                 .replace_range(pos..pos + 1, &ch.to_string());
             self.forward();
+        }
+    }
+
+    pub fn overwrite_chars(&mut self, vch: &Vec<char>) {
+        for ch in vch {
+            self.overwrite(*ch);
         }
     }
 
@@ -184,6 +196,10 @@ impl TextEditor {
     /// Moves the cursor to the end of the text.
     pub fn move_to_tail(&mut self) {
         self.0.move_to_tail()
+    }
+
+    pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
+        self.0.shift(backward, forward)
     }
 
     /// Moves the cursor one position backward, if possible.

@@ -3,8 +3,13 @@ use crate::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, Error, PromptSignal, Result,
+    preset, PromptSignal,
 };
+
+pub type Keymap = fn(
+    event: &Event,
+    renderer: &mut preset::listbox::render::Renderer,
+) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the listbox.
 ///
@@ -17,7 +22,7 @@ use crate::{
 pub fn default(
     event: &Event,
     renderer: &mut preset::listbox::render::Renderer,
-) -> Result<PromptSignal> {
+) -> anyhow::Result<PromptSignal> {
     let listbox_after_mut = renderer.listbox_snapshot.after_mut();
 
     match event {
@@ -32,7 +37,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(Error::Interrupted("ctrl+c".into())),
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
         // Move cursor.
         Event::Key(KeyEvent {

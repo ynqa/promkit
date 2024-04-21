@@ -1,6 +1,6 @@
-use promkit::{preset::query_selector::QuerySelector, Result};
+use promkit::preset::query_selector::QuerySelector;
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
         text.parse::<usize>()
             .map(|query| {

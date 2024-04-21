@@ -2,8 +2,8 @@ use std::{collections::HashSet, fmt, iter::FromIterator};
 
 use crate::core::listbox::Listbox;
 
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// A `Checkbox` struct that encapsulates a listbox
 /// for item selection and a set of picked (selected) indices.
@@ -120,6 +120,10 @@ impl Checkbox {
     /// Moves the cursor to the tail of the listbox.
     pub fn move_to_tail(&mut self) {
         self.listbox.move_to_tail()
+    }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        self.listbox.viewport_range(height)
     }
 }
 

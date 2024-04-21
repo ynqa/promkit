@@ -1,11 +1,10 @@
 use crate::{
     crossterm::style::ContentStyle,
-    error::Result,
     validate::{ErrorMessageGenerator, Validator},
     Prompt,
 };
 
-use super::Readline;
+use super::{render, Readline};
 
 /// A specialized `Readline` struct for securely capturing password input.
 /// It masks the input with a specified character for privacy and security.
@@ -68,7 +67,7 @@ impl Password {
     /// Displays the password prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the user's input.
-    pub fn prompt(self) -> Result<Prompt<String>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         self.0.prompt()
     }
 }

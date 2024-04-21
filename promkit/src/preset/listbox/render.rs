@@ -1,21 +1,36 @@
+use std::cell::RefCell;
+
 use crate::{
-    impl_as_any, impl_cast, keymap::KeymapManager, listbox, pane::Pane, snapshot::Snapshot, text,
+    crossterm::event::Event, listbox, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
+    text, PaneFactory, PromptSignal,
 };
 
+use super::keymap;
+
 pub struct Renderer {
-    pub keymap: KeymapManager<Self>,
-    pub title_snapshot: Snapshot<text::Renderer>,
-    pub listbox_snapshot: Snapshot<listbox::Renderer>,
+    pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
+    pub title_snapshot: Snapshot<text::State>,
+    pub listbox_snapshot: Snapshot<listbox::State>,
 }
 
-impl_as_any!(Renderer);
-impl_cast!(Renderer);
+impl crate::Finalizer for Renderer {
+    type Return = String;
+
+    fn finalize(&self) -> anyhow::Result<Self::Return> {
+        Ok(self.listbox_snapshot.after().listbox.get())
+    }
+}
 
 impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
-        let mut panes = Vec::new();
-        panes.extend(self.title_snapshot.create_panes(width));
-        panes.extend(self.listbox_snapshot.create_panes(width));
-        panes
+    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
+        vec![
+            self.title_snapshot.create_pane(width, height),
+            self.listbox_snapshot.create_pane(width, height),
+        ]
+    }
+
+    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
+        let keymap = *self.keymap.borrow_mut().get();
+        keymap(event, self)
     }
 }

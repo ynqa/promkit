@@ -3,22 +3,14 @@ use std::collections::HashSet;
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{matrixify, StyledGraphemes},
-    impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::{History, Mode, TextEditor};
 
-/// Represents a renderer for the `TextEditor` component,
-/// capable of visualizing text input in a pane.
-/// It supports a variety of features including history navigation,
-/// input suggestions, input masking,
-/// customizable prompt strings,
-/// and styles for different parts of the input. It also handles different
-/// edit modes such as insert and overwrite,
-/// and can be configured to render a specific number of lines.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     /// The `TextEditor` component to be rendered.
     pub texteditor: TextEditor,
     /// Optional history for navigating through previous inputs.
@@ -44,15 +36,13 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl_as_any!(Renderer);
-
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         let mut buf = StyledGraphemes::default();
-        buf.append(&mut StyledGraphemes::from_str(
-            &self.prefix,
-            self.prefix_style,
-        ));
+
+        let mut styled_prefix = StyledGraphemes::from_str(&self.prefix, self.prefix_style);
+
+        buf.append(&mut styled_prefix);
 
         let text = match self.mask {
             Some(mask) => self.texteditor.masking(mask),
@@ -64,10 +54,17 @@ impl crate::Renderer for Renderer {
 
         buf.append(&mut styled);
 
-        vec![Pane::new(
-            matrixify(width as usize, &buf),
-            self.texteditor.position() / width as usize,
-            self.lines,
-        )]
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let (matrix, offset) = matrixify(
+            width as usize,
+            height,
+            (styled_prefix.widths() + self.texteditor.position()) / width as usize,
+            &buf,
+        );
+        Pane::new(matrix, offset)
     }
 }

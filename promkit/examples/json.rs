@@ -1,6 +1,6 @@
-use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer, Result};
+use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer};
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(
         Deserializer::from_str(
             r#"{

@@ -1,6 +1,6 @@
-use promkit::{preset::password::Password, Result};
+use promkit::preset::password::Password;
 
-fn main() -> Result {
+fn main() -> anyhow::Result<()> {
     let mut p = Password::default()
         .title("Put your password")
         .validator(

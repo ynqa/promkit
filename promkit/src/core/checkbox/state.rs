@@ -1,20 +1,20 @@
 use crate::{
     crossterm::style::ContentStyle,
     grapheme::{trim, Graphemes, StyledGraphemes},
-    impl_as_any,
     pane::Pane,
+    PaneFactory,
 };
 
 use super::Checkbox;
 
-/// Represents a renderer for the `Checkbox` component,
-/// capable of visualizing checkboxes in a pane.
-/// It supports custom symbols for the cursor and checkmark,
-/// styles for active and inactive items,
-/// and a configurable number of lines for rendering.
-/// It also handles key events for navigation and toggling checkboxes.
+/// Represents the state of a `Checkbox` component.
+///
+/// This state includes not only the checkbox itself but also various attributes
+/// that determine how the checkbox and its items are displayed. These attributes
+/// include symbols for indicating active and inactive items, styles for selected
+/// and unselected lines, and the number of lines available for rendering.
 #[derive(Clone)]
-pub struct Renderer {
+pub struct State {
     /// The `Checkbox` component to be rendered.
     pub checkbox: Checkbox,
 
@@ -35,10 +35,8 @@ pub struct Renderer {
     pub lines: Option<usize>,
 }
 
-impl_as_any!(Renderer);
-
-impl crate::Renderer for Renderer {
-    fn create_panes(&self, width: u16) -> Vec<Pane> {
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
         let f = |idx: usize, item: &String| -> String {
             if self.checkbox.picked_indexes().contains(&idx) {
                 format!("{} {}", self.active_mark, item)
@@ -47,11 +45,21 @@ impl crate::Renderer for Renderer {
             }
         };
 
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let viewport = self.checkbox.viewport_range(height);
+
+        let relative_position = self.checkbox.position().saturating_sub(viewport.0);
+
         let matrix = self
             .checkbox
             .items()
             .iter()
             .enumerate()
+            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
                     StyledGraphemes::from_str(
@@ -73,6 +81,6 @@ impl crate::Renderer for Renderer {
 
         let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
 
-        vec![Pane::new(trimed, self.checkbox.position(), self.lines)]
+        Pane::new(trimed, relative_position)
     }
 }

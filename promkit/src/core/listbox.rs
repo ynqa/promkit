@@ -2,8 +2,8 @@ use std::{fmt, iter::FromIterator};
 
 use crate::core::cursor::Cursor;
 
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// A `Listbox` struct that encapsulates a list of strings,
 /// allowing for navigation and manipulation through a cursor.
@@ -69,5 +69,9 @@ impl Listbox {
     /// Moves the cursor to the tail of the listbox.
     pub fn move_to_tail(&mut self) {
         self.0.move_to_tail()
+    }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        self.0.viewport_range(height)
     }
 }

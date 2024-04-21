@@ -3,8 +3,8 @@ mod node;
 use crate::core::cursor::Cursor;
 
 pub use node::{Kind, Node, Path};
-mod render;
-pub use render::Renderer;
+mod state;
+pub use state::State;
 
 /// A `Tree` structure that manages a collection of nodes in a hierarchical manner.
 /// It utilizes a cursor to navigate and manipulate the nodes within the tree.
@@ -81,5 +81,9 @@ impl Tree {
     /// Moves the cursor to the tail of the tree.
     pub fn move_to_tail(&mut self) {
         self.cursor.move_to_tail()
+    }
+
+    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
+        self.cursor.viewport_range(height)
     }
 }

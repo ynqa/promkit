@@ -20,6 +20,12 @@ pub struct StyledGrapheme {
     style: ContentStyle,
 }
 
+impl ToString for StyledGrapheme {
+    fn to_string(&self) -> String {
+        self.ch.to_string()
+    }
+}
+
 impl StyledGrapheme {
     pub fn new(ch: char, style: ContentStyle) -> Self {
         Self {
@@ -155,13 +161,13 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
     }
 }
 
-/// Splits a collection of graphemes into lines that fit within a specified width.
-///
-/// This function is useful for text wrapping in terminal applications, ensuring that
-/// lines do not exceed the specified width. It respects the display width of each grapheme,
-/// allowing for accurate layout even with wide characters or emojis.
-pub fn matrixify(width: usize, g: &StyledGraphemes) -> Vec<StyledGraphemes> {
-    let mut ret = vec![];
+pub fn matrixify(
+    width: usize,
+    height: usize,
+    offset: usize,
+    g: &StyledGraphemes,
+) -> (Vec<StyledGraphemes>, usize) {
+    let mut all = vec![];
     let mut row = StyledGraphemes::default();
     for styled in g.iter() {
         let width_with_next_char = row.iter().fold(0, |mut layout, g| {
@@ -169,7 +175,7 @@ pub fn matrixify(width: usize, g: &StyledGraphemes) -> Vec<StyledGraphemes> {
             layout
         }) + styled.width;
         if !row.is_empty() && width < width_with_next_char {
-            ret.push(row);
+            all.push(row);
             row = StyledGraphemes::default();
         }
         if width >= styled.width {
@@ -177,9 +183,22 @@ pub fn matrixify(width: usize, g: &StyledGraphemes) -> Vec<StyledGraphemes> {
         }
     }
     if !row.is_empty() {
-        ret.push(row);
+        all.push(row);
     }
-    ret
+
+    if all.is_empty() {
+        return (vec![], 0);
+    }
+
+    let chunks: Vec<Vec<StyledGraphemes>> =
+        all.chunks(height).map(|chunk| chunk.to_vec()).collect();
+
+    let chunk_index = std::cmp::min(offset / height, chunks.len().saturating_sub(1));
+    let selected_chunk = chunks.get(chunk_index).cloned().unwrap_or_default();
+
+    let local_offset = offset % height;
+
+    (selected_chunk, local_offset)
 }
 
 /// Trims a collection of graphemes to fit within a specified width.
@@ -206,46 +225,49 @@ pub fn trim(width: usize, g: &StyledGraphemes) -> StyledGraphemes {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     mod matrixify {
-        use super::super::*;
+        use super::*;
 
         #[test]
-        fn test() {
-            let expect = vec![
-                StyledGraphemes::from(">>"),
-                StyledGraphemes::from(" a"),
-                StyledGraphemes::from("aa"),
-                StyledGraphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &StyledGraphemes::from(">> aaa ")),);
+        fn test_with_single_line_no_offset() {
+            let input =
+                StyledGraphemes::from("Hello, world! This is a longer test without offset.");
+            let (matrix, offset) = matrixify(50, 1, 0, &input);
+            assert_eq!(1, matrix.len());
+            assert_eq!(
+                "Hello, world! This is a longer test without offset",
+                matrix[0].to_string()
+            );
+            assert_eq!(0, offset);
         }
 
         #[test]
-        fn test_with_empty() {
-            assert!(matrixify(1, &StyledGraphemes::default()).is_empty());
+        fn test_with_multiple_lines_and_offset() {
+            let input = StyledGraphemes::from("One Two Three Four Five Six Seven Eight Nine Ten");
+            let (matrix, offset) = matrixify(10, 3, 10, &input);
+            assert_eq!(2, matrix.len());
+            assert_eq!("ven Eight ", matrix[0].to_string());
+            assert_eq!("Nine Ten", matrix[1].to_string());
+            assert_eq!(1, offset);
         }
 
         #[test]
-        fn test_with_emoji() {
-            let expect = vec![
-                StyledGraphemes::from(">>"),
-                StyledGraphemes::from(" "),
-                StyledGraphemes::from("😎"),
-                StyledGraphemes::from("😎"),
-                StyledGraphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(2, &StyledGraphemes::from(">> 😎😎 ")),);
+        fn test_with_empty_input() {
+            let input = StyledGraphemes::default();
+            let (matrix, offset) = matrixify(10, 2, 0, &input);
+            assert!(matrix.is_empty());
+            assert_eq!(0, offset);
         }
 
         #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            let expect = vec![
-                StyledGraphemes::from(">"),
-                StyledGraphemes::from(">"),
-                StyledGraphemes::from(" "),
-                StyledGraphemes::from(" "),
-            ];
-            assert_eq!(expect, matrixify(1, &StyledGraphemes::from(">> 😎😎 ")),);
+        fn test_with_large_offset_beyond_content() {
+            let input = StyledGraphemes::from("Short text");
+            let (matrix, offset) = matrixify(10, 2, 20, &input);
+            assert_eq!(1, matrix.len());
+            assert_eq!("Short text", matrix[0].to_string());
+            assert_eq!(0, offset);
         }
     }
 
