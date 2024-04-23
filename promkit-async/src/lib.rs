@@ -22,12 +22,11 @@ use promkit::{
     terminal::Terminal,
 };
 
-mod event_buffer;
-use event_buffer::EventBuffer;
-pub use event_buffer::EventBundle;
-mod resize_debounce;
+pub mod event_buffer;
+use event_buffer::{EventBuffer, EventBundle};
+pub mod resize_debounce;
 use resize_debounce::ResizeDebounce;
-mod display_coordinator;
+pub mod display_coordinator;
 use display_coordinator::DisplayCoordinator;
 
 pub trait PaneSyncer: promkit::Finalizer {
