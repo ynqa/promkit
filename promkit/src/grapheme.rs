@@ -8,7 +8,7 @@ use std::{
 use unicode_width::UnicodeWidthChar;
 
 mod styled;
-pub use styled::{matrixify, trim, StyledGraphemes};
+pub use styled::{trim, StyledGraphemes};
 
 impl From<char> for Grapheme {
     fn from(ch: char) -> Self {

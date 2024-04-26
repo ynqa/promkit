@@ -1,11 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{matrixify, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::{History, Mode, TextEditor};
 
@@ -59,11 +54,10 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let (matrix, offset) = matrixify(
+        let (matrix, offset) = buf.matrixify(
             width as usize,
             height,
             (styled_prefix.widths() + self.texteditor.position()) / width as usize,
-            &buf,
         );
         Pane::new(matrix, offset)
     }

@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{matrixify, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 /// Represents the state of a text-based component within the application.
 ///
@@ -26,11 +21,10 @@ impl State {
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let (matrix, _) = matrixify(
+        let (matrix, _) = StyledGraphemes::from_str(&self.text, self.style).matrixify(
             width as usize,
             height as usize,
             0,
-            &StyledGraphemes::from_str(&self.text, self.style),
         );
         Pane::new(matrix, 0)
     }

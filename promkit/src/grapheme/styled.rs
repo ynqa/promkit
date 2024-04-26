@@ -146,6 +146,46 @@ impl StyledGraphemes {
             styled_graphemes: self,
         }
     }
+
+    pub fn matrixify(
+        &self,
+        width: usize,
+        height: usize,
+        offset: usize,
+    ) -> (Vec<StyledGraphemes>, usize) {
+        let mut all = vec![];
+        let mut row = StyledGraphemes::default();
+        for styled in self.iter() {
+            let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+                layout += g.width;
+                layout
+            }) + styled.width;
+            if !row.is_empty() && width < width_with_next_char {
+                all.push(row);
+                row = StyledGraphemes::default();
+            }
+            if width >= styled.width {
+                row.push_back(styled.clone());
+            }
+        }
+        if !row.is_empty() {
+            all.push(row);
+        }
+
+        if all.is_empty() {
+            return (vec![], 0);
+        }
+
+        let chunks: Vec<Vec<StyledGraphemes>> =
+            all.chunks(height).map(|chunk| chunk.to_vec()).collect();
+
+        let chunk_index = std::cmp::min(offset / height, chunks.len().saturating_sub(1));
+        let selected_chunk = chunks.get(chunk_index).cloned().unwrap_or_default();
+
+        let local_offset = offset % height;
+
+        (selected_chunk, local_offset)
+    }
 }
 
 pub struct StyledGraphemesDisplay<'a> {
@@ -159,46 +199,6 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
         }
         Ok(())
     }
-}
-
-pub fn matrixify(
-    width: usize,
-    height: usize,
-    offset: usize,
-    g: &StyledGraphemes,
-) -> (Vec<StyledGraphemes>, usize) {
-    let mut all = vec![];
-    let mut row = StyledGraphemes::default();
-    for styled in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + styled.width;
-        if !row.is_empty() && width < width_with_next_char {
-            all.push(row);
-            row = StyledGraphemes::default();
-        }
-        if width >= styled.width {
-            row.push_back(styled.clone());
-        }
-    }
-    if !row.is_empty() {
-        all.push(row);
-    }
-
-    if all.is_empty() {
-        return (vec![], 0);
-    }
-
-    let chunks: Vec<Vec<StyledGraphemes>> =
-        all.chunks(height).map(|chunk| chunk.to_vec()).collect();
-
-    let chunk_index = std::cmp::min(offset / height, chunks.len().saturating_sub(1));
-    let selected_chunk = chunks.get(chunk_index).cloned().unwrap_or_default();
-
-    let local_offset = offset % height;
-
-    (selected_chunk, local_offset)
 }
 
 /// Trims a collection of graphemes to fit within a specified width.
@@ -234,7 +234,7 @@ mod test {
         fn test_with_single_line_no_offset() {
             let input =
                 StyledGraphemes::from("Hello, world! This is a longer test without offset.");
-            let (matrix, offset) = matrixify(50, 1, 0, &input);
+            let (matrix, offset) = input.matrixify(50, 1, 0);
             assert_eq!(1, matrix.len());
             assert_eq!(
                 "Hello, world! This is a longer test without offset",
@@ -246,7 +246,7 @@ mod test {
         #[test]
         fn test_with_multiple_lines_and_offset() {
             let input = StyledGraphemes::from("One Two Three Four Five Six Seven Eight Nine Ten");
-            let (matrix, offset) = matrixify(10, 3, 10, &input);
+            let (matrix, offset) = input.matrixify(10, 3, 10);
             assert_eq!(2, matrix.len());
             assert_eq!("ven Eight ", matrix[0].to_string());
             assert_eq!("Nine Ten", matrix[1].to_string());
@@ -256,7 +256,7 @@ mod test {
         #[test]
         fn test_with_empty_input() {
             let input = StyledGraphemes::default();
-            let (matrix, offset) = matrixify(10, 2, 0, &input);
+            let (matrix, offset) = input.matrixify(10, 2, 0);
             assert!(matrix.is_empty());
             assert_eq!(0, offset);
         }
@@ -264,7 +264,7 @@ mod test {
         #[test]
         fn test_with_large_offset_beyond_content() {
             let input = StyledGraphemes::from("Short text");
-            let (matrix, offset) = matrixify(10, 2, 20, &input);
+            let (matrix, offset) = input.matrixify(10, 2, 20);
             assert_eq!(1, matrix.len());
             assert_eq!("Short text", matrix[0].to_string());
             assert_eq!(0, offset);
