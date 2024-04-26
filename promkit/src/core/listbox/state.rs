@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{Graphemes, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::Listbox;
 
@@ -54,7 +49,7 @@ impl PaneFactory for State {
                     StyledGraphemes::from_str(
                         format!(
                             "{}{}",
-                            " ".repeat(Graphemes::from(self.cursor.clone()).widths()),
+                            " ".repeat(StyledGraphemes::from(self.cursor.clone()).widths()),
                             item
                         ),
                         self.inactive_item_style,

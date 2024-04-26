@@ -202,7 +202,7 @@ impl PaneFactory for State {
                             " ".repeat(super::State::indent_level(kind, &self.theme)),
                         ),
                         super::State::gen_syntax_style(kind, &self.theme)
-                            .apply_attribute_to_all(self.theme.active_item_attribute),
+                            .apply_attribute(self.theme.active_item_attribute),
                     ])
                 } else {
                     StyledGraphemes::from_iter([
@@ -211,7 +211,7 @@ impl PaneFactory for State {
                         ),
                         super::State::gen_syntax_style(kind, &self.theme),
                     ])
-                    .apply_attribute_to_all(self.theme.inactive_item_attribute)
+                    .apply_attribute(self.theme.inactive_item_attribute)
                 }
             })
             .map(|row| row.truncate_to_width(width as usize))

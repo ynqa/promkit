@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{
     core::cursor::Cursor,
-    grapheme::{Grapheme, Graphemes},
+    grapheme::{StyledGrapheme, StyledGraphemes},
 };
 
 mod history;
@@ -24,13 +24,13 @@ pub enum Mode {
 /// such as insert, delete, and overwrite.
 /// It utilizes a cursor to navigate and manipulate the text.
 #[derive(Clone)]
-pub struct TextEditor(Cursor<Graphemes>);
+pub struct TextEditor(Cursor<StyledGraphemes>);
 
 impl Default for TextEditor {
     fn default() -> Self {
         Self(Cursor::new(
             // Set cursor
-            Graphemes::from(" "),
+            StyledGraphemes::from(" "),
             0,
             false,
         ))
@@ -39,12 +39,12 @@ impl Default for TextEditor {
 
 impl TextEditor {
     /// Returns the current text including the cursor.
-    pub fn text(&self) -> Graphemes {
+    pub fn text(&self) -> StyledGraphemes {
         self.0.contents().clone()
     }
 
     /// Returns the text without the cursor.
-    pub fn text_without_cursor(&self) -> Graphemes {
+    pub fn text_without_cursor(&self) -> StyledGraphemes {
         let mut ret = self.text();
         ret.pop_back();
         ret
@@ -56,13 +56,13 @@ impl TextEditor {
     }
 
     /// Masks all characters except the cursor with the specified mask character.
-    pub fn masking(&self, mask: char) -> Graphemes {
+    pub fn masking(&self, mask: char) -> StyledGraphemes {
         self.text()
             .chars()
             .into_iter()
             .enumerate()
-            .map(|(i, c)| Grapheme::from(if i == self.text().len() - 1 { c } else { mask }))
-            .collect::<Graphemes>()
+            .map(|(i, c)| StyledGrapheme::from(if i == self.text().len() - 1 { c } else { mask }))
+            .collect::<StyledGraphemes>()
     }
 
     /// Replaces the current text with new text and positions the cursor at the end.
@@ -70,13 +70,13 @@ impl TextEditor {
         let mut buf = new.to_owned();
         buf.push(' ');
         let pos = buf.len() - 1;
-        *self = Self(Cursor::new(Graphemes::from(buf), pos, false));
+        *self = Self(Cursor::new(StyledGraphemes::from(buf), pos, false));
     }
 
     /// Inserts a character at the current cursor position.
     pub fn insert(&mut self, ch: char) {
         let pos = self.position();
-        self.0.contents_mut().insert(pos, Grapheme::from(ch));
+        self.0.contents_mut().insert(pos, StyledGrapheme::from(ch));
         self.forward();
     }
 
@@ -215,21 +215,21 @@ impl TextEditor {
 
 #[cfg(test)]
 mod test {
-    use crate::{core::cursor::Cursor, grapheme::Graphemes};
+    use crate::{core::cursor::Cursor, grapheme::StyledGraphemes};
 
     use super::TextEditor;
 
     fn new_with_position(s: String, p: usize) -> TextEditor {
-        TextEditor(Cursor::new(Graphemes::from(s), p, false))
+        TextEditor(Cursor::new(StyledGraphemes::from(s), p, false))
     }
 
     mod masking {
-        use crate::{grapheme::Graphemes, text_editor::test::new_with_position};
+        use crate::{grapheme::StyledGraphemes, text_editor::test::new_with_position};
 
         #[test]
         fn test() {
             let txt = new_with_position(String::from("abcde "), 0);
-            assert_eq!(Graphemes::from("***** "), txt.masking('*'))
+            assert_eq!(StyledGraphemes::from("***** "), txt.masking('*'))
         }
     }
 
@@ -241,7 +241,7 @@ mod test {
         #[test]
         fn test_for_empty() {
             let txt = TextEditor::default();
-            assert_eq!(Graphemes::from(" "), txt.text());
+            assert_eq!(StyledGraphemes::from(" "), txt.text());
             assert_eq!(0, txt.position());
         }
 
@@ -281,7 +281,7 @@ mod test {
                 String::from("abc "),
                 0, // indicate `a`.
             );
-            assert_eq!(Graphemes::from("abc "), txt.text());
+            assert_eq!(StyledGraphemes::from("abc "), txt.text());
             assert_eq!(0, txt.position());
         }
     }
@@ -461,7 +461,7 @@ mod test {
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.backward();
-            assert_eq!(Graphemes::from(" "), txt.text());
+            assert_eq!(StyledGraphemes::from(" "), txt.text());
             assert_eq!(0, txt.position());
         }
 
@@ -502,7 +502,7 @@ mod test {
                 0, // indicate `a`.
             );
             txt.backward();
-            assert_eq!(Graphemes::from("abc "), txt.text());
+            assert_eq!(StyledGraphemes::from("abc "), txt.text());
             assert_eq!(0, txt.position());
         }
     }
@@ -516,7 +516,7 @@ mod test {
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.forward();
-            assert_eq!(Graphemes::from(" "), txt.text());
+            assert_eq!(StyledGraphemes::from(" "), txt.text());
             assert_eq!(0, txt.position());
         }
 
@@ -542,7 +542,7 @@ mod test {
                 3, // indicate tail.
             );
             txt.forward();
-            assert_eq!(Graphemes::from("abc "), txt.text());
+            assert_eq!(StyledGraphemes::from("abc "), txt.text());
             assert_eq!(3, txt.position());
         }
 
@@ -571,7 +571,7 @@ mod test {
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.move_to_head();
-            assert_eq!(Graphemes::from(" "), txt.text());
+            assert_eq!(StyledGraphemes::from(" "), txt.text());
             assert_eq!(0, txt.position());
         }
 
@@ -612,7 +612,7 @@ mod test {
                 0, // indicate `a`.
             );
             txt.move_to_head();
-            assert_eq!(Graphemes::from("abc "), txt.text());
+            assert_eq!(StyledGraphemes::from("abc "), txt.text());
             assert_eq!(0, txt.position());
         }
     }
@@ -626,7 +626,7 @@ mod test {
         fn test_for_empty() {
             let mut txt = TextEditor::default();
             txt.move_to_tail();
-            assert_eq!(Graphemes::from(" "), txt.text());
+            assert_eq!(StyledGraphemes::from(" "), txt.text());
             assert_eq!(0, txt.position());
         }
 
@@ -652,7 +652,7 @@ mod test {
                 3, // indicate tail.
             );
             txt.move_to_tail();
-            assert_eq!(Graphemes::from("abc "), txt.text());
+            assert_eq!(StyledGraphemes::from("abc "), txt.text());
             assert_eq!(3, txt.position());
         }
 

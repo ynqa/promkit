@@ -44,7 +44,8 @@ impl PaneFactory for State {
             None => self.texteditor.text(),
         };
 
-        let mut styled = StyledGraphemes::from_graphemes(text, self.inactive_char_style)
+        let mut styled = text
+            .apply_style(self.inactive_char_style)
             .apply_style_at(self.texteditor.position(), self.active_char_style);
 
         buf.append(&mut styled);

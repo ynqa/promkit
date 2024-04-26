@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{Graphemes, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::{Kind, Tree};
 
@@ -84,7 +79,7 @@ impl PaneFactory for State {
                     StyledGraphemes::from_str(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::from(symbol(kind)).widths()),
+                            " ".repeat(StyledGraphemes::from(symbol(kind)).widths()),
                             " ".repeat(indent(kind)),
                             id(kind),
                         ),
