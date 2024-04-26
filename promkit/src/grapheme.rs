@@ -146,6 +146,7 @@ impl StyledGraphemes {
         }
     }
 
+    /// Applies a given style to all `StyledGrapheme` instances within the collection.
     pub fn apply_style(mut self, style: ContentStyle) -> Self {
         for grapheme in &mut self.0 {
             grapheme.apply_style(style);
@@ -153,6 +154,7 @@ impl StyledGraphemes {
         self
     }
 
+    /// Applies a given style to a specific `StyledGrapheme` at the specified index.
     pub fn apply_style_at(mut self, idx: usize, style: ContentStyle) -> Self {
         if let Some(grapheme) = self.0.get_mut(idx) {
             grapheme.apply_style(style);
@@ -160,6 +162,7 @@ impl StyledGraphemes {
         self
     }
 
+    /// Applies a given attribute to all `StyledGrapheme` instances within the collection.
     pub fn apply_attribute(mut self, attr: Attribute) -> Self {
         for styled_grapheme in &mut self.0 {
             styled_grapheme.style.attributes.set(attr);
@@ -167,12 +170,15 @@ impl StyledGraphemes {
         self
     }
 
+    /// Returns a displayable format of the styled graphemes.
     pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
         StyledGraphemesDisplay {
             styled_graphemes: self,
         }
     }
 
+    /// Organizes the `StyledGraphemes` into a matrix format based on specified width and height,
+    /// considering an offset for pagination or scrolling.
     pub fn matrixify(
         &self,
         width: usize,
@@ -213,6 +219,7 @@ impl StyledGraphemes {
         (selected_chunk, local_offset)
     }
 
+    /// Truncates the collection of `StyledGraphemes` to fit within a specified width.
     pub fn truncate_to_width(&self, width: usize) -> StyledGraphemes {
         let mut row = StyledGraphemes::default();
         for ch in self.iter() {
