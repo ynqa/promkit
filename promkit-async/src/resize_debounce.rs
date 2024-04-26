@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use futures::future::{Future, FutureExt};
+use futures::future::Future;
 use futures_timer::Delay;
 
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -23,11 +23,11 @@ impl ResizeDebounce {
         async move {
             let mut last_event: Option<(u16, u16)> = None;
             loop {
-                let delay = Delay::new(delay_duration).fuse();
+                let delay = Delay::new(delay_duration);
                 futures::pin_mut!(delay);
 
-                futures::select! {
-                    resize_opt = resize_receiver.recv().fuse() => {
+                tokio::select! {
+                    resize_opt = resize_receiver.recv() => {
                         if let Some(event) = resize_opt {
                             last_event = Some(event);
                         } else {
