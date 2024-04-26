@@ -1,6 +1,6 @@
 use crate::{
     crossterm::style::{Attribute, ContentStyle},
-    grapheme::{trim, StyledGraphemes},
+    grapheme::StyledGraphemes,
     pane::Pane,
     PaneFactory,
 };
@@ -214,7 +214,7 @@ impl PaneFactory for State {
                     .apply_attribute_to_all(self.theme.inactive_item_attribute)
                 }
             })
-            .map(|row| trim(width as usize, &row))
+            .map(|row| row.truncate_to_width(width as usize))
             .collect::<Vec<StyledGraphemes>>();
 
         Pane::new(layout, relative_position)

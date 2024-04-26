@@ -186,6 +186,23 @@ impl StyledGraphemes {
 
         (selected_chunk, local_offset)
     }
+
+    pub fn truncate_to_width(&self, width: usize) -> StyledGraphemes {
+        let mut row = StyledGraphemes::default();
+        for ch in self.iter() {
+            let width_with_next_char = row.iter().fold(0, |mut layout, g| {
+                layout += g.width;
+                layout
+            }) + ch.width;
+            if width < width_with_next_char {
+                break;
+            }
+            if width >= ch.width {
+                row.push_back(ch.clone());
+            }
+        }
+        row
+    }
 }
 
 pub struct StyledGraphemesDisplay<'a> {
@@ -199,28 +216,6 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
         }
         Ok(())
     }
-}
-
-/// Trims a collection of graphemes to fit within a specified width.
-///
-/// This function discards any excess graphemes that would cause the total display width
-/// to exceed the specified limit. It is useful for ensuring that a piece of text fits
-/// within a given space without wrapping.
-pub fn trim(width: usize, g: &StyledGraphemes) -> StyledGraphemes {
-    let mut row = StyledGraphemes::default();
-    for ch in g.iter() {
-        let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-            layout += g.width;
-            layout
-        }) + ch.width;
-        if width < width_with_next_char {
-            break;
-        }
-        if width >= ch.width {
-            row.push_back(ch.clone());
-        }
-    }
-    row
 }
 
 #[cfg(test)]
@@ -271,14 +266,14 @@ mod test {
         }
     }
 
-    mod trim {
+    mod truncate_to_width {
         use super::super::*;
 
         #[test]
         fn test() {
             assert_eq!(
                 StyledGraphemes::from(">> a"),
-                trim(4, &StyledGraphemes::from(">> aaa "))
+                StyledGraphemes::from(">> aaa ").truncate_to_width(4)
             );
         }
 
@@ -286,7 +281,7 @@ mod test {
         fn test_with_emoji() {
             assert_eq!(
                 StyledGraphemes::from("😎"),
-                trim(2, &StyledGraphemes::from("😎"))
+                StyledGraphemes::from("😎").truncate_to_width(2)
             );
         }
 
@@ -294,7 +289,7 @@ mod test {
         fn test_with_emoji_at_narrow_terminal() {
             assert_eq!(
                 StyledGraphemes::from(""),
-                trim(1, &StyledGraphemes::from("😎"))
+                StyledGraphemes::from("😎").truncate_to_width(1)
             );
         }
     }

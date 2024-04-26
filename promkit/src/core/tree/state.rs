@@ -1,6 +1,6 @@
 use crate::{
     crossterm::style::ContentStyle,
-    grapheme::{trim, Graphemes, StyledGraphemes},
+    grapheme::{Graphemes, StyledGraphemes},
     pane::Pane,
     PaneFactory,
 };
@@ -94,7 +94,10 @@ impl PaneFactory for State {
             })
             .collect::<Vec<StyledGraphemes>>();
 
-        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
+        let trimed = matrix
+            .iter()
+            .map(|row| row.truncate_to_width(width as usize))
+            .collect();
         Pane::new(trimed, relative_position)
     }
 }
