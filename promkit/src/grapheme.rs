@@ -248,6 +248,112 @@ impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
 mod test {
     use super::*;
 
+    mod from_str {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let style = ContentStyle::default();
+            let graphemes = StyledGraphemes::from_str("abc", style.clone());
+            assert_eq!(3, graphemes.0.len());
+            assert!(graphemes.0.iter().all(|g| g.style == style));
+        }
+    }
+
+    mod chars {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let graphemes = StyledGraphemes::from("abc");
+            let chars = graphemes.chars();
+            assert_eq!(vec!['a', 'b', 'c'], chars);
+        }
+    }
+
+    mod widths {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let graphemes = StyledGraphemes::from("a b");
+            assert_eq!(3, graphemes.widths()); // 'a' and 'b' are each 1 width, and space is 1 width
+        }
+    }
+
+    mod replace_range {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let mut graphemes = StyledGraphemes::from("Hello");
+            graphemes.replace_range(1..5, "i");
+            assert_eq!("Hi", graphemes.to_string());
+        }
+    }
+
+    mod apply_style {
+        use crate::{crossterm::style::Color, style::StyleBuilder};
+
+        use super::*;
+
+        #[test]
+        fn test_apply_style_to_all() {
+            let mut graphemes = StyledGraphemes::from("abc");
+            let new_style = StyleBuilder::new().fgc(Color::Green).build();
+            graphemes = graphemes.apply_style(new_style.clone());
+            assert!(graphemes.iter().all(|g| g.style == new_style));
+        }
+    }
+
+    mod apply_style_at {
+        use crate::{crossterm::style::Color, style::StyleBuilder};
+
+        use super::*;
+
+        #[test]
+        fn test_apply_style_at_specific_index() {
+            let mut graphemes = StyledGraphemes::from("abc");
+            let new_style = StyleBuilder::new().fgc(Color::Green).build();
+            graphemes = graphemes.apply_style_at(1, new_style.clone());
+            assert_eq!(graphemes.0[1].style, new_style);
+            assert_ne!(graphemes.0[0].style, new_style);
+            assert_ne!(graphemes.0[2].style, new_style);
+        }
+
+        #[test]
+        fn test_apply_style_at_out_of_bounds_index() {
+            let mut graphemes = StyledGraphemes::from("abc");
+            let new_style = StyleBuilder::new().fgc(Color::Green).build();
+            graphemes = graphemes.apply_style_at(5, new_style.clone()); // Out of bounds
+            assert_eq!(graphemes.0.len(), 3); // Ensure no changes in length
+        }
+    }
+
+    mod apply_attribute {
+        use super::*;
+
+        #[test]
+        fn test_apply_attribute_to_all() {
+            let mut graphemes = StyledGraphemes::from("abc");
+            graphemes = graphemes.apply_attribute(Attribute::Bold);
+            assert!(graphemes
+                .iter()
+                .all(|g| g.style.attributes.has(Attribute::Bold)));
+        }
+    }
+
+    mod styled_display {
+        use super::*;
+
+        #[test]
+        fn test_styled_display_output() {
+            let graphemes = StyledGraphemes::from("abc");
+            let display = graphemes.styled_display();
+            assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
+        }
+    }
+
     mod matrixify {
         use super::*;
 
@@ -293,7 +399,7 @@ mod test {
     }
 
     mod truncate_to_width {
-        use super::super::*;
+        use super::*;
 
         #[test]
         fn test() {
