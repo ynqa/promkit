@@ -305,7 +305,7 @@ mod test {
         use super::*;
 
         #[test]
-        fn test_apply_style_to_all() {
+        fn test() {
             let mut graphemes = StyledGraphemes::from("abc");
             let new_style = StyleBuilder::new().fgc(Color::Green).build();
             graphemes = graphemes.apply_style(new_style.clone());
@@ -341,7 +341,7 @@ mod test {
         use super::*;
 
         #[test]
-        fn test_apply_attribute_to_all() {
+        fn test() {
             let mut graphemes = StyledGraphemes::from("abc");
             graphemes = graphemes.apply_attribute(Attribute::Bold);
             assert!(graphemes
@@ -354,7 +354,7 @@ mod test {
         use super::*;
 
         #[test]
-        fn test_styled_display_output() {
+        fn test() {
             let graphemes = StyledGraphemes::from("abc");
             let display = graphemes.styled_display();
             assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
