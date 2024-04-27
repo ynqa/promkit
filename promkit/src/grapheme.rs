@@ -162,6 +162,62 @@ impl StyledGraphemes {
         self
     }
 
+    /// Finds all occurrences of a query string within the StyledGraphemes and returns their start indices.
+    pub fn find_all<S: AsRef<str>>(&self, query: S) -> Vec<usize> {
+        let query_str = query.as_ref();
+        if query_str.is_empty() {
+            return Vec::new();
+        }
+
+        let mut indices = Vec::new();
+        let mut pos = 0;
+        let query_chars: Vec<char> = query_str.chars().collect();
+        let query_len = query_chars.len();
+
+        // Iterate through each grapheme in self
+        while pos + query_len <= self.0.len() {
+            let mut match_found = true;
+            for (i, query_char) in query_chars.iter().enumerate() {
+                if self.0[pos + i].ch != *query_char {
+                    match_found = false;
+                    break;
+                }
+            }
+            if match_found {
+                indices.push(pos);
+                pos += 1; // Move to the next position even after a match
+            } else {
+                pos += 1; // Check the next position
+            }
+        }
+
+        indices
+    }
+
+    pub fn highlight<S: AsRef<str>>(mut self, query: S, style: ContentStyle) -> Option<Self> {
+        let query_str = query.as_ref();
+        if query_str.is_empty() {
+            return None;
+        }
+
+        let indices = self.find_all(query_str);
+        if indices.is_empty() {
+            return None;
+        }
+
+        let query_len = query_str.chars().count();
+
+        for &start_index in &indices {
+            for i in start_index..start_index + query_len {
+                if let Some(grapheme) = self.0.get_mut(i) {
+                    grapheme.apply_style(style);
+                }
+            }
+        }
+
+        Some(self)
+    }
+
     /// Applies a given attribute to all `StyledGrapheme` instances within the collection.
     pub fn apply_attribute(mut self, attr: Attribute) -> Self {
         for styled_grapheme in &mut self.0 {
@@ -334,6 +390,81 @@ mod test {
             let new_style = StyleBuilder::new().fgc(Color::Green).build();
             graphemes = graphemes.apply_style_at(5, new_style.clone()); // Out of bounds
             assert_eq!(graphemes.0.len(), 3); // Ensure no changes in length
+        }
+    }
+
+    mod find_all {
+        use super::*;
+
+        #[test]
+        fn test_with_empty_query() {
+            let graphemes = StyledGraphemes::from("Hello, world!");
+            let indices = graphemes.find_all("");
+            assert!(
+                indices.is_empty(),
+                "Should return an empty vector for an empty query string"
+            );
+        }
+
+        #[test]
+        fn test_with_repeated_substring() {
+            let graphemes = StyledGraphemes::from("Hello, world! Hello, universe!");
+            let indices = graphemes.find_all("Hello");
+            assert_eq!(
+                indices,
+                vec![0, 14],
+                "Should find all starting indices of 'Hello'"
+            );
+        }
+
+        #[test]
+        fn test_with_nonexistent_substring() {
+            let graphemes = StyledGraphemes::from("Hello, world!");
+            let indices = graphemes.find_all("xyz");
+            assert!(
+                indices.is_empty(),
+                "Should return an empty vector for a non-existent substring"
+            );
+        }
+
+        #[test]
+        fn test_with_special_character() {
+            let graphemes = StyledGraphemes::from("µs µs µs");
+            let indices = graphemes.find_all("s");
+            assert_eq!(
+                indices,
+                vec![1, 4, 7],
+                "Should correctly find indices of substring 'µs'"
+            );
+        }
+
+        #[test]
+        fn test_with_single_character() {
+            let graphemes = StyledGraphemes::from("abcabcabc");
+            let indices = graphemes.find_all("b");
+            assert_eq!(
+                indices,
+                vec![1, 4, 7],
+                "Should find all indices of character 'b'"
+            );
+        }
+
+        #[test]
+        fn test_with_full_match() {
+            let graphemes = StyledGraphemes::from("Hello");
+            let indices = graphemes.find_all("Hello");
+            assert_eq!(indices, vec![0], "Should match the entire string");
+        }
+
+        #[test]
+        fn test_with_partial_overlap() {
+            let graphemes = StyledGraphemes::from("ababa");
+            let indices = graphemes.find_all("aba");
+            assert_eq!(
+                indices,
+                vec![0, 2],
+                "Should handle overlapping matches correctly"
+            );
         }
     }
 
