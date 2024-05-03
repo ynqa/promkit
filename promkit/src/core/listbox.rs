@@ -14,6 +14,12 @@ pub use state::State;
 #[derive(Clone)]
 pub struct Listbox(Cursor<Vec<String>>);
 
+impl Default for Listbox {
+    fn default() -> Self {
+        Self(Cursor::new(vec![String::new()], 0, false))
+    }
+}
+
 impl<T: fmt::Display> FromIterator<T> for Listbox {
     /// Creates a `Listbox` from an iterator of items
     /// that implement the `Display` trait.
