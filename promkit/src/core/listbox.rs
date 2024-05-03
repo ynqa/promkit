@@ -27,7 +27,9 @@ impl<T: fmt::Display> FromIterator<T> for Listbox {
     /// and collected into a `Vec<String>`.
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
-            iter.into_iter().map(|e| format!("{}", e)).collect(),
+            iter.into_iter()
+                .map(|e| format!("{}", e).replace('\n', " "))
+                .collect(),
             0,
             false,
         ))
