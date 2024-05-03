@@ -166,8 +166,4 @@ impl JsonStream {
     pub fn move_to_tail(&mut self) {
         self.cursor.move_to_tail()
     }
-
-    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
-        self.cursor.viewport_range(height)
-    }
 }

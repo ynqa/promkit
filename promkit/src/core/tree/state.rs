@@ -59,16 +59,12 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.tree.viewport_range(height);
-
-        let relative_position = self.tree.position().saturating_sub(viewport.0);
-
         let matrix = self
             .tree
             .kinds()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| *i >= self.tree.position() && *i < self.tree.position() + height)
             .map(|(i, kind)| {
                 if i == self.tree.position() {
                     StyledGraphemes::from_str(
@@ -87,12 +83,9 @@ impl PaneFactory for State {
                     )
                 }
             })
+            .map(|row| row.truncate_to_width(width as usize))
             .collect::<Vec<StyledGraphemes>>();
 
-        let trimed = matrix
-            .iter()
-            .map(|row| row.truncate_to_width(width as usize))
-            .collect();
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix, 0)
     }
 }

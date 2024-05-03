@@ -90,13 +90,6 @@ impl<C: Len> CompositeCursor<C> {
             self.cross_contents_position = total_len.saturating_sub(1);
         }
     }
-
-    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
-        let total_len: usize = self.bundle.iter().map(|c| c.len()).sum();
-        let end = std::cmp::min(self.cross_contents_position + height, total_len);
-        let start = if end > height { end - height } else { 0 };
-        (start, end)
-    }
 }
 
 #[cfg(test)]
@@ -144,38 +137,6 @@ mod tests {
             let mut cursor = CompositeCursor::new(vec![vec![1, 2], vec![3, 4, 5]], 3);
             assert!(cursor.shift(1, 0)); // 3 -> 2
             assert_eq!(cursor.cross_contents_position(), 2);
-        }
-    }
-
-    mod viewport_range {
-        use super::*;
-
-        #[test]
-        fn test_viewport_range_within_bounds() {
-            let cursor = CompositeCursor::new(vec![vec![1, 2], vec![3, 4, 5]], 2);
-            let (start, end) = cursor.viewport_range(2);
-            assert_eq!((start, end), (2, 4));
-        }
-
-        #[test]
-        fn test_viewport_range_at_start() {
-            let cursor = CompositeCursor::new(vec![vec![1, 2], vec![3, 4, 5]], 0);
-            let (start, end) = cursor.viewport_range(2);
-            assert_eq!((start, end), (0, 2));
-        }
-
-        #[test]
-        fn test_viewport_range_at_end() {
-            let cursor = CompositeCursor::new(vec![vec![1, 2], vec![3, 4, 5]], 4);
-            let (start, end) = cursor.viewport_range(2);
-            assert_eq!((start, end), (3, 5));
-        }
-
-        #[test]
-        fn test_viewport_range_exceeds_total_length() {
-            let cursor = CompositeCursor::new(vec![vec![1, 2], vec![3, 4, 5]], 1);
-            let (start, end) = cursor.viewport_range(10);
-            assert_eq!((start, end), (0, 5));
         }
     }
 }

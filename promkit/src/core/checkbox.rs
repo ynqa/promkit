@@ -121,10 +121,6 @@ impl Checkbox {
     pub fn move_to_tail(&mut self) {
         self.listbox.move_to_tail()
     }
-
-    pub fn viewport_range(&self, height: usize) -> (usize, usize) {
-        self.listbox.viewport_range(height)
-    }
 }
 
 #[cfg(test)]

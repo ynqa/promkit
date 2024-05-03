@@ -29,16 +29,12 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.listbox.viewport_range(height);
-
-        let relative_position = self.listbox.position().saturating_sub(viewport.0);
-
         let matrix = self
             .listbox
             .items()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
                     StyledGraphemes::from_str(
@@ -56,13 +52,9 @@ impl PaneFactory for State {
                     )
                 }
             })
+            .map(|row| row.truncate_to_width(width as usize))
             .collect::<Vec<StyledGraphemes>>();
 
-        let trimed = matrix
-            .iter()
-            .map(|row| row.truncate_to_width(width as usize))
-            .collect();
-
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix, 0)
     }
 }

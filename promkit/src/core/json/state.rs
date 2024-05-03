@@ -181,20 +181,15 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.stream.viewport_range(height);
-
-        let relative_position = self
-            .stream
-            .cursor
-            .cross_contents_position()
-            .saturating_sub(viewport.0);
-
-        let layout = self
+        let matrix = self
             .stream
             .flatten_kinds()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| {
+                *i >= self.stream.cursor.cross_contents_position()
+                    && *i < self.stream.cursor.cross_contents_position() + height
+            })
             .map(|(i, kind)| {
                 if i == self.stream.cursor.cross_contents_position() {
                     StyledGraphemes::from_iter([
@@ -217,6 +212,6 @@ impl PaneFactory for State {
             .map(|row| row.truncate_to_width(width as usize))
             .collect::<Vec<StyledGraphemes>>();
 
-        Pane::new(layout, relative_position)
+        Pane::new(matrix, 0)
     }
 }

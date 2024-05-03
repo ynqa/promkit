@@ -45,16 +45,14 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.checkbox.viewport_range(height);
-
-        let relative_position = self.checkbox.position().saturating_sub(viewport.0);
-
         let matrix = self
             .checkbox
             .items()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| {
+                *i >= self.checkbox.position() && *i < self.checkbox.position() + height
+            })
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
                     StyledGraphemes::from_str(
@@ -72,13 +70,9 @@ impl PaneFactory for State {
                     )
                 }
             })
+            .map(|row| row.truncate_to_width(width as usize))
             .collect::<Vec<StyledGraphemes>>();
 
-        let trimed = matrix
-            .iter()
-            .map(|row| row.truncate_to_width(width as usize))
-            .collect();
-
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix, 0)
     }
 }
