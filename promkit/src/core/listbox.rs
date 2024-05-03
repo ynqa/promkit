@@ -28,7 +28,7 @@ impl<T: fmt::Display> FromIterator<T> for Listbox {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
             iter.into_iter()
-                .map(|e| format!("{}", e).replace('\n', " "))
+                .map(|e| format!("{}", e).replace('\n', " ").replace('\t', " "))
                 .collect(),
             0,
             false,
