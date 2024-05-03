@@ -70,9 +70,14 @@ impl PaneFactory for State {
                     )
                 }
             })
-            .map(|row| row.truncate_to_width(width as usize))
-            .collect::<Vec<StyledGraphemes>>();
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.checkbox.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-        Pane::new(matrix, 0)
+        Pane::new(matrix.0, 0)
     }
 }

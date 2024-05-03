@@ -274,24 +274,6 @@ impl StyledGraphemes {
 
         (selected_chunk, local_offset)
     }
-
-    /// Truncates the collection of `StyledGraphemes` to fit within a specified width.
-    pub fn truncate_to_width(&self, width: usize) -> StyledGraphemes {
-        let mut row = StyledGraphemes::default();
-        for ch in self.iter() {
-            let width_with_next_char = row.iter().fold(0, |mut layout, g| {
-                layout += g.width;
-                layout
-            }) + ch.width;
-            if width < width_with_next_char {
-                break;
-            }
-            if width >= ch.width {
-                row.push_back(ch.clone());
-            }
-        }
-        row
-    }
 }
 
 pub struct StyledGraphemesDisplay<'a> {
@@ -533,34 +515,6 @@ mod test {
             assert_eq!(1, matrix.len());
             assert_eq!("Short text", matrix[0].to_string());
             assert_eq!(0, offset);
-        }
-    }
-
-    mod truncate_to_width {
-        use super::*;
-
-        #[test]
-        fn test() {
-            assert_eq!(
-                StyledGraphemes::from(">> a"),
-                StyledGraphemes::from(">> aaa ").truncate_to_width(4)
-            );
-        }
-
-        #[test]
-        fn test_with_emoji() {
-            assert_eq!(
-                StyledGraphemes::from("😎"),
-                StyledGraphemes::from("😎").truncate_to_width(2)
-            );
-        }
-
-        #[test]
-        fn test_with_emoji_at_narrow_terminal() {
-            assert_eq!(
-                StyledGraphemes::from(""),
-                StyledGraphemes::from("😎").truncate_to_width(1)
-            );
         }
     }
 }

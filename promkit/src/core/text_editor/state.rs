@@ -60,6 +60,7 @@ impl PaneFactory for State {
             height,
             (styled_prefix.widths() + self.texteditor.position()) / width as usize,
         );
+
         Pane::new(matrix, offset)
     }
 }
