@@ -58,7 +58,9 @@ impl PaneFactory for State {
         let (matrix, offset) = buf.matrixify(
             width as usize,
             height,
-            (styled_prefix.widths() + self.texteditor.position()) / width as usize,
+            (StyledGraphemes::from_str(&self.prefix, self.prefix_style).widths()
+                + self.texteditor.position())
+                / width as usize,
         );
 
         Pane::new(matrix, offset)
