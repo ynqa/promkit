@@ -82,6 +82,16 @@ impl FromIterator<StyledGraphemes> for StyledGraphemes {
     }
 }
 
+impl<'a> FromIterator<&'a StyledGraphemes> for StyledGraphemes {
+    fn from_iter<I: IntoIterator<Item = &'a StyledGraphemes>>(iter: I) -> Self {
+        let concatenated = iter
+            .into_iter()
+            .flat_map(|g| g.0.iter().cloned())
+            .collect::<VecDeque<StyledGrapheme>>();
+        StyledGraphemes(concatenated)
+    }
+}
+
 impl FromIterator<StyledGrapheme> for StyledGraphemes {
     fn from_iter<I: IntoIterator<Item = StyledGrapheme>>(iter: I) -> Self {
         let mut g = StyledGraphemes::default();
@@ -130,6 +140,29 @@ impl StyledGraphemes {
     /// Calculates the total display width of all `Grapheme` instances in the collection.
     pub fn widths(&self) -> usize {
         self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
+    /// Replaces all occurrences of a substring `from` with another substring `to` within the `StyledGraphemes`.
+    pub fn replace<S: AsRef<str>>(mut self, from: S, to: S) -> Self {
+        let from_len = from.as_ref().chars().count();
+        let to_len = to.as_ref().chars().count();
+
+        let mut offset = 0;
+        let diff = from_len.abs_diff(to_len);
+
+        let pos = self.find_all(from);
+
+        for p in pos {
+            let adjusted_pos = if to_len > from_len {
+                p + offset
+            } else {
+                p.saturating_sub(offset)
+            };
+            self.replace_range(adjusted_pos..adjusted_pos + from_len, &to);
+            offset += diff;
+        }
+
+        self
     }
 
     /// Replaces the specified range with the given string.
@@ -327,6 +360,34 @@ mod test {
         fn test() {
             let graphemes = StyledGraphemes::from("a b");
             assert_eq!(3, graphemes.widths()); // 'a' and 'b' are each 1 width, and space is 1 width
+        }
+    }
+
+    mod replace_char {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let graphemes = StyledGraphemes::from("banana");
+            assert_eq!("bonono", graphemes.replace("a", "o").to_string());
+        }
+
+        #[test]
+        fn test_with_nonexistent_character() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hello World", graphemes.replace("x", "o").to_string());
+        }
+
+        #[test]
+        fn test_with_empty_string() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hell Wrld", graphemes.replace("o", "").to_string());
+        }
+
+        #[test]
+        fn test_with_multiple_characters() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hellabc Wabcrld", graphemes.replace("o", "abc").to_string());
         }
     }
 
