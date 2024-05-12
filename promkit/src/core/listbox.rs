@@ -1,6 +1,6 @@
 use std::{fmt, iter::FromIterator};
 
-use crate::core::cursor::Cursor;
+use crate::{core::cursor::Cursor, grapheme::StyledGraphemes};
 
 mod state;
 pub use state::State;
@@ -12,11 +12,11 @@ pub use state::State;
 /// retrieving the current item,
 /// and initializing from an iterator of displayable items.
 #[derive(Clone)]
-pub struct Listbox(Cursor<Vec<String>>);
+pub struct Listbox(Cursor<Vec<StyledGraphemes>>);
 
 impl Default for Listbox {
     fn default() -> Self {
-        Self(Cursor::new(vec![String::new()], 0, false))
+        Self(Cursor::new(vec![StyledGraphemes::default()], 0, false))
     }
 }
 
@@ -27,16 +27,24 @@ impl<T: fmt::Display> FromIterator<T> for Listbox {
     /// and collected into a `Vec<String>`.
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self(Cursor::new(
-            iter.into_iter().map(|e| format!("{}", e)).collect(),
+            iter.into_iter()
+                .map(|e| StyledGraphemes::from(format!("{}", e)))
+                .collect(),
             0,
             false,
         ))
     }
 }
 
+impl FromIterator<StyledGraphemes> for Listbox {
+    fn from_iter<T: IntoIterator<Item = StyledGraphemes>>(iter: T) -> Self {
+        Self(Cursor::new(iter.into_iter().collect(), 0, false))
+    }
+}
+
 impl Listbox {
     /// Returns a reference to the vector of items in the listbox.
-    pub fn items(&self) -> &Vec<String> {
+    pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.0.contents()
     }
 
@@ -48,11 +56,11 @@ impl Listbox {
     /// Retrieves the item at the current cursor position as a `String`.
     /// If the cursor is at a position without an item,
     /// returns an empty `String`.
-    pub fn get(&self) -> String {
+    pub fn get(&self) -> StyledGraphemes {
         self.items()
             .get(self.position())
-            .unwrap_or(&String::new())
-            .to_string()
+            .unwrap_or(&StyledGraphemes::default())
+            .clone()
     }
 
     /// Moves the cursor backward in the listbox, if possible.

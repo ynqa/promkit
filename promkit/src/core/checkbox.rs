@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt, iter::FromIterator};
 
-use crate::core::listbox::Listbox;
+use crate::{core::listbox::Listbox, grapheme::StyledGraphemes};
 
 mod state;
 pub use state::State;
@@ -67,7 +67,7 @@ impl Checkbox {
     }
 
     /// Returns a reference to the vector of items in the listbox.
-    pub fn items(&self) -> &Vec<String> {
+    pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.listbox.items()
     }
 
@@ -82,10 +82,10 @@ impl Checkbox {
     }
 
     /// Retrieves the items at the picked (selected) indices as a vector of strings.
-    pub fn get(&self) -> Vec<String> {
+    pub fn get(&self) -> Vec<StyledGraphemes> {
         self.picked
             .iter()
-            .fold(Vec::<String>::new(), |mut ret, idx| {
+            .fold(Vec::<StyledGraphemes>::new(), |mut ret, idx| {
                 ret.push(self.listbox.items().get(*idx).unwrap().to_owned());
                 ret
             })
@@ -145,7 +145,11 @@ mod tests {
             // Verify the items in the listbox
             assert_eq!(
                 checkbox.items(),
-                &vec!["1".to_string(), "2".to_string(), "3".to_string()]
+                &vec![
+                    StyledGraphemes::from("1"),
+                    StyledGraphemes::from("2"),
+                    StyledGraphemes::from("3"),
+                ]
             );
 
             // Verify the picked (selected) indices
