@@ -32,11 +32,11 @@ pub struct State {
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let f = |idx: usize, item: &String| -> String {
+        let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {
-                format!("{} {}", self.active_mark, item)
+                StyledGraphemes::from(format!("{} ", self.active_mark))
             } else {
-                format!("{} {}", self.inactive_mark, item)
+                StyledGraphemes::from(format!("{} ", self.inactive_mark))
             }
         };
 
@@ -55,19 +55,21 @@ impl PaneFactory for State {
             })
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
-                    StyledGraphemes::from_str(
-                        format!("{}{}", self.cursor, f(i, item)),
-                        self.active_item_style,
-                    )
+                    StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(self.cursor.clone()),
+                        &f(i),
+                        item,
+                    ])
+                    .apply_style(self.active_item_style)
                 } else {
-                    StyledGraphemes::from_str(
-                        format!(
-                            "{}{}",
+                    StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(
                             " ".repeat(StyledGraphemes::from(self.cursor.clone()).widths()),
-                            f(i, item)
                         ),
-                        self.inactive_item_style,
-                    )
+                        &f(i),
+                        item,
+                    ])
+                    .apply_style(self.inactive_item_style)
                 }
             })
             .fold((vec![], 0), |(mut acc, pos), item| {
