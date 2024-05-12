@@ -68,8 +68,8 @@ impl QuerySelector {
             listbox_state: listbox::State {
                 listbox: Listbox::from_iter(items),
                 cursor: String::from("❯ "),
-                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: StyleBuilder::new().build(),
+                active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
+                inactive_item_style: Some(StyleBuilder::new().build()),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
@@ -133,13 +133,13 @@ impl QuerySelector {
 
     /// Sets the style for active (currently selected) items in the list box component.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.active_item_style = style;
+        self.listbox_state.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items in the list box component.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.inactive_item_style = style;
+        self.listbox_state.inactive_item_style = Some(style);
         self
     }
 

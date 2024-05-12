@@ -14,9 +14,9 @@ pub struct State {
     pub cursor: String,
 
     /// Style for the selected line.
-    pub active_item_style: ContentStyle,
+    pub active_item_style: Option<ContentStyle>,
     /// Style for un-selected lines.
-    pub inactive_item_style: ContentStyle,
+    pub inactive_item_style: Option<ContentStyle>,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
@@ -38,15 +38,18 @@ impl PaneFactory for State {
             .map(|(i, item)| {
                 if i == self.listbox.position() {
                     StyledGraphemes::from_iter([&StyledGraphemes::from(self.cursor.clone()), item])
-                        .apply_style(self.active_item_style)
                 } else {
-                    StyledGraphemes::from_iter([
+                    let init = StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
                             " ".repeat(StyledGraphemes::from(self.cursor.clone()).widths()),
                         ),
                         item,
-                    ])
-                    .apply_style(self.inactive_item_style)
+                    ]);
+                    if let Some(style) = &self.active_item_style {
+                        init.apply_style(*style)
+                    } else {
+                        init
+                    }
                 }
             })
             .fold((vec![], 0), |(mut acc, pos), item| {
