@@ -24,7 +24,14 @@ impl crate::Finalizer for Renderer {
     type Return = Vec<String>;
 
     fn finalize(&self) -> anyhow::Result<Self::Return> {
-        Ok(self.checkbox_snapshot.after().checkbox.get())
+        Ok(self
+            .checkbox_snapshot
+            .after()
+            .checkbox
+            .get()
+            .iter()
+            .map(|e| e.to_string())
+            .collect())
     }
 }
 

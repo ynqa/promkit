@@ -34,7 +34,7 @@ impl crate::Finalizer for Renderer {
     type Return = String;
 
     fn finalize(&self) -> anyhow::Result<Self::Return> {
-        Ok(self.listbox_snapshot.after().listbox.get())
+        Ok(self.listbox_snapshot.after().listbox.get().to_string())
     }
 }
 
@@ -60,7 +60,17 @@ impl crate::Renderer for Renderer {
                 .text_without_cursor()
                 .to_string();
 
-            let list = (self.filter)(&query, self.listbox_snapshot.init().listbox.items());
+            let list = (self.filter)(
+                &query,
+                &self
+                    .listbox_snapshot
+                    .init()
+                    .listbox
+                    .items()
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect(),
+            );
             self.listbox_snapshot.after_mut().listbox = Listbox::from_iter(list);
         }
         signal
