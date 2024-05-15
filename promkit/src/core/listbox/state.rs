@@ -37,11 +37,11 @@ impl PaneFactory for State {
             .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
-                    StyledGraphemes::from_iter([&StyledGraphemes::from(self.cursor.clone()), item])
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item])
                 } else {
                     let init = StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(self.cursor.clone()).widths()),
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
                         ),
                         item,
                     ]);

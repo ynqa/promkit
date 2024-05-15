@@ -55,16 +55,12 @@ impl PaneFactory for State {
             })
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
-                    StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(self.cursor.clone()),
-                        &f(i),
-                        item,
-                    ])
-                    .apply_style(self.active_item_style)
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), &f(i), item])
+                        .apply_style(self.active_item_style)
                 } else {
                     StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(self.cursor.clone()).widths()),
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
                         ),
                         &f(i),
                         item,
