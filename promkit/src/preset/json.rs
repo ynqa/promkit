@@ -30,23 +30,21 @@ impl Json {
             },
             json_state: json::State {
                 stream,
-                theme: json::Theme {
-                    curly_brackets_style: StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Bold))
-                        .build(),
-                    square_brackets_style: StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Bold))
-                        .build(),
-                    key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
-                    string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
-                    number_value_style: StyleBuilder::new().build(),
-                    boolean_value_style: StyleBuilder::new().build(),
-                    null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
-                    active_item_attribute: Attribute::Undercurled,
-                    inactive_item_attribute: Attribute::Dim,
-                    lines: Default::default(),
-                    indent: 2,
-                },
+                curly_brackets_style: StyleBuilder::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+                square_brackets_style: StyleBuilder::new()
+                    .attrs(Attributes::from(Attribute::Bold))
+                    .build(),
+                key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
+                string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+                number_value_style: StyleBuilder::new().build(),
+                boolean_value_style: StyleBuilder::new().build(),
+                null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
+                active_item_attribute: Attribute::Undercurled,
+                inactive_item_attribute: Attribute::Dim,
+                lines: Default::default(),
+                indent: 2,
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
@@ -66,25 +64,25 @@ impl Json {
 
     /// Sets the number of lines to be used for rendering the JSON data.
     pub fn json_lines(mut self, lines: usize) -> Self {
-        self.json_state.theme.lines = Some(lines);
+        self.json_state.lines = Some(lines);
         self
     }
 
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.json_state.theme.indent = indent;
+        self.json_state.indent = indent;
         self
     }
 
     /// Sets the attribute for active (currently selected) items.
     pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.theme.active_item_attribute = attr;
+        self.json_state.active_item_attribute = attr;
         self
     }
 
     /// Sets the attribute for inactive (not currently selected) items.
     pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.theme.inactive_item_attribute = attr;
+        self.json_state.inactive_item_attribute = attr;
         self
     }
 

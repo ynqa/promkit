@@ -3,7 +3,7 @@ use crate::core::cursor::CompositeCursor;
 mod node;
 pub use node::{JsonNode, JsonPath, JsonPathSegment, JsonSyntaxKind};
 mod state;
-pub use state::{State, Theme};
+pub use state::State;
 
 /// Represents a stream of JSON data, allowing for efficient navigation and manipulation.
 ///
