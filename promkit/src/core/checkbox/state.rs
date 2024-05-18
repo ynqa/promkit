@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{trim, Graphemes, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::Checkbox;
 
@@ -37,11 +32,11 @@ pub struct State {
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let f = |idx: usize, item: &String| -> String {
+        let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {
-                format!("{} {}", self.active_mark, item)
+                StyledGraphemes::from(format!("{} ", self.active_mark))
             } else {
-                format!("{} {}", self.inactive_mark, item)
+                StyledGraphemes::from(format!("{} ", self.inactive_mark))
             }
         };
 
@@ -50,37 +45,37 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.checkbox.viewport_range(height);
-
-        let relative_position = self.checkbox.position().saturating_sub(viewport.0);
-
         let matrix = self
             .checkbox
             .items()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| {
+                *i >= self.checkbox.position() && *i < self.checkbox.position() + height
+            })
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
-                    StyledGraphemes::from_str(
-                        format!("{}{}", self.cursor, f(i, item)),
-                        self.active_item_style,
-                    )
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), &f(i), item])
+                        .apply_style(self.active_item_style)
                 } else {
-                    StyledGraphemes::from_str(
-                        format!(
-                            "{}{}",
-                            " ".repeat(Graphemes::from(self.cursor.clone()).widths()),
-                            f(i, item)
+                    StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
                         ),
-                        self.inactive_item_style,
-                    )
+                        &f(i),
+                        item,
+                    ])
+                    .apply_style(self.inactive_item_style)
                 }
             })
-            .collect::<Vec<StyledGraphemes>>();
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.checkbox.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix.0, 0)
     }
 }

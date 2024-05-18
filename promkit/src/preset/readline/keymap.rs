@@ -91,7 +91,7 @@ pub fn default(
                     suggest_after_mut.listbox = Listbox::from_iter(candidates);
                     text_editor_after_mut
                         .texteditor
-                        .replace(&suggest_after_mut.listbox.get());
+                        .replace(&suggest_after_mut.listbox.get().to_string());
 
                     renderer.keymap.borrow_mut().switch("on_suggest");
                 }
@@ -258,7 +258,7 @@ pub fn on_suggest(
             suggest_after_mut.listbox.forward();
             text_editor_after_mut
                 .texteditor
-                .replace(&suggest_after_mut.listbox.get());
+                .replace(&suggest_after_mut.listbox.get().to_string());
         }
 
         Event::Key(KeyEvent {
@@ -270,7 +270,7 @@ pub fn on_suggest(
             suggest_after_mut.listbox.backward();
             text_editor_after_mut
                 .texteditor
-                .replace(&suggest_after_mut.listbox.get());
+                .replace(&suggest_after_mut.listbox.get().to_string());
         }
 
         _ => {

@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -20,6 +20,3 @@ radix_trie = "0.2.1"
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114", features = ["preserve_order"] }
 unicode-width = "0.1.8"
-
-[dev-dependencies]
-strip-ansi-escapes = "0.2.0"

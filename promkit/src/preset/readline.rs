@@ -63,11 +63,13 @@ impl Default for Readline {
             suggest_state: listbox::State {
                 listbox: Listbox::from_iter(Vec::<String>::new()),
                 cursor: String::from("❯ "),
-                active_item_style: StyleBuilder::new()
-                    .fgc(Color::DarkGrey)
-                    .bgc(Color::DarkYellow)
-                    .build(),
-                inactive_item_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
+                active_item_style: Some(
+                    StyleBuilder::new()
+                        .fgc(Color::DarkGrey)
+                        .bgc(Color::DarkYellow)
+                        .build(),
+                ),
+                inactive_item_style: Some(StyleBuilder::new().fgc(Color::DarkGrey).build()),
                 lines: Some(3),
             },
             validator: Default::default(),

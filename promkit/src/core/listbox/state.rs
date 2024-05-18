@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{trim, Graphemes, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::Listbox;
 
@@ -19,9 +14,9 @@ pub struct State {
     pub cursor: String,
 
     /// Style for the selected line.
-    pub active_item_style: ContentStyle,
+    pub active_item_style: Option<ContentStyle>,
     /// Style for un-selected lines.
-    pub inactive_item_style: ContentStyle,
+    pub inactive_item_style: Option<ContentStyle>,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
@@ -34,37 +29,37 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.listbox.viewport_range(height);
-
-        let relative_position = self.listbox.position().saturating_sub(viewport.0);
-
         let matrix = self
             .listbox
             .items()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
-                    StyledGraphemes::from_str(
-                        format!("{}{}", self.cursor, item),
-                        self.active_item_style,
-                    )
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item])
                 } else {
-                    StyledGraphemes::from_str(
-                        format!(
-                            "{}{}",
-                            " ".repeat(Graphemes::from(self.cursor.clone()).widths()),
-                            item
+                    let init = StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
                         ),
-                        self.inactive_item_style,
-                    )
+                        item,
+                    ]);
+                    if let Some(style) = &self.active_item_style {
+                        init.apply_style(*style)
+                    } else {
+                        init
+                    }
                 }
             })
-            .collect::<Vec<StyledGraphemes>>();
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.listbox.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix.0, 0)
     }
 }

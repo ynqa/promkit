@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::grapheme::Graphemes;
+use crate::grapheme::StyledGraphemes;
 
 /// Defines a `Len` trait for obtaining the length of a collection
 /// and checking if it is empty.
@@ -51,7 +51,7 @@ impl Len for String {
     }
 }
 
-impl Len for Graphemes {
+impl Len for StyledGraphemes {
     /// Returns the number of `Grapheme` instances in the collection.
     fn len(&self) -> usize {
         self.0.len()

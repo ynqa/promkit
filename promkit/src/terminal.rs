@@ -64,7 +64,7 @@ impl Terminal {
             return crossterm::execute!(
                 io::stdout(),
                 terminal::Clear(terminal::ClearType::FromCursorDown),
-                style::Print("⚠️  Insufficient Space"),
+                style::Print("⚠️ Insufficient Space"),
             )
             .map_err(anyhow::Error::from);
         }
@@ -87,12 +87,15 @@ impl Terminal {
                 ),
             );
             used += rows.len();
-            for (i, row) in rows.iter().enumerate() {
+            for (j, row) in rows.iter().enumerate() {
                 crossterm::queue!(io::stdout(), style::Print(row.styled_display()))?;
 
                 current_cursor_y = current_cursor_y.saturating_sub(1);
 
-                if i != rows.len() - 1 && current_cursor_y == 0 {
+                if ((i == viewable_panes.len() - 1 && j != rows.len() - 1)
+                    || i != viewable_panes.len() - 1)
+                    && current_cursor_y == 0
+                {
                     crossterm::queue!(io::stdout(), terminal::ScrollUp(1))?;
                     self.position.1 = self.position.1.saturating_sub(1);
                 }

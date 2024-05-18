@@ -1,9 +1,4 @@
-use crate::{
-    crossterm::style::ContentStyle,
-    grapheme::{trim, Graphemes, StyledGraphemes},
-    pane::Pane,
-    PaneFactory,
-};
+use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
 
 use super::{Kind, Tree};
 
@@ -64,16 +59,12 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let viewport = self.tree.viewport_range(height);
-
-        let relative_position = self.tree.position().saturating_sub(viewport.0);
-
         let matrix = self
             .tree
             .kinds()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= viewport.0 && *i < viewport.1)
+            .filter(|(i, _)| *i >= self.tree.position() && *i < self.tree.position() + height)
             .map(|(i, kind)| {
                 if i == self.tree.position() {
                     StyledGraphemes::from_str(
@@ -84,7 +75,7 @@ impl PaneFactory for State {
                     StyledGraphemes::from_str(
                         format!(
                             "{}{}{}",
-                            " ".repeat(Graphemes::from(symbol(kind)).widths()),
+                            " ".repeat(StyledGraphemes::from(symbol(kind)).widths()),
                             " ".repeat(indent(kind)),
                             id(kind),
                         ),
@@ -92,9 +83,14 @@ impl PaneFactory for State {
                     )
                 }
             })
-            .collect::<Vec<StyledGraphemes>>();
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.tree.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-        let trimed = matrix.iter().map(|row| trim(width as usize, row)).collect();
-        Pane::new(trimed, relative_position)
+        Pane::new(matrix.0, 0)
     }
 }

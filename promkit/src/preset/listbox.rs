@@ -40,8 +40,8 @@ impl Listbox {
             listbox_state: listbox::State {
                 listbox: listbox::Listbox::from_iter(items),
                 cursor: String::from("❯ "),
-                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: StyleBuilder::new().build(),
+                active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
+                inactive_item_style: Some(StyleBuilder::new().build()),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
@@ -68,13 +68,13 @@ impl Listbox {
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.active_item_style = style;
+        self.listbox_state.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.inactive_item_style = style;
+        self.listbox_state.inactive_item_style = Some(style);
         self
     }
 

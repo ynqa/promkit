@@ -60,8 +60,6 @@ mod test {
     }
 
     mod is_empty {
-        use crate::grapheme::matrixify;
-
         use super::super::*;
 
         #[test]
@@ -69,7 +67,7 @@ mod test {
             assert_eq!(
                 true,
                 Pane {
-                    layout: matrixify(10, 10, 0, &StyledGraphemes::from("")).0,
+                    layout: StyledGraphemes::from("").matrixify(10, 10, 0).0,
                     offset: 0,
                 }
                 .is_empty()
