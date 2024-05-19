@@ -37,7 +37,13 @@ impl PaneFactory for State {
             .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
-                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item])
+                    let init =
+                        StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item]);
+                    if let Some(style) = &self.active_item_style {
+                        init.apply_style(*style)
+                    } else {
+                        init
+                    }
                 } else {
                     let init = StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
@@ -45,7 +51,7 @@ impl PaneFactory for State {
                         ),
                         item,
                     ]);
-                    if let Some(style) = &self.active_item_style {
+                    if let Some(style) = &self.inactive_item_style {
                         init.apply_style(*style)
                     } else {
                         init
