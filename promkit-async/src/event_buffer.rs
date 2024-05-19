@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
-use futures::future::{Future, FutureExt};
+use futures::future::Future;
 use futures_timer::Delay;
 use tokio::sync::mpsc::{Receiver, Sender};
 
@@ -32,11 +32,11 @@ impl EventBuffer {
 
         async move {
             loop {
-                let delay = Delay::new(delay_duration).fuse();
+                let delay = Delay::new(delay_duration);
                 futures::pin_mut!(delay);
 
-                futures::select! {
-                    maybe_event = event_receiver.recv().fuse() => {
+                tokio::select! {
+                    maybe_event = event_receiver.recv() => {
                         if let Some(event) = maybe_event {
                             buffer.push(event);
                         } else {

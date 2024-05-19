@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-use futures::{future::FutureExt, stream::StreamExt, Future};
+use futures::{stream::StreamExt, Future};
 
 use tokio::sync::mpsc::Receiver;
 
@@ -22,12 +22,11 @@ use promkit::{
     terminal::Terminal,
 };
 
-mod event_buffer;
-use event_buffer::EventBuffer;
-pub use event_buffer::EventBundle;
-mod resize_debounce;
+pub mod event_buffer;
+use event_buffer::{EventBuffer, EventBundle};
+pub mod resize_debounce;
 use resize_debounce::ResizeDebounce;
-mod display_coordinator;
+pub mod display_coordinator;
 use display_coordinator::DisplayCoordinator;
 
 pub trait PaneSyncer: promkit::Finalizer {
@@ -100,8 +99,8 @@ impl<T: PaneSyncer> Prompt<T> {
         let version = Arc::new(AtomicUsize::new(1));
 
         loop {
-            futures::select! {
-                maybe_event = stream.next().fuse() => {
+            tokio::select! {
+                maybe_event = stream.next() => {
                     if let Some(Ok(event)) = maybe_event {
                         match event {
                             Event::Resize(width, height) => {
@@ -113,18 +112,18 @@ impl<T: PaneSyncer> Prompt<T> {
                         }
                     }
                 },
-                maybe_debounced_resize = debounced_resize_receiver.recv().fuse() => {
+                maybe_debounced_resize = debounced_resize_receiver.recv() => {
                     if let Some((width, height)) = maybe_debounced_resize {
                         size = (width, height);
                     }
                 },
-                maybe_event_buffer = event_buffer_receiver.recv().fuse() => {
+                maybe_event_buffer = event_buffer_receiver.recv() => {
                     if let Some(event_buffer) = maybe_event_buffer {
                         let next = version.fetch_add(1, Ordering::SeqCst);
                         self.renderer.sync(next, &event_buffer, size.0, size.1).await?;
                     }
                 },
-                maybe_fin = fin_receiver.recv().fuse() => {
+                maybe_fin = fin_receiver.recv() => {
                     if maybe_fin.is_some() {
                         break;
                     }

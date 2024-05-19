@@ -5,7 +5,7 @@ use promkit::{
 
 use tokio::sync::mpsc::Sender;
 
-use promkit_async::EventBundle;
+use promkit_async::event_buffer::EventBundle;
 
 pub type Handler = fn(&[EventBundle], &mut text_editor::State, &Sender<()>) -> anyhow::Result<()>;
 

@@ -5,7 +5,7 @@ use promkit::{pane::Pane, switch::ActiveKeySwitcher, text_editor, PaneFactory};
 use futures::Future;
 use tokio::sync::mpsc::Sender;
 
-use promkit_async::{EventBundle, PaneSyncer};
+use promkit_async::{event_buffer::EventBundle, PaneSyncer};
 
 use crate::lazyutil::keymap;
 

@@ -7,7 +7,7 @@ use std::{
 };
 
 use crossterm::terminal;
-use futures::{Future, FutureExt};
+use futures::Future;
 use futures_timer::Delay;
 use tokio::sync::mpsc::Receiver;
 
@@ -69,11 +69,11 @@ impl DisplayCoordinator {
 
         async move {
             loop {
-                let delay = Delay::new(delay_duration).fuse();
+                let delay = Delay::new(delay_duration);
                 futures::pin_mut!(delay);
 
-                futures::select! {
-                    maybe_tuple = loading_activation_receiver.recv().fuse() => {
+                tokio::select! {
+                    maybe_tuple = loading_activation_receiver.recv() => {
                         match maybe_tuple {
                             Some((version, index)) => {
                                 if version > global.load(Ordering::SeqCst) {
@@ -84,7 +84,7 @@ impl DisplayCoordinator {
                             None => break,
                         }
                     },
-                    maybe_triplet = indexed_pane_receiver.recv().fuse() => {
+                    maybe_triplet = indexed_pane_receiver.recv() => {
                         match maybe_triplet {
                             Some((version, index, pane)) => {
                                 if version >= global.load(Ordering::SeqCst) {
