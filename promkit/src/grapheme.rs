@@ -227,10 +227,20 @@ impl StyledGraphemes {
         indices
     }
 
+    /// Highlights all occurrences of a specified query string
+    /// within the `StyledGraphemes` collection by applying a given style.
+    ///
+    /// # Returns
+    /// An `Option<Self>` which is:
+    /// - `Some(Self)`:
+    ///     - with the style applied to all occurrences of the query if the query is found.
+    ///     - unchanged if the query string is empty.
+    /// - `None`: if the query string is not found in the collection.
+
     pub fn highlight<S: AsRef<str>>(mut self, query: S, style: ContentStyle) -> Option<Self> {
         let query_str = query.as_ref();
         if query_str.is_empty() {
-            return None;
+            return Some(self);
         }
 
         let indices = self.find_all(query_str);
@@ -512,6 +522,18 @@ mod test {
                 vec![0, 2],
                 "Should handle overlapping matches correctly"
             );
+        }
+    }
+
+    mod highlight {
+        use super::*;
+
+        #[test]
+        fn test_with_empty_query() {
+            let graphemes = StyledGraphemes::from("Hello, world!");
+            let expected = graphemes.clone();
+            let highlighted = graphemes.highlight("", ContentStyle::default());
+            assert_eq!(highlighted.unwrap(), expected);
         }
     }
 
