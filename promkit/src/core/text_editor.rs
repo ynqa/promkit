@@ -38,6 +38,13 @@ impl Default for TextEditor {
 }
 
 impl TextEditor {
+    pub fn new<S: AsRef<str>>(s: S) -> Self {
+        let mut buf = s.as_ref().to_owned();
+        buf.push(' ');
+        let pos = buf.len() - 1;
+        Self(Cursor::new(StyledGraphemes::from(buf), pos, false))
+    }
+
     /// Returns the current text including the cursor.
     pub fn text(&self) -> StyledGraphemes {
         self.0.contents().clone()
