@@ -16,6 +16,17 @@ pub struct StyleBuilder {
     attributes: Attributes,
 }
 
+impl From<ContentStyle> for StyleBuilder {
+    fn from(style: ContentStyle) -> Self {
+        StyleBuilder {
+            foreground_color: style.foreground_color,
+            background_color: style.background_color,
+            underline_color: style.underline_color,
+            attributes: style.attributes,
+        }
+    }
+}
+
 impl StyleBuilder {
     /// Creates a new `Style` instance with default values.
     pub fn new() -> Self {

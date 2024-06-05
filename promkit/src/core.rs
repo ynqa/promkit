@@ -1,5 +1,6 @@
 pub mod checkbox;
 mod cursor;
+pub use cursor::Cursor;
 pub mod json;
 pub mod listbox;
 pub mod snapshot;
