@@ -54,7 +54,9 @@ impl Renderer {
                     state.inactive_char_style = StyleBuilder::from(state.inactive_char_style)
                         .attrs(Attributes::from(Attribute::Dim))
                         .build();
-                    state.active_char_style = StyleBuilder::new().build();
+                    state.active_char_style = StyleBuilder::new()
+                        .attrs(Attributes::from(Attribute::Dim))
+                        .build();
                 } else {
                     state.prefix_style = self.default_styles[i].prefix_style;
                     state.inactive_char_style = self.default_styles[i].inactive_char_style;
