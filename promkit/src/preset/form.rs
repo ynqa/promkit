@@ -30,12 +30,12 @@ impl Form {
                 inactive_char_style: state.inactive_char_style,
             })
             .collect();
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                text_editor_states: Cursor::new(self.text_editor_states, 0, false),
-                default_styles,
-            },
-        })
+        let mut renderer = render::Renderer {
+            keymap: RefCell::new(self.keymap),
+            text_editor_states: Cursor::new(self.text_editor_states, 0, false),
+            default_styles,
+        };
+        renderer.overwrite_styles();
+        Ok(Prompt { renderer })
     }
 }

@@ -7,7 +7,6 @@ use crate::{
         style::{Attribute, Attributes, ContentStyle},
     },
     pane::Pane,
-    preset::{self},
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text_editor, PaneFactory, PromptSignal,
@@ -40,28 +39,29 @@ impl crate::Finalizer for Renderer {
     }
 }
 
-fn hook_to_stylize(renderer: &mut preset::form::render::Renderer) {
-    let current_position = renderer.text_editor_states.position();
-    renderer
-        .text_editor_states
-        .contents_mut()
-        .iter_mut()
-        .enumerate()
-        .for_each(|(i, state)| {
-            if i != current_position {
-                state.prefix_style = StyleBuilder::from(state.prefix_style)
-                    .attrs(Attributes::from(Attribute::Dim))
-                    .build();
-                state.inactive_char_style = StyleBuilder::from(state.inactive_char_style)
-                    .attrs(Attributes::from(Attribute::Dim))
-                    .build();
-                state.active_char_style = StyleBuilder::new().build();
-            } else {
-                state.prefix_style = renderer.default_styles[i].prefix_style;
-                state.inactive_char_style = renderer.default_styles[i].inactive_char_style;
-                state.active_char_style = renderer.default_styles[i].active_char_style;
-            }
-        });
+impl Renderer {
+    pub fn overwrite_styles(&mut self) {
+        let current_position = self.text_editor_states.position();
+        self.text_editor_states
+            .contents_mut()
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, state)| {
+                if i != current_position {
+                    state.prefix_style = StyleBuilder::from(state.prefix_style)
+                        .attrs(Attributes::from(Attribute::Dim))
+                        .build();
+                    state.inactive_char_style = StyleBuilder::from(state.inactive_char_style)
+                        .attrs(Attributes::from(Attribute::Dim))
+                        .build();
+                    state.active_char_style = StyleBuilder::new().build();
+                } else {
+                    state.prefix_style = self.default_styles[i].prefix_style;
+                    state.inactive_char_style = self.default_styles[i].inactive_char_style;
+                    state.active_char_style = self.default_styles[i].active_char_style;
+                }
+            });
+    }
 }
 
 impl crate::Renderer for Renderer {
@@ -76,7 +76,7 @@ impl crate::Renderer for Renderer {
     fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal> {
         let keymap = *self.keymap.borrow_mut().get();
         let signal = keymap(event, self);
-        hook_to_stylize(self);
+        self.overwrite_styles();
         signal
     }
 }
