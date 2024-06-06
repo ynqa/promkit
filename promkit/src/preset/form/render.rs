@@ -2,19 +2,15 @@ use std::cell::RefCell;
 
 use crate::{
     core::Cursor,
-    crossterm::{
-        event::Event,
-        style::{Attribute, Attributes, ContentStyle},
-    },
+    crossterm::{event::Event, style::ContentStyle},
     pane::Pane,
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text_editor, PaneFactory, PromptSignal,
 };
 
 use super::keymap;
 
-pub struct DefaultStyle {
+pub struct Style {
     pub prefix_style: ContentStyle,
     pub active_char_style: ContentStyle,
     pub inactive_char_style: ContentStyle,
@@ -23,7 +19,8 @@ pub struct DefaultStyle {
 pub struct Renderer {
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
     pub text_editor_states: Cursor<Vec<text_editor::State>>,
-    pub default_styles: Vec<DefaultStyle>,
+    pub default_styles: Vec<Style>,
+    pub overwrite_styles: Vec<Style>,
 }
 
 impl crate::Finalizer for Renderer {
@@ -40,6 +37,7 @@ impl crate::Finalizer for Renderer {
 }
 
 impl Renderer {
+    /// Updates the styles of text editor states based on their active or inactive status.
     pub fn overwrite_styles(&mut self) {
         let current_position = self.text_editor_states.position();
         self.text_editor_states
@@ -47,20 +45,14 @@ impl Renderer {
             .iter_mut()
             .enumerate()
             .for_each(|(i, state)| {
-                if i != current_position {
-                    state.prefix_style = StyleBuilder::from(state.prefix_style)
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build();
-                    state.inactive_char_style = StyleBuilder::from(state.inactive_char_style)
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build();
-                    state.active_char_style = StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build();
-                } else {
+                if i == current_position {
                     state.prefix_style = self.default_styles[i].prefix_style;
                     state.inactive_char_style = self.default_styles[i].inactive_char_style;
                     state.active_char_style = self.default_styles[i].active_char_style;
+                } else {
+                    state.prefix_style = self.overwrite_styles[i].prefix_style;
+                    state.inactive_char_style = self.overwrite_styles[i].inactive_char_style;
+                    state.active_char_style = self.overwrite_styles[i].active_char_style;
                 }
             });
     }
