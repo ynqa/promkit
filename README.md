@@ -41,6 +41,11 @@ promkit = "0.4.4"
 - Mouse support (partially)
   - Allows scrolling through lists with the mouse wheel
 
+## Projects using *promkit*
+
+- [ynqa/jnv](https://github.com/ynqa/jnv)
+- [ynqa/sig](https://github.com/ynqa/sig)
+
 ## Examples/Demos
 
 *promkit* provides presets so that users can try prompts immediately without
