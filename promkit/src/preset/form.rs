@@ -11,9 +11,11 @@ use crate::{
 mod keymap;
 mod render;
 
+/// `Form` struct provides functionality for managing multiple text input fields.
 pub struct Form {
     keymap: ActiveKeySwitcher<keymap::Keymap>,
     text_editor_states: Vec<text_editor::State>,
+    /// Overwrite the default styles of text editor states when unselected.
     overwrite_styles: Vec<render::Style>,
 }
 

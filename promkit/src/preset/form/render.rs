@@ -10,16 +10,25 @@ use crate::{
 
 use super::keymap;
 
+/// Represents the visual styles for different states of text editor components.
 pub struct Style {
+    /// Style for the prefix of the text editor.
     pub prefix_style: ContentStyle,
+    /// Style for the character that is currently active (e.g., where the cursor is).
     pub active_char_style: ContentStyle,
+    /// Style for characters that are not currently active.
     pub inactive_char_style: ContentStyle,
 }
 
+/// Manages rendering logic for text editors, including handling of styles and key mappings.
 pub struct Renderer {
+    /// A mutable reference to a key switcher that manages active key mappings.
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
+    /// Cursor managing the state of multiple text editors.
     pub text_editor_states: Cursor<Vec<text_editor::State>>,
+    /// Default styles applied to text editors.
     pub default_styles: Vec<Style>,
+    /// Styles applied to text editors when they are unselected.
     pub overwrite_styles: Vec<Style>,
 }
 
