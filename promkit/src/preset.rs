@@ -16,3 +16,5 @@ pub mod query_selector;
 
 /// Supports creating and interacting with a tree structure for hierarchical data.
 pub mod tree;
+
+pub mod form;

@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.4.3"
+promkit = "0.4.4"
 ```
 
 ## Features
@@ -23,6 +23,7 @@ promkit = "0.4.3"
     - [Readline](#readline)
     - [Confirm](#confirm)
     - [Password](#password)
+    - [Form](#form)
     - [Listbox](#listbox)
     - [QuerySelector](#queryselector)
     - [Checkbox](#checkbox)
@@ -146,6 +147,72 @@ fn main() -> Result {
 </details>
 
 ![password](https://github.com/ynqa/promkit/assets/6745370/396356ef-47de-44bc-a8d4-d03c7ac66a2f)
+
+### Form
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --example form
+```
+
+</details>
+
+<details>
+<summary>Code</summary>
+
+```rust
+use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder, text_editor};
+
+fn main() -> anyhow::Result<()> {
+    let mut p = Form::new([
+        text_editor::State {
+            texteditor: Default::default(),
+            history: Default::default(),
+            prefix: String::from("❯❯ "),
+            mask: Default::default(),
+            prefix_style: StyleBuilder::new().fgc(Color::DarkRed).build(),
+            active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
+            inactive_char_style: StyleBuilder::new().build(),
+            edit_mode: Default::default(),
+            word_break_chars: Default::default(),
+            lines: Default::default(),
+        },
+        text_editor::State {
+            texteditor: Default::default(),
+            history: Default::default(),
+            prefix: String::from("❯❯ "),
+            mask: Default::default(),
+            prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+            active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
+            inactive_char_style: StyleBuilder::new().build(),
+            edit_mode: Default::default(),
+            word_break_chars: Default::default(),
+            lines: Default::default(),
+        },
+        text_editor::State {
+            texteditor: Default::default(),
+            history: Default::default(),
+            prefix: String::from("❯❯ "),
+            mask: Default::default(),
+            prefix_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
+            active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
+            inactive_char_style: StyleBuilder::new().build(),
+            edit_mode: Default::default(),
+            word_break_chars: Default::default(),
+            lines: Default::default(),
+        },
+    ])
+    .prompt()?;
+    println!("result: {:?}", p.run()?);
+    Ok(())
+}
+```
+
+</details>
+
+![form](https://github.com/ynqa/promkit/assets/6745370/c3dc88a7-d0f0-42f4-90b8-bc4d2e23e36d)
 
 ### Listbox
 
