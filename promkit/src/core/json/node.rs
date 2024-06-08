@@ -330,6 +330,57 @@ impl JsonNode {
         dfs(self, Vec::new(), &mut ret, true, 0); // Start with the root node being visible and is_last true, and indent 0
         ret
     }
+
+
+     pub fn pretty_print(&self, indent: usize) -> String {
+        match self {
+            JsonNode::Object {
+                children,
+                children_visible,
+            } => {
+                let mut output = String::new();
+                let indent_str = " ".repeat(indent);
+                output.push_str(&format!("{{\n"));
+                if *children_visible {
+                    let mut iter = children.iter();
+                    if let Some((key, value)) = iter.next() {
+                        output.push_str(&format!("{}  \"{}\": {}", indent_str, key, value.pretty_print(indent + 2)));
+                    }
+                    for (key, value) in iter {
+                        output.push(',');
+                        output.push('\n');
+                        output.push_str(&format!("{}  \"{}\": {}", indent_str, key, value.pretty_print(indent + 2)));
+                    }
+                    output.push('\n');
+                }
+                output.push_str(&format!("{}}}", indent_str));
+                output
+            }
+            JsonNode::Array {
+                children,
+                children_visible,
+            } => {
+                let mut output = String::new();
+                let indent_str = " ".repeat(indent);
+                output.push_str("[\n");
+                if *children_visible {
+                    let mut iter = children.iter();
+                    if let Some(child) = iter.next() {
+                        output.push_str(&format!("{}{}", indent_str, child.pretty_print(indent + 2)));
+                    }
+                    for child in iter {
+                        output.push(',');
+                        output.push('\n');
+                        output.push_str(&format!("{}{}", indent_str, child.pretty_print(indent + 2)));
+                    }
+                    output.push('\n');
+                }
+                output.push_str(&format!("{}]", indent_str));
+                output
+            }
+            JsonNode::Leaf(value) => format!("{}", value),
+        }
+    }
 }
 
 #[cfg(test)]
