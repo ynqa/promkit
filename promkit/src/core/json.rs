@@ -63,6 +63,18 @@ impl JsonStream {
             .collect()
     }
 
+    pub fn pretty_print(&self) -> String {
+        let mut output = String::new();
+        for (i, root) in self.roots.iter().enumerate() {
+            output.push_str(&root.pretty_print(0));
+            if i < self.roots.len() - 1 {
+                output.push(',');
+            }
+            output.push('\n');
+        }
+        output
+    }
+
     /// Retrieves the current root node and its path from the root based on the cursor's position.
     ///
     /// # Returns
