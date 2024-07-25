@@ -167,40 +167,53 @@ impl State {
             }
         }
     }
-}
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let height = match self.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
-
-        let matrix = self
-            .stream
+    fn styled_json(&self) -> Vec<StyledGraphemes> {
+        self.stream
             .flatten_kinds()
             .iter()
             .enumerate()
-            .filter(|(i, _)| {
-                *i >= self.stream.cursor.cross_contents_position()
-                    && *i < self.stream.cursor.cross_contents_position() + height
-            })
             .map(|(i, kind)| {
                 if i == self.stream.cursor.cross_contents_position() {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(self.indent_level(kind))),
                         self.gen_syntax_style(kind)
-                            .apply_attribute(self.active_item_attribute),
+                        .apply_attribute(self.active_item_attribute),
                     ])
                 } else {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(self.indent_level(kind))),
                         self.gen_syntax_style(kind),
                     ])
-                    .apply_attribute(self.inactive_item_attribute)
+                        .apply_attribute(self.inactive_item_attribute)
                 }
             })
-            .fold((vec![], 0), |(mut acc, pos), item| {
+        .collect()
+    }
+
+    pub fn json_str(&self) -> String {
+        self.styled_json()
+            .into_iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+}
+
+impl PaneFactory for State {
+
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let styled_json = self.styled_json();
+        let matrix = styled_json
+            .into_iter()
+            .enumerate()
+            .fold((vec![], 0), |(mut acc, pos), (_, item)| {
                 let rows = item.matrixify(width as usize, height, 0).0;
                 if pos < self.stream.cursor.cross_contents_position() + height {
                     acc.extend(rows);
