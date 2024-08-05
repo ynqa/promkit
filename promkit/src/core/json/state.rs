@@ -178,17 +178,17 @@ impl State {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(self.indent_level(kind))),
                         self.gen_syntax_style(kind)
-                        .apply_attribute(self.active_item_attribute),
+                            .apply_attribute(self.active_item_attribute),
                     ])
                 } else {
                     StyledGraphemes::from_iter([
                         StyledGraphemes::from(" ".repeat(self.indent_level(kind))),
                         self.gen_syntax_style(kind),
                     ])
-                        .apply_attribute(self.inactive_item_attribute)
+                    .apply_attribute(self.inactive_item_attribute)
                 }
             })
-        .collect()
+            .collect()
     }
 
     pub fn json_str(&self) -> String {
@@ -198,11 +198,9 @@ impl State {
             .collect::<Vec<String>>()
             .join("\n")
     }
-
 }
 
 impl PaneFactory for State {
-
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         let height = match self.lines {
             Some(lines) => lines.min(height as usize),
@@ -210,16 +208,17 @@ impl PaneFactory for State {
         };
 
         let styled_json = self.styled_json();
-        let matrix = styled_json
-            .into_iter()
-            .enumerate()
-            .fold((vec![], 0), |(mut acc, pos), (_, item)| {
-                let rows = item.matrixify(width as usize, height, 0).0;
-                if pos < self.stream.cursor.cross_contents_position() + height {
-                    acc.extend(rows);
-                }
-                (acc, pos + 1)
-            });
+        let matrix =
+            styled_json
+                .into_iter()
+                .enumerate()
+                .fold((vec![], 0), |(mut acc, pos), (_, item)| {
+                    let rows = item.matrixify(width as usize, height, 0).0;
+                    if pos < self.stream.cursor.cross_contents_position() + height {
+                        acc.extend(rows);
+                    }
+                    (acc, pos + 1)
+                });
 
         Pane::new(matrix.0, 0)
     }
