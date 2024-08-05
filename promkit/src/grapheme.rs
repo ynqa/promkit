@@ -28,9 +28,12 @@ impl From<char> for StyledGrapheme {
     }
 }
 
-impl ToString for StyledGrapheme {
-    fn to_string(&self) -> String {
-        self.ch.to_string()
+impl fmt::Display for StyledGraphemes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for styled_grapheme in self.iter() {
+            write!(f, "{}", styled_grapheme.ch)?;
+        }
+        Ok(())
     }
 }
 
@@ -114,12 +117,6 @@ impl fmt::Debug for StyledGraphemes {
             write!(f, "{}", styled_grapheme.ch)?;
         }
         Ok(())
-    }
-}
-
-impl ToString for StyledGraphemes {
-    fn to_string(&self) -> String {
-        self.iter().map(|g| g.ch).collect()
     }
 }
 

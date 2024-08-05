@@ -36,12 +36,6 @@ impl<T: fmt::Display> FromIterator<T> for Listbox {
     }
 }
 
-impl FromIterator<StyledGraphemes> for Listbox {
-    fn from_iter<T: IntoIterator<Item = StyledGraphemes>>(iter: T) -> Self {
-        Self(Cursor::new(iter.into_iter().collect(), 0, false))
-    }
-}
-
 impl Listbox {
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
