@@ -44,6 +44,7 @@ promkit = "0.4.5"
 ## Projects using *promkit*
 
 - [ynqa/jnv](https://github.com/ynqa/jnv)
+- [ynqa/logu](https://github.com/ynqa/logu)
 - [ynqa/sig](https://github.com/ynqa/sig)
 
 ## Examples/Demos
