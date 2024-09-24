@@ -212,6 +212,10 @@ impl PaneFactory for State {
             styled_json
                 .into_iter()
                 .enumerate()
+                .filter(|(i, _)| {
+                    *i >= self.stream.cursor.cross_contents_position()
+                        && *i < self.stream.cursor.cross_contents_position() + height
+                })
                 .fold((vec![], 0), |(mut acc, pos), (_, item)| {
                     let rows = item.matrixify(width as usize, height, 0).0;
                     if pos < self.stream.cursor.cross_contents_position() + height {
