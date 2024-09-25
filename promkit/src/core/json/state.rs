@@ -208,21 +208,20 @@ impl PaneFactory for State {
         };
 
         let styled_json = self.styled_json();
-        let matrix =
-            styled_json
-                .into_iter()
-                .enumerate()
-                .filter(|(i, _)| {
-                    *i >= self.stream.cursor.cross_contents_position()
-                        && *i < self.stream.cursor.cross_contents_position() + height
-                })
-                .fold((vec![], 0), |(mut acc, pos), (_, item)| {
-                    let rows = item.matrixify(width as usize, height, 0).0;
-                    if pos < self.stream.cursor.cross_contents_position() + height {
-                        acc.extend(rows);
-                    }
-                    (acc, pos + 1)
-                });
+        let matrix = styled_json
+            .into_iter()
+            .enumerate()
+            .filter(|(i, _)| {
+                *i >= self.stream.cursor.cross_contents_position()
+                    && *i < self.stream.cursor.cross_contents_position() + height
+            })
+            .fold((vec![], 0), |(mut acc, pos), (_, item)| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.stream.cursor.cross_contents_position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
         Pane::new(matrix.0, 0)
     }
