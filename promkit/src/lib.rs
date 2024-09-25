@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.4.5"
+//! promkit = "0.4.6"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.4.5#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.4.5#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.4.5#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.4.5#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.4.5#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.4.5#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.4.5#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.4.6#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.4.6#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.4.6#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.4.6#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.4.6#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.4.6#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.4.6#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.4.5#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.4.6#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
