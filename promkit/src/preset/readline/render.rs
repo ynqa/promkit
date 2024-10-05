@@ -30,13 +30,15 @@ pub struct Renderer {
 impl crate::Finalizer for Renderer {
     type Return = String;
 
-    fn finalize(&self) -> anyhow::Result<Self::Return> {
-        Ok(self
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        let ret = self
             .text_editor_snapshot
             .after()
             .texteditor
             .text_without_cursor()
-            .to_string())
+            .to_string();
+        self.text_editor_snapshot.reset_after_to_init();
+        Ok(ret)
     }
 }
 
