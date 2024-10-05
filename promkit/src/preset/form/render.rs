@@ -35,7 +35,7 @@ pub struct Renderer {
 impl crate::Finalizer for Renderer {
     type Return = Vec<String>;
 
-    fn finalize(&self) -> anyhow::Result<Self::Return> {
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         Ok(self
             .text_editor_states
             .contents()

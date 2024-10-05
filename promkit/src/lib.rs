@@ -174,7 +174,7 @@ pub trait Finalizer {
     ///
     /// Returns a `Result` containing the final result of the prompt. The type of the result
     /// is defined by the `Return` associated type.
-    fn finalize(&self) -> anyhow::Result<Self::Return>;
+    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
 }
 
 /// A trait for rendering components within a prompt.

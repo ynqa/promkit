@@ -26,7 +26,7 @@ pub struct Renderer {
 impl crate::Finalizer for Renderer {
     type Return = (JsonNode, Option<JsonPath>);
 
-    fn finalize(&self) -> anyhow::Result<Self::Return> {
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         Ok(self
             .json_snapshot
             .after()

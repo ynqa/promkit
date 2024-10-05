@@ -33,7 +33,7 @@ pub struct Renderer {
 impl crate::Finalizer for Renderer {
     type Return = String;
 
-    fn finalize(&self) -> anyhow::Result<Self::Return> {
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         Ok(self.listbox_snapshot.after().listbox.get().to_string())
     }
 }
