@@ -270,6 +270,9 @@ impl<T: Renderer> Prompt<T> {
                 }
                 _ => {
                     if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
+                        // Renderer has a possibility to disable the cursor color to indicate termination,
+                        // and so ensure to display the state of Renderer at the end.
+                        terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
                         break;
                     }
                 }
