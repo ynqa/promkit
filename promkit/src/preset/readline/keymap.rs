@@ -1,3 +1,5 @@
+use crossterm::style::ContentStyle;
+
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     listbox::Listbox,
@@ -63,6 +65,9 @@ pub fn default(
                     if let Some(ref mut history) = &mut text_editor_after_mut.history {
                         history.insert(text);
                     }
+                    // For representing the end of the prompt,
+                    // reset the style of the cursor to default.
+                    text_editor_after_mut.active_char_style = ContentStyle::default();
                     Ok(PromptSignal::Quit)
                 } else {
                     Ok(PromptSignal::Continue)

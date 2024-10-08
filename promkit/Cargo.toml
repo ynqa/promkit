@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.4.6"
+version = "0.4.7"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"

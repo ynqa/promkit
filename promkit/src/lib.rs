@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.4.6"
+//! promkit = "0.4.7"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.4.6#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.4.6#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.4.6#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.4.6#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.4.6#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.4.6#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.4.6#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.4.7#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.4.7#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.4.7#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.4.7#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.4.7#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.4.7#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.4.7#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.4.6#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.4.7#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
@@ -174,7 +174,7 @@ pub trait Finalizer {
     ///
     /// Returns a `Result` containing the final result of the prompt. The type of the result
     /// is defined by the `Return` associated type.
-    fn finalize(&self) -> anyhow::Result<Self::Return>;
+    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
 }
 
 /// A trait for rendering components within a prompt.
@@ -270,6 +270,9 @@ impl<T: Renderer> Prompt<T> {
                 }
                 _ => {
                     if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
+                        // Renderer has a possibility to disable the cursor color to indicate termination,
+                        // and so ensure to display the state of Renderer at the end.
+                        terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
                         break;
                     }
                 }
