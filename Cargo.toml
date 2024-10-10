@@ -3,4 +3,5 @@ resolver = "2"
 members = [
   "promkit",
   "promkit-async",
+  "promkit-derive",
 ]
