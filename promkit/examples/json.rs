@@ -1,4 +1,5 @@
 use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer};
+use std::io;
 
 fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(
@@ -23,7 +24,7 @@ fn main() -> anyhow::Result<()> {
     let mut p = Json::new(stream)
         .title("JSON viewer")
         .json_lines(5)
-        .prompt()?;
+        .prompt(io::stdout())?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

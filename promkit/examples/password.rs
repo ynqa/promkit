@@ -1,4 +1,5 @@
 use promkit::preset::password::Password;
+use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Password::default()
@@ -7,7 +8,7 @@ fn main() -> anyhow::Result<()> {
             |text| 4 < text.len() && text.len() < 10,
             |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
         )
-        .prompt()?;
+        .prompt(io::stdout())?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

@@ -1,4 +1,5 @@
 use promkit::preset::query_selector::QuerySelector;
+use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
@@ -14,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     })
     .title("What number do you like?")
     .listbox_lines(5)
-    .prompt()?;
+    .prompt(io::stdout())?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

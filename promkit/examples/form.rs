@@ -1,4 +1,5 @@
 use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder, text_editor};
+use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Form::new([
@@ -39,7 +40,7 @@ fn main() -> anyhow::Result<()> {
             lines: Default::default(),
         },
     ])
-    .prompt()?;
+    .prompt(io::stdout())?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

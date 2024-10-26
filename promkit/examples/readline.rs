@@ -1,4 +1,5 @@
 use promkit::{preset::readline::Readline, suggest::Suggest};
+use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Readline::default()
@@ -13,7 +14,7 @@ fn main() -> anyhow::Result<()> {
             |text| text.len() > 10,
             |text| format!("Length must be over 10 but got {}", text.len()),
         )
-        .prompt()?;
+        .prompt(io::stdout())?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
