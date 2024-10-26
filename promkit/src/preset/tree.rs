@@ -106,13 +106,17 @@ impl Tree {
     /// Displays the tree prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(
+        self,
+        writer: W,
+    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 tree_snapshot: Snapshot::<tree::State>::new(self.tree_state),
             },
+            writer,
         })
     }
 }

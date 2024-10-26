@@ -92,13 +92,17 @@ impl Json {
     }
 
     /// Creates a prompt based on the current configuration of the `Json` instance.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(
+        self,
+        writer: W,
+    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 json_snapshot: Snapshot::<json::State>::new(self.json_state),
             },
+            writer,
         })
     }
 }

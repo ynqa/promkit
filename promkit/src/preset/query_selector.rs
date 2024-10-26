@@ -157,7 +157,10 @@ impl QuerySelector {
     /// Displays the query select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(
+        self,
+        writer: W,
+    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
@@ -166,6 +169,7 @@ impl QuerySelector {
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
                 filter: self.filter,
             },
+            writer,
         })
     }
 }

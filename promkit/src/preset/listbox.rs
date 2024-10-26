@@ -92,13 +92,14 @@ impl Listbox {
     /// Displays the select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(self, writer: W) -> anyhow::Result<Prompt<render::Renderer, W>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
             },
+            writer,
         })
     }
 }

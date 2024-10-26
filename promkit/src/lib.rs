@@ -221,14 +221,15 @@ pub trait Renderer: Finalizer {
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-pub struct Prompt<T: Renderer> {
+pub struct Prompt<T: Renderer, W: io::Write> {
     pub renderer: T,
+    pub writer: W,
 }
 
-impl<T: Renderer> Drop for Prompt<T> {
+impl<T: Renderer, W: io::Write> Drop for Prompt<T, W> {
     fn drop(&mut self) {
         execute!(
-            io::stdout(),
+            self.writer,
             cursor::Show,
             event::DisableMouseCapture,
             cursor::MoveToNextLine(1),
@@ -238,7 +239,7 @@ impl<T: Renderer> Drop for Prompt<T> {
     }
 }
 
-impl<T: Renderer> Prompt<T> {
+impl<T: Renderer, W: io::Write> Prompt<T, W> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -250,11 +251,11 @@ impl<T: Renderer> Prompt<T> {
     /// Returns a `Result` containing the produced result or an error.
     pub fn run(&mut self) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
-        execute!(io::stdout(), cursor::Hide)?;
+        execute!(self.writer, cursor::Hide)?;
 
         let size = crossterm::terminal::size()?;
         let panes = self.renderer.create_panes(size.0, size.1);
-        let mut terminal = Terminal::start_session(&panes)?;
+        let mut terminal = Terminal::start_session(&panes, &mut self.writer)?;
         terminal.draw(&panes)?;
 
         loop {
@@ -262,11 +263,7 @@ impl<T: Renderer> Prompt<T> {
 
             match &ev {
                 Event::Resize(_, _) => {
-                    terminal.position = (0, 0);
-                    crossterm::execute!(
-                        io::stdout(),
-                        crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
-                    )?;
+                    terminal.on_resize()?;
                 }
                 _ => {
                     if self.renderer.evaluate(&ev)? == PromptSignal::Quit {

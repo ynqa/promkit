@@ -174,7 +174,10 @@ impl Readline {
 
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(
+        self,
+        writer: W,
+    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
@@ -185,6 +188,7 @@ impl Readline {
                 validator: self.validator,
                 error_message_snapshot: Snapshot::<text::State>::new(self.error_message_state),
             },
+            writer,
         })
     }
 }

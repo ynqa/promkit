@@ -45,7 +45,10 @@ impl Form {
         }
     }
 
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+    pub fn prompt<W: std::io::Write>(
+        self,
+        writer: W,
+    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
         let default_styles = self
             .text_editor_states
             .iter()
@@ -62,6 +65,6 @@ impl Form {
             overwrite_styles: self.overwrite_styles,
         };
         renderer.overwrite_styles();
-        Ok(Prompt { renderer })
+        Ok(Prompt { renderer, writer })
     }
 }
