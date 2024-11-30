@@ -93,7 +93,7 @@ pub fn default(
                     .text_without_cursor()
                     .to_string();
                 if let Some(candidates) = suggest.prefix_search(text) {
-                    suggest_after_mut.listbox = Listbox::from_iter(candidates);
+                    suggest_after_mut.listbox = Listbox::from_displayable(candidates);
                     text_editor_after_mut
                         .texteditor
                         .replace(&suggest_after_mut.listbox.get().to_string());
@@ -279,7 +279,7 @@ pub fn on_suggest(
         }
 
         _ => {
-            suggest_after_mut.listbox = Listbox::from_iter(Vec::<String>::new());
+            suggest_after_mut.listbox = Listbox::from_displayable(Vec::<String>::new());
 
             renderer.keymap.borrow_mut().switch("default");
         }

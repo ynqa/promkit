@@ -38,7 +38,7 @@ impl Listbox {
                     .build(),
             },
             listbox_state: listbox::State {
-                listbox: listbox::Listbox::from_iter(items),
+                listbox: listbox::Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
                 inactive_item_style: Some(StyleBuilder::new().build()),

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt, iter::FromIterator};
+use std::{collections::HashSet, fmt};
 
 use crate::{core::listbox::Listbox, grapheme::StyledGraphemes};
 
@@ -16,20 +16,23 @@ pub struct Checkbox {
     picked: HashSet<usize>,
 }
 
-impl<T: fmt::Display> FromIterator<T> for Checkbox {
-    /// Creates a `Checkbox` from an iterator of items
-    /// that implement the `Display` trait.
-    /// Each item is added to the listbox,
-    /// and the set of picked indices is initialized as empty.
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+impl Checkbox {
+    /// Creates a new `Checkbox` from a vector of `fmt::Display`.
+    pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
         Self {
-            listbox: Listbox::from_iter(iter),
+            listbox: Listbox::from_displayable(items),
             picked: HashSet::new(),
         }
     }
-}
 
-impl Checkbox {
+    /// Creates a new `Checkbox` from a vector of `StyledGraphemes`.
+    pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
+        Self {
+            listbox: Listbox::from_styled_graphemes(items),
+            picked: HashSet::new(),
+        }
+    }
+
     /// Creates a `Checkbox` from an iterator of tuples where the first element
     /// implements the `Display` trait and the second element is a bool indicating
     /// if the item is picked (selected).
@@ -61,7 +64,7 @@ impl Checkbox {
             .collect::<HashSet<usize>>();
 
         Self {
-            listbox: Listbox::from_iter(listbox_items),
+            listbox: Listbox::from_displayable(listbox_items),
             picked: picked_indices,
         }
     }

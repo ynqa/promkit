@@ -39,7 +39,7 @@ impl Checkbox {
                     .build(),
             },
             checkbox_state: checkbox::State {
-                checkbox: checkbox::Checkbox::from_iter(items),
+                checkbox: checkbox::Checkbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
                 inactive_mark: '☐',

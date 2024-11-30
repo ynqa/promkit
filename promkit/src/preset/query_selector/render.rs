@@ -71,7 +71,7 @@ impl crate::Renderer for Renderer {
                     .map(|e| e.to_string())
                     .collect(),
             );
-            self.listbox_snapshot.after_mut().listbox = Listbox::from_iter(list);
+            self.listbox_snapshot.after_mut().listbox = Listbox::from_displayable(list);
         }
         signal
     }

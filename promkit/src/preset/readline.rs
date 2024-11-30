@@ -61,7 +61,7 @@ impl Default for Readline {
             },
             suggest: Default::default(),
             suggest_state: listbox::State {
-                listbox: Listbox::from_iter(Vec::<String>::new()),
+                listbox: Listbox::from_displayable(Vec::<String>::new()),
                 cursor: String::from("❯ "),
                 active_item_style: Some(
                     StyleBuilder::new()

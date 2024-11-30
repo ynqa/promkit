@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, iter::FromIterator};
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -66,7 +66,7 @@ impl QuerySelector {
                 lines: Default::default(),
             },
             listbox_state: listbox::State {
-                listbox: Listbox::from_iter(items),
+                listbox: Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
                 inactive_item_style: Some(StyleBuilder::new().build()),
