@@ -1,4 +1,4 @@
-use std::{fmt, iter::FromIterator};
+use std::fmt;
 
 use crate::{core::cursor::Cursor, grapheme::StyledGraphemes};
 
@@ -20,23 +20,24 @@ impl Default for Listbox {
     }
 }
 
-impl<T: fmt::Display> FromIterator<T> for Listbox {
-    /// Creates a `Listbox` from an iterator of items
-    /// that implement the `Display` trait.
-    /// Each item is converted to a `String`
-    /// and collected into a `Vec<String>`.
-    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+impl Listbox {
+    /// Creates a new `Listbox` from a vector of `fmt::Display`.
+    pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
         Self(Cursor::new(
-            iter.into_iter()
+            items
+                .into_iter()
                 .map(|e| StyledGraphemes::from(format!("{}", e)))
                 .collect(),
             0,
             false,
         ))
     }
-}
 
-impl Listbox {
+    /// Creates a new `Listbox` from a vector of `StyledGraphemes`.
+    pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
+        Self(Cursor::new(items, 0, false))
+    }
+
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.0.contents()

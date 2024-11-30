@@ -101,7 +101,7 @@ impl TextEditor {
             let pos = self.position();
             self.0
                 .contents_mut()
-                .replace_range(pos..pos + 1, &ch.to_string());
+                .replace_range(pos..pos + 1, ch.to_string());
             self.forward();
         }
     }

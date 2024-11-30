@@ -29,7 +29,7 @@ impl Checkbox {
     /// # Arguments
     ///
     /// * `items` - An iterator over items
-    /// that implement the `Display` trait, to be used as options.
+    ///   that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_state: text::State {
@@ -39,7 +39,7 @@ impl Checkbox {
                     .build(),
             },
             checkbox_state: checkbox::State {
-                checkbox: checkbox::Checkbox::from_iter(items),
+                checkbox: checkbox::Checkbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
                 inactive_mark: '☐',

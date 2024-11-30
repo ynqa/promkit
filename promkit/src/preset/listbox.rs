@@ -28,7 +28,7 @@ impl Listbox {
     /// # Arguments
     ///
     /// * `items` - An iterator over items
-    /// that implement the `Display` trait, to be used as options.
+    ///   that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_state: text::State {
@@ -38,7 +38,7 @@ impl Listbox {
                     .build(),
             },
             listbox_state: listbox::State {
-                listbox: listbox::Listbox::from_iter(items),
+                listbox: listbox::Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
                 inactive_item_style: Some(StyleBuilder::new().build()),

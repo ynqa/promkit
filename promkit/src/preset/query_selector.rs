@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, iter::FromIterator};
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -37,10 +37,10 @@ impl QuerySelector {
     /// # Arguments
     ///
     /// * `items` - An iterator over items that implement the `Display` trait,
-    /// to be used as options in the list box.
+    ///   to be used as options in the list box.
     /// * `filter` - A function that takes the current input
-    /// from the text editor and the list of items,
-    /// returning a filtered list of items to display.
+    ///   from the text editor and the list of items,
+    ///   returning a filtered list of items to display.
     pub fn new<T, I>(items: I, filter: render::Filter) -> Self
     where
         T: Display,
@@ -66,7 +66,7 @@ impl QuerySelector {
                 lines: Default::default(),
             },
             listbox_state: listbox::State {
-                listbox: Listbox::from_iter(items),
+                listbox: Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
                 inactive_item_style: Some(StyleBuilder::new().build()),
