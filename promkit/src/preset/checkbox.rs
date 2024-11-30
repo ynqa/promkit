@@ -29,7 +29,7 @@ impl Checkbox {
     /// # Arguments
     ///
     /// * `items` - An iterator over items
-    /// that implement the `Display` trait, to be used as options.
+    ///   that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_state: text::State {

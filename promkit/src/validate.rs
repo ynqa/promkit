@@ -25,11 +25,11 @@ impl<T: ?Sized> ValidatorManager<T> {
     /// # Arguments
     ///
     /// * `validator` - A function that takes a reference
-    /// to an input of type `T` and returns a boolean
-    /// indicating whether the input passes the validation.
+    ///   to an input of type `T` and returns a boolean
+    ///   indicating whether the input passes the validation.
     /// * `error_message_generator` - A function that takes a reference
-    /// to an input of type `T` and returns a `String`
-    /// that describes the validation error.
+    ///   to an input of type `T` and returns a `String`
+    ///   that describes the validation error.
     ///
     /// # Returns
     ///
@@ -47,7 +47,7 @@ impl<T: ?Sized> ValidatorManager<T> {
     /// # Arguments
     ///
     /// * `input` - A reference
-    /// to the input of type `T` to be validated.
+    ///   to the input of type `T` to be validated.
     ///
     /// # Returns
     ///
@@ -63,7 +63,7 @@ impl<T: ?Sized> ValidatorManager<T> {
     /// # Arguments
     ///
     /// * `input` - A reference to the input of type `T`
-    /// for which to generate an error message.
+    ///   for which to generate an error message.
     ///
     /// # Returns
     ///
