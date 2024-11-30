@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{parse::Error, parse_macro_input, spanned::Spanned, DeriveInput};
 
-#[proc_macro_derive(Promkit, attributes(readline))]
+#[proc_macro_derive(Promkit, attributes(form))]
 pub fn promkit_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     match impl_promkit_derive(&ast) {
@@ -13,7 +13,7 @@ pub fn promkit_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     }
 }
 
-mod readline;
+mod form;
 
 fn impl_promkit_derive(ast: &DeriveInput) -> Result<TokenStream, Error> {
     let fields = match &ast.data {
@@ -36,8 +36,8 @@ fn impl_promkit_derive(ast: &DeriveInput) -> Result<TokenStream, Error> {
         for attr in field.attrs.iter() {
             #[allow(clippy::single_match)]
             match attr.path().get_ident().unwrap().to_string().as_str() {
-                "readline" => {
-                    let expr = readline::impl_promkit_per_field(field, attr)?;
+                "form" => {
+                    let expr = form::impl_promkit_per_field(field, attr)?;
                     fns = quote! {
                         #fns
                         #expr

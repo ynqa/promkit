@@ -3,16 +3,16 @@ use promkit_derive::Promkit;
 
 #[derive(Default, Debug, Promkit)]
 struct Profile {
-    #[readline(
+    #[form(
         prefix = "What is your name?",
         prefix_style = StyleBuilder::new().fgc(Color::DarkCyan).build(),
     )]
     name: String,
 
-    #[readline(default)]
+    #[form(default)]
     hobby: Option<String>,
 
-    #[readline(prefix = "How old are you?", ignore_invalid_attr = "nothing")]
+    #[form(prefix = "How old are you?", ignore_invalid_attr = "nothing")]
     age: usize,
 }
 
