@@ -13,6 +13,8 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
     let mut inactive_char_style = quote! {
         promkit::style::StyleBuilder::new().build()
     };
+    let mut mask = quote! { None::<char> };
+    let mut edit_mode = quote! { promkit::text_editor::Mode::default() };
     let mut word_break_chars = quote! { std::collections::HashSet::from([' ']) };
 
     match &attr.meta {
@@ -47,6 +49,14 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
                                 let expr = entry.value;
                                 inactive_char_style = quote! { #expr };
                             }
+                            "mask" => {
+                                let expr = entry.value;
+                                mask = quote! { #expr };
+                            }
+                            "edit_mode" => {
+                                let expr = entry.value;
+                                edit_mode = quote! { #expr };
+                            }
                             "word_break_chars" => {
                                 let expr = entry.value;
                                 word_break_chars = quote! { #expr };
@@ -72,11 +82,11 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
             texteditor: Default::default(),
             history: Default::default(),
             prefix: #prefix,
-            mask: Default::default(),
             prefix_style: #prefix_style,
             active_char_style: #active_char_style,
             inactive_char_style: #inactive_char_style,
-            edit_mode: Default::default(),
+            mask: #mask,
+            edit_mode: #edit_mode,
             word_break_chars: #word_break_chars,
             lines: Default::default()
         }
