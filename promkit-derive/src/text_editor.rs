@@ -5,7 +5,11 @@ use syn::{parse::Error, punctuated::Punctuated, spanned::Spanned, Meta, MetaName
 pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
     let mut prefix = quote! { String::from("❯❯ ") };
     let mut prefix_style = quote! {
-        promkit::style::StyleBuilder::new().fgc(promkit::crossterm::style::Color::DarkGreen).build()
+        promkit::style::StyleBuilder::new().attrs(
+            promkit::crossterm::style::Attributes::from(
+                promkit::crossterm::style::Attribute::Bold,
+            )
+        ).build()
     };
     let mut active_char_style = quote! {
         promkit::style::StyleBuilder::new().bgc(promkit::crossterm::style::Color::DarkCyan).build()
