@@ -18,9 +18,7 @@ struct Profile {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut ret = Profile::default();
-    ret.readline_name()?;
-    ret.readline_hobby()?;
-    ret.readline_age()?;
+    ret.build()?;
     dbg!(ret);
     Ok(())
 }
