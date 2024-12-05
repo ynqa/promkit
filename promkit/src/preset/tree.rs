@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, io};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -21,6 +21,8 @@ pub struct Tree {
     title_state: text::State,
     /// State for the tree itself.
     tree_state: tree::State,
+    /// Writer to which promptkit write its contents
+    writer: Box<dyn io::Write>,
 }
 
 impl Tree {
@@ -47,6 +49,7 @@ impl Tree {
                 lines: Default::default(),
                 indent: 2,
             },
+            writer: Box::new(io::stdout()),
         }
     }
 
@@ -103,6 +106,12 @@ impl Tree {
         self
     }
 
+    /// Sets writer.
+    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
+        self.writer = Box::new(writer);
+        self
+    }
+
     /// Displays the tree prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
@@ -113,6 +122,7 @@ impl Tree {
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 tree_snapshot: Snapshot::<tree::State>::new(self.tree_state),
             },
+            writer: self.writer,
         })
     }
 }
