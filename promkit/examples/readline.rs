@@ -1,5 +1,4 @@
 use promkit::{preset::readline::Readline, suggest::Suggest};
-use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Readline::default()

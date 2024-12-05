@@ -1,5 +1,4 @@
 use promkit::preset::password::Password;
-use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Password::default()

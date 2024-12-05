@@ -1,5 +1,4 @@
 use promkit::preset::checkbox::Checkbox;
-use std::io;
 
 fn main() -> anyhow::Result<()> {
     let mut p = Checkbox::new(vec![

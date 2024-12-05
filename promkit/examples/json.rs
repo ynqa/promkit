@@ -1,5 +1,4 @@
 use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer};
-use std::io;
 
 fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(
