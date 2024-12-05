@@ -221,12 +221,12 @@ pub trait Renderer: Finalizer {
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-pub struct Prompt<T: Renderer, W: io::Write> {
+pub struct Prompt<T: Renderer> {
     pub renderer: T,
-    pub writer: W,
+    pub writer: Box<dyn io::Write>,
 }
 
-impl<T: Renderer, W: io::Write> Drop for Prompt<T, W> {
+impl<T: Renderer> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(
             self.writer,
@@ -239,7 +239,7 @@ impl<T: Renderer, W: io::Write> Drop for Prompt<T, W> {
     }
 }
 
-impl<T: Renderer, W: io::Write> Prompt<T, W> {
+impl<T: Renderer> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop

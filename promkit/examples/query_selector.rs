@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     })
     .title("What number do you like?")
     .listbox_lines(5)
-    .prompt(io::stdout())?;
+    .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

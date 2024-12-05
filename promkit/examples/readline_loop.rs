@@ -2,7 +2,7 @@ use promkit::preset::readline::Readline;
 use std::io;
 
 fn main() -> anyhow::Result<()> {
-    let mut p = Readline::default().prompt(io::stdout())?;
+    let mut p = Readline::default().prompt()?;
 
     loop {
         match p.run() {

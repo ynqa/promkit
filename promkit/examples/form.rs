@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
             lines: Default::default(),
         },
     ])
-    .prompt(io::stdout())?;
+    .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

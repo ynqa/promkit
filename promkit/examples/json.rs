@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
     let mut p = Json::new(stream)
         .title("JSON viewer")
         .json_lines(5)
-        .prompt(io::stdout())?;
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

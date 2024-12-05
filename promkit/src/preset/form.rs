@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, io};
 
 use crate::{
     core::Cursor,
@@ -17,6 +17,8 @@ pub struct Form {
     text_editor_states: Vec<text_editor::State>,
     /// Overwrite the default styles of text editor states when unselected.
     overwrite_styles: Vec<render::Style>,
+    /// Writer to which promptkit write its contents
+    writer: Box<dyn io::Write>,
 }
 
 impl Form {
@@ -42,13 +44,17 @@ impl Form {
             keymap: ActiveKeySwitcher::new("default", self::keymap::default as keymap::Keymap),
             text_editor_states,
             overwrite_styles,
+            writer: Box::new(io::stdout()),
         }
     }
 
-    pub fn prompt<W: std::io::Write>(
-        self,
-        writer: W,
-    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
+    /// Sets writer.
+    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
+        self.writer = Box::new(writer);
+        self
+    }
+
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         let default_styles = self
             .text_editor_states
             .iter()
@@ -65,6 +71,9 @@ impl Form {
             overwrite_styles: self.overwrite_styles,
         };
         renderer.overwrite_styles();
-        Ok(Prompt { renderer, writer })
+        Ok(Prompt {
+            renderer,
+            writer: self.writer,
+        })
     }
 }

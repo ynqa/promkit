@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
     ])
     .title("What are your favorite fruits?")
     .checkbox_lines(5)
-    .prompt(io::stdout())?;
+    .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

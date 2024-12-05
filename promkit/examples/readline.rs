@@ -14,7 +14,7 @@ fn main() -> anyhow::Result<()> {
             |text| text.len() > 10,
             |text| format!("Length must be over 10 but got {}", text.len()),
         )
-        .prompt(io::stdout())?;
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }

@@ -31,10 +31,7 @@ impl Confirm {
     /// Displays the confirmation prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the user's input.
-    pub fn prompt<W: std::io::Write>(
-        self,
-        writer: W,
-    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
-        self.0.prompt(writer)
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
+        self.0.prompt()
     }
 }

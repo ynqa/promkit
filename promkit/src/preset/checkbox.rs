@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display};
+use std::{cell::RefCell, fmt::Display, io};
 
 use crate::{
     checkbox,
@@ -20,6 +20,8 @@ pub struct Checkbox {
     title_state: text::State,
     /// State for the checkbox list itself.
     checkbox_state: checkbox::State,
+    /// Writer to which promptkit write its contents
+    writer: Box<dyn io::Write>,
 }
 
 impl Checkbox {
@@ -48,6 +50,7 @@ impl Checkbox {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
+            writer: Box::new(io::stdout()),
         }
     }
 
@@ -69,6 +72,7 @@ impl Checkbox {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
+            writer: Box::new(io::stdout()),
         }
     }
 
@@ -119,20 +123,23 @@ impl Checkbox {
         self
     }
 
+    /// Sets writer.
+    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
+        self.writer = Box::new(writer);
+        self
+    }
+
     /// Displays the checkbox prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
-    pub fn prompt<W: std::io::Write>(
-        self,
-        writer: W,
-    ) -> anyhow::Result<Prompt<render::Renderer, W>> {
+    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
                 checkbox_snapshot: Snapshot::<checkbox::State>::new(self.checkbox_state),
             },
-            writer,
+            writer: self.writer,
         })
     }
 }

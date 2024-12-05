@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
             |text| 4 < text.len() && text.len() < 10,
             |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
         )
-        .prompt(io::stdout())?;
+        .prompt()?;
     println!("result: {:?}", p.run()?);
     Ok(())
 }
