@@ -1,0 +1,18 @@
+[package]
+name = "promkit-derive"
+version = "0.1.0"
+authors = ["ynqa <un.pensiero.vano@gmail.com>"]
+edition = "2021"
+description = "A derive macro for promkit"
+repository = "https://github.com/ynqa/promkit"
+license = "MIT"
+readme = "README.md"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0.52", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+promkit = { path = "../promkit", version = "0.5.1" }
