@@ -1,0 +1,47 @@
+name: ci
+on: push
+jobs:
+  test:
+    name: test
+    strategy:
+      matrix:
+        version: [ 1.67.0, stable ]
+        platform:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu  }
+          - { os: macos-latest , target: x86_64-apple-darwin       }
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.version }}
+          override: true
+          target: ${{ matrix.platform.target }}
+          components: clippy, rustfmt
+      - name: Install clipboard dependencies
+        if: ${{ matrix.platform.os == 'ubuntu-latest' }}
+        run: sudo apt install -y libxcb-shape0-dev libxcb-xfixes0-dev
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --target=${{ matrix.platform.target }}
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+      - name: Format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
