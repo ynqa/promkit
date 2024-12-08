@@ -1,0 +1,30 @@
+name: fx
+version: 35.0.0
+summary: Terminal JSON viewer
+description: Terminal JSON viewer
+base: core20
+grade: stable
+confinement: strict
+architectures:
+  - build-on: armhf
+  - build-on: amd64
+  - build-on: arm64
+
+plugs:
+  dot-fxrc-js:
+    interface: personal-files
+    read:
+      - $HOME/.fxrc.js
+
+apps:
+  fx:
+    command: bin/fx
+    plugs: [ dot-fxrc-js, home, network ]
+
+parts:
+  fx:
+    plugin: go
+    source: https://github.com/antonmedv/fx.git
+    source-type: git
+    stage-snaps:
+      - node/18/stable

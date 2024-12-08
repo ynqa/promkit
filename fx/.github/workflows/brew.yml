@@ -1,0 +1,29 @@
+name: brew
+
+on: [workflow_dispatch]
+
+jobs:
+  brew:
+    runs-on: macos-latest
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+        with:
+          test-bot: false
+
+      - name: Install Homebrew Bundler RubyGems
+        run: brew install-bundler-gems
+
+      - name: Configure Git user
+        uses: Homebrew/actions/git-user-config@master
+
+      - name: Update brew
+        run: brew update
+
+      - name: Bump formulae
+        uses: Homebrew/actions/bump-packages@master
+        with:
+          token: ${{ secrets.MY_HOMEBREW_RELEASE_GITHUB_TOKEN }}
+          formulae: |
+            fx
