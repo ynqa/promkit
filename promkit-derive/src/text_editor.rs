@@ -37,11 +37,11 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
                     .into_iter()
                     .for_each(
                         |entry| match entry.path.get_ident().unwrap().to_string().as_str() {
-                            "prefix" => {
+                            "label" => {
                                 let expr = entry.value;
                                 prefix = quote! { format!("{} ", #expr) };
                             }
-                            "prefix_style" => {
+                            "label_style" => {
                                 let expr = entry.value;
                                 prefix_style = quote! { #expr };
                             }
