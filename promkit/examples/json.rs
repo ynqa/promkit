@@ -1,29 +1,19 @@
-use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer};
+use std::{fs::File, io::Read};
+
+use promkit::{json::JsonStream, serde_json::Deserializer};
 
 fn main() -> anyhow::Result<()> {
-    let stream = JsonStream::new(
-        Deserializer::from_str(
-            r#"{
-              "number": 9,
-              "map": {
-                "entry1": "first",
-                "entry2": "second"
-              },
-              "list": [
-                "abc",
-                "def"
-              ]
-            }"#,
-        )
+    let mut json = String::new();
+    File::open("/Users/eufy/workspace/github.com/ynqa/jnv/test.json")?.read_to_string(&mut json)?;
+    let serdejson = Deserializer::from_str(&json)
         .into_iter::<serde_json::Value>()
-        .filter_map(serde_json::Result::ok),
-        None,
-    );
+        .filter_map(serde_json::Result::ok);
+    let stream = JsonStream::new(serdejson, None);
 
-    let mut p = Json::new(stream)
-        .title("JSON viewer")
-        .json_lines(5)
-        .prompt()?;
-    println!("result: {:?}", p.run()?);
+    // let mut p = Json::new(stream)
+    //     .title("JSON viewer")
+    //     .json_lines(5)
+    //     .prompt()?;
+    // println!("result: {:?}", p.run()?);
     Ok(())
 }
