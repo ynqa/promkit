@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use promkit::{json::JsonStream, serde_json::Deserializer};
+use promkit::{json::JsonStream, jsonz, serde_json::Deserializer};
 
 fn main() -> anyhow::Result<()> {
     let mut json = String::new();
@@ -8,7 +8,8 @@ fn main() -> anyhow::Result<()> {
     let serdejson = Deserializer::from_str(&json)
         .into_iter::<serde_json::Value>()
         .filter_map(serde_json::Result::ok);
-    let stream = JsonStream::new(serdejson, None);
+    // let stream = JsonStream::new(serdejson, None);
+    jsonz::create_rows(serdejson);
 
     // let mut p = Json::new(stream)
     //     .title("JSON viewer")
