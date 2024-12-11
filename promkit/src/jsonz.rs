@@ -3,11 +3,9 @@ use winnow::Parser;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Null,
-    Boolean,
-    Number,
-    String,
-    EmptyArray,
-    EmptyObject,
+    Boolean(bool),
+    Number(serde_json::Number),
+    String(String),
     OpenContainer {
         container_type: ContainerType,
         collapsed: bool,
@@ -311,7 +309,7 @@ mod tests {
         rows.push(Row {
             parent: Some(1),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(1)),
             prev_sibling: None,
             next_sibling: Some(3),
         });
@@ -320,7 +318,7 @@ mod tests {
         rows.push(Row {
             parent: Some(1),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(2)),
             prev_sibling: Some(2),
             next_sibling: Some(4),
         });
@@ -343,7 +341,7 @@ mod tests {
         rows.push(Row {
             parent: Some(4),
             depth: 3,
-            value: Value::String,
+            value: Value::String("value".to_string()),
             prev_sibling: None,
             next_sibling: None,
         });
@@ -380,7 +378,7 @@ mod tests {
         rows.push(Row {
             parent: Some(7),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(1)),
             prev_sibling: None,
             next_sibling: Some(9),
         });
@@ -389,7 +387,7 @@ mod tests {
         rows.push(Row {
             parent: Some(7),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(2)),
             prev_sibling: Some(8),
             next_sibling: None,
         });
@@ -454,7 +452,7 @@ mod tests {
         rows.push(Row {
             parent: Some(first_obj_start),
             depth: 1,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(1)),
             prev_sibling: None,
             next_sibling: Some(first_obj_start + 2),
         });
@@ -464,7 +462,7 @@ mod tests {
         rows.push(Row {
             parent: Some(first_obj_start),
             depth: 1,
-            value: Value::String,
+            value: Value::String("Alice".to_string()),
             prev_sibling: Some(first_obj_start + 1),
             next_sibling: None,
         });
@@ -505,7 +503,7 @@ mod tests {
         rows.push(Row {
             parent: Some(second_obj_start),
             depth: 1,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(2)),
             prev_sibling: None,
             next_sibling: Some(second_obj_start + 2),
         });
@@ -515,7 +513,7 @@ mod tests {
         rows.push(Row {
             parent: Some(second_obj_start),
             depth: 1,
-            value: Value::String,
+            value: Value::String("Bob".to_string()),
             prev_sibling: Some(second_obj_start + 1),
             next_sibling: Some(second_obj_start + 3),
         });
@@ -540,7 +538,7 @@ mod tests {
         rows.push(Row {
             parent: Some(second_obj_start + 3),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(1)),
             prev_sibling: None,
             next_sibling: Some(second_obj_start + 5),
         });
@@ -550,7 +548,7 @@ mod tests {
         rows.push(Row {
             parent: Some(second_obj_start + 3),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(2)),
             prev_sibling: Some(second_obj_start + 4),
             next_sibling: Some(second_obj_start + 6),
         });
@@ -560,7 +558,7 @@ mod tests {
         rows.push(Row {
             parent: Some(second_obj_start + 3),
             depth: 2,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(3)),
             prev_sibling: Some(second_obj_start + 5),
             next_sibling: None,
         });
@@ -616,7 +614,7 @@ mod tests {
         rows.push(Row {
             parent: Some(third_obj_start),
             depth: 1,
-            value: Value::Number,
+            value: Value::Number(serde_json::Number::from(3)),
             prev_sibling: None,
             next_sibling: Some(third_obj_start + 2),
         });
@@ -626,7 +624,7 @@ mod tests {
         rows.push(Row {
             parent: Some(third_obj_start),
             depth: 1,
-            value: Value::String,
+            value: Value::String("Charlie".to_string()),
             prev_sibling: Some(third_obj_start + 1),
             next_sibling: Some(third_obj_start + 3),
         });
@@ -636,7 +634,7 @@ mod tests {
         rows.push(Row {
             parent: Some(third_obj_start),
             depth: 1,
-            value: Value::Boolean,
+            value: Value::Boolean(true),
             prev_sibling: Some(third_obj_start + 2),
             next_sibling: None,
         });
