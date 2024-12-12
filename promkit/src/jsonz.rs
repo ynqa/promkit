@@ -55,6 +55,16 @@ pub struct Row {
     pub v: Value,
 }
 
+pub trait RowOperation {
+    fn up(&mut self, current: usize) -> usize;
+}
+
+impl RowOperation for Vec<Row> {
+    fn up(&mut self, current: usize) -> usize {
+        todo!()
+    }
+}
+
 fn process_value(
     value: &serde_json::Value,
     rows: &mut Vec<Row>,
