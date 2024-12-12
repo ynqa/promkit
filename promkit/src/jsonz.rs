@@ -61,7 +61,19 @@ pub trait RowOperation {
 
 impl RowOperation for Vec<Row> {
     fn up(&mut self, current: usize) -> usize {
-        todo!()
+        if current == 0 {
+            return 0;
+        }
+
+        let prev = current - 1;
+        match &self[prev].v {
+            Value::Close {
+                collapsed,
+                open_index,
+                ..
+            } if *collapsed => *open_index,
+            _ => prev,
+        }
     }
 }
 
