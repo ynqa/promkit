@@ -57,6 +57,7 @@ pub struct Row {
 
 pub trait RowOperation {
     fn up(&mut self, current: usize) -> usize;
+    fn down(&mut self, current: usize) -> usize;
 }
 
 impl RowOperation for Vec<Row> {
@@ -74,6 +75,10 @@ impl RowOperation for Vec<Row> {
             } if *collapsed => *open_index,
             _ => prev,
         }
+    }
+
+    fn down(&mut self, current: usize) -> usize {
+        todo!();
     }
 }
 
