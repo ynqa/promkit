@@ -78,7 +78,19 @@ impl RowOperation for Vec<Row> {
     }
 
     fn down(&mut self, current: usize) -> usize {
-        todo!();
+        if current >= self.len() - 1 {
+            return current;
+        }
+
+        let next = current + 1;
+        match &self[current].v {
+            Value::Open {
+                collapsed,
+                close_index,
+                ..
+            } if *collapsed => *close_index + 1,
+            _ => next,
+        }
     }
 }
 

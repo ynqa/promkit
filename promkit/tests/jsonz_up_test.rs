@@ -44,6 +44,7 @@ mod up {
             collapsed: true,
             open_index: 4,
         };
+        assert_eq!(rows.up(0), 0);
         assert_eq!(rows.up(1), 0);
         assert_eq!(rows.up(4), 1);
         assert_eq!(rows.up(9), 4);

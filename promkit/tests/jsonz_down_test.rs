@@ -47,5 +47,6 @@ mod down {
         assert_eq!(rows.down(0), 1);
         assert_eq!(rows.down(1), 4);
         assert_eq!(rows.down(4), 9);
+        assert_eq!(rows.down(9), 9);
     }
 }
