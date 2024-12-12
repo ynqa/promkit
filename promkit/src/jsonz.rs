@@ -88,7 +88,14 @@ impl RowOperation for Vec<Row> {
                 collapsed,
                 close_index,
                 ..
-            } if *collapsed => *close_index + 1,
+            } if *collapsed => {
+                let next_pos = close_index + 1;
+                if next_pos >= self.len() {
+                    current
+                } else {
+                    next_pos
+                }
+            }
             _ => next,
         }
     }

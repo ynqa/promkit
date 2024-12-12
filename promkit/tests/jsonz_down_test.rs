@@ -49,4 +49,32 @@ mod down {
         assert_eq!(rows.down(4), 9);
         assert_eq!(rows.down(9), 9);
     }
+
+    #[test]
+    fn test_down_on_last_collapsed() {
+        let input = serde_json::Value::from_str(
+            r#"
+                [
+                    1,
+                    2,
+                    3
+                ]
+            "#,
+        )
+        .unwrap();
+
+        let mut rows = create_rows([input]);
+        rows[0].v = Value::Open {
+            typ: ContainerType::Object,
+            collapsed: true,
+            close_index: 4,
+        };
+        rows[4].v = Value::Close {
+            typ: ContainerType::Object,
+            collapsed: true,
+            open_index: 0,
+        };
+
+        assert_eq!(rows.down(0), 0);
+    }
 }
