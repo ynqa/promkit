@@ -23,27 +23,9 @@ mod down {
         .unwrap();
 
         let mut rows = create_rows([input]);
-        rows[1].v = Value::Open {
-            typ: ContainerType::Object,
-            collapsed: true,
-            close_index: 3,
-        };
-        rows[3].v = Value::Close {
-            typ: ContainerType::Object,
-            collapsed: true,
-            open_index: 1,
-        };
+        rows.toggle(1);
+        rows.toggle(4);
 
-        rows[4].v = Value::Open {
-            typ: ContainerType::Array,
-            collapsed: true,
-            close_index: 8,
-        };
-        rows[8].v = Value::Close {
-            typ: ContainerType::Array,
-            collapsed: true,
-            open_index: 4,
-        };
         assert_eq!(rows.down(0), 1);
         assert_eq!(rows.down(1), 4);
         assert_eq!(rows.down(4), 9);
@@ -64,16 +46,7 @@ mod down {
         .unwrap();
 
         let mut rows = create_rows([input]);
-        rows[0].v = Value::Open {
-            typ: ContainerType::Object,
-            collapsed: true,
-            close_index: 4,
-        };
-        rows[4].v = Value::Close {
-            typ: ContainerType::Object,
-            collapsed: true,
-            open_index: 0,
-        };
+        rows.toggle(0);
 
         assert_eq!(rows.down(0), 0);
     }
