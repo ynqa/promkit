@@ -155,7 +155,29 @@ impl RowOperation for Vec<Row> {
     }
 
     fn extract(&self, current: usize, n: usize) -> Vec<Row> {
-        todo!()
+        let mut result = Vec::new();
+        let mut i = current;
+        let mut remaining = n;
+
+        while i < self.len() && remaining > 0 {
+            result.push(self[i].clone());
+            remaining -= 1;
+
+            match &self[i].v {
+                Value::Open {
+                    collapsed: true,
+                    close_index,
+                    ..
+                } => {
+                    i = *close_index + 1;
+                }
+                _ => {
+                    i += 1;
+                }
+            }
+        }
+
+        result
     }
 }
 
