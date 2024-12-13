@@ -102,7 +102,55 @@ impl RowOperation for Vec<Row> {
     }
 
     fn toggle(&mut self, current: usize) -> bool {
-        todo!()
+        match &self[current].v {
+            Value::Open {
+                typ,
+                collapsed,
+                close_index,
+            } => {
+                let new_collapsed = !collapsed;
+                let close_idx = *close_index;
+                let typ_clone = typ.clone();
+
+                self[current].v = Value::Open {
+                    typ: typ_clone.clone(),
+                    collapsed: new_collapsed,
+                    close_index: close_idx,
+                };
+
+                self[close_idx].v = Value::Close {
+                    typ: typ_clone,
+                    collapsed: new_collapsed,
+                    open_index: current,
+                };
+
+                true
+            }
+            Value::Close {
+                typ,
+                collapsed,
+                open_index,
+            } => {
+                let new_collapsed = !collapsed;
+                let open_idx = *open_index;
+                let typ_clone = typ.clone();
+
+                self[current].v = Value::Close {
+                    typ: typ_clone.clone(),
+                    collapsed: new_collapsed,
+                    open_index: open_idx,
+                };
+
+                self[open_idx].v = Value::Open {
+                    typ: typ_clone,
+                    collapsed: new_collapsed,
+                    close_index: current,
+                };
+
+                true
+            }
+            _ => false,
+        }
     }
 }
 
