@@ -59,6 +59,7 @@ pub trait RowOperation {
     fn up(&mut self, current: usize) -> usize;
     fn down(&mut self, current: usize) -> usize;
     fn toggle(&mut self, current: usize) -> bool;
+    fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
 
 impl RowOperation for Vec<Row> {
@@ -151,6 +152,10 @@ impl RowOperation for Vec<Row> {
             }
             _ => false,
         }
+    }
+
+    fn extract(&self, current: usize, n: usize) -> Vec<Row> {
+        todo!()
     }
 }
 
