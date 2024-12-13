@@ -24,7 +24,8 @@ mod toggle {
 
         let mut rows = create_rows([input]);
 
-        rows.toggle(1);
+        let index = rows.toggle(1);
+        assert_eq!(index, 1);
         assert_eq!(
             rows[1].v,
             Value::Open {
@@ -42,7 +43,8 @@ mod toggle {
             }
         );
 
-        rows.toggle(4);
+        let index = rows.toggle(4);
+        assert_eq!(index, 4);
         assert_eq!(
             rows[4].v,
             Value::Open {
@@ -60,7 +62,8 @@ mod toggle {
             }
         );
 
-        rows.toggle(0);
+        let index = rows.toggle(0);
+        assert_eq!(index, 0);
         assert_eq!(
             rows[0].v,
             Value::Open {
@@ -153,7 +156,8 @@ mod toggle {
 
         let mut rows = create_rows([input]);
 
-        rows.toggle(3);
+        let index = rows.toggle(3);
+        assert_eq!(index, 1);
         assert_eq!(
             rows[1].v,
             Value::Open {
@@ -171,7 +175,8 @@ mod toggle {
             }
         );
 
-        rows.toggle(8);
+        let index = rows.toggle(8);
+        assert_eq!(index, 4);
         assert_eq!(
             rows[4].v,
             Value::Open {
@@ -189,7 +194,8 @@ mod toggle {
             }
         );
 
-        rows.toggle(9);
+        let index = rows.toggle(9);
+        assert_eq!(index, 0);
         assert_eq!(
             rows[0].v,
             Value::Open {

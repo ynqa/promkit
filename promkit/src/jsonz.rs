@@ -58,7 +58,7 @@ pub struct Row {
 pub trait RowOperation {
     fn up(&mut self, current: usize) -> usize;
     fn down(&mut self, current: usize) -> usize;
-    fn toggle(&mut self, current: usize) -> bool;
+    fn toggle(&mut self, current: usize) -> usize;
     fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
 
@@ -102,7 +102,7 @@ impl RowOperation for Vec<Row> {
         }
     }
 
-    fn toggle(&mut self, current: usize) -> bool {
+    fn toggle(&mut self, current: usize) -> usize {
         match &self[current].v {
             Value::Open {
                 typ,
@@ -125,7 +125,7 @@ impl RowOperation for Vec<Row> {
                     open_index: current,
                 };
 
-                true
+                current
             }
             Value::Close {
                 typ,
@@ -148,9 +148,13 @@ impl RowOperation for Vec<Row> {
                     close_index: current,
                 };
 
-                true
+                if new_collapsed {
+                    open_idx
+                } else {
+                    current
+                }
             }
-            _ => false,
+            _ => current,
         }
     }
 
