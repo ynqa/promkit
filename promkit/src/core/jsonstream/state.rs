@@ -54,9 +54,8 @@ impl State {
         let width = width as usize;
 
         for (i, row) in rows.iter().enumerate() {
+            let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts = Vec::new();
-
-            parts.push(StyledGraphemes::from(" ".repeat(self.indent * row.depth)));
 
             if let Some(key) = &row.k {
                 parts.push(
@@ -128,7 +127,18 @@ impl State {
                 }
             }
 
-            let mut line: StyledGraphemes = parts.into_iter().collect();
+            let mut content: StyledGraphemes = parts.into_iter().collect();
+
+            // Note that `extract_rows_from_current`
+            // returns rows starting from the current position,
+            // so the first row should always be highlighted as active
+            content = content.apply_attribute(if i == 0 {
+                self.active_item_attribute
+            } else {
+                self.inactive_item_attribute
+            });
+
+            let mut line: StyledGraphemes = vec![indent, content].into_iter().collect();
 
             if line.widths() > width {
                 let ellipsis: StyledGraphemes = StyledGraphemes::from("…");
@@ -143,15 +153,6 @@ impl State {
                 }
                 line = vec![truncated, ellipsis].into_iter().collect();
             }
-
-            // Note that `extract_rows_from_current`
-            // returns rows starting from the current position,
-            // so the first row should always be highlighted as active
-            line = line.apply_attribute(if i == 0 {
-                self.active_item_attribute
-            } else {
-                self.inactive_item_attribute
-            });
 
             formatted.push(line);
         }
