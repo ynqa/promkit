@@ -20,7 +20,8 @@ impl JsonStream {
 }
 
 impl JsonStream {
-    pub fn extract_rows(&self, n: usize) -> Vec<Row> {
+    /// Extracts a specified number of rows from the current position in JSON stream.
+    pub fn extract_rows_from_current(&self, n: usize) -> Vec<Row> {
         self.rows.extract(self.position, n)
     }
 
