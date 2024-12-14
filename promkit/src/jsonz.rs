@@ -331,8 +331,36 @@ pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_json::Value>>(iter: T) -
     rows
 }
 
+fn collect_paths(value: &serde_json::Value, current_path: &str, paths: &mut HashSet<String>) {
+    paths.insert(current_path.to_string());
+
+    match value {
+        serde_json::Value::Object(obj) => {
+            for (key, val) in obj {
+                let new_path = if current_path == "." {
+                    format!(".{}", key)
+                } else {
+                    format!("{}.{}", current_path, key)
+                };
+                collect_paths(val, &new_path, paths);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for (i, val) in arr.iter().enumerate() {
+                let new_path = format!("{}[{}]", current_path, i);
+                collect_paths(val, &new_path, paths);
+            }
+        }
+        _ => {}
+    }
+}
+
 pub fn get_all_paths<'a, T: IntoIterator<Item = &'a serde_json::Value>>(
     iter: T,
-) -> HashSet<&'a str> {
-    todo!()
+) -> HashSet<String> {
+    let mut paths = HashSet::new();
+    for value in iter {
+        collect_paths(value, ".", &mut paths);
+    }
+    paths
 }
