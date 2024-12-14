@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    crossterm::event::Event, jsonstream, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
-    text, PaneFactory, PromptSignal,
+    crossterm::event::Event, jsonstream, pane::Pane, switch::ActiveKeySwitcher, text, PaneFactory,
+    PromptSignal,
 };
 
 use super::keymap;
@@ -12,10 +12,10 @@ use super::keymap;
 pub struct Renderer {
     /// Manages key mappings specific to this renderer.
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
-    /// Snapshot of the renderer used for the title.
-    pub title_snapshot: Snapshot<text::State>,
-    /// Snapshot of the renderer used for JSON content.
-    pub json_snapshot: Snapshot<jsonstream::State>,
+    /// A renderer used for the title.
+    pub title_state: text::State,
+    /// A renderer used for JSON content.
+    pub json_state: jsonstream::State,
 }
 
 impl crate::Finalizer for Renderer {
@@ -29,8 +29,8 @@ impl crate::Finalizer for Renderer {
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width, height),
-            self.json_snapshot.create_pane(width, height),
+            self.title_state.create_pane(width, height),
+            self.json_state.create_pane(width, height),
         ]
     }
 

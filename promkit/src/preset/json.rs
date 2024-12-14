@@ -3,7 +3,6 @@ use std::cell::RefCell;
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     jsonstream::{self, JsonStream},
-    snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text, Prompt,
@@ -96,8 +95,8 @@ impl Json {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
-                title_snapshot: Snapshot::<text::State>::new(self.title_state),
-                json_snapshot: Snapshot::<jsonstream::State>::new(self.json_state),
+                title_state: self.title_state,
+                json_state: self.json_state,
             },
         })
     }

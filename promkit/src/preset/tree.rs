@@ -2,7 +2,6 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text,
@@ -110,8 +109,8 @@ impl Tree {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
-                title_snapshot: Snapshot::<text::State>::new(self.title_state),
-                tree_snapshot: Snapshot::<tree::State>::new(self.tree_state),
+                title_state: self.title_state,
+                tree_state: self.tree_state,
             },
         })
     }
