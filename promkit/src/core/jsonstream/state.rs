@@ -131,16 +131,16 @@ impl State {
             let mut line: StyledGraphemes = parts.into_iter().collect();
 
             if line.widths() > width {
+                let ellipsis: StyledGraphemes = StyledGraphemes::from("…");
                 let mut truncated = StyledGraphemes::default();
                 let mut current_width = 0;
                 for g in line.iter() {
-                    if current_width + g.width() + 3 > width {
+                    if current_width + g.width() + ellipsis.widths() > width {
                         break;
                     }
                     truncated.push_back(g.clone());
                     current_width += g.width();
                 }
-                let ellipsis: StyledGraphemes = StyledGraphemes::from("...");
                 line = vec![truncated, ellipsis].into_iter().collect();
             }
 
