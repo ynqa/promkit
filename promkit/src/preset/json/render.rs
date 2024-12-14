@@ -1,12 +1,7 @@
 use std::cell::RefCell;
 
 use crate::{
-    crossterm::event::Event,
-    json,
-    json::{JsonNode, JsonPath},
-    pane::Pane,
-    snapshot::Snapshot,
-    switch::ActiveKeySwitcher,
+    crossterm::event::Event, jsonstream, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
     text, PaneFactory, PromptSignal,
 };
 
@@ -20,18 +15,14 @@ pub struct Renderer {
     /// Snapshot of the renderer used for the title.
     pub title_snapshot: Snapshot<text::State>,
     /// Snapshot of the renderer used for JSON content.
-    pub json_snapshot: Snapshot<json::State>,
+    pub json_snapshot: Snapshot<jsonstream::State>,
 }
 
 impl crate::Finalizer for Renderer {
-    type Return = (JsonNode, Option<JsonPath>);
+    type Return = ();
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
-        Ok(self
-            .json_snapshot
-            .after()
-            .stream
-            .current_root_and_path_from_root())
+        Ok(())
     }
 }
 

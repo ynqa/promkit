@@ -1,7 +1,7 @@
 pub mod checkbox;
 mod cursor;
 pub use cursor::Cursor;
-pub mod json;
+pub mod jsonstream;
 pub mod listbox;
 pub mod snapshot;
 pub mod text;

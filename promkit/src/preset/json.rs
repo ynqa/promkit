@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    json::{self, JsonStream},
+    jsonstream::{self, JsonStream},
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
@@ -16,7 +16,7 @@ pub mod render;
 pub struct Json {
     keymap: ActiveKeySwitcher<keymap::Keymap>,
     title_state: text::State,
-    json_state: json::State,
+    json_state: jsonstream::State,
 }
 
 impl Json {
@@ -28,7 +28,7 @@ impl Json {
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
             },
-            json_state: json::State {
+            json_state: jsonstream::State {
                 stream,
                 curly_brackets_style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
@@ -97,7 +97,7 @@ impl Json {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
                 title_snapshot: Snapshot::<text::State>::new(self.title_state),
-                json_snapshot: Snapshot::<json::State>::new(self.json_state),
+                json_snapshot: Snapshot::<jsonstream::State>::new(self.json_state),
             },
         })
     }
