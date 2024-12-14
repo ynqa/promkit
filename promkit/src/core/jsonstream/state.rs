@@ -122,6 +122,7 @@ impl State {
 
             if i + 1 < rows.len() {
                 if let super::jsonz::Value::Close { .. } = rows[i + 1].v {
+                } else if let super::jsonz::Value::Open { .. } = rows[i].v {
                 } else {
                     parts.push(StyledGraphemes::from(","));
                 }
