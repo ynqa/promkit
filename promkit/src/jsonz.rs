@@ -56,14 +56,14 @@ pub struct Row {
 }
 
 pub trait RowOperation {
-    fn up(&mut self, current: usize) -> usize;
-    fn down(&mut self, current: usize) -> usize;
+    fn up(&self, current: usize) -> usize;
+    fn down(&self, current: usize) -> usize;
     fn toggle(&mut self, current: usize) -> usize;
     fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
 
 impl RowOperation for Vec<Row> {
-    fn up(&mut self, current: usize) -> usize {
+    fn up(&self, current: usize) -> usize {
         if current == 0 {
             return 0;
         }
@@ -79,7 +79,7 @@ impl RowOperation for Vec<Row> {
         }
     }
 
-    fn down(&mut self, current: usize) -> usize {
+    fn down(&self, current: usize) -> usize {
         if current >= self.len() - 1 {
             return current;
         }
