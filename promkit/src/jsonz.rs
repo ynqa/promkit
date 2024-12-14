@@ -321,7 +321,7 @@ fn process_value(
     }
 }
 
-pub fn create_rows<T: IntoIterator<Item = serde_json::Value>>(iter: T) -> Vec<Row> {
+pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_json::Value>>(iter: T) -> Vec<Row> {
     let mut rows = Vec::new();
     for value in iter {
         process_value(&value, &mut rows, 0, None);

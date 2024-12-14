@@ -17,7 +17,7 @@ mod extract {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         let extracted = rows.extract(0, 2);
         assert_eq!(extracted.len(), 2);
@@ -77,7 +77,7 @@ mod extract {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
 
         // {
         //   "object": {...},
@@ -139,7 +139,7 @@ mod extract {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         let extracted = rows.extract(2, 3);
         assert_eq!(extracted.len(), 3);
@@ -189,7 +189,7 @@ mod extract {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         let extracted = rows.extract(0, 10);
         assert_eq!(extracted.len(), 4);
@@ -232,7 +232,7 @@ mod extract {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
 
         // {
         //   "obj1": {

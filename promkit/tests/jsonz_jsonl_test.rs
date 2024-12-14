@@ -6,7 +6,7 @@ mod jsonl {
 
     #[test]
     fn test_basic_jsonl() {
-        let inputs = Deserializer::from_str(
+        let inputs: Vec<_> = Deserializer::from_str(
             r#"
                 {
                     "name": "Alice",
@@ -23,9 +23,10 @@ mod jsonl {
             "#,
         )
         .into_iter::<serde_json::Value>()
-        .filter_map(serde_json::Result::ok);
+        .filter_map(serde_json::Result::ok)
+        .collect();
 
-        let mut rows = create_rows(inputs);
+        let mut rows = create_rows(inputs.iter());
 
         assert_eq!(
             rows[0],
@@ -133,7 +134,7 @@ mod jsonl {
 
     #[test]
     fn test_mixed_jsonl() {
-        let inputs = Deserializer::from_str(
+        let inputs: Vec<_> = Deserializer::from_str(
             r#"
                 {
                     "array": [
@@ -156,9 +157,10 @@ mod jsonl {
             "#,
         )
         .into_iter::<serde_json::Value>()
-        .filter_map(serde_json::Result::ok);
+        .filter_map(serde_json::Result::ok)
+        .collect();
 
-        let mut rows = create_rows(inputs);
+        let mut rows = create_rows(inputs.iter());
 
         assert_eq!(
             rows[0],

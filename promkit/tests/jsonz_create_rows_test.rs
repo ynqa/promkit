@@ -7,16 +7,17 @@ mod create_rows {
 
     #[test]
     fn test_empty_containers() {
-        let inputs = Deserializer::from_str(
+        let values: Vec<_> = Deserializer::from_str(
             r#"
                 {}
                 []
             "#,
         )
         .into_iter::<serde_json::Value>()
-        .filter_map(serde_json::Result::ok);
+        .filter_map(serde_json::Result::ok)
+        .collect();
 
-        let rows = create_rows(inputs);
+        let rows = create_rows(values.iter());
         assert_eq!(rows.len(), 2);
 
         assert_eq!(
@@ -57,7 +58,7 @@ mod create_rows {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         assert_eq!(
             rows[0],
@@ -164,7 +165,7 @@ mod create_rows {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         assert_eq!(
             rows[0],
@@ -279,7 +280,7 @@ mod create_rows {
         )
         .unwrap();
 
-        let rows = create_rows([input]);
+        let rows = create_rows([&input]);
 
         assert_eq!(
             rows[0],

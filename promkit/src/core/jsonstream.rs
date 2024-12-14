@@ -11,7 +11,7 @@ pub struct JsonStream {
 }
 
 impl JsonStream {
-    pub fn new<I: IntoIterator<Item = serde_json::Value>>(iter: I) -> Self {
+    pub fn new<'a, I: IntoIterator<Item = &'a serde_json::Value>>(iter: I) -> Self {
         Self {
             rows: jsonz::create_rows(iter),
             position: 0,

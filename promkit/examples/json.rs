@@ -237,7 +237,9 @@ fn main() -> anyhow::Result<()> {
             "#,
         )
         .into_iter::<serde_json::Value>()
-        .filter_map(serde_json::Result::ok),
+        .filter_map(serde_json::Result::ok)
+        .collect::<Vec<_>>()
+        .iter(),
     );
 
     let mut p = Json::new(stream).title("JSON viewer").prompt()?;

@@ -22,7 +22,7 @@ mod toggle {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
 
         let index = rows.toggle(1);
         assert_eq!(index, 1);
@@ -154,7 +154,7 @@ mod toggle {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
 
         let index = rows.toggle(3);
         assert_eq!(index, 1);

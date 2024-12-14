@@ -22,7 +22,7 @@ mod up {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
         rows.toggle(1);
         rows.toggle(4);
 

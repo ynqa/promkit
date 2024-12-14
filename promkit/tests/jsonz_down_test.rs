@@ -22,7 +22,7 @@ mod down {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
         rows.toggle(1);
         rows.toggle(4);
 
@@ -45,7 +45,7 @@ mod down {
         )
         .unwrap();
 
-        let mut rows = create_rows([input]);
+        let mut rows = create_rows([&input]);
         rows.toggle(0);
 
         assert_eq!(rows.down(0), 0);
