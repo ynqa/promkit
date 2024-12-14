@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {
     Object,
@@ -327,4 +329,10 @@ pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_json::Value>>(iter: T) -
         process_value(value, &mut rows, 0, None);
     }
     rows
+}
+
+pub fn get_all_paths<'a, T: IntoIterator<Item = &'a serde_json::Value>>(
+    iter: T,
+) -> HashSet<&'a str> {
+    todo!()
 }
