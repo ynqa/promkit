@@ -3,7 +3,6 @@ use std::{cell::RefCell, fmt::Display};
 use crate::{
     checkbox,
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text, Prompt,
@@ -126,8 +125,8 @@ impl Checkbox {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
-                title_snapshot: Snapshot::<text::State>::new(self.title_state),
-                checkbox_snapshot: Snapshot::<checkbox::State>::new(self.checkbox_state),
+                title_state: self.title_state,
+                checkbox_state: self.checkbox_state,
             },
         })
     }

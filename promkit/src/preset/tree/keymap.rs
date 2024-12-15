@@ -24,8 +24,6 @@ pub fn default(
     event: &Event,
     renderer: &mut preset::tree::render::Renderer,
 ) -> anyhow::Result<PromptSignal> {
-    let tree_after_mut = renderer.tree_snapshot.after_mut();
-
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -47,7 +45,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            tree_after_mut.tree.backward();
+            renderer.tree_state.tree.backward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -55,7 +53,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            tree_after_mut.tree.backward();
+            renderer.tree_state.tree.backward();
         }
 
         Event::Key(KeyEvent {
@@ -64,7 +62,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            tree_after_mut.tree.forward();
+            renderer.tree_state.tree.forward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -72,7 +70,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            tree_after_mut.tree.forward();
+            renderer.tree_state.tree.forward();
         }
 
         // Fold/Unfold
@@ -82,7 +80,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            tree_after_mut.tree.toggle();
+            renderer.tree_state.tree.toggle();
         }
 
         _ => (),

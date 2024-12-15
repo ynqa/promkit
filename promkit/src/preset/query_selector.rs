@@ -161,7 +161,7 @@ impl QuerySelector {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
-                title_snapshot: Snapshot::<text::State>::new(self.title_state),
+                title_state: self.title_state,
                 text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
                 filter: self.filter,

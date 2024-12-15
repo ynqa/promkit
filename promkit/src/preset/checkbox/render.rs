@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
 use crate::{
-    checkbox, crossterm::event::Event, pane::Pane, snapshot::Snapshot, switch::ActiveKeySwitcher,
-    text, PaneFactory, PromptSignal,
+    checkbox, crossterm::event::Event, pane::Pane, switch::ActiveKeySwitcher, text, PaneFactory,
+    PromptSignal,
 };
 
 use super::keymap;
@@ -14,10 +14,10 @@ use super::keymap;
 pub struct Renderer {
     /// Manages key mappings for the renderer.
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
-    /// A snapshot of the title's renderer state.
-    pub title_snapshot: Snapshot<text::State>,
-    /// A snapshot of the checkbox's renderer state.
-    pub checkbox_snapshot: Snapshot<checkbox::State>,
+    /// A title's renderer state.
+    pub title_state: text::State,
+    /// A checkbox's renderer state.
+    pub checkbox_state: checkbox::State,
 }
 
 impl crate::Finalizer for Renderer {
@@ -25,8 +25,7 @@ impl crate::Finalizer for Renderer {
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         Ok(self
-            .checkbox_snapshot
-            .after()
+            .checkbox_state
             .checkbox
             .get()
             .iter()
@@ -38,8 +37,8 @@ impl crate::Finalizer for Renderer {
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width, height),
-            self.checkbox_snapshot.create_pane(width, height),
+            self.title_state.create_pane(width, height),
+            self.checkbox_state.create_pane(width, height),
         ]
     }
 

@@ -24,8 +24,6 @@ pub fn default(
     event: &Event,
     renderer: &mut preset::checkbox::render::Renderer,
 ) -> anyhow::Result<PromptSignal> {
-    let checkbox_after_mut = renderer.checkbox_snapshot.after_mut();
-
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -47,7 +45,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            checkbox_after_mut.checkbox.backward();
+            renderer.checkbox_state.checkbox.backward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -55,7 +53,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            checkbox_after_mut.checkbox.backward();
+            renderer.checkbox_state.checkbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -64,7 +62,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            checkbox_after_mut.checkbox.forward();
+            renderer.checkbox_state.checkbox.forward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -72,7 +70,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            checkbox_after_mut.checkbox.forward();
+            renderer.checkbox_state.checkbox.forward();
         }
 
         Event::Key(KeyEvent {
@@ -80,7 +78,7 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => checkbox_after_mut.checkbox.toggle(),
+        }) => renderer.checkbox_state.checkbox.toggle(),
 
         _ => (),
     }
