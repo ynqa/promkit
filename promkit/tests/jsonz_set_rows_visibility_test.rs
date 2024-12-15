@@ -34,7 +34,7 @@ mod set_nodes_visibility {
 
         let mut rows = create_rows(inputs.iter());
 
-        rows.set_nodes_visibility(true);
+        rows.set_rows_visibility(true);
         for row in &rows {
             match &row.v {
                 Value::Open { collapsed, .. } | Value::Close { collapsed, .. } => {
@@ -44,7 +44,7 @@ mod set_nodes_visibility {
             }
         }
 
-        rows.set_nodes_visibility(false);
+        rows.set_rows_visibility(false);
         for row in &rows {
             match &row.v {
                 Value::Open { collapsed, .. } | Value::Close { collapsed, .. } => {

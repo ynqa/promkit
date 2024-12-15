@@ -20,6 +20,7 @@ impl JsonStream {
 }
 
 impl JsonStream {
+    /// Returns a reference to the underlying vector of rows.
     pub fn rows(&self) -> &[Row] {
         &self.rows
     }
@@ -35,6 +36,12 @@ impl JsonStream {
         self.position = index;
     }
 
+    /// Sets the visibility of all rows in JSON stream.
+    pub fn set_nodes_visibility(&mut self, collapsed: bool) {
+        self.rows.set_rows_visibility(collapsed);
+        self.position = 0;
+    }
+
     /// Moves the cursor backward through JSON stream.
     pub fn backward(&mut self) -> bool {
         let index = self.rows.up(self.position);
@@ -43,11 +50,23 @@ impl JsonStream {
         ret
     }
 
+    /// Moves the cursor to the head position in JSON stream.
+    pub fn head(&mut self) -> bool {
+        self.position = self.rows.head();
+        true
+    }
+
     /// Moves the cursor forward through JSON stream.
     pub fn forward(&mut self) -> bool {
         let index = self.rows.down(self.position);
         let ret = index != self.position;
         self.position = index;
         ret
+    }
+
+    /// Moves the cursor to the last position in JSON stream.
+    pub fn tail(&mut self) -> bool {
+        self.position = self.rows.tail();
+        true
     }
 }

@@ -74,7 +74,7 @@ pub trait RowOperation {
     fn down(&self, current: usize) -> usize;
     fn tail(&self) -> usize;
     fn toggle(&mut self, current: usize) -> usize;
-    fn set_nodes_visibility(&mut self, collapsed: bool);
+    fn set_rows_visibility(&mut self, collapsed: bool);
     fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
 
@@ -197,7 +197,7 @@ impl RowOperation for Vec<Row> {
         }
     }
 
-    fn set_nodes_visibility(&mut self, collapsed: bool) {
+    fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
             if let Value::Open {
                 typ, close_index, ..
