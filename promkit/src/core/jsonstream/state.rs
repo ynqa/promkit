@@ -49,7 +49,7 @@ pub struct State {
 
 impl State {
     /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
-    fn format_rows(&self, rows: Vec<super::jsonz::Row>, width: u16) -> Vec<StyledGraphemes> {
+    fn format_rows(&self, rows: &[super::jsonz::Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
 
@@ -169,7 +169,7 @@ impl PaneFactory for State {
         };
 
         let rows = self.stream.extract_rows_from_current(height);
-        let formatted_rows = self.format_rows(rows, width);
+        let formatted_rows = self.format_rows(&rows, width);
 
         Pane::new(formatted_rows, 0)
     }
