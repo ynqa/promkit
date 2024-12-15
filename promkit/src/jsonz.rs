@@ -68,6 +68,7 @@ pub struct Row {
 
 pub trait RowOperation {
     fn up(&self, current: usize) -> usize;
+    fn head(&self) -> usize;
     fn down(&self, current: usize) -> usize;
     fn tail(&self) -> usize;
     fn toggle(&mut self, current: usize) -> usize;
@@ -89,6 +90,10 @@ impl RowOperation for Vec<Row> {
             } if *collapsed => *open_index,
             _ => prev,
         }
+    }
+
+    fn head(&self) -> usize {
+        0
     }
 
     fn down(&self, current: usize) -> usize {
