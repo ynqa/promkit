@@ -99,6 +99,9 @@ impl RowFormatter {
                         ContainerType::Object => self.curly_brackets_style,
                         ContainerType::Array => self.square_brackets_style,
                     };
+                    // We don't need to check collapsed here because:
+                    // 1. If the corresponding Open is collapsed, this Close will be skipped during `extract_rows`
+                    // 2. If the Open is not collapsed, we want to show the closing bracket
                     parts.push(StyledGraphemes::from(typ.close_str()).apply_style(bracket_style));
                 }
             }
