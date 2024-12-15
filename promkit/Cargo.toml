@@ -17,6 +17,7 @@ anyhow = "1.0.81"
 crossterm = { version = "0.28.1", features = ["use-dev-tty"] }
 indexmap = "2.2.3"
 radix_trie = "0.2.1"
+rayon = "1.10.0"
 serde = { version = "1.0.197" }
 serde_json = { version = "1.0.114", features = ["preserve_order"] }
 unicode-width = "0.1.8"

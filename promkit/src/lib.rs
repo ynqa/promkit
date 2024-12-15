@@ -128,6 +128,7 @@ pub use serde_json;
 mod core;
 pub use core::*;
 pub mod grapheme;
+pub mod jsonz;
 pub mod pane;
 pub mod preset;
 pub mod style;

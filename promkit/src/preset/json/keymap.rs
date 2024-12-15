@@ -24,8 +24,6 @@ pub fn default(
     event: &Event,
     renderer: &mut preset::json::render::Renderer,
 ) -> anyhow::Result<PromptSignal> {
-    let json_after_mut = renderer.json_snapshot.after_mut();
-
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -53,7 +51,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            json_after_mut.stream.backward();
+            renderer.json_state.stream.backward();
         }
 
         Event::Key(KeyEvent {
@@ -68,7 +66,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            json_after_mut.stream.forward();
+            renderer.json_state.stream.forward();
         }
 
         // Fold/Unfold
@@ -78,7 +76,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            json_after_mut.stream.toggle();
+            renderer.json_state.stream.toggle();
         }
 
         _ => (),
