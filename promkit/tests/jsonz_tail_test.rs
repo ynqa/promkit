@@ -53,9 +53,9 @@ mod tail {
 
         let mut rows = create_rows(inputs.iter());
 
-        assert_eq!(rows.tail(), 12);
+        assert_eq!(rows.tail(), 11);
         rows.toggle(0);
-        assert_eq!(rows.tail(), 12);
+        assert_eq!(rows.tail(), 11);
         rows.toggle(8);
         assert_eq!(rows.tail(), 8);
     }

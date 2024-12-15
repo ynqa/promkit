@@ -115,7 +115,22 @@ impl RowOperation for Vec<Row> {
     }
 
     fn tail(&self) -> usize {
-        todo!()
+        if self.is_empty() {
+            return 0;
+        }
+
+        let mut last = self.len() - 1;
+        match &self[last].v {
+            Value::Close {
+                collapsed,
+                open_index,
+                ..
+            } if *collapsed => {
+                last = *open_index;
+                last
+            }
+            _ => last,
+        }
     }
 
     fn toggle(&mut self, current: usize) -> usize {
