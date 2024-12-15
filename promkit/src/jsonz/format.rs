@@ -34,9 +34,26 @@ pub struct RowFormatter {
     pub indent: usize,
 }
 
+impl Default for RowFormatter {
+    fn default() -> Self {
+        Self {
+            curly_brackets_style: Default::default(),
+            square_brackets_style: Default::default(),
+            key_style: Default::default(),
+            string_value_style: Default::default(),
+            number_value_style: Default::default(),
+            boolean_value_style: Default::default(),
+            null_value_style: Default::default(),
+            active_item_attribute: Attribute::NoBold,
+            inactive_item_attribute: Attribute::NoBold,
+            indent: Default::default(),
+        }
+    }
+}
+
 impl RowFormatter {
     /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
-    pub fn format(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+    pub fn format_for_terminal_display(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
 
@@ -148,5 +165,61 @@ impl RowFormatter {
         }
 
         formatted
+    }
+
+    /// Formats a slice of Rows to a raw JSON string, ignoring collapsed and truncated states
+    pub fn format_raw_json(&self, rows: &[Row]) -> String {
+        todo!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    mod format_raw_json {
+        use std::str::FromStr;
+
+        use crate::jsonz::{create_rows, format};
+
+        #[test]
+        fn test() {
+            let expected = r#"
+{
+    "array": [
+        {
+            "key": "value"
+        },
+        [
+            1,
+            2,
+            3
+        ],
+        {
+            "nested": true
+        }
+    ],
+    "object": {
+        "array": [
+            1,
+            2,
+            3
+        ],
+        "nested": {
+            "value": "test"
+        }
+    }
+}"#
+            .trim();
+
+            assert_eq!(
+                format::RowFormatter {
+                    indent: 4,
+                    ..Default::default()
+                }
+                .format_raw_json(&create_rows([
+                    &serde_json::Value::from_str(&expected).unwrap()
+                ])),
+                expected,
+            );
+        }
     }
 }

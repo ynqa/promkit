@@ -26,7 +26,7 @@ impl PaneFactory for State {
         };
 
         let rows = self.stream.extract_rows_from_current(height);
-        let formatted_rows = self.formatter.format(&rows, width);
+        let formatted_rows = self.formatter.format_for_terminal_display(&rows, width);
 
         Pane::new(formatted_rows, 0)
     }
