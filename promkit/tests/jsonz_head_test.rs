@@ -6,7 +6,7 @@ mod head {
     use serde_json::Deserializer;
 
     #[test]
-    fn test() {
+    fn test_head_after_toggle() {
         let input = serde_json::Value::from_str(
             r#"
                 {
@@ -30,7 +30,7 @@ mod head {
     }
 
     #[test]
-    fn test_for_jsonl() {
+    fn test_jsonl() {
         let inputs: Vec<_> = Deserializer::from_str(
             r#"
                 {

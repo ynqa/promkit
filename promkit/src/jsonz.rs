@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use rayon::prelude::*;
+
 pub mod format;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -72,6 +74,7 @@ pub trait RowOperation {
     fn down(&self, current: usize) -> usize;
     fn tail(&self) -> usize;
     fn toggle(&mut self, current: usize) -> usize;
+    fn set_nodes_visibility(&mut self, collapsed: bool);
     fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
 
@@ -192,6 +195,30 @@ impl RowOperation for Vec<Row> {
             }
             _ => current,
         }
+    }
+
+    fn set_nodes_visibility(&mut self, collapsed: bool) {
+        self.par_iter_mut().for_each(|row| {
+            if let Value::Open {
+                typ, close_index, ..
+            } = &row.v
+            {
+                row.v = Value::Open {
+                    typ: typ.clone(),
+                    collapsed,
+                    close_index: *close_index,
+                };
+            } else if let Value::Close {
+                typ, open_index, ..
+            } = &row.v
+            {
+                row.v = Value::Close {
+                    typ: typ.clone(),
+                    collapsed,
+                    open_index: *open_index,
+                };
+            }
+        });
     }
 
     fn extract(&self, current: usize, n: usize) -> Vec<Row> {
