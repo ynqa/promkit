@@ -23,6 +23,13 @@ impl ContainerType {
         }
     }
 
+    pub fn empty_str(&self) -> &'static str {
+        match self {
+            ContainerType::Object => "{}",
+            ContainerType::Array => "[]",
+        }
+    }
+
     pub fn collapsed_preview(&self) -> &'static str {
         match self {
             ContainerType::Object => "{…}",

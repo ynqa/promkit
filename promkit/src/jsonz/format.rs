@@ -77,10 +77,7 @@ impl RowFormatter {
                         ContainerType::Object => self.curly_brackets_style,
                         ContainerType::Array => self.square_brackets_style,
                     };
-                    parts.push(
-                        StyledGraphemes::from(format!("{}{}", typ.open_str(), typ.close_str()))
-                            .apply_style(bracket_style),
-                    );
+                    parts.push(StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style));
                 }
                 Value::Open { typ, collapsed, .. } => {
                     let bracket_style = match typ {
