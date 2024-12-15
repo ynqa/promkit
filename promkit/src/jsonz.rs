@@ -69,6 +69,7 @@ pub struct Row {
 pub trait RowOperation {
     fn up(&self, current: usize) -> usize;
     fn down(&self, current: usize) -> usize;
+    fn tail(&self) -> usize;
     fn toggle(&mut self, current: usize) -> usize;
     fn extract(&self, current: usize, n: usize) -> Vec<Row>;
 }
@@ -111,6 +112,10 @@ impl RowOperation for Vec<Row> {
             }
             _ => next,
         }
+    }
+
+    fn tail(&self) -> usize {
+        todo!()
     }
 
     fn toggle(&mut self, current: usize) -> usize {
