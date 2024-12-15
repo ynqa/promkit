@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     jsonstream::{self, JsonStream},
+    jsonz::format::RowFormatter,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text, Prompt,
@@ -29,21 +30,23 @@ impl Json {
             },
             json_state: jsonstream::State {
                 stream,
-                curly_brackets_style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                square_brackets_style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
-                string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
-                number_value_style: StyleBuilder::new().build(),
-                boolean_value_style: StyleBuilder::new().build(),
-                null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
-                active_item_attribute: Attribute::Undercurled,
-                inactive_item_attribute: Attribute::Dim,
+                formatter: RowFormatter {
+                    curly_brackets_style: StyleBuilder::new()
+                        .attrs(Attributes::from(Attribute::Bold))
+                        .build(),
+                    square_brackets_style: StyleBuilder::new()
+                        .attrs(Attributes::from(Attribute::Bold))
+                        .build(),
+                    key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
+                    string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
+                    number_value_style: StyleBuilder::new().build(),
+                    boolean_value_style: StyleBuilder::new().build(),
+                    null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
+                    active_item_attribute: Attribute::Undercurled,
+                    inactive_item_attribute: Attribute::Dim,
+                    indent: 2,
+                },
                 lines: Default::default(),
-                indent: 2,
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
@@ -69,19 +72,19 @@ impl Json {
 
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.json_state.indent = indent;
+        self.json_state.formatter.indent = indent;
         self
     }
 
     /// Sets the attribute for active (currently selected) items.
     pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.active_item_attribute = attr;
+        self.json_state.formatter.active_item_attribute = attr;
         self
     }
 
     /// Sets the attribute for inactive (not currently selected) items.
     pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.inactive_item_attribute = attr;
+        self.json_state.formatter.inactive_item_attribute = attr;
         self
     }
 

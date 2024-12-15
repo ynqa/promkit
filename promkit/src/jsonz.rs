@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+pub mod format;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {
     Object,
