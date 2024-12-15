@@ -43,7 +43,7 @@ impl JsonStream {
     }
 
     /// Moves the cursor backward through JSON stream.
-    pub fn backward(&mut self) -> bool {
+    pub fn up(&mut self) -> bool {
         let index = self.rows.up(self.position);
         let ret = index != self.position;
         self.position = index;
@@ -57,7 +57,7 @@ impl JsonStream {
     }
 
     /// Moves the cursor forward through JSON stream.
-    pub fn forward(&mut self) -> bool {
+    pub fn down(&mut self) -> bool {
         let index = self.rows.down(self.position);
         let ret = index != self.position;
         self.position = index;

@@ -51,7 +51,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.backward();
+            renderer.json_state.stream.up();
         }
 
         Event::Key(KeyEvent {
@@ -66,7 +66,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.forward();
+            renderer.json_state.stream.down();
         }
 
         // Fold/Unfold
