@@ -53,7 +53,7 @@ mod get_all_paths {
         )
         .unwrap();
 
-        let actual = jsonz::get_all_paths([&v]);
+        let actual = jsonz::get_all_paths([&v]).collect::<HashSet<_>>();
         let expected = HashSet::from_iter(
             [
                 ".",
@@ -114,7 +114,7 @@ mod get_all_paths {
         .filter_map(serde_json::Result::ok)
         .collect::<Vec<_>>();
 
-        let actual = jsonz::get_all_paths(binding.iter());
+        let actual = jsonz::get_all_paths(binding.iter()).collect::<HashSet<_>>();
         let expected = HashSet::from_iter(
             [
                 ".",

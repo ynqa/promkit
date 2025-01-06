@@ -33,6 +33,14 @@ impl Listbox {
         ))
     }
 
+    pub fn len(&self) -> usize {
+        self.0.contents().len()
+    }
+
+    pub fn push_string(&mut self, item: String) {
+        self.0.contents_mut().push(StyledGraphemes::from(item));
+    }
+
     /// Creates a new `Listbox` from a vector of `StyledGraphemes`.
     pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
         Self(Cursor::new(items, 0, false))
@@ -78,5 +86,9 @@ impl Listbox {
     /// Moves the cursor to the tail of the listbox.
     pub fn move_to_tail(&mut self) {
         self.0.move_to_tail()
+    }
+
+    pub fn is_tail(&self) -> bool {
+        self.0.is_tail()
     }
 }
