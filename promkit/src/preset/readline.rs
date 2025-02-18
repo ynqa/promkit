@@ -45,6 +45,7 @@ impl Default for Readline {
                 .register("on_suggest", self::keymap::on_suggest),
             title_state: text::State {
                 text: Default::default(),
+                matrix_index: Default::default(),
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
@@ -77,6 +78,7 @@ impl Default for Readline {
             validator: Default::default(),
             error_message_state: text::State {
                 text: Default::default(),
+                matrix_index: Default::default(),
                 style: StyleBuilder::new()
                     .fgc(Color::DarkRed)
                     .attrs(Attributes::from(Attribute::Bold))

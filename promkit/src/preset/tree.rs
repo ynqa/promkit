@@ -35,6 +35,7 @@ impl Tree {
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             title_state: text::State {
                 text: Default::default(),
+                matrix_index: Default::default(),
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),

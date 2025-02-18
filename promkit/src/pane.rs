@@ -53,6 +53,7 @@ mod test {
         fn test() {
             let state = text::State {
                 text: "".to_string(),
+                matrix_index: 0,
                 style: ContentStyle::default(),
             };
             assert_eq!(0, state.create_pane(10, 10).visible_row_count())
