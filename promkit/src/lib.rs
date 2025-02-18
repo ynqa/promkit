@@ -283,6 +283,7 @@ impl<T: Renderer> Prompt<T> {
             terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
+        disable_raw_mode()?;
         self.renderer.finalize()
     }
 }
