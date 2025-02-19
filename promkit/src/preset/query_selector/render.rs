@@ -21,8 +21,8 @@ use super::keymap;
 pub struct Renderer {
     /// Manages key mappings specific to this renderer.
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
-    /// Snapshot of the title renderer.
-    pub title_snapshot: Snapshot<text::State>,
+    /// A title renderer.
+    pub title_state: text::State,
     /// Snapshot of the text editor renderer.
     pub text_editor_snapshot: Snapshot<text_editor::State>,
     /// Snapshot of the listbox renderer.
@@ -41,7 +41,7 @@ impl crate::Finalizer for Renderer {
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width, height),
+            self.title_state.create_pane(width, height),
             self.text_editor_snapshot.create_pane(width, height),
             self.listbox_snapshot.create_pane(width, height),
         ]

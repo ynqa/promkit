@@ -3,7 +3,6 @@ use std::{cell::RefCell, fmt::Display, io};
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     listbox,
-    snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
     text, Prompt,
@@ -105,8 +104,8 @@ impl Listbox {
         Ok(Prompt {
             renderer: render::Renderer {
                 keymap: RefCell::new(self.keymap),
-                title_snapshot: Snapshot::<text::State>::new(self.title_state),
-                listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
+                title_state: self.title_state,
+                listbox_state: self.listbox_state,
             },
             writer: self.writer,
         })

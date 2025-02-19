@@ -23,8 +23,6 @@ pub fn default(
     event: &Event,
     renderer: &mut preset::listbox::render::Renderer,
 ) -> anyhow::Result<PromptSignal> {
-    let listbox_after_mut = renderer.listbox_snapshot.after_mut();
-
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -52,7 +50,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            listbox_after_mut.listbox.backward();
+            renderer.listbox_state.listbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -67,7 +65,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            listbox_after_mut.listbox.forward();
+            renderer.listbox_state.listbox.forward();
         }
 
         _ => (),

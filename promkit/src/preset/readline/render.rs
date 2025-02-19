@@ -13,8 +13,8 @@ use super::keymap;
 pub struct Renderer {
     /// Manages key bindings and their associated actions within the readline interface.
     pub keymap: RefCell<ActiveKeySwitcher<keymap::Keymap>>,
-    /// Holds a snapshot of the title's renderer state, used for rendering the title section.
-    pub title_snapshot: Snapshot<text::State>,
+    /// Holds a title's renderer state, used for rendering the title section.
+    pub title_state: text::State,
     /// Holds a snapshot of the text editor's renderer state, used for rendering the text input area.
     pub text_editor_snapshot: Snapshot<text_editor::State>,
     /// Optional suggest component for autocomplete functionality.
@@ -37,7 +37,12 @@ impl crate::Finalizer for Renderer {
             .texteditor
             .text_without_cursor()
             .to_string();
+
+        // Keep history over state reset
+        let history = self.text_editor_snapshot.after_mut().history.take();
         self.text_editor_snapshot.reset_after_to_init();
+        self.text_editor_snapshot.after_mut().history = history;
+
         Ok(ret)
     }
 }
@@ -45,7 +50,7 @@ impl crate::Finalizer for Renderer {
 impl crate::Renderer for Renderer {
     fn create_panes(&self, width: u16, height: u16) -> Vec<Pane> {
         vec![
-            self.title_snapshot.create_pane(width, height),
+            self.title_state.create_pane(width, height),
             self.error_message_snapshot.create_pane(width, height),
             self.text_editor_snapshot.create_pane(width, height),
             self.suggest_snapshot.create_pane(width, height),

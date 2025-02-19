@@ -11,7 +11,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! promkit = "0.5.1"
+//! promkit = "0.6.1"
 //! ```
 //!
 //! ## Features
@@ -19,13 +19,13 @@
 //! - Support cross-platform both UNIX and Windows owing to [crossterm](https://github.com/crossterm-rs/crossterm)
 //! - Various building methods
 //!   - Preset; Support for quickly setting up a UI by providing simple parameters.
-//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.5.1#readline)
-//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.5.1#confirm)
-//!     - [Password](https://github.com/ynqa/promkit/tree/v0.5.1#password)
-//!     - [Select](https://github.com/ynqa/promkit/tree/v0.5.1#select)
-//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.5.1#queryselect)
-//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.5.1#checkbox)
-//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.5.1#tree)
+//!     - [Readline](https://github.com/ynqa/promkit/tree/v0.6.1#readline)
+//!     - [Confirm](https://github.com/ynqa/promkit/tree/v0.6.1#confirm)
+//!     - [Password](https://github.com/ynqa/promkit/tree/v0.6.1#password)
+//!     - [Select](https://github.com/ynqa/promkit/tree/v0.6.1#select)
+//!     - [QuerySelect](https://github.com/ynqa/promkit/tree/v0.6.1#queryselect)
+//!     - [Checkbox](https://github.com/ynqa/promkit/tree/v0.6.1#checkbox)
+//!     - [Tree](https://github.com/ynqa/promkit/tree/v0.6.1#tree)
 //!   - Combining various UI components.
 //!     - They are provided with the same interface, allowing users to choose and
 //!       assemble them according to their preferences.
@@ -39,7 +39,7 @@
 //!
 //! ## Examples/Demos
 //!
-//! See [here](https://github.com/ynqa/promkit/tree/v0.5.1#examplesdemos)
+//! See [here](https://github.com/ynqa/promkit/tree/v0.6.1#examplesdemos)
 //!
 //! ## Why *promkit*?
 //!
@@ -128,6 +128,7 @@ pub use serde_json;
 mod core;
 pub use core::*;
 pub mod grapheme;
+pub mod jsonz;
 pub mod pane;
 pub mod preset;
 pub mod style;
@@ -279,6 +280,7 @@ impl<T: Renderer> Prompt<T> {
             terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
+        disable_raw_mode()?;
         self.renderer.finalize()
     }
 }
