@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display};
+use std::{cell::RefCell, fmt::Display, io};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -28,6 +28,8 @@ pub struct QuerySelector {
     /// A filter function to apply to the list box items
     /// based on the text editor input.
     filter: render::Filter,
+    /// Writer to which promptkit write its contents
+    writer: Box<dyn io::Write>,
 }
 
 impl QuerySelector {
@@ -74,6 +76,7 @@ impl QuerySelector {
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             filter,
+            writer: Box::new(io::stdout()),
         }
     }
 
@@ -154,6 +157,12 @@ impl QuerySelector {
         self
     }
 
+    /// Sets writer.
+    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
+        self.writer = Box::new(writer);
+        self
+    }
+
     /// Displays the query select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
@@ -166,6 +175,7 @@ impl QuerySelector {
                 listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
                 filter: self.filter,
             },
+            writer: self.writer,
         })
     }
 }

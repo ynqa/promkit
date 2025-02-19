@@ -1,17 +1,27 @@
-use std::io::{self, Write};
+use std::io::Write;
 
 use crate::{
     crossterm::{cursor, style, terminal},
     pane::Pane,
 };
 
-pub struct Terminal {
+pub struct Terminal<'a, W: Write> {
     /// The current cursor position within the terminal.
     pub position: (u16, u16),
+    pub writer: &'a mut W,
 }
 
-impl Terminal {
-    pub fn start_session(panes: &[Pane]) -> anyhow::Result<Self> {
+impl<'a, W: Write> Terminal<'a, W> {
+    pub fn on_resize(&mut self) -> anyhow::Result<()> {
+        self.position = (0, 0);
+        crossterm::execute!(
+            self.writer,
+            crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
+        )?;
+        Ok(())
+    }
+
+    pub fn start_session(panes: &[Pane], writer: &'a mut W) -> anyhow::Result<Self> {
         let position = cursor::position()?;
         let size = terminal::size()?;
 
@@ -23,9 +33,9 @@ impl Terminal {
         //    to ensure the next output starts correctly.
         if position.0 != 0 {
             if size.1 == position.1 + 1 {
-                crossterm::queue!(io::stdout(), terminal::ScrollUp(1))?;
+                crossterm::queue!(writer, terminal::ScrollUp(1))?;
             }
-            crossterm::queue!(io::stdout(), cursor::MoveToNextLine(1))?;
+            crossterm::queue!(writer, cursor::MoveToNextLine(1))?;
         }
 
         // Calculate the total number of rows required by all panes.
@@ -39,16 +49,17 @@ impl Terminal {
         // to maintain its relative position.
         if size.1 == position.1 + 1 {
             crossterm::queue!(
-                io::stdout(),
+                writer,
                 terminal::ScrollUp(lines as u16),
                 cursor::MoveToPreviousLine(lines as u16),
             )?;
         }
 
-        io::stdout().flush()?;
+        writer.flush()?;
 
         Ok(Self {
             position: cursor::position()?,
+            writer,
         })
     }
 
@@ -62,7 +73,7 @@ impl Terminal {
 
         if height < viewable_panes.len() as u16 {
             return crossterm::execute!(
-                io::stdout(),
+                self.writer,
                 terminal::Clear(terminal::ClearType::FromCursorDown),
                 style::Print("⚠️ Insufficient Space"),
             )
@@ -70,7 +81,7 @@ impl Terminal {
         }
 
         crossterm::queue!(
-            io::stdout(),
+            self.writer,
             cursor::MoveTo(self.position.0, self.position.1),
             terminal::Clear(terminal::ClearType::FromCursorDown),
         )?;
@@ -88,7 +99,7 @@ impl Terminal {
             );
             used += rows.len();
             for (j, row) in rows.iter().enumerate() {
-                crossterm::queue!(io::stdout(), style::Print(row.styled_display()))?;
+                crossterm::queue!(self.writer, style::Print(row.styled_display()))?;
 
                 current_cursor_y = current_cursor_y.saturating_sub(1);
 
@@ -96,14 +107,14 @@ impl Terminal {
                     || i != viewable_panes.len() - 1)
                     && current_cursor_y == 0
                 {
-                    crossterm::queue!(io::stdout(), terminal::ScrollUp(1))?;
+                    crossterm::queue!(self.writer, terminal::ScrollUp(1))?;
                     self.position.1 = self.position.1.saturating_sub(1);
                 }
 
-                crossterm::queue!(io::stdout(), cursor::MoveToNextLine(1))?;
+                crossterm::queue!(self.writer, cursor::MoveToNextLine(1))?;
             }
         }
-        io::stdout().flush()?;
+        self.writer.flush()?;
         Ok(())
     }
 }
