@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -13,11 +13,10 @@ name = "promkit"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.81"
+anyhow = "1.0.95"
 crossterm = { version = "0.28.1", features = ["use-dev-tty"] }
-indexmap = "2.2.3"
 radix_trie = "0.2.1"
 rayon = "1.10.0"
-serde = { version = "1.0.197" }
-serde_json = { version = "1.0.114", features = ["preserve_order"] }
-unicode-width = "0.1.8"
+serde = { version = "1.0.217" }
+serde_json = { version = "1.0.138", features = ["preserve_order"] }
+unicode-width = "0.2.0"
