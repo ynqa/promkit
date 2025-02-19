@@ -37,7 +37,12 @@ impl crate::Finalizer for Renderer {
             .texteditor
             .text_without_cursor()
             .to_string();
+
+        // Keep history over state reset
+        let history = self.text_editor_snapshot.after_mut().history.take();
         self.text_editor_snapshot.reset_after_to_init();
+        self.text_editor_snapshot.after_mut().history = history;
+
         Ok(ret)
     }
 }
