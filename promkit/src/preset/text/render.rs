@@ -12,10 +12,10 @@ pub struct Renderer {
 }
 
 impl crate::Finalizer for Renderer {
-    type Return = String;
+    type Return = ();
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
-        Ok(self.text_state.text.clone())
+        Ok(())
     }
 }
 

@@ -52,9 +52,9 @@ mod test {
         #[test]
         fn test() {
             let state = text::State {
-                text: "".to_string(),
-                matrix_index: 0,
+                text: text::Text::from(""),
                 style: ContentStyle::default(),
+                lines: None,
             };
             assert_eq!(0, state.create_pane(10, 10).visible_row_count())
         }

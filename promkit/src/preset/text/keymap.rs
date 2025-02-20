@@ -11,11 +11,11 @@ pub type Keymap = fn(
     renderer: &mut preset::text::render::Renderer,
 ) -> anyhow::Result<PromptSignal>;
 
-/// Default key bindings for the listbox.
+/// Default key bindings for the text.
 ///
 /// | Key                    | Action
 /// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the listbox
+/// | <kbd>Enter</kbd>       | Exit the text
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
@@ -50,7 +50,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.text_state.up();
+            renderer.text_state.text.backward();
         }
 
         Event::Key(KeyEvent {
@@ -65,7 +65,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.text_state.down();
+            renderer.text_state.text.forward();
         }
 
         _ => (),

@@ -3,7 +3,9 @@ use crossterm::style::ContentStyle;
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     listbox::Listbox,
-    preset, text_editor, PromptSignal,
+    preset,
+    text::Text,
+    text_editor, PromptSignal,
 };
 
 pub type Keymap = fn(
@@ -55,7 +57,8 @@ pub fn default(
                 .map(|validator| {
                     let valid = validator.validate(&text);
                     if !valid {
-                        error_message_after_mut.text = validator.generate_error_message(&text);
+                        error_message_after_mut.text =
+                            Text::from(validator.generate_error_message(&text));
                     }
                     valid
                 })

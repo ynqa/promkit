@@ -19,9 +19,9 @@ impl Text {
         Self {
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             text_state: text::State {
-                text: text.as_ref().to_string(),
-                matrix_index: Default::default(),
+                text: text::Text::from(text),
                 style: Default::default(),
+                lines: None,
             },
             writer: Box::new(io::stdout()),
         }

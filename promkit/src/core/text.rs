@@ -1,45 +1,48 @@
-use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane, PaneFactory};
+use crate::{core::cursor::Cursor, grapheme::StyledGraphemes};
 
-/// Represents the state of a text-based component within the application.
-///
-/// This state encapsulates the properties and
-/// behaviors specific to text handling,
+mod state;
+pub use state::State;
+
 #[derive(Clone)]
-pub struct State {
-    /// The text to be rendered.
-    pub text: String,
-    /// The index of the matrix to start rendering from.
-    pub matrix_index: usize,
+pub struct Text(Cursor<Vec<StyledGraphemes>>);
 
-    /// Style for the text string.
-    pub style: ContentStyle,
-}
-
-impl State {
-    pub fn replace(&mut self, renderer: Self) {
-        *self = renderer;
+impl Default for Text {
+    fn default() -> Self {
+        Self(Cursor::new(vec![], 0, false))
     }
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let (matrix, offset) = StyledGraphemes::from_str(&self.text, self.style).matrixify(
-            width as usize,
-            height as usize,
-            self.matrix_index,
-        );
-        Pane::new(matrix, offset)
+impl<T: AsRef<str>> From<T> for Text {
+    fn from(text: T) -> Self {
+        let lines: Vec<StyledGraphemes> = text
+            .as_ref()
+            .split('\n')
+            .map(StyledGraphemes::from)
+            .collect();
+        Self(Cursor::new(lines, 0, false))
     }
 }
 
-impl State {
-    pub fn down(&mut self) {
-        self.matrix_index += 1;
+impl Text {
+    /// Returns a reference to the vector of items in the listbox.
+    pub fn items(&self) -> &Vec<StyledGraphemes> {
+        self.0.contents()
     }
 
-    pub fn up(&mut self) {
-        if self.matrix_index > 0 {
-            self.matrix_index -= 1;
-        }
+    /// Returns the current position of the cursor within the listbox.
+    pub fn position(&self) -> usize {
+        self.0.position()
+    }
+
+    /// Moves the cursor backward in the listbox, if possible.
+    /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
+    pub fn backward(&mut self) -> bool {
+        self.0.backward()
+    }
+
+    /// Moves the cursor forward in the listbox, if possible.
+    /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
+    pub fn forward(&mut self) -> bool {
+        self.0.forward()
     }
 }
