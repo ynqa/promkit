@@ -17,6 +17,9 @@ impl<T: AsRef<str>> From<T> for Text {
         let lines: Vec<StyledGraphemes> = text
             .as_ref()
             .split('\n')
+            // Replace empty lines with null character to
+            // prevent them from being ignored at `style::Print`
+            .map(|line| if line.is_empty() { "\0" } else { line })
             .map(StyledGraphemes::from)
             .collect();
         Self(Cursor::new(lines, 0, false))

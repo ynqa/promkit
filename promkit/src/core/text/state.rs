@@ -36,7 +36,7 @@ impl PaneFactory for State {
             .items()
             .iter()
             .enumerate()
-            .filter(|(i, _)| *i >= self.text.position())
+            .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
             .map(|(_, item)| item.clone().apply_style(self.style))
             .fold((vec![], 0), |(mut acc, pos), item| {
                 let rows = item.matrixify(width as usize, height, 0).0;

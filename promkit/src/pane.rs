@@ -52,7 +52,7 @@ mod test {
         #[test]
         fn test() {
             let state = text::State {
-                text: text::Text::from(""),
+                text: Default::default(),
                 style: ContentStyle::default(),
                 lines: None,
             };
