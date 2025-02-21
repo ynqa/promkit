@@ -18,3 +18,5 @@ pub mod query_selector;
 pub mod tree;
 
 pub mod form;
+
+pub mod text;

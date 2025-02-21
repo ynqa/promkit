@@ -6,7 +6,8 @@ use crate::{
     jsonz::format::RowFormatter,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, Prompt,
+    text::{self, Text},
+    Prompt,
 };
 
 pub mod keymap;
@@ -29,6 +30,7 @@ impl Json {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             json_state: jsonstream::State {
                 stream,
@@ -57,7 +59,7 @@ impl Json {
 
     /// Sets the title text for the JSON preset.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = text.as_ref().to_string();
+        self.title_state.text = Text::from(text);
         self
     }
 

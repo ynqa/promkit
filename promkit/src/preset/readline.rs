@@ -7,7 +7,7 @@ use crate::{
     style::StyleBuilder,
     suggest::Suggest,
     switch::ActiveKeySwitcher,
-    text,
+    text::{self, Text},
     text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     Prompt,
@@ -48,6 +48,7 @@ impl Default for Readline {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             text_editor_state: text_editor::State {
                 texteditor: Default::default(),
@@ -81,6 +82,7 @@ impl Default for Readline {
                     .fgc(Color::DarkRed)
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             writer: Box::new(io::stdout()),
         }
@@ -90,7 +92,7 @@ impl Default for Readline {
 impl Readline {
     /// Sets the title text displayed above the input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = text.as_ref().to_string();
+        self.title_state.text = Text::from(text);
         self
     }
 

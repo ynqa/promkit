@@ -5,7 +5,8 @@ use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, Prompt,
+    text::{self, Text},
+    Prompt,
 };
 
 pub mod keymap;
@@ -38,6 +39,7 @@ impl Checkbox {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::from_displayable(items),
@@ -60,6 +62,7 @@ impl Checkbox {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::new_with_checked(items),
@@ -77,7 +80,7 @@ impl Checkbox {
 
     /// Sets the title text displayed above the checkbox list.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = text.as_ref().to_string();
+        self.title_state.text = Text::from(text);
         self
     }
 

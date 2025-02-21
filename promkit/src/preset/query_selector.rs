@@ -6,7 +6,7 @@ use crate::{
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text,
+    text::{self, Text},
     text_editor::{self, Mode},
     Prompt,
 };
@@ -54,6 +54,7 @@ impl QuerySelector {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             text_editor_state: text_editor::State {
                 texteditor: Default::default(),
@@ -82,7 +83,7 @@ impl QuerySelector {
 
     /// Sets the title text displayed above the query selection.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = text.as_ref().to_string();
+        self.title_state.text = Text::from(text);
         self
     }
 

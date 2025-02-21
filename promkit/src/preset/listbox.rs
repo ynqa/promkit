@@ -5,7 +5,8 @@ use crate::{
     listbox,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text, Prompt,
+    text::{self, Text},
+    Prompt,
 };
 
 pub mod keymap;
@@ -37,6 +38,7 @@ impl Listbox {
                 style: StyleBuilder::new()
                     .attrs(Attributes::from(Attribute::Bold))
                     .build(),
+                lines: None,
             },
             listbox_state: listbox::State {
                 listbox: listbox::Listbox::from_displayable(items),
@@ -52,7 +54,7 @@ impl Listbox {
 
     /// Sets the title text displayed above the selectable list.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = text.as_ref().to_string();
+        self.title_state.text = Text::from(text);
         self
     }
 
