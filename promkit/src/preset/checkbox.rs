@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, io};
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
     checkbox,
@@ -20,8 +20,6 @@ pub struct Checkbox {
     title_state: text::State,
     /// State for the checkbox list itself.
     checkbox_state: checkbox::State,
-    /// Writer to which promptkit write its contents
-    writer: Box<dyn io::Write>,
 }
 
 impl Checkbox {
@@ -51,7 +49,6 @@ impl Checkbox {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            writer: Box::new(io::stdout()),
         }
     }
 
@@ -74,7 +71,6 @@ impl Checkbox {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            writer: Box::new(io::stdout()),
         }
     }
 
@@ -125,12 +121,6 @@ impl Checkbox {
         self
     }
 
-    /// Sets writer.
-    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
-        self.writer = Box::new(writer);
-        self
-    }
-
     /// Displays the checkbox prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is a list of selected options.
@@ -141,7 +131,6 @@ impl Checkbox {
                 title_state: self.title_state,
                 checkbox_state: self.checkbox_state,
             },
-            writer: self.writer,
         })
     }
 }
