@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashSet, io};
+use std::{cell::RefCell, collections::HashSet};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -34,8 +34,6 @@ pub struct Readline {
     validator: Option<ValidatorManager<str>>,
     /// State for displaying error messages based on input validation.
     error_message_state: text::State,
-    /// Writer to which promptkit write its contents
-    writer: Box<dyn io::Write>,
 }
 
 impl Default for Readline {
@@ -84,7 +82,6 @@ impl Default for Readline {
                     .build(),
                 lines: None,
             },
-            writer: Box::new(io::stdout()),
         }
     }
 }
@@ -177,12 +174,6 @@ impl Readline {
         self
     }
 
-    /// Sets writer.
-    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
-        self.writer = Box::new(writer);
-        self
-    }
-
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
     pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
@@ -196,7 +187,6 @@ impl Readline {
                 validator: self.validator,
                 error_message_snapshot: Snapshot::<text::State>::new(self.error_message_state),
             },
-            writer: self.writer,
         })
     }
 }

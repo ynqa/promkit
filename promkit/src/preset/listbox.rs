@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, io};
+use std::{cell::RefCell, fmt::Display};
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -19,8 +19,6 @@ pub struct Listbox {
     title_state: text::State,
     /// State for the selectable list itself.
     listbox_state: listbox::State,
-    /// Writer to which promptkit write its contents
-    writer: Box<dyn io::Write>,
 }
 
 impl Listbox {
@@ -48,7 +46,6 @@ impl Listbox {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            writer: Box::new(io::stdout()),
         }
     }
 
@@ -93,12 +90,6 @@ impl Listbox {
         self
     }
 
-    /// Sets writer.
-    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
-        self.writer = Box::new(writer);
-        self
-    }
-
     /// Displays the select prompt and waits for user input.
     /// Returns a `Result` containing the `Prompt` result,
     /// which is the selected option.
@@ -109,7 +100,6 @@ impl Listbox {
                 title_state: self.title_state,
                 listbox_state: self.listbox_state,
             },
-            writer: self.writer,
         })
     }
 }

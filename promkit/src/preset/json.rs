@@ -1,4 +1,4 @@
-use std::{cell::RefCell, io};
+use std::cell::RefCell;
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
@@ -18,8 +18,6 @@ pub struct Json {
     keymap: ActiveKeySwitcher<keymap::Keymap>,
     title_state: text::State,
     json_state: jsonstream::State,
-    /// Writer to which promptkit write its contents
-    writer: Box<dyn io::Write>,
 }
 
 impl Json {
@@ -53,7 +51,6 @@ impl Json {
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            writer: Box::new(io::stdout()),
         }
     }
 
@@ -98,12 +95,6 @@ impl Json {
         self
     }
 
-    /// Sets writer.
-    pub fn writer<W: io::Write + 'static>(mut self, writer: W) -> Self {
-        self.writer = Box::new(writer);
-        self
-    }
-
     /// Creates a prompt based on the current configuration of the `Json` instance.
     pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
         Ok(Prompt {
@@ -112,7 +103,6 @@ impl Json {
                 title_state: self.title_state,
                 json_state: self.json_state,
             },
-            writer: self.writer,
         })
     }
 }

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, io};
+use std::cell::RefCell;
 
 use crossterm::style::ContentStyle;
 
@@ -10,8 +10,6 @@ pub mod render;
 pub struct Text {
     keymap: ActiveKeySwitcher<keymap::Keymap>,
     text_state: text::State,
-    /// Writer to which promptkit write its contents
-    writer: Box<dyn io::Write>,
 }
 
 impl Text {
@@ -23,7 +21,6 @@ impl Text {
                 style: Default::default(),
                 lines: None,
             },
-            writer: Box::new(io::stdout()),
         }
     }
 
@@ -38,7 +35,6 @@ impl Text {
                 keymap: RefCell::new(self.keymap),
                 text_state: self.text_state,
             },
-            writer: self.writer,
         })
     }
 }
