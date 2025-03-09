@@ -4,7 +4,7 @@ use crate::{crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pan
 
 use super::{History, Mode, TextEditor};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct State {
     /// The `TextEditor` component to be rendered.
     pub texteditor: TextEditor,
