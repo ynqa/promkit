@@ -233,7 +233,6 @@ impl StyledGraphemes {
     ///     - with the style applied to all occurrences of the query if the query is found.
     ///     - unchanged if the query string is empty.
     /// - `None`: if the query string is not found in the collection.
-
     pub fn highlight<S: AsRef<str>>(mut self, query: S, style: ContentStyle) -> Option<Self> {
         let query_str = query.as_ref();
         if query_str.is_empty() {
