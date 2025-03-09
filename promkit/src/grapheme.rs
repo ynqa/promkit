@@ -324,7 +324,7 @@ pub struct StyledGraphemesDisplay<'a> {
     styled_graphemes: &'a StyledGraphemes,
 }
 
-impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
+impl fmt::Display for StyledGraphemesDisplay<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for styled_grapheme in self.styled_graphemes.iter() {
             write!(f, "{}", styled_grapheme.style.apply(styled_grapheme.ch))?;

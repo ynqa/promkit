@@ -395,7 +395,7 @@ pub struct PathIterator<'a> {
     stack: Vec<(String, &'a serde_json::Value)>,
 }
 
-impl<'a> PathIterator<'a> {
+impl PathIterator<'_> {
     fn escape_json_path_key(key: &str) -> String {
         if key.contains('.') || key.contains('-') || key.contains('@') {
             format!("\"{}\"", key)
@@ -405,7 +405,7 @@ impl<'a> PathIterator<'a> {
     }
 }
 
-impl<'a> Iterator for PathIterator<'a> {
+impl Iterator for PathIterator<'_> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
