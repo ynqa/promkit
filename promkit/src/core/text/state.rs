@@ -6,7 +6,7 @@ use super::Text;
 ///
 /// This state encapsulates the properties and
 /// behaviors specific to text handling,
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct State {
     /// The text to be rendered.
     pub text: Text,
