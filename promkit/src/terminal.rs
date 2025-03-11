@@ -61,12 +61,7 @@ impl Terminal {
             .collect::<Vec<&Pane>>();
 
         if height < viewable_panes.len() as u16 {
-            return crossterm::execute!(
-                io::stdout(),
-                terminal::Clear(terminal::ClearType::FromCursorDown),
-                style::Print("⚠️ Insufficient Space"),
-            )
-            .map_err(anyhow::Error::from);
+            return Err(anyhow::anyhow!("Insufficient space to display all panes"));
         }
 
         crossterm::queue!(
