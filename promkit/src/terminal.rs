@@ -61,12 +61,7 @@ impl Terminal {
             .collect::<Vec<&Pane>>();
 
         if height < viewable_panes.len() as u16 {
-            return crossterm::execute!(
-                io::stdout(),
-                terminal::Clear(terminal::ClearType::FromCursorDown),
-                style::Print("⚠️ Insufficient Space"),
-            )
-            .map_err(anyhow::Error::from);
+            return Err(anyhow::anyhow!("Insufficient space to display all panes"));
         }
 
         crossterm::queue!(
@@ -77,25 +72,30 @@ impl Terminal {
 
         let mut used = 0;
 
-        let mut current_cursor_y = height.saturating_sub(self.position.1);
-        for (i, pane) in viewable_panes.iter().enumerate() {
-            let rows = pane.extract(
-                1.max(
-                    (height as usize)
-                        // -1 in this context signifies the exclusion of the current pane.
-                        .saturating_sub(used + viewable_panes.len() - 1 - i),
-                ),
+        let mut remaining_lines = height.saturating_sub(self.position.1);
+
+        for (pane_index, pane) in viewable_panes.iter().enumerate() {
+            // We need to ensure each pane gets at least 1 row
+            let max_rows = 1.max(
+                (height as usize).saturating_sub(used + viewable_panes.len() - 1 - pane_index),
             );
+
+            let rows = pane.extract(max_rows);
             used += rows.len();
-            for (j, row) in rows.iter().enumerate() {
+
+            for (row_index, row) in rows.iter().enumerate() {
                 crossterm::queue!(io::stdout(), style::Print(row.styled_display()))?;
 
-                current_cursor_y = current_cursor_y.saturating_sub(1);
+                remaining_lines = remaining_lines.saturating_sub(1);
 
-                if ((i == viewable_panes.len() - 1 && j != rows.len() - 1)
-                    || i != viewable_panes.len() - 1)
-                    && current_cursor_y == 0
-                {
+                // Determine if scrolling is needed:
+                // - We need to scroll if we've reached the bottom of the terminal (remaining_lines == 0)
+                // - AND we have more content to display (either more rows in current pane or more panes)
+                let is_last_pane = pane_index == viewable_panes.len() - 1;
+                let is_last_row_in_pane = row_index == rows.len() - 1;
+                let has_more_content = !(is_last_pane && is_last_row_in_pane);
+
+                if has_more_content && remaining_lines == 0 {
                     crossterm::queue!(io::stdout(), terminal::ScrollUp(1))?;
                     self.position.1 = self.position.1.saturating_sub(1);
                 }

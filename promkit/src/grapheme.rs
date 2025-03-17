@@ -233,7 +233,6 @@ impl StyledGraphemes {
     ///     - with the style applied to all occurrences of the query if the query is found.
     ///     - unchanged if the query string is empty.
     /// - `None`: if the query string is not found in the collection.
-
     pub fn highlight<S: AsRef<str>>(mut self, query: S, style: ContentStyle) -> Option<Self> {
         let query_str = query.as_ref();
         if query_str.is_empty() {
@@ -324,7 +323,7 @@ pub struct StyledGraphemesDisplay<'a> {
     styled_graphemes: &'a StyledGraphemes,
 }
 
-impl<'a> fmt::Display for StyledGraphemesDisplay<'a> {
+impl fmt::Display for StyledGraphemesDisplay<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for styled_grapheme in self.styled_graphemes.iter() {
             write!(f, "{}", styled_grapheme.style.apply(styled_grapheme.ch))?;
