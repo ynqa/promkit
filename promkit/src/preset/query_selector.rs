@@ -1,13 +1,16 @@
 use std::{cell::RefCell, fmt::Display};
 
+use promkit_widgets::{
+    listbox::{self, Listbox},
+    text::{self, Text},
+    text_editor::{self, Mode},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
-    text_editor::{self, Mode},
     Prompt,
 };
 

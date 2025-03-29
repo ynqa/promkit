@@ -1,12 +1,14 @@
 use std::cell::RefCell;
 
+use promkit_widgets::{
+    jsonstream::{self, format::RowFormatter, JsonStream},
+    text::{self, Text},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    jsonstream::{self, JsonStream},
-    jsonz::format::RowFormatter,
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
     Prompt,
 };
 

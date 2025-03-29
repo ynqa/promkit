@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
-use crossterm::style::ContentStyle;
+use promkit_widgets::text;
 
-use crate::{switch::ActiveKeySwitcher, text, Prompt};
+use crate::{crossterm::style::ContentStyle, switch::ActiveKeySwitcher, Prompt};
 
 pub mod keymap;
 pub mod render;

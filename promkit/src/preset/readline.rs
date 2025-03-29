@@ -1,14 +1,17 @@
 use std::{cell::RefCell, collections::HashSet};
 
+use promkit_widgets::{
+    listbox::{self, Listbox},
+    text::{self, Text},
+    text_editor::{self, History},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    listbox::{self, Listbox},
     snapshot::Snapshot,
     style::StyleBuilder,
     suggest::Suggest,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
-    text_editor::{self, History},
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     Prompt,
 };

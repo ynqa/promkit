@@ -1,11 +1,14 @@
 use std::cell::RefCell;
 
+use promkit_widgets::{
+    text::{self, Text},
+    tree::{self, node::Node},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
-    tree::{self, Node},
     Prompt,
 };
 

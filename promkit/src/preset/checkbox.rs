@@ -1,11 +1,14 @@
 use std::{cell::RefCell, fmt::Display};
 
-use crate::{
+use promkit_widgets::{
     checkbox,
+    text::{self, Text},
+};
+
+use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
     Prompt,
 };
 

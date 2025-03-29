@@ -122,26 +122,18 @@
 //! This approach ensures consistency in UI elements even when
 //! the terminal size changes, providing a smoother user experience.
 
-pub use crossterm;
-pub use serde_json;
-
-mod core;
-pub use core::*;
-pub mod grapheme;
-pub mod jsonz;
-pub mod pane;
 pub mod preset;
+pub mod snapshot;
 pub mod style;
 pub mod suggest;
 pub mod switch;
-pub mod terminal;
 pub mod validate;
 
 use std::io;
 
-use crate::{
+use promkit_core::{
     crossterm::{
-        cursor,
+        self, cursor,
         event::{self, Event},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
@@ -255,7 +247,9 @@ impl<T: Renderer> Prompt<T> {
 
         let size = crossterm::terminal::size()?;
         let panes = self.renderer.create_panes(size.0, size.1);
-        let mut terminal = Terminal::start_session(&panes)?;
+        let mut terminal = Terminal {
+            position: crossterm::cursor::position()?,
+        };
         terminal.draw(&panes)?;
 
         loop {

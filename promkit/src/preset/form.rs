@@ -1,11 +1,12 @@
 use std::cell::RefCell;
 
+use promkit_widgets::{cursor::Cursor, text_editor};
+
 use crate::{
-    core::Cursor,
     crossterm::style::{Attribute, Attributes},
     style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text_editor, Prompt,
+    Prompt,
 };
 
 mod keymap;

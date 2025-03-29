@@ -1,6 +1,8 @@
+use promkit_widgets::text_editor;
+
 use crate::{
     crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    preset, text_editor, PromptSignal,
+    preset, PromptSignal,
 };
 
 pub type Keymap = fn(

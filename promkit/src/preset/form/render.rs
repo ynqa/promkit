@@ -1,11 +1,13 @@
 use std::cell::RefCell;
 
+use promkit_core::{pane::Pane, PaneFactory};
+
+use promkit_widgets::{cursor::Cursor, text_editor};
+
 use crate::{
-    core::Cursor,
     crossterm::{event::Event, style::ContentStyle},
-    pane::Pane,
     switch::ActiveKeySwitcher,
-    text_editor, PaneFactory, PromptSignal,
+    PromptSignal,
 };
 
 use super::keymap;
