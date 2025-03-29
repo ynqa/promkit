@@ -1,0 +1,13 @@
+[package]
+name = "promkit-core"
+version = "0.1.0"
+edition = "2024"
+authors = ["ynqa <un.pensiero.vano@gmail.com>"]
+description = "Core library for promkit"
+repository = "https://github.com/ynqa/promkit"
+license = "MIT"
+readme = "README.md"
+
+[dependencies]
+crossterm = { workspace = true }
+unicode-width = { workspace = true }
