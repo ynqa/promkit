@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::{ContainerType, Row, Value};
+use super::jsonz::{ContainerType, Row, Value};
 
 #[derive(Clone)]
 pub struct RowFormatter {
@@ -246,10 +246,14 @@ impl RowFormatter {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     mod format_raw_json {
         use std::str::FromStr;
 
-        use crate::jsonstream::jsonz::{create_rows, format};
+        use super::*;
+
+        use crate::jsonstream::jsonz::create_rows;
 
         #[test]
         fn test() {
@@ -282,7 +286,7 @@ mod tests {
             .trim();
 
             assert_eq!(
-                format::RowFormatter {
+                RowFormatter {
                     indent: 4,
                     ..Default::default()
                 }

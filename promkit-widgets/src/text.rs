@@ -1,53 +1,52 @@
-use promkit_core::grapheme::StyledGraphemes;
+use promkit_core::{PaneFactory, crossterm::style::ContentStyle, pane::Pane};
 
-use crate::cursor::Cursor;
+mod text;
+pub use text::Text;
 
-mod state;
-pub use state::State;
+/// Represents the state of a text-based component within the application.
+///
+/// This state encapsulates the properties and
+/// behaviors specific to text handling,
+#[derive(Clone, Default)]
+pub struct State {
+    /// The text to be rendered.
+    pub text: Text,
 
-#[derive(Clone)]
-pub struct Text(Cursor<Vec<StyledGraphemes>>);
+    /// Style for the text string.
+    pub style: ContentStyle,
 
-impl Default for Text {
-    fn default() -> Self {
-        Self(Cursor::new(vec![], 0, false))
+    /// Maximum number of lines to display.
+    pub lines: Option<usize>,
+}
+
+impl State {
+    pub fn replace(&mut self, renderer: Self) {
+        *self = renderer;
     }
 }
 
-impl<T: AsRef<str>> From<T> for Text {
-    fn from(text: T) -> Self {
-        let lines: Vec<StyledGraphemes> = text
-            .as_ref()
-            .split('\n')
-            // Replace empty lines with null character to
-            // prevent them from being ignored at `style::Print`
-            .map(|line| if line.is_empty() { "\0" } else { line })
-            .map(StyledGraphemes::from)
-            .collect();
-        Self(Cursor::new(lines, 0, false))
-    }
-}
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
 
-impl Text {
-    /// Returns a reference to the vector of items in the listbox.
-    pub fn items(&self) -> &Vec<StyledGraphemes> {
-        self.0.contents()
-    }
+        let matrix = self
+            .text
+            .items()
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
+            .map(|(_, item)| item.clone().apply_style(self.style))
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.text.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-    /// Returns the current position of the cursor within the listbox.
-    pub fn position(&self) -> usize {
-        self.0.position()
-    }
-
-    /// Moves the cursor backward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
-    pub fn backward(&mut self) -> bool {
-        self.0.backward()
-    }
-
-    /// Moves the cursor forward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
-    pub fn forward(&mut self) -> bool {
-        self.0.forward()
+        Pane::new(matrix.0, 0)
     }
 }

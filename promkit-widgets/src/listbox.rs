@@ -1,96 +1,74 @@
-use std::fmt;
+use promkit_core::{
+    PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane,
+};
 
-use promkit_core::grapheme::StyledGraphemes;
+mod listbox;
+pub use listbox::Listbox;
 
-use crate::cursor::Cursor;
-
-mod state;
-pub use state::State;
-
-/// A `Listbox` struct that encapsulates a list of strings,
-/// allowing for navigation and manipulation through a cursor.
-/// It supports basic operations
-/// such as moving the cursor forward and backward,
-/// retrieving the current item,
-/// and initializing from an iterator of displayable items.
+/// Represents the state of a `Listbox` component, including its appearance and behavior.
+/// This state includes the currently selected item, styles for active and inactive items,
+/// and the number of lines available for rendering the listbox.
 #[derive(Clone)]
-pub struct Listbox(Cursor<Vec<StyledGraphemes>>);
+pub struct State {
+    /// The `Listbox` component to be rendered.
+    pub listbox: Listbox,
 
-impl Default for Listbox {
-    fn default() -> Self {
-        Self(Cursor::new(vec![StyledGraphemes::default()], 0, false))
-    }
+    /// Symbol for the selected line.
+    pub cursor: String,
+
+    /// Style for the selected line.
+    pub active_item_style: Option<ContentStyle>,
+    /// Style for un-selected lines.
+    pub inactive_item_style: Option<ContentStyle>,
+
+    /// Number of lines available for rendering.
+    pub lines: Option<usize>,
 }
 
-impl Listbox {
-    /// Creates a new `Listbox` from a vector of `fmt::Display`.
-    pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
-        Self(Cursor::new(
-            items
-                .into_iter()
-                .map(|e| StyledGraphemes::from(format!("{}", e)))
-                .collect(),
-            0,
-            false,
-        ))
-    }
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
 
-    pub fn len(&self) -> usize {
-        self.0.contents().len()
-    }
+        let matrix = self
+            .listbox
+            .items()
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
+            .map(|(i, item)| {
+                if i == self.listbox.position() {
+                    let init =
+                        StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item]);
+                    if let Some(style) = &self.active_item_style {
+                        init.apply_style(*style)
+                    } else {
+                        init
+                    }
+                } else {
+                    let init = StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
+                        ),
+                        item,
+                    ]);
+                    if let Some(style) = &self.inactive_item_style {
+                        init.apply_style(*style)
+                    } else {
+                        init
+                    }
+                }
+            })
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.listbox.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-    pub fn push_string(&mut self, item: String) {
-        self.0.contents_mut().push(StyledGraphemes::from(item));
-    }
-
-    /// Creates a new `Listbox` from a vector of `StyledGraphemes`.
-    pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
-        Self(Cursor::new(items, 0, false))
-    }
-
-    /// Returns a reference to the vector of items in the listbox.
-    pub fn items(&self) -> &Vec<StyledGraphemes> {
-        self.0.contents()
-    }
-
-    /// Returns the current position of the cursor within the listbox.
-    pub fn position(&self) -> usize {
-        self.0.position()
-    }
-
-    /// Retrieves the item at the current cursor position as a `String`.
-    /// If the cursor is at a position without an item,
-    /// returns an empty `String`.
-    pub fn get(&self) -> StyledGraphemes {
-        self.items()
-            .get(self.position())
-            .unwrap_or(&StyledGraphemes::default())
-            .clone()
-    }
-
-    /// Moves the cursor backward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
-    pub fn backward(&mut self) -> bool {
-        self.0.backward()
-    }
-
-    /// Moves the cursor forward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
-    pub fn forward(&mut self) -> bool {
-        self.0.forward()
-    }
-
-    /// Moves the cursor to the head (beginning) of the listbox.
-    pub fn move_to_head(&mut self) {
-        self.0.move_to_head()
-    }
-
-    /// Moves the cursor to the tail of the listbox.
-    pub fn move_to_tail(&mut self) {
-        self.0.move_to_tail()
-    }
-
-    pub fn is_tail(&self) -> bool {
-        self.0.is_tail()
+        Pane::new(matrix.0, 0)
     }
 }

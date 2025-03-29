@@ -1,161 +1,84 @@
-use std::{collections::HashSet, fmt};
+use promkit_core::{
+    PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane,
+};
 
-use promkit_core::grapheme::StyledGraphemes;
+mod checkbox;
+pub use checkbox::Checkbox;
 
-use crate::listbox::Listbox;
-
-mod state;
-pub use state::State;
-
-/// A `Checkbox` struct that encapsulates a listbox
-/// for item selection and a set of picked (selected) indices.
-/// It allows for multiple selections,
-/// toggling the selection state of items,
-/// and navigating through the items.
+/// Represents the state of a `Checkbox` component.
+///
+/// This state includes not only the checkbox itself but also various attributes
+/// that determine how the checkbox and its items are displayed. These attributes
+/// include symbols for indicating active and inactive items, styles for selected
+/// and unselected lines, and the number of lines available for rendering.
 #[derive(Clone)]
-pub struct Checkbox {
-    listbox: Listbox,
-    picked: HashSet<usize>,
+pub struct State {
+    /// The `Checkbox` component to be rendered.
+    pub checkbox: Checkbox,
+
+    /// Symbol for the selected line.
+    pub cursor: String,
+
+    /// Symbol used to indicate an active (selected) checkbox item.
+    pub active_mark: char,
+    /// Symbol used to indicate an inactive (unselected) checkbox item.
+    pub inactive_mark: char,
+
+    /// Style for the selected line.
+    pub active_item_style: ContentStyle,
+    /// Style for unselected lines.
+    pub inactive_item_style: ContentStyle,
+
+    /// Number of lines available for rendering.
+    pub lines: Option<usize>,
 }
 
-impl Checkbox {
-    /// Creates a new `Checkbox` from a vector of `fmt::Display`.
-    pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
-        Self {
-            listbox: Listbox::from_displayable(items),
-            picked: HashSet::new(),
-        }
-    }
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let f = |idx: usize| -> StyledGraphemes {
+            if self.checkbox.picked_indexes().contains(&idx) {
+                StyledGraphemes::from(format!("{} ", self.active_mark))
+            } else {
+                StyledGraphemes::from(format!("{} ", self.inactive_mark))
+            }
+        };
 
-    /// Creates a new `Checkbox` from a vector of `StyledGraphemes`.
-    pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
-        Self {
-            listbox: Listbox::from_styled_graphemes(items),
-            picked: HashSet::new(),
-        }
-    }
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
 
-    /// Creates a `Checkbox` from an iterator of tuples where the first element
-    /// implements the `Display` trait and the second element is a bool indicating
-    /// if the item is picked (selected).
-    /// Each item is added to the listbox, and the set of picked indices is
-    /// initialized based on the bool values.
-    pub fn new_with_checked<T: fmt::Display, I: IntoIterator<Item = (T, bool)>>(iter: I) -> Self {
-        let (listbox, picked): (Vec<_>, Vec<_>) = iter
-            .into_iter()
-            .enumerate()
-            .map(|(index, (item, is_picked))| ((index, item), is_picked))
-            .unzip(); // `unzip` を使用して、アイテムと選択状態を分けます。
-
-        let listbox_items = listbox
-            .into_iter()
-            .map(|(_, item)| item)
-            .collect::<Vec<_>>();
-        let picked_indices = picked
-            .into_iter()
-            .enumerate()
-            .filter_map(
-                |(index, is_picked)| {
-                    if is_picked { Some(index) } else { None }
-                },
-            )
-            .collect::<HashSet<usize>>();
-
-        Self {
-            listbox: Listbox::from_displayable(listbox_items),
-            picked: picked_indices,
-        }
-    }
-
-    /// Returns a reference to the vector of items in the listbox.
-    pub fn items(&self) -> &Vec<StyledGraphemes> {
-        self.listbox.items()
-    }
-
-    /// Returns the current position of the cursor within the listbox.
-    pub fn position(&self) -> usize {
-        self.listbox.position()
-    }
-
-    /// Returns a reference to the set of picked (selected) indices.
-    pub fn picked_indexes(&self) -> &HashSet<usize> {
-        &self.picked
-    }
-
-    /// Retrieves the items at the picked (selected) indices as a vector of strings.
-    pub fn get(&self) -> Vec<StyledGraphemes> {
-        self.picked
+        let matrix = self
+            .checkbox
+            .items()
             .iter()
-            .fold(Vec::<StyledGraphemes>::new(), |mut ret, idx| {
-                ret.push(self.listbox.items().get(*idx).unwrap().to_owned());
-                ret
+            .enumerate()
+            .filter(|(i, _)| {
+                *i >= self.checkbox.position() && *i < self.checkbox.position() + height
             })
-    }
+            .map(|(i, item)| {
+                if i == self.checkbox.position() {
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), &f(i), item])
+                        .apply_style(self.active_item_style)
+                } else {
+                    StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(
+                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
+                        ),
+                        &f(i),
+                        item,
+                    ])
+                    .apply_style(self.inactive_item_style)
+                }
+            })
+            .fold((vec![], 0), |(mut acc, pos), item| {
+                let rows = item.matrixify(width as usize, height, 0).0;
+                if pos < self.checkbox.position() + height {
+                    acc.extend(rows);
+                }
+                (acc, pos + 1)
+            });
 
-    /// Toggles the selection state of the item at the current cursor position within the listbox.
-    pub fn toggle(&mut self) {
-        if self.picked.contains(&self.listbox.position()) {
-            self.picked.remove(&self.listbox.position());
-        } else {
-            self.picked.insert(self.listbox.position());
-        }
-    }
-
-    /// Moves the cursor backward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
-    pub fn backward(&mut self) -> bool {
-        self.listbox.backward()
-    }
-
-    /// Moves the cursor forward in the listbox, if possible.
-    /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
-    pub fn forward(&mut self) -> bool {
-        self.listbox.forward()
-    }
-
-    /// Moves the cursor to the head (beginning) of the listbox.
-    pub fn move_to_head(&mut self) {
-        self.listbox.move_to_head()
-    }
-
-    /// Moves the cursor to the tail of the listbox.
-    pub fn move_to_tail(&mut self) {
-        self.listbox.move_to_tail()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    mod new_with_checked {
-        use super::*;
-
-        #[test]
-        fn test() {
-            // Prepare a list of items with their checked status
-            let items = vec![
-                (String::from("1"), true),
-                (String::from("2"), false),
-                (String::from("3"), true),
-            ];
-
-            // Create a Checkbox using `new_with_checked`
-            let checkbox = Checkbox::new_with_checked(items);
-
-            // Verify the items in the listbox
-            assert_eq!(
-                checkbox.items(),
-                &vec![
-                    StyledGraphemes::from("1"),
-                    StyledGraphemes::from("2"),
-                    StyledGraphemes::from("3"),
-                ]
-            );
-
-            // Verify the picked (selected) indices
-            let expected_picked_indexes: HashSet<usize> = [0, 2].iter().cloned().collect();
-            assert_eq!(checkbox.picked_indexes(), &expected_picked_indexes);
-        }
+        Pane::new(matrix.0, 0)
     }
 }

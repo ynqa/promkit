@@ -1,7 +1,5 @@
 use rayon::prelude::*;
 
-pub mod format;
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {
     Object,

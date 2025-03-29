@@ -1,72 +1,37 @@
+use promkit_core::{PaneFactory, pane::Pane};
+
+mod jsonstream;
+pub use jsonstream::JsonStream;
+pub mod format;
+use format::RowFormatter;
 pub mod jsonz;
-use jsonz::{Row, RowOperation};
-mod state;
-pub use state::State;
 
-/// Represents a stream of JSON data, allowing for efficient navigation and manipulation.
+/// Represents the state of a JSON stream within the application.
+///
+/// This struct holds the current JSON stream being processed and provides
+/// methods to interact with and manipulate the stream according to the
+/// application's needs. It also contains a theme configuration for styling
+/// the JSON output.
 #[derive(Clone)]
-pub struct JsonStream {
-    rows: Vec<Row>,
-    position: usize,
+pub struct State {
+    pub stream: JsonStream,
+
+    pub formatter: RowFormatter,
+
+    /// Number of lines available for rendering.
+    pub lines: Option<usize>,
 }
 
-impl JsonStream {
-    pub fn new<'a, I: IntoIterator<Item = &'a serde_json::Value>>(iter: I) -> Self {
-        Self {
-            rows: jsonz::create_rows(iter),
-            position: 0,
-        }
-    }
-}
+impl PaneFactory for State {
+    fn create_pane(&self, width: u16, height: u16) -> Pane {
+        let height = match self.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
 
-impl JsonStream {
-    /// Returns a reference to the underlying vector of rows.
-    pub fn rows(&self) -> &[Row] {
-        &self.rows
-    }
+        let rows = self.stream.extract_rows_from_current(height);
+        let formatted_rows = self.formatter.format_for_terminal_display(&rows, width);
 
-    /// Extracts a specified number of rows from the current position in JSON stream.
-    pub fn extract_rows_from_current(&self, n: usize) -> Vec<Row> {
-        self.rows.extract(self.position, n)
-    }
-
-    /// Toggles the visibility of a node at the cursor's current position.
-    pub fn toggle(&mut self) {
-        let index = self.rows.toggle(self.position);
-        self.position = index;
-    }
-
-    /// Sets the visibility of all rows in JSON stream.
-    pub fn set_nodes_visibility(&mut self, collapsed: bool) {
-        self.rows.set_rows_visibility(collapsed);
-        self.position = 0;
-    }
-
-    /// Moves the cursor backward through JSON stream.
-    pub fn up(&mut self) -> bool {
-        let index = self.rows.up(self.position);
-        let ret = index != self.position;
-        self.position = index;
-        ret
-    }
-
-    /// Moves the cursor to the head position in JSON stream.
-    pub fn head(&mut self) -> bool {
-        self.position = self.rows.head();
-        true
-    }
-
-    /// Moves the cursor forward through JSON stream.
-    pub fn down(&mut self) -> bool {
-        let index = self.rows.down(self.position);
-        let ret = index != self.position;
-        self.position = index;
-        ret
-    }
-
-    /// Moves the cursor to the last position in JSON stream.
-    pub fn tail(&mut self) -> bool {
-        self.position = self.rows.tail();
-        true
+        Pane::new(formatted_rows, 0)
     }
 }
