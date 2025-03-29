@@ -11,7 +11,8 @@ members = [
 anyhow = "1.0.97"
 # See https://github.com/crossterm-rs/crossterm/issues/935
 crossterm = { version = "0.28.1", features = ["use-dev-tty", "event-stream", "libc", "serde"] }
+radix_trie = "0.2.1"
 rayon = "1.10.0"
-serde = { version = "1.0.219" }
+serde = "1.0.219"
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
 unicode-width = "0.2.0"
