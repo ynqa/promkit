@@ -3,6 +3,7 @@ pub use crossterm;
 pub mod grapheme;
 pub mod pane;
 use pane::Pane;
+pub mod terminal;
 
 pub trait PaneFactory {
     /// Creates pane with the given width.

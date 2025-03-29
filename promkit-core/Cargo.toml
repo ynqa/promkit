@@ -9,5 +9,6 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
+anyhow = { workspace = true}
 crossterm = { workspace = true }
 unicode-width = { workspace = true }
