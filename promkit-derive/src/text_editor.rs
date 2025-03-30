@@ -18,7 +18,7 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
         promkit::style::StyleBuilder::new().build()
     };
     let mut mask = quote! { None::<char> };
-    let mut edit_mode = quote! { promkit::text_editor::Mode::default() };
+    let mut edit_mode = quote! { promkit::promkit_widgets::text_editor::Mode::default() };
     let mut word_break_chars = quote! { std::collections::HashSet::from([' ']) };
 
     match &attr.meta {
@@ -82,7 +82,7 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
     };
 
     Ok(quote! {
-        promkit::text_editor::State {
+        promkit::promkit_widgets::text_editor::State {
             texteditor: Default::default(),
             history: Default::default(),
             prefix: #prefix,
