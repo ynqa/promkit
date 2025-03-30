@@ -14,13 +14,14 @@ each implemented in dedicated modules:
   - Each widget implements
   [PaneFactory](https://docs.rs/promkit/0.8.0/promkit/trait.PaneFactory.html)
   trait to generate panes needed for rendering
-  > [!IMPORTANT]
-  > The widgets themselves do not contain event handlers
-  > - This prevents key operation conflicts
-  > when combining multiple widgets
-  > - e.g. When combining a listbox and text editor, <kbd>↓</kbd>
-  > behavior could potentially conflict
-  >   - navigating the list vs. recalling input history
+
+> [!IMPORTANT]
+> The widgets themselves DO NOT contain event handlers
+> - This prevents key operation conflicts
+> when combining multiple widgets
+> - e.g. When combining a listbox and text editor, <kbd>↓</kbd>
+> behavior could potentially conflict
+>   - navigating the list vs. recalling input history
 
 - **Rendering**: Processing to visually display the generated panes
   - **promkit-core**: Responsible for basic terminal operations
