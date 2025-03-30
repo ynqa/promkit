@@ -39,7 +39,11 @@ listbox = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",
 ]
-query-selector = []
+query-selector = [
+    "promkit-widgets/listbox",
+    "promkit-widgets/text",
+    "promkit-widgets/texteditor",
+]
 readline = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",
