@@ -1,7 +1,9 @@
-use promkit::preset::json::Json;
-use promkit_widgets::{
-    jsonstream::JsonStream,
-    serde_json::{self, Deserializer},
+use promkit::{
+    preset::json::Json,
+    promkit_widgets::{
+        jsonstream::JsonStream,
+        serde_json::{self, Deserializer},
+    },
 };
 
 fn main() -> anyhow::Result<()> {

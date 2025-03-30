@@ -1,0 +1,13 @@
+[package]
+name = "json"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+promkit = { path = "../../promkit", features = ["json"] }
+
+[[bin]]
+name = "json"
+path = "src/json.rs"

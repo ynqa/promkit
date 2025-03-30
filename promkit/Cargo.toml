@@ -31,7 +31,10 @@ checkbox = [
     "promkit-widgets/text",
 ]
 form = ["promkit-widgets/texteditor"]
-json = ["promkit-widgets/jsonstream"]
+json = [
+    "promkit-widgets/jsonstream",
+    "promkit-widgets/text",
+]
 listbox = ["promkit-widgets/listbox"]
 query_selector = []
 readline = [
