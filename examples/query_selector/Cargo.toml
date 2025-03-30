@@ -1,0 +1,13 @@
+[package]
+name = "query-selector"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+promkit = { path = "../../promkit", features = ["query-selector"] }
+
+[[bin]]
+name = "query-selector"
+path = "src/query_selector.rs"

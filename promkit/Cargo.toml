@@ -19,7 +19,7 @@ all = [
     "form",
     "json",
     "listbox",
-    "query_selector",
+    "query-selector",
     "readline",
     "password",
     "confirm",
@@ -39,7 +39,7 @@ listbox = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",
 ]
-query_selector = []
+query-selector = []
 readline = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",

@@ -23,7 +23,7 @@ pub mod json;
 pub mod listbox;
 
 /// Facilitates querying and selecting from a set of options in a structured format.
-#[cfg(feature = "query_selector")]
+#[cfg(feature = "query-selector")]
 pub mod query_selector;
 
 /// Supports creating and interacting with a tree structure for hierarchical data.
