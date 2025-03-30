@@ -43,6 +43,7 @@ promkit = "0.9.0"
 
 ## Projects using *promkit*
 
+- [ynqa/empiriqa](https://github.com/ynqa/empiriqa)
 - [ynqa/jnv](https://github.com/ynqa/jnv)
 - [ynqa/logu](https://github.com/ynqa/logu)
 - [ynqa/sig](https://github.com/ynqa/sig)
