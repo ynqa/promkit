@@ -13,7 +13,8 @@ name = "promkit"
 path = "src/lib.rs"
 
 [features]
-default = [
+default = []
+all = [
     "checkbox",
     "form",
     "json",
@@ -25,9 +26,11 @@ default = [
     "text",
     "tree",
 ]
-
-checkbox = ["promkit-widgets/checkbox"]
-form = []
+checkbox = [
+    "promkit-widgets/checkbox",
+    "promkit-widgets/text",
+]
+form = ["promkit-widgets/texteditor"]
 json = ["promkit-widgets/jsonstream"]
 listbox = ["promkit-widgets/listbox"]
 query_selector = []
@@ -40,5 +43,5 @@ tree = ["promkit-widgets/tree"]
 [dependencies]
 anyhow ={ workspace = true }
 promkit-core = { path = "../promkit-core", version = "=0.1.0" }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.1.0", default-features = false }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.1.0" }
 radix_trie = { workspace = true }

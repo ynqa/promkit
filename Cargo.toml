@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "examples/*",
   "promkit",
   "promkit-core",
   "promkit-derive",
