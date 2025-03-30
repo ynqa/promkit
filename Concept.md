@@ -80,7 +80,6 @@ flowchart LR
         F --> C{Evaluate}
         C -->|Continue| G[Request: generate pane for rendering]
         G[Request: generate pane for rendering] --> output_pane
-        C -->|Break out of loop| E[Exit]
         
         subgraph gen_pane["promkit-widgets"]
             direction LR
@@ -94,6 +93,8 @@ flowchart LR
 
         H --> A
     end
+
+    C -->|Break out of loop| E[Exit]
 ```
 
 In the current implementation of promkit, event handling is centralized.
