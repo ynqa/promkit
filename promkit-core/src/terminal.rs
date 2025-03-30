@@ -1,8 +1,8 @@
 use std::io::{self, Write};
 
 use crate::{
+    Pane,
     crossterm::{cursor, style, terminal},
-    pane::Pane,
 };
 
 pub struct Terminal {

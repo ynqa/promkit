@@ -142,8 +142,8 @@ use promkit_core::{
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
-    pane::Pane,
     terminal::Terminal,
+    Pane,
 };
 
 /// Represents the signal to control the flow of a prompt.

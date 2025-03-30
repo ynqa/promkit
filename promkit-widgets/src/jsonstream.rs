@@ -1,4 +1,4 @@
-use promkit_core::{PaneFactory, pane::Pane};
+use promkit_core::{Pane, PaneFactory};
 
 mod jsonstream;
 pub use jsonstream::JsonStream;

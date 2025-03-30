@@ -1,6 +1,4 @@
-use promkit_core::{
-    PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes, pane::Pane,
-};
+use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
 
 mod checkbox;
 pub use checkbox::Checkbox;

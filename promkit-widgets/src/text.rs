@@ -1,4 +1,4 @@
-use promkit_core::{PaneFactory, crossterm::style::ContentStyle, pane::Pane};
+use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle};
 
 mod text;
 pub use text::Text;

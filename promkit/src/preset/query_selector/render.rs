@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use promkit_core::{pane::Pane, PaneFactory};
+use promkit_core::{Pane, PaneFactory};
 
 use promkit_widgets::{
     listbox::{self, Listbox},
