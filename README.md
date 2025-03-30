@@ -403,7 +403,7 @@ fn main() -> Result {
 ```
 </details>
 
-![json](https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9)
+<img src="https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9" width="50%" height="auto">
 
 ## Why *promkit*?
 
