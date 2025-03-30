@@ -33,7 +33,7 @@ each implemented in dedicated modules:
 This separation allows each component to focus on a single responsibility,
 making customization and extension easier.
 
-### Event-Loop Runtime
+### Event-Loop
 
 These three functions collectively form the core of "event-loop" logic.
 Here is the important part of the actual event-loop from

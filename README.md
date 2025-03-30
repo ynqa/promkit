@@ -18,29 +18,29 @@ promkit = "0.9.0"
 
 - Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
 - Modularized architecture
-  - `promkit-core`
+  - [promkit-core](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-core/)
     - Core functionality for basic terminal operations and pane management
-  - `promkit-widgets`
+  - [promkit-widgets](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-widgets/)
     - Various UI components (text, listbox, tree, etc.)
-  - `promkit`
+  - [promkit](https://github.com/ynqa/promkit/tree/v0.9.0/promkit)
     - High-level presets and user interfaces
-  - `promkit-derive`
+  - [promkit-derive](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-derive/)
     - A Derive macro that simplifies interactive form input
 - Rich preset components
-  - [Readline](#readline) - Text input with auto-completion
-  - [Confirm](#confirm) - Yes/no confirmation prompt
-  - [Password](#password) - Password input with masking and validation
-  - [Form](#form) - Manage multiple text input fields
-  - [Listbox](#listbox) - Single selection interface from a list
-  - [QuerySelector](#queryselector) - Searchable selection interface
-  - [Checkbox](#checkbox) - Multiple selection checkbox interface
-  - [Tree](#tree) - Tree display for hierarchical data like file systems
-  - [JSON](#json) - Parse and interactively display JSON data
-  - [Text](#text) - Static text display
+  - [Readline](https://github.com/ynqa/promkit/tree/v0.9.0#readline) - Text input with auto-completion
+  - [Confirm](https://github.com/ynqa/promkit/tree/v0.9.0#confirm) - Yes/no confirmation prompt
+  - [Password](https://github.com/ynqa/promkit/tree/v0.9.0#password) - Password input with masking and validation
+  - [Form](https://github.com/ynqa/promkit/tree/v0.9.0#form) - Manage multiple text input fields
+  - [Listbox](https://github.com/ynqa/promkit/tree/v0.9.0#listbox) - Single selection interface from a list
+  - [QuerySelector](https://github.com/ynqa/promkit/tree/v0.9.0#queryselector) - Searchable selection interface
+  - [Checkbox](https://github.com/ynqa/promkit/tree/v0.9.0#checkbox) - Multiple selection checkbox interface
+  - [Tree](https://github.com/ynqa/promkit/tree/v0.9.0#tree) - Tree display for hierarchical data like file systems
+  - [JSON](https://github.com/ynqa/promkit/tree/v0.9.0#json) - Parse and interactively display JSON data
+  - [Text](https://github.com/ynqa/promkit/tree/v0.9.0#text) - Static text display
 
 ## Concept
 
-See [here](Concept.md).
+See [here](https://github.com/ynqa/promkit/tree/v0.9.0/Concept.md).
 
 ## Projects using *promkit*
 
