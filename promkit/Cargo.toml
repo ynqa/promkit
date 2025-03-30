@@ -12,8 +12,33 @@ readme = "README.md"
 name = "promkit"
 path = "src/lib.rs"
 
+[features]
+default = [
+    "checkbox",
+    "form",
+    "json",
+    "listbox",
+    "query_selector",
+    "readline",
+    "password",
+    "confirm",
+    "text",
+    "tree",
+]
+
+checkbox = []
+form = []
+json = []
+listbox = []
+query_selector = []
+readline = []
+password = ["readline"]
+confirm = ["readline"]
+text = []
+tree = []
+
 [dependencies]
-anyhow = "1.0.95"
+anyhow ={ workspace = true }
 promkit-core = { path = "../promkit-core", version = "=0.1.0" }
 promkit-widgets = { path = "../promkit-widgets", version = "=0.1.0" }
 radix_trie = { workspace = true }

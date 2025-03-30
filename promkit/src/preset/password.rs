@@ -4,7 +4,7 @@ use crate::{
     Prompt,
 };
 
-use super::{render, Readline};
+use crate::preset::readline::{render, Readline};
 
 /// A specialized `Readline` struct for securely capturing password input.
 /// It masks the input with a specified character for privacy and security.

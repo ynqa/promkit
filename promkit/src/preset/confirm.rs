@@ -1,6 +1,6 @@
 use crate::Prompt;
 
-use super::{render, Readline};
+use crate::preset::readline::{render, Readline};
 
 /// A wrapper around `Readline` for creating simple yes/no confirmation prompts.
 pub struct Confirm(Readline);
