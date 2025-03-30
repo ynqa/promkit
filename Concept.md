@@ -63,11 +63,11 @@ As a diagram:
 flowchart LR
     subgraph promkit["promkit: event-loop"]
         direction LR
-        A[User Input] --> D[Request: update state]
+        A[User Input] --> L[Determine behavior that matches key event]
 
         subgraph B_event["promkit: event-handler"]
             direction LR
-            D[Request: update state]
+            L[Determine behavior that matches key event] --> D[Request: update state]
         end
 
         D --> F[Update state]
@@ -80,8 +80,7 @@ flowchart LR
         F --> C{Evaluate}
         C -->|Continue| G[Request: generate pane for rendering]
         G[Request: generate pane for rendering] --> output_pane
-        C -->|Finish| E[Return result]
-        E --> K[Finish]
+        C -->|Break out of loop| E[Exit]
         
         subgraph gen_pane["promkit-widgets"]
             direction LR
