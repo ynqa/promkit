@@ -35,7 +35,10 @@ json = [
     "promkit-widgets/jsonstream",
     "promkit-widgets/text",
 ]
-listbox = ["promkit-widgets/listbox"]
+listbox = [
+    "promkit-widgets/listbox",
+    "promkit-widgets/text",
+]
 query_selector = []
 readline = [
     "promkit-widgets/listbox",
