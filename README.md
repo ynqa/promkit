@@ -61,7 +61,7 @@ that can be executed immediately below.
 <summary>Command</summary>
 
 ```bash
-cargo run --example readline
+cargo run --bin readline --manifest-path examples/readline/Cargo.toml
 ```
 
 </details>
@@ -100,7 +100,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example confirm
+cargo run --manifest-path examples/confirm/Cargo.toml
 ```
 
 </details>
@@ -127,7 +127,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example password
+cargo run --manifest-path examples/password/Cargo.toml
 ```
 
 </details>
@@ -160,7 +160,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example form
+cargo run --manifest-path examples/form/Cargo.toml
 ```
 
 </details>
@@ -226,7 +226,7 @@ fn main() -> anyhow::Result<()> {
 <summary>Command</summary>
 
 ```bash
-cargo run --example listbox
+cargo run --manifest-path examples/listbox/Cargo.toml
 ```
 </details>
 
@@ -255,7 +255,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example query_selector
+cargo run --manifest-path examples/query_selector/Cargo.toml
 ```
 </details>
 
@@ -294,7 +294,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example checkbox
+cargo run --manifest-path examples/checkbox/Cargo.toml
 ```
 </details>
 
@@ -334,7 +334,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example tree
+cargo run --manifest-path examples/tree/Cargo.toml
 ```
 </details>
 
@@ -363,7 +363,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example json
+cargo run --manifest-path examples/json/Cargo.toml
 ```
 </details>
 
