@@ -10,7 +10,7 @@ promkit = { path = "../../promkit", features = ["readline"] }
 
 [[bin]]
 name = "readline"
-path = "src/main.rs"
+path = "src/readline.rs"
 
 [[bin]]
 name = "readline-loop"

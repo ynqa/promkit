@@ -7,3 +7,7 @@ publish = false
 [dependencies]
 anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = ["checkbox"] }
+
+[[bin]]
+name = "checkbox"
+path = "src/checkbox.rs"

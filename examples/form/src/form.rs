@@ -1,5 +1,4 @@
-use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder};
-use promkit_widgets::text_editor;
+use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder, promkit_widgets::text_editor};
 
 fn main() -> anyhow::Result<()> {
     let mut p = Form::new([

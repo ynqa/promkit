@@ -1,0 +1,13 @@
+[package]
+name = "form"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+promkit = { path = "../../promkit", features = ["form"] }
+
+[[bin]]
+name = "form"
+path = "src/form.rs"
