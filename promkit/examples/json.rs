@@ -1,5 +1,8 @@
-use promkit::{jsonstream::JsonStream, preset::json::Json};
-use serde_json::Deserializer;
+use promkit::preset::json::Json;
+use promkit_widgets::{
+    jsonstream::JsonStream,
+    serde_json::{self, Deserializer},
+};
 
 fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(

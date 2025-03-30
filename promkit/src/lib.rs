@@ -122,6 +122,10 @@
 //! This approach ensures consistency in UI elements even when
 //! the terminal size changes, providing a smoother user experience.
 
+pub use promkit_core;
+pub use promkit_core::crossterm;
+pub use promkit_widgets;
+
 pub mod preset;
 pub mod snapshot;
 pub mod style;
@@ -133,7 +137,7 @@ use std::io;
 
 use promkit_core::{
     crossterm::{
-        self, cursor,
+        cursor,
         event::{self, Event},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
