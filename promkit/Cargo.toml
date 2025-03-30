@@ -34,7 +34,11 @@ form = ["promkit-widgets/texteditor"]
 json = ["promkit-widgets/jsonstream"]
 listbox = ["promkit-widgets/listbox"]
 query_selector = []
-readline = ["promkit-widgets/texteditor"]
+readline = [
+    "promkit-widgets/listbox",
+    "promkit-widgets/text",
+    "promkit-widgets/texteditor",
+]
 password = ["readline"]
 confirm = ["readline"]
 text = ["promkit-widgets/text"]

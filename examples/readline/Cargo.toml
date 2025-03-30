@@ -1,0 +1,17 @@
+[package]
+name = "readline"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+promkit = { path = "../../promkit", features = ["readline"] }
+
+[[bin]]
+name = "readline"
+path = "src/main.rs"
+
+[[bin]]
+name = "readline-loop"
+path = "src/readline_loop.rs"
