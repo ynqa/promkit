@@ -45,7 +45,10 @@ readline = [
 password = ["readline"]
 confirm = ["readline"]
 text = ["promkit-widgets/text"]
-tree = ["promkit-widgets/tree"]
+tree = [
+    "promkit-widgets/text",
+    "promkit-widgets/tree",
+]
 
 [dependencies]
 anyhow ={ workspace = true }
