@@ -16,30 +16,31 @@ promkit = "0.9.0"
 
 ## Features
 
-- Support cross-platform both UNIX and Windows owing to
-[crossterm](https://github.com/crossterm-rs/crossterm)
-- Various building methods
-  - Preset; Support for quickly setting up a UI by providing simple parameters
-    - [Readline](#readline)
-    - [Confirm](#confirm)
-    - [Password](#password)
-    - [Form](#form)
-    - [Listbox](#listbox)
-    - [QuerySelector](#queryselector)
-    - [Checkbox](#checkbox)
-    - [Tree](#tree)
-    - [JSON](#json)
-  - Combining various UI components
-    - They are provided with the same interface, allowing users to choose and
-      assemble them according to their preferences
-  - (Upcoming) Stronger support to display yor own data structures
-- Versatile customization capabilities
-  - Theme for designing the appearance of the prompt
-    - e.g. cursor, text and prompt string
-  - Validation for user input and error message construction
-  - Customizable key mappings
-- Mouse support (partially)
-  - Allows scrolling through lists with the mouse wheel
+- Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
+- Modularized architecture
+  - `promkit-core`
+    - Core functionality for basic terminal operations and pane management
+  - `promkit-widgets`
+    - Various UI components (text, listbox, tree, etc.)
+  - `promkit`
+    - High-level presets and user interfaces
+  - `promkit-derive`
+    - A Derive macro that simplifies interactive form input
+- Rich preset components
+  - [Readline](#readline) - Text input with auto-completion
+  - [Confirm](#confirm) - Yes/no confirmation prompt
+  - [Password](#password) - Password input with masking and validation
+  - [Form](#form) - Manage multiple text input fields
+  - [Listbox](#listbox) - Single selection interface from a list
+  - [QuerySelector](#queryselector) - Searchable selection interface
+  - [Checkbox](#checkbox) - Multiple selection checkbox interface
+  - [Tree](#tree) - Tree display for hierarchical data like file systems
+  - [JSON](#json) - Parse and interactively display JSON data
+  - [Text](#text) - Static text display
+
+## Concept
+
+See [here](Concept.md).
 
 ## Projects using *promkit*
 
@@ -405,87 +406,6 @@ fn main() -> Result {
 </details>
 
 <img src="https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9" width="50%" height="auto">
-
-## Why *promkit*?
-
-Related libraries in this category include the following:
-- [console-rs/dialoguer](https://github.com/console-rs/dialoguer)
-- [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire)
-
-*promkit* offers several advantages over these libraries:
-
-### Unified interface approach for UI components
-
-*promkit* takes a unified approach by having all of its components inherit the
-same `Renderer` trait. This design choice enables users to seamlessly support
-their custom data structures for display, similar to the relationships seen in
-TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
-and
-[EdJoPaTo/tui-rs-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget).
-In other words, it's straightforward for anyone to display their own data
-structures using widgets within promkit.  
-In contrast, other libraries tend to treat each prompt as a mostly independent
-entity. If you want to display a new data structure, you often have to build the
-UI from scratch, which can be a time-consuming and less flexible process.
-
-```rust
-pub trait Renderer: AsAny + Finalizer {
-    /// Creates a collection of panes based on the specified width.
-    ///
-    /// This method is responsible for generating the layout of the UI components
-    /// that will be displayed in the prompt. The width parameter allows the layout
-    /// to adapt to the current terminal width.
-    ///
-    /// # Parameters
-    ///
-    /// * `width`: The width of the terminal in characters.
-    ///
-    /// # Returns
-    ///
-    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
-    fn create_panes(&self, width: u16) -> Vec<Pane>;
-
-    /// Evaluates an event and determines the next action for the prompt.
-    ///
-    /// This method is called whenever an event occurs (e.g., user input). It allows
-    /// the renderer to react to the event and decide whether the prompt should continue
-    /// running or quit.
-    ///
-    /// # Parameters
-    ///
-    /// * `event`: A reference to the event that occurred.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
-    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
-    /// the prompt should terminate its execution.
-    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
-}
-```
-
-### Variety of Pre-built UI Preset Components
-
-One of the compelling reasons to choose *promkit* is its extensive range of pre-built UI preset components.
-These presets allow developers to quickly implement various interactive prompts without the need to design and
-build each component from scratch. The availability of these presets not only speeds up the development process
-but also ensures consistency and reliability across different applications.
-Here are some of the preset components available, see [Examples](#examplesdemos)
-
-### Resilience to terminal resizing
-
-Performing operations that involve executing a command in one pane while
-simultaneously opening a new pane is a common occurrence. During such operations,
-if UI corruption is caused by resizing the terminal size, it may adversely affect
-the user experience.  
-Other libraries can struggle when the terminal is resized, making typing and
-interaction difficult or impossible. For example:
-
- - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
-
-*promkit* introduces a step to align data with the screen size before rendering.
-This approach ensures consistency in UI elements even when
-the terminal size changes, providing a smoother user experience.
 
 ## License
 
