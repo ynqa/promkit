@@ -71,7 +71,7 @@ cargo run --bin readline --manifest-path examples/readline/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::readline::Readline, suggest::Suggest, Result};
 
 fn main() -> Result {
@@ -110,7 +110,7 @@ cargo run --manifest-path examples/confirm/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::confirm::Confirm, Result};
 
 fn main() -> Result {
@@ -137,7 +137,7 @@ cargo run --manifest-path examples/password/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::password::Password, Result};
 
 fn main() -> Result {
@@ -170,7 +170,7 @@ cargo run --manifest-path examples/form/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder, text_editor};
 
 fn main() -> anyhow::Result<()> {
@@ -235,7 +235,7 @@ cargo run --manifest-path examples/listbox/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::listbox::Listbox, Result};
 
 fn main() -> Result {
@@ -264,7 +264,7 @@ cargo run --manifest-path examples/query_selector/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::query_selector::QuerySelector, Result};
 
 fn main() -> Result {
@@ -303,7 +303,7 @@ cargo run --manifest-path examples/checkbox/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::checkbox::Checkbox, Result};
 
 fn main() -> Result {
@@ -343,7 +343,7 @@ cargo run --manifest-path examples/tree/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::tree::Tree, tree::Node, Result};
 
 fn main() -> Result {
@@ -372,7 +372,7 @@ cargo run --manifest-path examples/json/Cargo.toml
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer, Result};
 
 fn main() -> Result {
