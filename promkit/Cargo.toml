@@ -26,19 +26,19 @@ default = [
     "tree",
 ]
 
-checkbox = []
+checkbox = ["promkit-widgets/checkbox"]
 form = []
-json = []
-listbox = []
+json = ["promkit-widgets/jsonstream"]
+listbox = ["promkit-widgets/listbox"]
 query_selector = []
-readline = []
+readline = ["promkit-widgets/texteditor"]
 password = ["readline"]
 confirm = ["readline"]
-text = []
-tree = []
+text = ["promkit-widgets/text"]
+tree = ["promkit-widgets/tree"]
 
 [dependencies]
 anyhow ={ workspace = true }
 promkit-core = { path = "../promkit-core", version = "=0.1.0" }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.1.0" }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.1.0", default-features = false }
 radix_trie = { workspace = true }
