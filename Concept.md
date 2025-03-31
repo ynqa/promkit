@@ -128,11 +128,17 @@ let mut p = Readline::default()
     // Change input prefix
     .prefix("$ ")
     // Prefix style
-    .prefix_style(StyleBuilder::new().fgc(Color::DarkBlue).build())
+    .prefix_style(ContentStyle {
+        foreground_color: Some(Color::DarkRed),
+        ..Default::default()
+    })
     // Active character style
-    .active_char_style(StyleBuilder::new().bgc(Color::DarkMagenta).build())
+    .active_char_style(ContentStyle {
+        background_color: Some(Color::DarkCyan),
+        ..Default::default()
+    })
     // Inactive character style
-    .inactive_char_style(StyleBuilder::new().fgc(Color::DarkGrey).build())
+    .inactive_char_style(ContentStyle::default())
     // Enable suggestion feature
     .enable_suggest(Suggest::from_iter(["option1", "option2"]))
     // Enable history feature

@@ -20,28 +20,31 @@ you can automatically generate interactive forms that populate your struct field
 ## Usage Example
 
 ```rust
-use promkit::{crossterm::style::Color, style::StyleBuilder};
+use promkit::crossterm::style::{Color, ContentStyle};
 use promkit_derive::Promkit;
 
 #[derive(Default, Debug, Promkit)]
 struct Profile {
     #[form(
         label = "What is your name?",
-        label_style = StyleBuilder::new().fgc(Color::DarkCyan).build(),
+        label_style = ContentStyle {
+            foreground_color: Some(Color::DarkCyan),
+            ..Default::default()
+        },
     )]
     name: String,
 
     #[form(default)]
     hobby: Option<String>,
 
-    #[form(label = "How old are you?")]
+    #[form(label = "How old are you?", ignore_invalid_attr = "nothing")]
     age: usize,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut profile = Profile::default();
-    profile.build()?;  // This displays the interactive form and collects user input
-    println!("{:?}", profile);  // The struct now contains the input values
+    let mut ret = Profile::default();
+    ret.build()?;
+    dbg!(ret);
     Ok(())
 }
 ```
