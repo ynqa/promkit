@@ -11,4 +11,5 @@ readme = "README.md"
 [dependencies]
 anyhow = { workspace = true}
 crossterm = { workspace = true }
+tokio = { workspace = true }
 unicode-width = { workspace = true }
