@@ -1,9 +1,12 @@
 use std::cell::RefCell;
 
+use promkit_core::{Pane, PaneFactory};
+
+use promkit_widgets::{listbox, text, text_editor};
+
 use crate::{
-    crossterm::event::Event, listbox, pane::Pane, snapshot::Snapshot, suggest::Suggest,
-    switch::ActiveKeySwitcher, text, text_editor, validate::ValidatorManager, PaneFactory,
-    PromptSignal,
+    crossterm::event::Event, snapshot::Snapshot, suggest::Suggest, switch::ActiveKeySwitcher,
+    validate::ValidatorManager, PromptSignal,
 };
 
 use super::keymap;

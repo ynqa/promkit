@@ -1,11 +1,13 @@
 use std::cell::RefCell;
 
+use promkit_widgets::{
+    text::{self, Text},
+    tree::{self, node::Node},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
-    tree::{self, Node},
     Prompt,
 };
 
@@ -32,18 +34,21 @@ impl Tree {
         Self {
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             tree_state: tree::State {
                 tree: tree::Tree::new(root),
                 folded_symbol: String::from("▶︎ "),
                 unfolded_symbol: String::from("▼ "),
-                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: StyleBuilder::new().build(),
+                active_item_style: ContentStyle {
+                    foreground_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                inactive_item_style: ContentStyle::default(),
                 lines: Default::default(),
                 indent: 2,
             },

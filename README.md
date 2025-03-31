@@ -11,38 +11,40 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.8.0"
+promkit = "0.9.0"
 ```
 
 ## Features
 
-- Support cross-platform both UNIX and Windows owing to
-[crossterm](https://github.com/crossterm-rs/crossterm)
-- Various building methods
-  - Preset; Support for quickly setting up a UI by providing simple parameters
-    - [Readline](#readline)
-    - [Confirm](#confirm)
-    - [Password](#password)
-    - [Form](#form)
-    - [Listbox](#listbox)
-    - [QuerySelector](#queryselector)
-    - [Checkbox](#checkbox)
-    - [Tree](#tree)
-    - [JSON](#json)
-  - Combining various UI components
-    - They are provided with the same interface, allowing users to choose and
-      assemble them according to their preferences
-  - (Upcoming) Stronger support to display yor own data structures
-- Versatile customization capabilities
-  - Theme for designing the appearance of the prompt
-    - e.g. cursor, text and prompt string
-  - Validation for user input and error message construction
-  - Customizable key mappings
-- Mouse support (partially)
-  - Allows scrolling through lists with the mouse wheel
+- Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
+- Modularized architecture
+  - [promkit-core](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-core/)
+    - Core functionality for basic terminal operations and pane management
+  - [promkit-widgets](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-widgets/)
+    - Various UI components (text, listbox, tree, etc.)
+  - [promkit](https://github.com/ynqa/promkit/tree/v0.9.0/promkit)
+    - High-level presets and user interfaces
+  - [promkit-derive](https://github.com/ynqa/promkit/tree/v0.9.0/promkit-derive/)
+    - A Derive macro that simplifies interactive form input
+- Rich preset components
+  - [Readline](https://github.com/ynqa/promkit/tree/v0.9.0#readline) - Text input with auto-completion
+  - [Confirm](https://github.com/ynqa/promkit/tree/v0.9.0#confirm) - Yes/no confirmation prompt
+  - [Password](https://github.com/ynqa/promkit/tree/v0.9.0#password) - Password input with masking and validation
+  - [Form](https://github.com/ynqa/promkit/tree/v0.9.0#form) - Manage multiple text input fields
+  - [Listbox](https://github.com/ynqa/promkit/tree/v0.9.0#listbox) - Single selection interface from a list
+  - [QuerySelector](https://github.com/ynqa/promkit/tree/v0.9.0#queryselector) - Searchable selection interface
+  - [Checkbox](https://github.com/ynqa/promkit/tree/v0.9.0#checkbox) - Multiple selection checkbox interface
+  - [Tree](https://github.com/ynqa/promkit/tree/v0.9.0#tree) - Tree display for hierarchical data like file systems
+  - [JSON](https://github.com/ynqa/promkit/tree/v0.9.0#json) - Parse and interactively display JSON data
+  - [Text](https://github.com/ynqa/promkit/tree/v0.9.0#text) - Static text display
+
+## Concept
+
+See [here](https://github.com/ynqa/promkit/tree/v0.9.0/Concept.md).
 
 ## Projects using *promkit*
 
+- [ynqa/empiriqa](https://github.com/ynqa/empiriqa)
 - [ynqa/jnv](https://github.com/ynqa/jnv)
 - [ynqa/logu](https://github.com/ynqa/logu)
 - [ynqa/sig](https://github.com/ynqa/sig)
@@ -61,7 +63,7 @@ that can be executed immediately below.
 <summary>Command</summary>
 
 ```bash
-cargo run --example readline
+cargo run --bin readline --manifest-path examples/readline/Cargo.toml
 ```
 
 </details>
@@ -69,7 +71,7 @@ cargo run --example readline
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::readline::Readline, suggest::Suggest, Result};
 
 fn main() -> Result {
@@ -92,7 +94,7 @@ fn main() -> Result {
 ```
 </details>
 
-![readline](https://github.com/ynqa/promkit/assets/6745370/d124268e-9496-4c4b-83be-c734e4d03591)
+<img src="https://github.com/ynqa/promkit/assets/6745370/d124268e-9496-4c4b-83be-c734e4d03591" width="50%" height="auto">
 
 ### Confirm
 
@@ -100,7 +102,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example confirm
+cargo run --manifest-path examples/confirm/Cargo.toml
 ```
 
 </details>
@@ -108,7 +110,7 @@ cargo run --example confirm
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::confirm::Confirm, Result};
 
 fn main() -> Result {
@@ -119,7 +121,7 @@ fn main() -> Result {
 ```
 </details>
 
-![confirm](https://github.com/ynqa/promkit/assets/6745370/ac9bac78-66cd-4653-a39f-6c9c0c24131f)
+<img src="https://github.com/ynqa/promkit/assets/6745370/ac9bac78-66cd-4653-a39f-6c9c0c24131f" width="50%" height="auto">
 
 ### Password
 
@@ -127,7 +129,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example password
+cargo run --manifest-path examples/password/Cargo.toml
 ```
 
 </details>
@@ -135,7 +137,7 @@ cargo run --example password
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::password::Password, Result};
 
 fn main() -> Result {
@@ -152,7 +154,7 @@ fn main() -> Result {
 ```
 </details>
 
-![password](https://github.com/ynqa/promkit/assets/6745370/396356ef-47de-44bc-a8d4-d03c7ac66a2f)
+<img src="https://github.com/ynqa/promkit/assets/6745370/396356ef-47de-44bc-a8d4-d03c7ac66a2f" width="50%" height="auto">
 
 ### Form
 
@@ -160,7 +162,7 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example form
+cargo run --manifest-path examples/form/Cargo.toml
 ```
 
 </details>
@@ -168,7 +170,7 @@ cargo run --example form
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{crossterm::style::Color, preset::form::Form, style::StyleBuilder, text_editor};
 
 fn main() -> anyhow::Result<()> {
@@ -218,7 +220,7 @@ fn main() -> anyhow::Result<()> {
 
 </details>
 
-![form](https://github.com/ynqa/promkit/assets/6745370/c3dc88a7-d0f0-42f4-90b8-bc4d2e23e36d)
+<img src="https://github.com/ynqa/promkit/assets/6745370/c3dc88a7-d0f0-42f4-90b8-bc4d2e23e36d" width="50%" height="auto">
 
 ### Listbox
 
@@ -226,14 +228,14 @@ fn main() -> anyhow::Result<()> {
 <summary>Command</summary>
 
 ```bash
-cargo run --example listbox
+cargo run --manifest-path examples/listbox/Cargo.toml
 ```
 </details>
 
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::listbox::Listbox, Result};
 
 fn main() -> Result {
@@ -247,7 +249,7 @@ fn main() -> Result {
 ```
 </details>
 
-![listbox](https://github.com/ynqa/promkit/assets/6745370/0da1b1d0-bb17-4951-8ea8-3b09cd2eb86a)
+<img src="https://github.com/ynqa/promkit/assets/6745370/0da1b1d0-bb17-4951-8ea8-3b09cd2eb86a" width="50%" height="auto">
 
 ### QuerySelector
 
@@ -255,14 +257,14 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example query_selector
+cargo run --manifest-path examples/query_selector/Cargo.toml
 ```
 </details>
 
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::query_selector::QuerySelector, Result};
 
 fn main() -> Result {
@@ -286,7 +288,7 @@ fn main() -> Result {
 ```
 </details>
 
-![query_selector](https://github.com/ynqa/promkit/assets/6745370/7ac2ed54-9f9e-4735-bffb-72f7cee06f6d)
+<img src="https://github.com/ynqa/promkit/assets/6745370/7ac2ed54-9f9e-4735-bffb-72f7cee06f6d" width="50%" height="auto">
 
 ### Checkbox
 
@@ -294,14 +296,14 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example checkbox
+cargo run --manifest-path examples/checkbox/Cargo.toml
 ```
 </details>
 
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::checkbox::Checkbox, Result};
 
 fn main() -> Result {
@@ -326,7 +328,7 @@ fn main() -> Result {
 ```
 </details>
 
-![checkbox](https://github.com/ynqa/promkit/assets/6745370/350b16ce-6ef4-46f2-9466-d01b9dab4eaf)
+<img src="https://github.com/ynqa/promkit/assets/6745370/350b16ce-6ef4-46f2-9466-d01b9dab4eaf" width="50%" height="auto">
 
 ### Tree
 
@@ -334,14 +336,14 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example tree
+cargo run --manifest-path examples/tree/Cargo.toml
 ```
 </details>
 
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{preset::tree::Tree, tree::Node, Result};
 
 fn main() -> Result {
@@ -355,7 +357,7 @@ fn main() -> Result {
 ```
 </details>
 
-![tree](https://github.com/ynqa/promkit/assets/6745370/61aefcd0-080a-443e-9dc6-ac627d306f55)
+<img src="https://github.com/ynqa/promkit/assets/6745370/61aefcd0-080a-443e-9dc6-ac627d306f55" width="50%" height="auto">
 
 ### JSON
 
@@ -363,14 +365,14 @@ fn main() -> Result {
 <summary>Command</summary>
 
 ```bash
-cargo run --example json
+cargo run --manifest-path examples/json/Cargo.toml
 ```
 </details>
 
 <details>
 <summary>Code</summary>
 
-```rust
+```rust,ignore
 use promkit::{json::JsonStream, preset::json::Json, serde_json::Deserializer, Result};
 
 fn main() -> Result {
@@ -403,88 +405,7 @@ fn main() -> Result {
 ```
 </details>
 
-![json](https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9)
-
-## Why *promkit*?
-
-Related libraries in this category include the following:
-- [console-rs/dialoguer](https://github.com/console-rs/dialoguer)
-- [mikaelmello/inquire](https://github.com/mikaelmello/inquire/tree/main/inquire)
-
-*promkit* offers several advantages over these libraries:
-
-### Unified interface approach for UI components
-
-*promkit* takes a unified approach by having all of its components inherit the
-same `Renderer` trait. This design choice enables users to seamlessly support
-their custom data structures for display, similar to the relationships seen in
-TUI projects like [ratatui-org/ratatui](https://github.com/ratatui-org/ratatui)
-and
-[EdJoPaTo/tui-rs-tree-widget](https://github.com/EdJoPaTo/tui-rs-tree-widget).
-In other words, it's straightforward for anyone to display their own data
-structures using widgets within promkit.  
-In contrast, other libraries tend to treat each prompt as a mostly independent
-entity. If you want to display a new data structure, you often have to build the
-UI from scratch, which can be a time-consuming and less flexible process.
-
-```rust
-pub trait Renderer: AsAny + Finalizer {
-    /// Creates a collection of panes based on the specified width.
-    ///
-    /// This method is responsible for generating the layout of the UI components
-    /// that will be displayed in the prompt. The width parameter allows the layout
-    /// to adapt to the current terminal width.
-    ///
-    /// # Parameters
-    ///
-    /// * `width`: The width of the terminal in characters.
-    ///
-    /// # Returns
-    ///
-    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
-    fn create_panes(&self, width: u16) -> Vec<Pane>;
-
-    /// Evaluates an event and determines the next action for the prompt.
-    ///
-    /// This method is called whenever an event occurs (e.g., user input). It allows
-    /// the renderer to react to the event and decide whether the prompt should continue
-    /// running or quit.
-    ///
-    /// # Parameters
-    ///
-    /// * `event`: A reference to the event that occurred.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
-    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
-    /// the prompt should terminate its execution.
-    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
-}
-```
-
-### Variety of Pre-built UI Preset Components
-
-One of the compelling reasons to choose *promkit* is its extensive range of pre-built UI preset components.
-These presets allow developers to quickly implement various interactive prompts without the need to design and
-build each component from scratch. The availability of these presets not only speeds up the development process
-but also ensures consistency and reliability across different applications.
-Here are some of the preset components available, see [Examples](#examplesdemos)
-
-### Resilience to terminal resizing
-
-Performing operations that involve executing a command in one pane while
-simultaneously opening a new pane is a common occurrence. During such operations,
-if UI corruption is caused by resizing the terminal size, it may adversely affect
-the user experience.  
-Other libraries can struggle when the terminal is resized, making typing and
-interaction difficult or impossible. For example:
-
- - [(console-rs/dialoguer) Automatic re-render on terminal window resize](https://github.com/console-rs/dialoguer/issues/178)
-
-*promkit* introduces a step to align data with the screen size before rendering.
-This approach ensures consistency in UI elements even when
-the terminal size changes, providing a smoother user experience.
+<img src="https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9" width="50%" height="auto">
 
 ## License
 

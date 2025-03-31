@@ -1,11 +1,11 @@
-use crossterm::style::ContentStyle;
+use promkit_widgets::{listbox::Listbox, text::Text, text_editor};
 
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    listbox::Listbox,
-    preset,
-    text::Text,
-    text_editor, PromptSignal,
+    crossterm::{
+        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        style::ContentStyle,
+    },
+    preset, PromptSignal,
 };
 
 pub type Keymap = fn(

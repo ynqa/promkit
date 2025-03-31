@@ -1,11 +1,13 @@
 use std::{cell::RefCell, fmt::Display};
 
-use crate::{
+use promkit_widgets::{
     checkbox,
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    style::StyleBuilder,
-    switch::ActiveKeySwitcher,
     text::{self, Text},
+};
+
+use crate::{
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+    switch::ActiveKeySwitcher,
     Prompt,
 };
 
@@ -33,19 +35,22 @@ impl Checkbox {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
                 inactive_mark: '☐',
-                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: StyleBuilder::new().build(),
+                active_item_style: ContentStyle {
+                    foreground_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                inactive_item_style: ContentStyle::default(),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),
@@ -55,19 +60,22 @@ impl Checkbox {
     pub fn new_with_checked<T: Display, I: IntoIterator<Item = (T, bool)>>(items: I) -> Self {
         Self {
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             checkbox_state: checkbox::State {
                 checkbox: checkbox::Checkbox::new_with_checked(items),
                 cursor: String::from("❯ "),
                 active_mark: '☒',
                 inactive_mark: '☐',
-                active_item_style: StyleBuilder::new().fgc(Color::DarkCyan).build(),
-                inactive_item_style: StyleBuilder::new().build(),
+                active_item_style: ContentStyle {
+                    foreground_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                inactive_item_style: ContentStyle::default(),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),

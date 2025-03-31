@@ -1,13 +1,13 @@
 use std::cell::RefCell;
 
-use crate::{
-    crossterm::event::Event,
+use promkit_core::{Pane, PaneFactory};
+
+use promkit_widgets::{
     listbox::{self, Listbox},
-    pane::Pane,
-    snapshot::Snapshot,
-    switch::ActiveKeySwitcher,
-    text, text_editor, PaneFactory, PromptSignal,
+    text, text_editor,
 };
+
+use crate::{crossterm::event::Event, snapshot::Snapshot, switch::ActiveKeySwitcher, PromptSignal};
 
 /// Used to process and filter a list of options
 /// based on the input text in the `QuerySelector` component.

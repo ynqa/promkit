@@ -1,11 +1,14 @@
-use promkit::{crossterm::style::Color, style::StyleBuilder};
+use promkit::crossterm::style::{Color, ContentStyle};
 use promkit_derive::Promkit;
 
 #[derive(Default, Debug, Promkit)]
 struct Profile {
     #[form(
         label = "What is your name?",
-        label_style = StyleBuilder::new().fgc(Color::DarkCyan).build(),
+        label_style = ContentStyle {
+            foreground_color: Some(Color::DarkCyan),
+            ..Default::default()
+        },
     )]
     name: String,
 

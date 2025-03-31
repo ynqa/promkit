@@ -1,11 +1,12 @@
 use std::cell::RefCell;
 
+use promkit_core::crossterm::style::ContentStyle;
+use promkit_widgets::{cursor::Cursor, text_editor};
+
 use crate::{
-    core::Cursor,
     crossterm::style::{Attribute, Attributes},
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text_editor, Prompt,
+    Prompt,
 };
 
 mod keymap;
@@ -25,15 +26,18 @@ impl Form {
             .into_iter()
             .map(|state| {
                 let style = render::Style {
-                    prefix_style: StyleBuilder::from(state.prefix_style)
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build(),
-                    inactive_char_style: StyleBuilder::from(state.inactive_char_style)
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build(),
-                    active_char_style: StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Dim))
-                        .build(),
+                    prefix_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Dim),
+                        ..state.prefix_style
+                    },
+                    active_char_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Dim),
+                        ..Default::default()
+                    },
+                    inactive_char_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Dim),
+                        ..state.inactive_char_style
+                    },
                 };
                 (state, style)
             })

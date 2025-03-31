@@ -1,21 +1,21 @@
 use std::{cell::RefCell, collections::HashSet};
 
-use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+use promkit_widgets::{
     listbox::{self, Listbox},
-    snapshot::Snapshot,
-    style::StyleBuilder,
-    suggest::Suggest,
-    switch::ActiveKeySwitcher,
     text::{self, Text},
     text_editor::{self, History},
+};
+
+use crate::{
+    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
+    snapshot::Snapshot,
+    suggest::Suggest,
+    switch::ActiveKeySwitcher,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     Prompt,
 };
 
-pub mod confirm;
 pub mod keymap;
-pub mod password;
 pub mod render;
 
 /// `Readline` struct provides functionality
@@ -42,20 +42,27 @@ impl Default for Readline {
             keymap: ActiveKeySwitcher::new("default", self::keymap::default as keymap::Keymap)
                 .register("on_suggest", self::keymap::on_suggest),
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             text_editor_state: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
                 prefix: String::from("❯❯ "),
                 mask: Default::default(),
-                prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
-                active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
-                inactive_char_style: StyleBuilder::new().build(),
+                prefix_style: ContentStyle {
+                    foreground_color: Some(Color::DarkGreen),
+                    ..Default::default()
+                },
+
+                active_char_style: ContentStyle {
+                    background_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                inactive_char_style: ContentStyle::default(),
                 edit_mode: Default::default(),
                 word_break_chars: HashSet::from([' ']),
                 lines: Default::default(),
@@ -64,22 +71,25 @@ impl Default for Readline {
             suggest_state: listbox::State {
                 listbox: Listbox::from_displayable(Vec::<String>::new()),
                 cursor: String::from("❯ "),
-                active_item_style: Some(
-                    StyleBuilder::new()
-                        .fgc(Color::DarkGrey)
-                        .bgc(Color::DarkYellow)
-                        .build(),
-                ),
-                inactive_item_style: Some(StyleBuilder::new().fgc(Color::DarkGrey).build()),
+                active_item_style: Some(ContentStyle {
+                    foreground_color: Some(Color::DarkGrey),
+                    background_color: Some(Color::DarkYellow),
+                    ..Default::default()
+                }),
+                inactive_item_style: Some(ContentStyle {
+                    foreground_color: Some(Color::DarkGrey),
+                    ..Default::default()
+                }),
                 lines: Some(3),
             },
             validator: Default::default(),
             error_message_state: text::State {
                 text: Default::default(),
-                style: StyleBuilder::new()
-                    .fgc(Color::DarkRed)
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
+                style: ContentStyle {
+                    foreground_color: Some(Color::DarkRed),
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
                 lines: None,
             },
         }

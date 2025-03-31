@@ -1,11 +1,13 @@
 use std::{cell::RefCell, fmt::Display};
 
+use promkit_widgets::{
+    listbox,
+    text::{self, Text},
+};
+
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    listbox,
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
-    text::{self, Text},
     Prompt,
 };
 
@@ -32,17 +34,20 @@ impl Listbox {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             listbox_state: listbox::State {
                 listbox: listbox::Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
-                active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
-                inactive_item_style: Some(StyleBuilder::new().build()),
+                active_item_style: Some(ContentStyle {
+                    foreground_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                }),
+                inactive_item_style: Some(ContentStyle::default()),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),

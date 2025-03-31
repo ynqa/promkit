@@ -30,10 +30,12 @@ jobs:
         with:
           command: test
           args: -- --nocapture --format pretty
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --examples
+      - name: Build examples
+        run: |
+          find examples \
+            -name Cargo.toml \
+            -exec cargo build \
+              --manifest-path {} \;
       - uses: actions-rs/cargo@v1
         with:
           command: build

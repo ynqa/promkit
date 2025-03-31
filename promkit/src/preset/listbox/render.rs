@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 
-use crate::{
-    crossterm::event::Event, listbox, pane::Pane, switch::ActiveKeySwitcher, text, PaneFactory,
-    PromptSignal,
-};
+use promkit_core::{Pane, PaneFactory};
+
+use promkit_widgets::{listbox, text};
+
+use crate::{crossterm::event::Event, switch::ActiveKeySwitcher, PromptSignal};
 
 use super::keymap;
 
