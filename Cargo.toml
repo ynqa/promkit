@@ -16,4 +16,5 @@ radix_trie = "0.2.1"
 rayon = "1.10.0"
 serde = "1.0.219"
 serde_json = { version = "1.0.140", features = ["preserve_order"] }
+tokio = { version = "1.44.1", features = ["full"] }
 unicode-width = "0.2.0"
