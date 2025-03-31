@@ -1,4 +1,8 @@
+use std::sync::LazyLock;
+
 use crate::grapheme::StyledGraphemes;
+
+pub static EMPTY_PANE: LazyLock<Pane> = LazyLock::new(|| Pane::new(vec![], 0));
 
 #[derive(Clone)]
 pub struct Pane {
