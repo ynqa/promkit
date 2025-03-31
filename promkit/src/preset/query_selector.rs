@@ -9,7 +9,6 @@ use promkit_widgets::{
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
     snapshot::Snapshot,
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
     Prompt,
 };
@@ -51,20 +50,26 @@ impl QuerySelector {
     {
         Self {
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             text_editor_state: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
                 prefix: String::from("❯❯ "),
                 mask: None,
-                prefix_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
-                active_char_style: StyleBuilder::new().bgc(Color::DarkCyan).build(),
-                inactive_char_style: StyleBuilder::new().build(),
+                prefix_style: ContentStyle {
+                    foreground_color: Some(Color::DarkGreen),
+                    ..Default::default()
+                },
+                active_char_style: ContentStyle {
+                    background_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                inactive_char_style: ContentStyle::default(),
                 edit_mode: Default::default(),
                 word_break_chars: Default::default(),
                 lines: Default::default(),
@@ -72,8 +77,11 @@ impl QuerySelector {
             listbox_state: listbox::State {
                 listbox: Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
-                active_item_style: Some(StyleBuilder::new().fgc(Color::DarkCyan).build()),
-                inactive_item_style: Some(StyleBuilder::new().build()),
+                active_item_style: Some(ContentStyle {
+                    foreground_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                }),
+                inactive_item_style: Some(ContentStyle::default()),
                 lines: Default::default(),
             },
             keymap: ActiveKeySwitcher::new("default", self::keymap::default),

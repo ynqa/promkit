@@ -6,7 +6,6 @@ pub use promkit_widgets;
 
 pub mod preset;
 pub mod snapshot;
-pub mod style;
 pub mod suggest;
 pub mod switch;
 pub mod validate;

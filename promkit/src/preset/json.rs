@@ -7,7 +7,6 @@ use promkit_widgets::{
 
 use crate::{
     crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    style::StyleBuilder,
     switch::ActiveKeySwitcher,
     Prompt,
 };
@@ -26,26 +25,37 @@ impl Json {
     pub fn new(stream: JsonStream) -> Self {
         Self {
             title_state: text::State {
-                text: Default::default(),
-                style: StyleBuilder::new()
-                    .attrs(Attributes::from(Attribute::Bold))
-                    .build(),
-                lines: None,
+                style: ContentStyle {
+                    attributes: Attributes::from(Attribute::Bold),
+                    ..Default::default()
+                },
+                ..Default::default()
             },
             json_state: jsonstream::State {
                 stream,
                 formatter: RowFormatter {
-                    curly_brackets_style: StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Bold))
-                        .build(),
-                    square_brackets_style: StyleBuilder::new()
-                        .attrs(Attributes::from(Attribute::Bold))
-                        .build(),
-                    key_style: StyleBuilder::new().fgc(Color::DarkBlue).build(),
-                    string_value_style: StyleBuilder::new().fgc(Color::DarkGreen).build(),
-                    number_value_style: StyleBuilder::new().build(),
-                    boolean_value_style: StyleBuilder::new().build(),
-                    null_value_style: StyleBuilder::new().fgc(Color::DarkGrey).build(),
+                    curly_brackets_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    },
+                    square_brackets_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    },
+                    key_style: ContentStyle {
+                        foreground_color: Some(Color::DarkBlue),
+                        ..Default::default()
+                    },
+                    string_value_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    number_value_style: ContentStyle::default(),
+                    boolean_value_style: ContentStyle::default(),
+                    null_value_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        ..Default::default()
+                    },
                     active_item_attribute: Attribute::Undercurled,
                     inactive_item_attribute: Attribute::Dim,
                     indent: 2,
