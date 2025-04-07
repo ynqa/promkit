@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+  "event-dbg",
   "examples/*",
   "promkit",
   "promkit-core",
