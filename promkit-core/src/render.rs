@@ -2,6 +2,31 @@ use std::collections::BTreeMap;
 
 use crate::{Pane, terminal::Terminal};
 
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct OrderedIndex(pub usize, pub usize); // numerator, denominator
+
+impl PartialOrd for OrderedIndex {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for OrderedIndex {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // Comparing fractions: To compare a/b and c/d, compare ad and bc
+        let left = (self.0 as u64) * (other.1 as u64);
+        let right = (self.1 as u64) * (other.0 as u64);
+        left.cmp(&right)
+    }
+}
+
+impl OrderedIndex {
+    pub fn mediant(a: &OrderedIndex, b: &OrderedIndex) -> Self {
+        // TODO: gcd to reduce the fraction
+        Self(a.0 + b.0, a.1 + b.1)
+    }
+}
+
 pub struct Renderer<K: Ord> {
     terminal: Terminal,
     panes: BTreeMap<K, Pane>,
