@@ -11,8 +11,7 @@ members = [
 
 [workspace.dependencies]
 anyhow = "1.0.97"
-# See https://github.com/crossterm-rs/crossterm/issues/935
-crossterm = { version = "0.28.1", features = ["use-dev-tty", "event-stream", "libc", "serde"] }
+crossterm = { version = "0.29.0", features = ["use-dev-tty", "event-stream", "serde"] }
 radix_trie = "0.2.1"
 rayon = "1.10.0"
 serde = "1.0.219"
