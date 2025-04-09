@@ -12,7 +12,7 @@ each implemented in dedicated modules:
 - **State Updates**: Managing and updating the internal state of widgets
   - **promkit-widgets**: Responsible for state management of various widgets and pane generation
   - Each widget implements
-  [PaneFactory](https://docs.rs/promkit/0.8.0/promkit/trait.PaneFactory.html)
+  [PaneFactory](https://docs.rs/promkit-core/0.1.1/promkit_core/trait.PaneFactory.html)
   trait to generate panes needed for rendering
 
 > [!IMPORTANT]
@@ -25,9 +25,9 @@ each implemented in dedicated modules:
 
 - **Rendering**: Processing to visually display the generated panes
   - **promkit-core**: Responsible for basic terminal operations
-  - [Terminal](https://docs.rs/promkit_core/0.1.0/terminal/struct.Terminal.html) handles rendering
+  - [Terminal](https://docs.rs/promkit_core/0.1.1/terminal/struct.Terminal.html) handles rendering
     - Currently uses full rendering with plans to implement differential rendering in the future.
-  - [Pane](https://docs.rs/promkit_core/0.1.0/pane/struct.Pane.html)
+  - [Pane](https://docs.rs/promkit_core/0.1.1/pane/struct.Pane.html)
   defines the data structures for rendering
 
 This separation allows each component to focus on a single responsibility,
@@ -37,7 +37,7 @@ making customization and extension easier.
 
 These three functions collectively form the core of "event-loop" logic.
 Here is the important part of the actual event-loop from
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.8.0/promkit/struct.Prompt.html#method.run):
+[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run):
 
 ```rust
 // Core part of event-loop
@@ -99,13 +99,13 @@ flowchart LR
 
 In the current implementation of promkit, event handling is centralized.
 That is, all events are processed sequentially within
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.8.0/promkit/struct.Prompt.html#method.run)
+[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run)
 and propagated to each widget through
-[Renderer.evaluate](https://docs.rs/promkit/0.8.0/promkit/trait.Renderer.html#tymethod.evaluate).
+[Renderer.evaluate](https://docs.rs/promkit/0.9.1/promkit/trait.Renderer.html#tymethod.evaluate).
 
 > [!NOTE]
 > The current implementation of
-> [Prompt<T: Renderer>::run](https://docs.rs/promkit/0.8.0/promkit/struct.Prompt.html#method.run)
+> [Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run)
 > is provisional. In the future,
 > we plan to introduce more flexible event processing and rendering mechanisms.
 
@@ -118,7 +118,7 @@ according to your use case.
 ### Customize as configures
 
 Using high-level APIs, you can easily customize existing preset components. For example, in
-[preset::readline::Readline](https://github.com/ynqa/promkit/blob/v0.8.0/promkit/src/preset/readline.rs),
+[preset::readline::Readline](https://github.com/ynqa/promkit/blob/v0.9.1/promkit/src/preset/readline.rs),
 the following customizations are possible:
 
 ```rust
@@ -165,16 +165,16 @@ Lower-level customization is also possible:
 
 1. **Creating custom widgets**: You can create your own widgets equivalent to `promkit-widgets`. 
 By implementing
-[PaneFactory](https://docs.rs/promkit/0.8.0/promkit/trait.PaneFactory.html)
+[PaneFactory](https://docs.rs/promkit-core/0.1.1/promkit_core/trait.PaneFactory.html)
 trait for your data structure, you can use it like other standard widgets.
 e.g. https://github.com/ynqa/empiriqa/blob/v0.1.0/src/queue.rs
 
 2. **Defining custom presets**: By combining multiple widgets and implementing your own event handlers, 
 you can create completely customized presets. In that case, you need to implement
-[Renderer](https://docs.rs/promkit/0.8.0/promkit/trait.Renderer.html) trait.
+[Renderer](https://docs.rs/promkit/0.9.1/promkit/trait.Renderer.html) trait.
 
 This allows you to leave event-loop logic to promkit (i.e., you can execute
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.8.0/promkit/struct.Prompt.html#method.run))
+[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run))
 while implementing your own rendering logic and event handling.
 
 3. **Customizing Event-Loop**: One of the important features of promkit is the clear separation
