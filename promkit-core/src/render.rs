@@ -5,6 +5,12 @@ use crate::{Pane, terminal::Terminal};
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct OrderedIndex(pub usize, pub usize); // numerator, denominator
 
+impl std::fmt::Display for OrderedIndex {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({},{})", self.0, self.1)
+    }
+}
+
 impl PartialOrd for OrderedIndex {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
