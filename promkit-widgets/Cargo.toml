@@ -1,6 +1,6 @@
 [package]
 name = "promkit-widgets"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Widgets for promkit"
@@ -20,7 +20,7 @@ tree = []
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.1.0" }
+promkit-core = { path = "../promkit-core", version = "=0.1.1" }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 rayon = { workspace = true, optional = true }
