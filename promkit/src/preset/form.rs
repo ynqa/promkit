@@ -1,3 +1,5 @@
+//! Provides multiple readline input options.
+
 use std::cell::RefCell;
 
 use promkit_core::crossterm::style::ContentStyle;

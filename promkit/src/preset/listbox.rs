@@ -1,3 +1,5 @@
+//! Implements a list box for single or multiple selections from a list.
+
 use std::{cell::RefCell, fmt::Display};
 
 use promkit_widgets::{

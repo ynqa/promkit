@@ -1,3 +1,5 @@
+//! Provides a password input interface with masking and validation.
+
 use crate::{
     crossterm::style::ContentStyle,
     validate::{ErrorMessageGenerator, Validator},

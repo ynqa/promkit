@@ -1,3 +1,5 @@
+//! Enables parsing and interaction with JSON data.
+
 use std::cell::RefCell;
 
 use promkit_widgets::{

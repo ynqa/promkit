@@ -26,19 +26,10 @@ all = [
     "text",
     "tree",
 ]
-checkbox = [
-    "promkit-widgets/checkbox",
-    "promkit-widgets/text",
-]
+checkbox = ["promkit-widgets/checkbox", "promkit-widgets/text"]
 form = ["promkit-widgets/texteditor"]
-json = [
-    "promkit-widgets/jsonstream",
-    "promkit-widgets/text",
-]
-listbox = [
-    "promkit-widgets/listbox",
-    "promkit-widgets/text",
-]
+json = ["promkit-widgets/jsonstream", "promkit-widgets/text"]
+listbox = ["promkit-widgets/listbox", "promkit-widgets/text"]
 query-selector = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",
@@ -52,13 +43,14 @@ readline = [
 password = ["readline"]
 confirm = ["readline"]
 text = ["promkit-widgets/text"]
-tree = [
-    "promkit-widgets/text",
-    "promkit-widgets/tree",
-]
+tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
 [dependencies]
-anyhow ={ workspace = true }
+anyhow = { workspace = true }
 promkit-core = { path = "../promkit-core", version = "=0.1.1" }
 promkit-widgets = { path = "../promkit-widgets", version = "=0.1.1" }
 radix_trie = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

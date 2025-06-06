@@ -1,3 +1,5 @@
+//! Provides a checkbox interface for multiple options selection.
+
 use std::{cell::RefCell, fmt::Display};
 
 use promkit_widgets::{
