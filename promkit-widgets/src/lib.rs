@@ -1,5 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub use promkit_core as core;
+
 pub mod cursor;
 
 #[cfg(feature = "checkbox")]

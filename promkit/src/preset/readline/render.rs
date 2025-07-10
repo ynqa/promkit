@@ -1,8 +1,9 @@
 use std::cell::RefCell;
 
-use promkit_core::{Pane, PaneFactory};
-
-use promkit_widgets::{listbox, text, text_editor};
+use promkit_widgets::{
+    core::{Pane, PaneFactory},
+    listbox, text, text_editor,
+};
 
 use crate::{
     crossterm::event::Event, snapshot::Snapshot, suggest::Suggest, switch::ActiveKeySwitcher,

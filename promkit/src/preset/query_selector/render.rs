@@ -1,8 +1,7 @@
 use std::cell::RefCell;
 
-use promkit_core::{Pane, PaneFactory};
-
 use promkit_widgets::{
+    core::{Pane, PaneFactory},
     listbox::{self, Listbox},
     text, text_editor,
 };

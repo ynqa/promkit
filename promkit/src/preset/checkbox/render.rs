@@ -1,8 +1,10 @@
 use std::cell::RefCell;
 
-use promkit_core::{Pane, PaneFactory};
-
-use promkit_widgets::{checkbox, text};
+use promkit_widgets::{
+    checkbox,
+    core::{Pane, PaneFactory},
+    text,
+};
 
 use crate::{crossterm::event::Event, switch::ActiveKeySwitcher, PromptSignal};
 

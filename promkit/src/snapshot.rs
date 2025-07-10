@@ -1,6 +1,6 @@
 use std::cell::{Ref, RefCell};
 
-use promkit_core::{Pane, PaneFactory};
+use promkit_widgets::core::{Pane, PaneFactory};
 
 /// A `Snapshot` struct captures the state of a renderer at three different points:
 /// initial (`init`), before any changes (`before`), and after changes have been applied (`after`).

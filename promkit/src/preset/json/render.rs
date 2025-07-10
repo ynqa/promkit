@@ -1,8 +1,9 @@
 use std::cell::RefCell;
 
-use promkit_core::{Pane, PaneFactory};
-
-use promkit_widgets::{jsonstream, text};
+use promkit_widgets::{
+    core::{Pane, PaneFactory},
+    jsonstream, text,
+};
 
 use crate::{crossterm::event::Event, switch::ActiveKeySwitcher, PromptSignal};
 

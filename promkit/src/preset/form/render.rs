@@ -1,8 +1,10 @@
 use std::cell::RefCell;
 
-use promkit_core::{Pane, PaneFactory};
-
-use promkit_widgets::{cursor::Cursor, text_editor};
+use promkit_widgets::{
+    core::{Pane, PaneFactory},
+    cursor::Cursor,
+    text_editor,
+};
 
 use crate::{
     crossterm::{event::Event, style::ContentStyle},

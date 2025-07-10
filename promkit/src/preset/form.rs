@@ -2,8 +2,7 @@
 
 use std::cell::RefCell;
 
-use promkit_core::crossterm::style::ContentStyle;
-use promkit_widgets::{cursor::Cursor, text_editor};
+use promkit_widgets::{core::crossterm::style::ContentStyle, cursor::Cursor, text_editor};
 
 use crate::{
     crossterm::style::{Attribute, Attributes},

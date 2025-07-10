@@ -1,9 +1,8 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use promkit_core;
-pub use promkit_core::crossterm;
 pub use promkit_widgets;
+pub use promkit_widgets::core::crossterm;
 
 pub mod preset;
 pub mod snapshot;
@@ -13,7 +12,7 @@ pub mod validate;
 
 use std::io;
 
-use promkit_core::{
+use promkit_widgets::core::{
     crossterm::{
         cursor,
         event::{self, Event},
