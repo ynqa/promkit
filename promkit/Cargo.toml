@@ -47,7 +47,7 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.1.1" }
+promkit-core = "=0.1.1"
 promkit-widgets = { path = "../promkit-widgets", version = "=0.1.1" }
 radix_trie = { workspace = true }
 
