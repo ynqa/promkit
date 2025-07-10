@@ -1,4 +1,6 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
+
+use tokio::sync::Mutex;
 
 use crate::{Pane, terminal::Terminal};
 
@@ -34,17 +36,21 @@ impl OrderedIndex {
     }
 }
 
+/// SharedRenderer is a type alias for an Arc-wrapped Renderer, allowing for shared ownership and concurrency.
+pub type SharedRenderer<K> = Arc<Renderer<K>>;
+
+/// Renderer is responsible for managing and rendering multiple panes in a terminal.
 pub struct Renderer<K: Ord> {
-    terminal: Terminal,
+    terminal: Mutex<Terminal>,
     panes: BTreeMap<K, Pane>,
 }
 
 impl<K: Ord> Renderer<K> {
     pub fn try_new() -> anyhow::Result<Self> {
         Ok(Self {
-            terminal: Terminal {
+            terminal: Mutex::new(Terminal {
                 position: crossterm::cursor::position()?,
-            },
+            }),
             panes: BTreeMap::new(),
         })
     }
@@ -69,8 +75,8 @@ impl<K: Ord> Renderer<K> {
         self
     }
 
-    pub fn render(&mut self) -> anyhow::Result<()> {
-        self.terminal
-            .draw(&self.panes.values().cloned().collect::<Vec<Pane>>())
+    pub async fn render(&mut self) -> anyhow::Result<()> {
+        let mut terminal = self.terminal.lock().await;
+        terminal.draw(&self.panes.values().cloned().collect::<Vec<Pane>>())
     }
 }
