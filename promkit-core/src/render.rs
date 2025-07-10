@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::{Pane, terminal::Terminal};
 
+/// OrderedIndex is used to represent the index of pane in a fraction format.
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct OrderedIndex(pub usize, pub usize); // numerator, denominator
 
