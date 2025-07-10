@@ -1,3 +1,5 @@
+//! Offers functionality for reading input from the user.
+
 use std::{cell::RefCell, collections::HashSet};
 
 use promkit_widgets::{

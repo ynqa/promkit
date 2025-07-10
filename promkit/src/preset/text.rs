@@ -1,3 +1,5 @@
+//! Provides a static text display.
+
 use std::cell::RefCell;
 
 use promkit_widgets::text;

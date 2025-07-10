@@ -1,3 +1,5 @@
+//! Supports creating and interacting with a tree structure for hierarchical data.
+
 use std::cell::RefCell;
 
 use promkit_widgets::{

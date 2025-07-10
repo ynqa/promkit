@@ -1,3 +1,5 @@
+//! Contains a simple yes/no confirmation prompt.
+
 use crate::Prompt;
 
 use crate::preset::readline::{render, Readline};
