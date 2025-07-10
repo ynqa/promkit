@@ -1,5 +1,6 @@
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
+use crossbeam_skiplist::SkipMap;
 use tokio::sync::Mutex;
 
 use crate::{Pane, terminal::Terminal};
@@ -40,18 +41,18 @@ impl OrderedIndex {
 pub type SharedRenderer<K> = Arc<Renderer<K>>;
 
 /// Renderer is responsible for managing and rendering multiple panes in a terminal.
-pub struct Renderer<K: Ord> {
+pub struct Renderer<K: Ord + Send + 'static> {
     terminal: Mutex<Terminal>,
-    panes: BTreeMap<K, Pane>,
+    panes: SkipMap<K, Pane>,
 }
 
-impl<K: Ord> Renderer<K> {
+impl<K: Ord + Send + 'static> Renderer<K> {
     pub fn try_new() -> anyhow::Result<Self> {
         Ok(Self {
             terminal: Mutex::new(Terminal {
                 position: crossterm::cursor::position()?,
             }),
-            panes: BTreeMap::new(),
+            panes: SkipMap::new(),
         })
     }
 
@@ -76,7 +77,12 @@ impl<K: Ord> Renderer<K> {
     }
 
     pub async fn render(&mut self) -> anyhow::Result<()> {
+        let panes: Vec<Pane> = self
+            .panes
+            .iter()
+            .map(|entry| entry.value().clone())
+            .collect();
         let mut terminal = self.terminal.lock().await;
-        terminal.draw(&self.panes.values().cloned().collect::<Vec<Pane>>())
+        terminal.draw(&panes)
     }
 }
