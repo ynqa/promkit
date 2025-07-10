@@ -40,10 +40,16 @@ impl OrderedIndex {
 /// SharedRenderer is a type alias for an Arc-wrapped Renderer, allowing for shared ownership and concurrency.
 pub type SharedRenderer<K> = Arc<Renderer<K>>;
 
+/// Content represents the content of a pane, including its visibility status.
+pub struct Content {
+    pane: Pane,
+    visible: bool,
+}
+
 /// Renderer is responsible for managing and rendering multiple panes in a terminal.
 pub struct Renderer<K: Ord + Send + 'static> {
     terminal: Mutex<Terminal>,
-    panes: SkipMap<K, Pane>,
+    contents: SkipMap<K, Content>,
 }
 
 impl<K: Ord + Send + 'static> Renderer<K> {
@@ -52,16 +58,16 @@ impl<K: Ord + Send + 'static> Renderer<K> {
             terminal: Mutex::new(Terminal {
                 position: crossterm::cursor::position()?,
             }),
-            panes: SkipMap::new(),
+            contents: SkipMap::new(),
         })
     }
 
     pub fn update<I>(&mut self, items: I) -> &mut Self
     where
-        I: IntoIterator<Item = (K, Pane)>,
+        I: IntoIterator<Item = (K, Content)>,
     {
-        items.into_iter().for_each(|(index, pane)| {
-            self.panes.insert(index, pane);
+        items.into_iter().for_each(|(index, content)| {
+            self.contents.insert(index, content);
         });
         self
     }
@@ -71,16 +77,17 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         I: IntoIterator<Item = K>,
     {
         items.into_iter().for_each(|index| {
-            self.panes.remove(&index);
+            self.contents.remove(&index);
         });
         self
     }
 
     pub async fn render(&mut self) -> anyhow::Result<()> {
         let panes: Vec<Pane> = self
-            .panes
+            .contents
             .iter()
-            .map(|entry| entry.value().clone())
+            .filter(|entry| entry.value().visible)
+            .map(|entry| entry.value().pane.clone())
             .collect();
         let mut terminal = self.terminal.lock().await;
         terminal.draw(&panes)
