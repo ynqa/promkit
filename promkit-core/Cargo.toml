@@ -9,7 +9,7 @@ license = "MIT"
 readme = "README.md"
 
 [dependencies]
-anyhow = { workspace = true}
+anyhow = { workspace = true }
 crossterm = { workspace = true }
 dashmap = { workspace = true }
 tokio = { workspace = true }
