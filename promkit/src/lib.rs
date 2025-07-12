@@ -12,15 +12,16 @@ pub mod validate;
 
 use std::io;
 
+use futures::StreamExt;
+
 use promkit_widgets::core::{
     crossterm::{
         cursor,
-        event::{self, Event},
+        event::{self, Event, EventStream},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode},
     },
-    terminal::Terminal,
-    Pane,
+    render::SharedRenderer,
 };
 
 /// Represents the signal to control the flow of a prompt.
@@ -35,28 +36,27 @@ pub enum PromptSignal {
     Quit,
 }
 
-pub trait Finalizer {
-    /// The type of the result produced by the renderer.
-    type Return;
-
-    /// Finalizes the prompt and produces a result.
-    ///
-    /// This method is called after the prompt has been instructed to quit. It allows
-    /// the renderer to perform any necessary cleanup and produce a final result.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing the final result of the prompt. The type of the result
-    /// is defined by the `Return` associated type.
-    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
-}
-
 /// A trait for rendering components within a prompt.
 ///
 /// This trait defines the essential functions required for rendering custom UI components
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
-pub trait Renderer: Finalizer {
+pub trait Engine {
+    /// The type of index used to identify different components in the prompt.
+    type Index: Ord + Send + 'static;
+
+    /// Returns a shared renderer for the prompt.
+    fn renderer(&self) -> SharedRenderer<Self::Index>;
+
+    /// Initializes the handler, preparing it for use.
+    /// This method is called before the prompt starts running.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success or failure of the initialization.
+    /// If successful, the renderer is ready to handle events and render the prompt.
+    async fn initialize(&mut self) -> anyhow::Result<()>;
+
     /// Evaluates an event and determines the next action for the prompt.
     ///
     /// This method is called whenever an event occurs (e.g., user input). It allows
@@ -72,18 +72,32 @@ pub trait Renderer: Finalizer {
     /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
     /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
     /// the prompt should terminate its execution.
-    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
+
+    /// The type of the result produced by the renderer.
+    type Return;
+
+    /// Finalizes the prompt and produces a result.
+    ///
+    /// This method is called after the prompt has been instructed to quit. It allows
+    /// the renderer to perform any necessary cleanup and produce a final result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the final result of the prompt. The type of the result
+    /// is defined by the `Return` associated type.
+    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
 }
 
 /// Represents a customizable prompt that can handle user input and produce a result.
 ///
 /// This struct encapsulates the rendering logic,
 /// event handling, and result production for a prompt.
-pub struct Prompt<T: Renderer> {
-    pub renderer: T,
+pub struct Prompt<T: Engine> {
+    pub engine: T,
 }
 
-impl<T: Renderer> Drop for Prompt<T> {
+impl<T: Engine> Drop for Prompt<T> {
     fn drop(&mut self) {
         execute!(
             io::stdout(),
@@ -96,7 +110,7 @@ impl<T: Renderer> Drop for Prompt<T> {
     }
 }
 
-impl<T: Renderer> Prompt<T> {
+impl<T: Engine> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -106,43 +120,37 @@ impl<T: Renderer> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub fn run(&mut self) -> anyhow::Result<T::Return> {
+    pub async fn run(&mut self) -> anyhow::Result<T::Return> {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        let size = crossterm::terminal::size()?;
-        let panes = self.renderer.create_panes(size.0, size.1);
-        let mut terminal = Terminal {
-            position: crossterm::cursor::position()?,
-        };
-        terminal.draw(&panes)?;
+        self.engine.initialize().await?;
+
+        let mut stream = EventStream::new();
 
         loop {
-            let ev = event::read()?;
-
-            match &ev {
-                Event::Resize(_, _) => {
-                    terminal.position = (0, 0);
-                    crossterm::execute!(
-                        io::stdout(),
-                        crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
-                    )?;
-                }
-                _ => {
-                    if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
-                        // Renderer has a possibility to disable the cursor color to indicate termination,
-                        // and so ensure to display the state of Renderer at the end.
-                        terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
-                        break;
+            match stream.next().await {
+                Some(Ok(event)) => {
+                    match event {
+                        Event::Resize(_, _) => {
+                            self.engine.renderer().render().await?;
+                        }
+                        _ => {
+                            // Evaluate the event using the engine
+                            if self.engine.evaluate(&event).await? == PromptSignal::Quit {
+                                break;
+                            }
+                        }
                     }
                 }
+                _ => {
+                    // Handle error or end of stream
+                    break;
+                }
             }
-
-            let size = crossterm::terminal::size()?;
-            terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
         disable_raw_mode()?;
-        self.renderer.finalize()
+        self.engine.finalize()
     }
 }
