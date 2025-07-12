@@ -24,12 +24,15 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         })
     }
 
-    pub fn try_new_with_panes<I>(init_panes: I) -> anyhow::Result<Self>
+    pub async fn try_new_with_panes<I>(init_panes: I, draw: bool) -> anyhow::Result<Self>
     where
         I: IntoIterator<Item = (K, Pane)>,
     {
         let renderer = Self::try_new()?;
         renderer.update(init_panes);
+        if draw {
+            renderer.render().await?;
+        }
         Ok(renderer)
     }
 
