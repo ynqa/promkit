@@ -5,9 +5,7 @@ pub use promkit_widgets;
 pub use promkit_widgets::core::crossterm;
 
 pub mod preset;
-pub mod snapshot;
 pub mod suggest;
-pub mod switch;
 pub mod validate;
 
 use std::io;
