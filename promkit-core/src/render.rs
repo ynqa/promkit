@@ -24,7 +24,16 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         })
     }
 
-    pub fn update<I>(&mut self, items: I) -> &mut Self
+    pub fn try_new_with_panes<I>(init_panes: I) -> anyhow::Result<Self>
+    where
+        I: IntoIterator<Item = (K, Pane)>,
+    {
+        let renderer = Self::try_new()?;
+        renderer.update(init_panes);
+        Ok(renderer)
+    }
+
+    pub fn update<I>(&self, items: I) -> &Self
     where
         I: IntoIterator<Item = (K, Pane)>,
     {
@@ -34,7 +43,7 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         self
     }
 
-    pub fn remove<I>(&mut self, items: I) -> &mut Self
+    pub fn remove<I>(&self, items: I) -> &Self
     where
         I: IntoIterator<Item = K>,
     {
@@ -44,7 +53,7 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         self
     }
 
-    pub async fn render(&mut self) -> anyhow::Result<()> {
+    pub async fn render(&self) -> anyhow::Result<()> {
         let panes: Vec<Pane> = self
             .panes
             .iter()
