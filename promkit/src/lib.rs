@@ -2,7 +2,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub use promkit_widgets;
-pub use promkit_widgets::core::crossterm;
 
 pub mod preset;
 pub mod suggest;
@@ -27,7 +26,7 @@ use promkit_widgets::core::{
 /// This enum is used to indicate whether a prompt should continue running
 /// or quit based on user input or other conditions.
 #[derive(Eq, PartialEq)]
-pub enum PromptSignal {
+pub enum Signal {
     /// Indicates that the prompt should continue to run and handle further events.
     Continue,
     /// Indicates that the prompt should quit and terminate its execution.
@@ -67,10 +66,10 @@ pub trait Engine {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
-    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
+    /// Returns a `Result` containing a `Signal`. `Signal::Continue` indicates
+    /// that the prompt should continue running, while `Signal::Quit` indicates that
     /// the prompt should terminate its execution.
-    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal>;
 
     /// The type of the result produced by the renderer.
     type Return;
@@ -135,7 +134,7 @@ impl<T: Engine> Prompt<T> {
                         }
                         _ => {
                             // Evaluate the event using the engine
-                            if self.engine.evaluate(&event).await? == PromptSignal::Quit {
+                            if self.engine.evaluate(&event).await? == Signal::Quit {
                                 break;
                             }
                         }
