@@ -57,22 +57,6 @@ pub trait Finalizer {
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
 pub trait Renderer: Finalizer {
-    /// Creates a collection of panes based on the specified width.
-    ///
-    /// This method is responsible for generating the layout of the UI components
-    /// that will be displayed in the prompt. The width parameter allows the layout
-    /// to adapt to the current terminal width and height.
-    ///
-    /// # Parameters
-    ///
-    /// * `width`: The width of the terminal in characters.
-    /// * `height`: The height of the terminal in characters.
-    ///
-    /// # Returns
-    ///
-    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
-    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane>;
-
     /// Evaluates an event and determines the next action for the prompt.
     ///
     /// This method is called whenever an event occurs (e.g., user input). It allows
