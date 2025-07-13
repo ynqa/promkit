@@ -86,7 +86,7 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
                         .texteditor
                         .replace(&ctx.suggestions.listbox.get().to_string());
 
-                    ctx.focus = Focus::Suggestion;
+                    ctx.evaluator_fn = suggestion;
                 }
             }
         }
@@ -267,7 +267,7 @@ pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
         _ => {
             ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
 
-            ctx.focus = Focus::Readline;
+            ctx.evaluator_fn = readline;
         }
     }
     Ok(Signal::Continue)

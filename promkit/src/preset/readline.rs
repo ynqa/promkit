@@ -18,6 +18,7 @@ use promkit_widgets::{
 };
 
 use crate::{
+    preset::readline::evaluate::Evaluator,
     suggest::Suggest,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     Prompt, Signal,
@@ -47,8 +48,7 @@ enum Focus {
 pub struct Readline {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: SharedRenderer<Index>,
-    /// Focus state to track which component is currently focused.
-    pub focus: Focus,
+    pub evaluator_fn: Evaluator,
     /// Holds a title's renderer state, used for rendering the title section.
     pub title: text::State,
     /// Holds a text editor's renderer state, used for rendering the text input area.
@@ -72,10 +72,7 @@ impl crate::Prompt for Readline {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = match self.focus {
-            Focus::Readline => evaluate::readline(event, self),
-            Focus::Suggestion => evaluate::suggestion(event, self),
-        };
+        let ret = (self.evaluator_fn)(event, self);
         let size = crossterm::terminal::size()?;
         self.renderer
             .as_ref()
@@ -181,7 +178,7 @@ impl Readline {
                 )
                 .await?,
             ),
-            focus: Focus::Readline,
+            evaluator_fn: evaluate::readline,
             title,
             readline,
             suggest: Default::default(),
@@ -263,14 +260,11 @@ impl Readline {
         self
     }
 
-    // pub fn register_keymap<K: AsRef<str>>(
-    //     mut self,
-    //     key: K,
-    //     evaluator: evaluate::Evaluator,
-    // ) -> Self {
-    //     self.keymap = self.keymap.register(key, evaluator);
-    //     self
-    // }
+    /// Sets the function to evaluate the input, allowing for custom evaluation logic.
+    pub fn evaluator<K: AsRef<str>>(mut self, evaluator: evaluate::Evaluator) -> Self {
+        self.evaluator_fn = evaluator;
+        self
+    }
 
     /// Configures a validator for the input with a function to validate the input and another to configure the error message.
     pub fn validator(
