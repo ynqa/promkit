@@ -14,14 +14,11 @@ use futures::StreamExt;
 use scopeguard::defer;
 use tokio::sync::Mutex;
 
-use core::{
-    crossterm::{
-        cursor,
-        event::{self, Event, EventStream},
-        execute,
-        terminal::{disable_raw_mode, enable_raw_mode},
-    },
-    render::SharedRenderer,
+use core::crossterm::{
+    cursor,
+    event::{self, Event, EventStream},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 /// Singleton for EventStream. If a new EventStream is created for each Prompt::run,

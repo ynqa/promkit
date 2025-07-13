@@ -10,6 +10,7 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     widgets::{
         text::{self, Text},
         tree::{self, node::Node},
@@ -26,16 +27,13 @@ pub enum Index {
     Tree = 1,
 }
 
-/// Type alias for the evaluator function used in the tree preset.
-pub type Evaluator = fn(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal>;
-
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
 pub struct Tree {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator_fn: Evaluator<Self>,
     /// State for the title displayed above the tree.
     pub title: text::State,
     /// State for the tree itself.
@@ -44,12 +42,6 @@ pub struct Tree {
 
 #[async_trait::async_trait]
 impl crate::Prompt for Tree {
-    type Index = Index;
-
-    fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
@@ -66,7 +58,7 @@ impl crate::Prompt for Tree {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator_fn)(event, self).await;
         let size = crossterm::terminal::size()?;
         self.renderer
             .as_ref()
@@ -92,7 +84,7 @@ impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator_fn: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -164,7 +156,7 @@ impl Tree {
     }
 
     /// Sets the evaluator function for processing events in the tree.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
         self.evaluator_fn = evaluator;
         self
     }

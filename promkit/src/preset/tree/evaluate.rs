@@ -1,5 +1,3 @@
-use std::{future::Future, pin::Pin};
-
 use crate::{
     core::{
         crossterm::event::{
@@ -21,22 +19,18 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
-pub fn boxed_default<'a>(event: &'a Event, ctx: &'a mut Tree) -> Pin<Box<dyn Future<Output = anyhow::Result<Signal>> + Send + 'a>> {
-    Box::pin(default(event, ctx))
-}
-
-async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
     match event {
         Event::Resize(width, height) => {
             ctx.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, ctx.title.create_pane(*width, *height)),
-                (Index::Tree, ctx.tree.create_pane(*width, *height)),
-            ])
-            .render()
-            .await?;
+                .as_ref()
+                .unwrap()
+                .update([
+                    (Index::Title, ctx.title.create_pane(*width, *height)),
+                    (Index::Tree, ctx.tree.create_pane(*width, *height)),
+                ])
+                .render()
+                .await?;
         }
 
         Event::Key(KeyEvent {
