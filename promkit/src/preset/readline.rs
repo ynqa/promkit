@@ -46,7 +46,7 @@ enum Focus {
 /// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
-    pub renderer: Option<SharedRenderer<Index>>,
+    pub renderer: SharedRenderer<Index>,
     /// Focus state to track which component is currently focused.
     pub focus: Focus,
     /// Holds a title's renderer state, used for rendering the title section.
@@ -63,95 +63,12 @@ pub struct Readline {
     pub error_message: text::State,
 }
 
-impl Default for Readline {
-    fn default() -> Self {
-        Self {
-            renderer: None,
-            focus: Focus::Readline,
-            title: text::State {
-                style: ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            readline: text_editor::State {
-                texteditor: Default::default(),
-                history: Default::default(),
-                prefix: String::from("❯❯ "),
-                mask: Default::default(),
-                prefix_style: ContentStyle {
-                    foreground_color: Some(Color::DarkGreen),
-                    ..Default::default()
-                },
-
-                active_char_style: ContentStyle {
-                    background_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                },
-                inactive_char_style: ContentStyle::default(),
-                edit_mode: Default::default(),
-                word_break_chars: HashSet::from([' ']),
-                lines: Default::default(),
-            },
-            suggest: Default::default(),
-            suggestions: listbox::State {
-                listbox: Listbox::from_displayable(Vec::<String>::new()),
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkGrey),
-                    background_color: Some(Color::DarkYellow),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkGrey),
-                    ..Default::default()
-                }),
-                lines: Some(3),
-            },
-            validator: Default::default(),
-            error_message: text::State {
-                text: Default::default(),
-                style: ContentStyle {
-                    foreground_color: Some(Color::DarkRed),
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                },
-                lines: None,
-            },
-        }
-    }
-}
-
 #[async_trait::async_trait]
 impl crate::Prompt for Readline {
     type Index = Index;
 
     fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
-    async fn initialize(&mut self) -> anyhow::Result<()> {
-        let size = crossterm::terminal::size()?;
-        self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
-                [
-                    (Index::Title, self.title.create_pane(size.0, size.1)),
-                    (Index::Readline, self.readline.create_pane(size.0, size.1)),
-                    (
-                        Index::Suggestion,
-                        self.suggestions.create_pane(size.0, size.1),
-                    ),
-                    (
-                        Index::ErrorMessage,
-                        self.error_message.create_pane(size.0, size.1),
-                    ),
-                ],
-                true,
-            )
-            .await?,
-        ));
-        Ok(())
+        self.renderer.clone()
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
@@ -162,7 +79,6 @@ impl crate::Prompt for Readline {
         let size = crossterm::terminal::size()?;
         self.renderer
             .as_ref()
-            .unwrap()
             .update([
                 (Index::Title, self.title.create_pane(size.0, size.1)),
                 (Index::Readline, self.readline.create_pane(size.0, size.1)),
@@ -193,6 +109,88 @@ impl crate::Prompt for Readline {
 }
 
 impl Readline {
+    /// Creates a new `Readline` instance with default settings.
+    pub async fn try_default() -> anyhow::Result<Self> {
+        let size = crossterm::terminal::size()?;
+
+        let title = text::State {
+            style: ContentStyle {
+                attributes: Attributes::from(Attribute::Bold),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        let readline = text_editor::State {
+            texteditor: Default::default(),
+            history: Default::default(),
+            prefix: String::from("❯❯ "),
+            mask: Default::default(),
+            prefix_style: ContentStyle {
+                foreground_color: Some(Color::DarkGreen),
+                ..Default::default()
+            },
+
+            active_char_style: ContentStyle {
+                background_color: Some(Color::DarkCyan),
+                ..Default::default()
+            },
+            inactive_char_style: ContentStyle::default(),
+            edit_mode: Default::default(),
+            word_break_chars: HashSet::from([' ']),
+            lines: Default::default(),
+        };
+
+        let suggestions = listbox::State {
+            listbox: Listbox::from_displayable(Vec::<String>::new()),
+            cursor: String::from("❯ "),
+            active_item_style: Some(ContentStyle {
+                foreground_color: Some(Color::DarkGrey),
+                background_color: Some(Color::DarkYellow),
+                ..Default::default()
+            }),
+            inactive_item_style: Some(ContentStyle {
+                foreground_color: Some(Color::DarkGrey),
+                ..Default::default()
+            }),
+            lines: Some(3),
+        };
+
+        let error_message = text::State {
+            text: Default::default(),
+            style: ContentStyle {
+                foreground_color: Some(Color::DarkRed),
+                attributes: Attributes::from(Attribute::Bold),
+                ..Default::default()
+            },
+            lines: None,
+        };
+        Ok(Self {
+            renderer: SharedRenderer::new(
+                Renderer::try_new_with_panes(
+                    [
+                        (Index::Title, title.create_pane(size.0, size.1)),
+                        (Index::Readline, readline.create_pane(size.0, size.1)),
+                        (Index::Suggestion, suggestions.create_pane(size.0, size.1)),
+                        (
+                            Index::ErrorMessage,
+                            error_message.create_pane(size.0, size.1),
+                        ),
+                    ],
+                    true,
+                )
+                .await?,
+            ),
+            focus: Focus::Readline,
+            title,
+            readline,
+            suggest: Default::default(),
+            suggestions,
+            validator: Default::default(),
+            error_message,
+        })
+    }
+
     /// Sets the title text displayed above the input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title.text = Text::from(text);
