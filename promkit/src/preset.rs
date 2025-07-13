@@ -18,9 +18,9 @@ pub mod password;
 #[cfg_attr(docsrs, doc(cfg(feature = "json")))]
 pub mod json;
 
-// #[cfg(feature = "listbox")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
-// pub mod listbox;
+#[cfg(feature = "listbox")]
+#[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
+pub mod listbox;
 
 #[cfg(feature = "query-selector")]
 #[cfg_attr(docsrs, doc(cfg(feature = "query-selector")))]
