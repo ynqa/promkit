@@ -1,9 +1,6 @@
 use promkit_widgets::{listbox::Listbox, text::Text, text_editor};
 
-use crate::{
-    preset::readline::{Focus, Readline},
-    Signal,
-};
+use crate::{preset::readline::Readline, Signal};
 use promkit_widgets::core::crossterm::{
     event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     style::ContentStyle,

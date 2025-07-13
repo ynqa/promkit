@@ -35,12 +35,6 @@ pub enum Index {
     ErrorMessage = 3,
 }
 
-/// Represents the focus state of the readline interface.
-enum Focus {
-    Readline,
-    Suggestion,
-}
-
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
 /// It supports various configurations
