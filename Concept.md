@@ -6,9 +6,9 @@ The core design principle of promkit is the clear separation of the following th
 each implemented in dedicated modules:
 
 - **Event Handlers**: Define behaviors for keyboard inputs (such as when <kbd>Enter</kbd> is pressed)
-  - **promkit**: Responsible for implementing the [Prompt](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html) trait, combining widgets and handling corresponding events
+  - **promkit**: Responsible for implementing [Prompt](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html) trait, combining widgets and handling corresponding events
   - The new async `Prompt` trait provides `initialize`, `evaluate`, and `finalize` methods for complete lifecycle management
-  - Event processing is now handled through a singleton `EventStream` for improved performance and reliability
+  - Event processing is now handled through a singleton `EventStream` for asynchronous event handling
 
 - **State Updates**: Managing and updating the internal state of widgets
   - **promkit-widgets**: Responsible for state management of various widgets and pane generation
@@ -68,6 +68,7 @@ As a diagram:
 
 ```mermaid
 flowchart LR
+    Initialize[Initilaize] --> A
     subgraph promkit["promkit: event-loop"]
         direction LR
         A[Observe user input] --> B
@@ -89,7 +90,7 @@ flowchart LR
         E -->|Continue| A
     end
 
-    E -->|Quit| F[Break out of loop]
+    E -->|Quit| Finalize[Finalize]
 ```
 
 In the current implementation of promkit (v0.10.0), event handling is centralized and async.
