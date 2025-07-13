@@ -17,6 +17,12 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the selection down
 pub async fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
     match event {
+        // Resize the text view.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Exit the text view.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

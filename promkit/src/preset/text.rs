@@ -46,12 +46,7 @@ impl crate::Prompt for Text {
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([(Index::Text, self.text.create_pane(size.0, size.1))])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -86,5 +81,18 @@ impl Text {
     pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
         self.evaluator = evaluator;
         self
+    }
+
+    // Render the text component with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([(Index::Text, self.text.create_pane(width, height))])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

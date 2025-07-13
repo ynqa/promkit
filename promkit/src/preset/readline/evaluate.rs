@@ -10,16 +10,35 @@ use crate::{
 };
 
 pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
-    match ctx.focus {
-        Focus::Readline => {
-            // Handle the readline input events.
-            return readline(event, ctx).await;
+    // Handle the common events for both readline and suggestion modes.
+    match event {
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
         }
-        Focus::Suggestion => {
-            // Handle the suggestion input events.
-            return suggestion(event, ctx).await;
+
+        // Exit the readline or suggestion mode.
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('c'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
+
+        _ => {
+            match ctx.focus {
+                Focus::Readline => {
+                    // Handle the readline input events.
+                    return readline(event, ctx).await;
+                }
+                Focus::Suggestion => {
+                    // Handle the suggestion input events.
+                    return suggestion(event, ctx).await;
+                }
+            }
         }
     }
+
+    Ok(Signal::Continue)
 }
 
 /// Default key bindings for the text editor.
@@ -43,6 +62,7 @@ pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal
 /// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
 pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
+        // Return the input text when the validation passes.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
@@ -76,13 +96,8 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
                 }
             };
         }
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('c'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
+        // Try to autocomplete
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
@@ -239,13 +254,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
 
 pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('c'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Err(anyhow::anyhow!("ctrl+c")),
-
+        // Move cursor in the suggestion list.
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
@@ -276,10 +285,10 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
                 .replace(&ctx.suggestions.listbox.get().to_string());
         }
 
+        // Switch back to the readline input.
         _ => {
             ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
 
-            // Switch focus back to the readline input.
             ctx.focus = Focus::Readline;
         }
     }

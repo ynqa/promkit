@@ -155,23 +155,7 @@ impl crate::Prompt for Readline {
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, self.title.create_pane(size.0, size.1)),
-                (Index::Readline, self.readline.create_pane(size.0, size.1)),
-                (
-                    Index::Suggestion,
-                    self.suggestions.create_pane(size.0, size.1),
-                ),
-                (
-                    Index::ErrorMessage,
-                    self.error_message.create_pane(size.0, size.1),
-                ),
-            ])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -274,5 +258,29 @@ impl Readline {
     ) -> Self {
         self.validator = Some(ValidatorManager::new(validator, error_message_generator));
         self
+    }
+
+    /// Render the readline with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Readline, self.readline.create_pane(width, height)),
+                        (
+                            Index::Suggestion,
+                            self.suggestions.create_pane(width, height),
+                        ),
+                        (
+                            Index::ErrorMessage,
+                            self.error_message.create_pane(width, height),
+                        ),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

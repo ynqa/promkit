@@ -1,12 +1,9 @@
 use crate::{
-    core::{
-        crossterm::event::{
-            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-            MouseEventKind,
-        },
-        PaneFactory,
+    core::crossterm::event::{
+        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
+        MouseEventKind,
     },
-    preset::tree::{Index, Tree},
+    preset::tree::Tree,
     Signal,
 };
 
@@ -21,18 +18,12 @@ use crate::{
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
 pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
     match event {
+        // Resize the tree view.
         Event::Resize(width, height) => {
-            ctx.renderer
-                .as_ref()
-                .unwrap()
-                .update([
-                    (Index::Title, ctx.title.create_pane(*width, *height)),
-                    (Index::Tree, ctx.tree.create_pane(*width, *height)),
-                ])
-                .render()
-                .await?;
+            ctx.render(*width, *height).await?;
         }
 
+        // Exit the tree view.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
