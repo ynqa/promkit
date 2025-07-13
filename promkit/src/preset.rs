@@ -6,9 +6,9 @@
 #[cfg_attr(docsrs, doc(cfg(feature = "readline")))]
 pub mod readline;
 
-// #[cfg(feature = "confirm")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "confirm")))]
-// pub mod confirm;
+#[cfg(feature = "confirm")]
+#[cfg_attr(docsrs, doc(cfg(feature = "confirm")))]
+pub mod confirm;
 
 // #[cfg(feature = "password")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "password")))]

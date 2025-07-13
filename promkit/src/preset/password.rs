@@ -1,25 +1,23 @@
 //! Provides a password input interface with masking and validation.
 
 use crate::{
-    crossterm::style::ContentStyle,
+    core::crossterm::style::ContentStyle,
     validate::{ErrorMessageGenerator, Validator},
     Prompt,
 };
 
-use crate::preset::readline::{render, Readline};
+use crate::preset::readline::Readline;
 
 /// A specialized `Readline` struct for securely capturing password input.
 /// It masks the input with a specified character for privacy and security.
 pub struct Password(Readline);
 
-impl Default for Password {
-    /// Creates a new `Password` instance with default settings, using '*' as the mask character.
-    fn default() -> Self {
-        Self(Readline::default().mask('*'))
-    }
-}
-
 impl Password {
+    /// Creates a new `Password` instance with default settings, using '*' as the mask character.
+    pub async fn default() -> anyhow::Result<Self> {
+        Ok(Self(Readline::try_default().await.mask('*')))
+    }
+
     /// Sets the title text displayed above the password input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self = Password(self.0.title(text));
