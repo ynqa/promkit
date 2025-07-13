@@ -101,13 +101,6 @@ All events are processed sequentially within the async
 method and propagated to each implementation through the
 [Prompt::evaluate](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#tymethod.evaluate) method.
 
-> [!NOTE]
-> The v0.10.0 implementation introduces significant improvements:
-> - **Async support**: Full async/await pattern for better performance and responsiveness
-> - **Singleton EventStream**: Prevents cursor position reading errors and improves reliability
-> - **SharedRenderer**: Thread-safe rendering with `Arc<Renderer<K>>` and `SkipMap` for efficient pane management
-> - **Lifecycle management**: Clear `initialize`, `evaluate`, and `finalize` phases
-
 ## Customizability
 
 promkit allows customization at various levels.
