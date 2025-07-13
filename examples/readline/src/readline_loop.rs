@@ -1,9 +1,9 @@
-use promkit::preset::readline::Readline;
+use promkit::{preset::readline::Readline, Prompt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     loop {
-        match Readline::try_default().await?.prompt().await {
+        match Readline::try_default().await?.run().await {
             Ok(cmd) => {
                 println!("result: {:?}", cmd);
             }

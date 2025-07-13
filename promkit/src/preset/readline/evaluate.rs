@@ -1,12 +1,13 @@
 use promkit_widgets::{listbox::Listbox, text::Text, text_editor};
 
-use crate::{preset::readline::Readline, Signal};
-use promkit_widgets::core::crossterm::{
-    event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    style::ContentStyle,
+use crate::{
+    core::crossterm::{
+        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+        style::ContentStyle,
+    },
+    preset::readline::Readline,
+    Signal,
 };
-
-pub type Evaluator = fn(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal>;
 
 /// Default key bindings for the text editor.
 ///

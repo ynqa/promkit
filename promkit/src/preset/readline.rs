@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use promkit_widgets::{
+use crate::{
     core::{
         crossterm::{
             self,
@@ -12,16 +12,14 @@ use promkit_widgets::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
-    listbox::{self, Listbox},
-    text::{self, Text},
-    text_editor::{self, History},
-};
-
-use crate::{
-    preset::readline::evaluate::Evaluator,
     suggest::Suggest,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    Prompt, Signal,
+    widgets::{
+        listbox::{self, Listbox},
+        text::{self, Text},
+        text_editor::{self, History},
+    },
+    Signal,
 };
 
 pub mod evaluate;
@@ -35,6 +33,9 @@ pub enum Index {
     ErrorMessage = 3,
 }
 
+/// Type alias for the evaluator function used in the `Readline` prompt.
+pub type Evaluator = fn(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal>;
+
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
 /// It supports various configurations
@@ -42,6 +43,7 @@ pub enum Index {
 pub struct Readline {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: SharedRenderer<Index>,
+    /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator_fn: Evaluator,
     /// Holds a title's renderer state, used for rendering the title section.
     pub title: text::State,
@@ -255,7 +257,7 @@ impl Readline {
     }
 
     /// Sets the function to evaluate the input, allowing for custom evaluation logic.
-    pub fn evaluator<K: AsRef<str>>(mut self, evaluator: evaluate::Evaluator) -> Self {
+    pub fn evaluator<K: AsRef<str>>(mut self, evaluator: Evaluator) -> Self {
         self.evaluator_fn = evaluator;
         self
     }
@@ -268,10 +270,5 @@ impl Readline {
     ) -> Self {
         self.validator = Some(ValidatorManager::new(validator, error_message_generator));
         self
-    }
-
-    /// Runs the prompt, allowing the user to input text and interact with the readline interface.
-    pub async fn prompt(&mut self) -> anyhow::Result<<Readline as Prompt>::Return> {
-        self.run().await
     }
 }

@@ -1,15 +1,11 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::text::Text,
+    Signal,
 };
-
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::text::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the text.
 ///
@@ -19,17 +15,14 @@ pub type Keymap = fn(
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::text::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+pub fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -50,7 +43,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.text_state.text.backward();
+            ctx.text.text.backward();
         }
 
         Event::Key(KeyEvent {
@@ -65,10 +58,10 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.text_state.text.forward();
+            ctx.text.text.forward();
         }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

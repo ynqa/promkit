@@ -34,6 +34,6 @@ pub mod readline;
 // #[cfg_attr(docsrs, doc(cfg(feature = "form")))]
 // pub mod form;
 
-// #[cfg(feature = "text")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
-// pub mod text;
+#[cfg(feature = "text")]
+#[cfg_attr(docsrs, doc(cfg(feature = "text")))]
+pub mod text;

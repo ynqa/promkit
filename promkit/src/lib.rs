@@ -14,7 +14,7 @@ use futures::StreamExt;
 use scopeguard::defer;
 use tokio::sync::Mutex;
 
-use promkit_widgets::core::{
+use core::{
     crossterm::{
         cursor,
         event::{self, Event, EventStream},

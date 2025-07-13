@@ -1,4 +1,4 @@
-use promkit::{preset::readline::Readline, suggest::Suggest};
+use promkit::{preset::readline::Readline, suggest::Suggest, Prompt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
             |text| text.len() > 10,
             |text| format!("Length must be over 10 but got {}", text.len()),
         )
-        .prompt()
+        .run()
         .await?;
     println!("result: {:?}", ret);
     Ok(())
