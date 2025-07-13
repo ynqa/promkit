@@ -2,8 +2,7 @@ use promkit::{preset::readline::Readline, suggest::Suggest, Prompt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let ret = Readline::try_default()
-        .await?
+    let ret = Readline::default()
         .title("Hi!")
         .enable_suggest(Suggest::from_iter([
             "apple",

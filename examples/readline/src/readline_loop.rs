@@ -3,7 +3,7 @@ use promkit::{preset::readline::Readline, Prompt};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     loop {
-        match Readline::try_default().await?.run().await {
+        match Readline::default().run().await {
             Ok(cmd) => {
                 println!("result: {:?}", cmd);
             }

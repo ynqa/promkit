@@ -55,6 +55,15 @@ pub trait Prompt {
     /// Returns a shared renderer for the prompt.
     fn renderer(&self) -> SharedRenderer<Self::Index>;
 
+    /// Initializes the handler, preparing it for use.
+    /// This method is called before the prompt starts running.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success or failure of the initialization.
+    /// If successful, the renderer is ready to handle events and render the prompt.
+    async fn initialize(&mut self) -> anyhow::Result<()>;
+
     /// Evaluates an event and determines the next action for the prompt.
     ///
     /// This method is called whenever an event occurs (e.g., user input). It allows
@@ -108,6 +117,8 @@ pub trait Prompt {
 
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
+
+        self.initialize().await?;
 
         loop {
             match EVENT_STREAM.lock().await.next().await {

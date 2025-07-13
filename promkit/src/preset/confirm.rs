@@ -8,12 +8,11 @@ use crate::preset::readline::Readline;
 pub struct Confirm(Readline);
 
 impl Confirm {
-    /// Creates a new `Confirm` instance with a default prompt.
-    pub async fn try_default<T: AsRef<str>>(text: T) -> anyhow::Result<Self> {
-        Ok(Self(
-            Readline::try_default()
-                .await?
-                .prefix(format!("{} (y/n) ", text.as_ref()))
+    /// Creates a new `Confirm` prompt with a specified prefix.
+    pub fn new_with_prefix<T: AsRef<str>>(prefix: T) -> Self {
+        Self(
+            Readline::default()
+                .prefix(format!("{} (y/n) ", prefix.as_ref()))
                 .validator(
                     |text| -> bool {
                         ["yes", "no", "y", "n", "Y", "N"]
@@ -22,7 +21,7 @@ impl Confirm {
                     },
                     |_| String::from("Please type 'y' or 'n' as an answer"),
                 ),
-        ))
+        )
     }
 
     /// Sets the title text displayed above the confirmation prompt.
