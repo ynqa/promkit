@@ -18,4 +18,4 @@ proc-macro2 = "1.0"
 promkit = { path = "../promkit", version = "=0.10.0", features = ["form"] }
 
 [dev-dependencies]
-tokio = { version = "1.46.1", features = ["full"] }
+tokio = { workspace = true }
