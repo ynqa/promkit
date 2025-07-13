@@ -10,6 +10,7 @@ pub mod validate;
 use std::io;
 
 use futures::StreamExt;
+use scopeguard::defer;
 
 use promkit_widgets::core::{
     crossterm::{
@@ -38,7 +39,7 @@ pub enum Signal {
 /// This trait defines the essential functions required for rendering custom UI components
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
-pub trait Engine {
+pub trait Prompt {
     /// The type of index used to identify different components in the prompt.
     type Index: Ord + Send + 'static;
 
@@ -84,30 +85,7 @@ pub trait Engine {
     /// Returns a `Result` containing the final result of the prompt. The type of the result
     /// is defined by the `Return` associated type.
     fn finalize(&mut self) -> anyhow::Result<Self::Return>;
-}
 
-/// Represents a customizable prompt that can handle user input and produce a result.
-///
-/// This struct encapsulates the rendering logic,
-/// event handling, and result production for a prompt.
-pub struct Prompt<T: Engine> {
-    pub engine: T,
-}
-
-impl<T: Engine> Drop for Prompt<T> {
-    fn drop(&mut self) {
-        execute!(
-            io::stdout(),
-            cursor::Show,
-            event::DisableMouseCapture,
-            cursor::MoveToNextLine(1),
-        )
-        .ok();
-        disable_raw_mode().ok();
-    }
-}
-
-impl<T: Engine> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -117,11 +95,22 @@ impl<T: Engine> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub async fn run(&mut self) -> anyhow::Result<T::Return> {
+    async fn run(&mut self) -> anyhow::Result<Self::Return> {
+        defer!{
+            execute!(
+                io::stdout(),
+                cursor::Show,
+                event::DisableMouseCapture,
+                cursor::MoveToNextLine(1),
+            )
+            .ok();
+            disable_raw_mode().ok();
+        };
+
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        self.engine.initialize().await?;
+        self.initialize().await?;
 
         let mut stream = EventStream::new();
 
@@ -130,11 +119,11 @@ impl<T: Engine> Prompt<T> {
                 Some(Ok(event)) => {
                     match event {
                         Event::Resize(_, _) => {
-                            self.engine.renderer().render().await?;
+                            self.renderer().render().await?;
                         }
                         _ => {
                             // Evaluate the event using the engine
-                            if self.engine.evaluate(&event).await? == Signal::Quit {
+                            if self.evaluate(&event).await? == Signal::Quit {
                                 break;
                             }
                         }
@@ -147,7 +136,6 @@ impl<T: Engine> Prompt<T> {
             }
         }
 
-        disable_raw_mode()?;
-        self.engine.finalize()
+        self.finalize()
     }
 }

@@ -50,6 +50,7 @@ anyhow = { workspace = true }
 futures = { workspace = true }
 promkit-widgets = { path = "../promkit-widgets", version = "=0.2.0" }
 radix_trie = { workspace = true }
+scopeguard = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true
