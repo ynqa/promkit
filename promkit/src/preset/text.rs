@@ -33,12 +33,6 @@ pub struct Text {
 
 #[async_trait::async_trait]
 impl crate::Prompt for Text {
-    type Index = Index;
-
-    fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(

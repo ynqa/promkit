@@ -45,12 +45,6 @@ pub struct Form {
 
 #[async_trait::async_trait]
 impl crate::Prompt for Form {
-    type Index = usize;
-
-    fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
     async fn initialize(&mut self) -> anyhow::Result<()> {
         // Update styles based on the current position.
         self.overwrite_styles();
