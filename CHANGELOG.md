@@ -11,14 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Async support**: Full async/await pattern implementation for better performance and responsiveness
-- **Singleton EventStream**: Prevents cursor position reading errors and improves overall reliability
 - **SharedRenderer**: Thread-safe rendering system with `Arc<Renderer<K>>` and `SkipMap` for efficient pane management
 - **Lifecycle management**: Clear separation of `initialize`, `evaluate`, and `finalize` phases for better control flow
 
 ### Changed
 - Migrated to async/await pattern throughout the codebase
 - Improved rendering performance with shared renderer architecture
-- Enhanced error handling and reliability for cursor position operations
 
 ### Improved
 - Better thread safety with Arc-based renderer sharing
