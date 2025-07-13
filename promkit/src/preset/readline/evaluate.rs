@@ -12,11 +12,12 @@ use crate::{
 pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     // Handle the common events for both readline and suggestion modes.
     match event {
+        // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
             ctx.render(*width, *height).await?;
         }
 
-        // Exit the readline or suggestion mode.
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,

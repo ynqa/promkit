@@ -11,12 +11,12 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
     let current_position = ctx.readlines.position();
 
     match event {
-        // Resize the terminal.
+        // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
             ctx.render(*width, *height).await?;
         }
 
-        // Quit the form.
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

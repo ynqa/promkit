@@ -17,12 +17,12 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the selection down
 pub async fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
     match event {
-        // Resize the listbox.
+        // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
             ctx.render(*width, *height).await?;
         }
 
-        // Exit the listbox.
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

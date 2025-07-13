@@ -12,6 +12,7 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     widgets::{
         checkbox,
         text::{self, Text},
@@ -28,16 +29,13 @@ pub enum Index {
     Checkbox = 1,
 }
 
-/// Type alias for the evaluator function used in the checkbox preset.
-pub type Evaluator = fn(event: &Event, ctx: &mut Checkbox) -> anyhow::Result<Signal>;
-
 /// Represents a checkbox component for creating
 /// and managing a list of selectable options.
 pub struct Checkbox {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
     /// State for the title displayed above the checkbox list.
     pub title: text::State,
     /// State for the checkbox list itself.
@@ -62,17 +60,9 @@ impl crate::Prompt for Checkbox {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, self.title.create_pane(size.0, size.1)),
-                (Index::Checkbox, self.checkbox.create_pane(size.0, size.1)),
-            ])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -94,7 +84,7 @@ impl Checkbox {
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -121,7 +111,7 @@ impl Checkbox {
     pub fn new_with_checked<T: Display, I: IntoIterator<Item = (T, bool)>>(items: I) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -187,8 +177,24 @@ impl Checkbox {
     }
 
     /// Sets the evaluator function for handling input events.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
-        self.evaluator_fn = evaluator;
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
+    }
+
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Checkbox, self.checkbox.create_pane(width, height)),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

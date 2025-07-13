@@ -7,12 +7,12 @@ use crate::{
 
 pub async fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
     match event {
-        // Resize the query selector.
+        // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
             ctx.render(*width, *height).await?;
         }
 
-        // Exit the query selector.
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

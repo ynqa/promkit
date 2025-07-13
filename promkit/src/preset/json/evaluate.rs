@@ -18,12 +18,12 @@ use crate::{
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
 pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
     match event {
-        // Resize the JSON viewer.
+        // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
             ctx.render(*width, *height).await?;
         }
 
-        // Exit the JSON viewer.
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
