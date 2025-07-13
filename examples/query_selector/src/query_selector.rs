@@ -1,7 +1,8 @@
-use promkit::preset::query_selector::QuerySelector;
+use promkit::{preset::query_selector::QuerySelector, Prompt};
 
-fn main() -> anyhow::Result<()> {
-    let mut p = QuerySelector::new(0..100, |text, items| -> Vec<String> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let ret = QuerySelector::new(0..100, |text, items| -> Vec<String> {
         text.parse::<usize>()
             .map(|query| {
                 items
@@ -14,7 +15,8 @@ fn main() -> anyhow::Result<()> {
     })
     .title("What number do you like?")
     .listbox_lines(5)
-    .prompt()?;
-    println!("result: {:?}", p.run()?);
+    .run()
+    .await?;
+    println!("result: {:?}", ret);
     Ok(())
 }

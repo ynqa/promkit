@@ -22,9 +22,9 @@ pub mod json;
 // #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
 // pub mod listbox;
 
-// #[cfg(feature = "query-selector")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "query-selector")))]
-// pub mod query_selector;
+#[cfg(feature = "query-selector")]
+#[cfg_attr(docsrs, doc(cfg(feature = "query-selector")))]
+pub mod query_selector;
 
 // #[cfg(feature = "tree")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
