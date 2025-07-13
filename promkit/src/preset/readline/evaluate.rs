@@ -1,7 +1,7 @@
 use promkit_widgets::{listbox::Listbox, text::Text, text_editor};
 
 use crate::{
-    preset::{self, readline::Readline},
+    preset::readline::{Focus, Readline},
     Signal,
 };
 use promkit_widgets::core::crossterm::{
@@ -79,12 +79,14 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             if let Some(suggest) = &ctx.suggest {
-                let text = ctx.texteditor.text_without_cursor().to_string();
+                let text = ctx.readline.texteditor.text_without_cursor().to_string();
                 if let Some(candidates) = suggest.prefix_search(text) {
-                    ctx.listbox = Listbox::from_displayable(candidates);
-                    ctx.texteditor.replace(&ctx.listbox.get().to_string());
+                    ctx.suggestions.listbox = Listbox::from_displayable(candidates);
+                    ctx.readline
+                        .texteditor
+                        .replace(&ctx.suggestions.listbox.get().to_string());
 
-                    ctx.keymap.borrow_mut().switch("on_suggest");
+                    ctx.focus = Focus::Suggestion;
                 }
             }
         }
@@ -96,7 +98,7 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.texteditor.backward();
+            ctx.readline.texteditor.backward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Right,
@@ -104,20 +106,20 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.texteditor.forward();
+            ctx.readline.texteditor.forward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Char('a'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.texteditor.move_to_head(),
+        }) => ctx.readline.texteditor.move_to_head(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('e'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.texteditor.move_to_tail(),
+        }) => ctx.readline.texteditor.move_to_tail(),
 
         // Move cursor to the nearest character.
         Event::Key(KeyEvent {
@@ -146,13 +148,13 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.texteditor.erase(),
+        }) => ctx.readline.texteditor.erase(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('u'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.texteditor.erase_all(),
+        }) => ctx.readline.texteditor.erase_all(),
 
         // Erase to the nearest character.
         Event::Key(KeyEvent {
@@ -161,6 +163,7 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => ctx
+            .readline
             .texteditor
             .erase_to_previous_nearest(&ctx.readline.word_break_chars),
 
@@ -170,6 +173,7 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => ctx
+            .readline
             .texteditor
             .erase_to_next_nearest(&ctx.readline.word_break_chars),
 
@@ -180,9 +184,9 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            if let Some(ref mut history) = &mut ctx.history {
+            if let Some(ref mut history) = &mut ctx.readline.history {
                 if history.backward() {
-                    ctx.texteditor.replace(&history.get())
+                    ctx.readline.texteditor.replace(&history.get())
                 }
             }
         }
@@ -192,9 +196,9 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            if let Some(ref mut history) = &mut ctx.history {
+            if let Some(ref mut history) = &mut ctx.readline.history {
                 if history.forward() {
-                    ctx.texteditor.replace(&history.get())
+                    ctx.readline.texteditor.replace(&history.get())
                 }
             }
         }
@@ -212,8 +216,8 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => match ctx.readline.edit_mode {
-            text_editor::Mode::Insert => ctx.texteditor.insert(*ch),
-            text_editor::Mode::Overwrite => ctx.texteditor.overwrite(*ch),
+            text_editor::Mode::Insert => ctx.readline.texteditor.insert(*ch),
+            text_editor::Mode::Overwrite => ctx.readline.texteditor.overwrite(*ch),
         },
 
         _ => (),
@@ -263,7 +267,7 @@ pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
         _ => {
             ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
 
-            ctx.keymap.borrow_mut().switch("default");
+            ctx.focus = Focus::Readline;
         }
     }
     Ok(Signal::Continue)

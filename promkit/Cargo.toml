@@ -47,6 +47,7 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 futures = { workspace = true }
 promkit-widgets = { path = "../promkit-widgets", version = "=0.2.0" }
 radix_trie = { workspace = true }
