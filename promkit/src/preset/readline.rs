@@ -259,7 +259,7 @@ impl Readline {
     }
 
     /// Sets the function to evaluate the input, allowing for custom evaluation logic.
-    pub fn evaluator<K: AsRef<str>>(mut self, evaluator: Evaluator) -> Self {
+    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
         self.evaluator_fn = evaluator;
         self
     }

@@ -14,9 +14,9 @@ pub mod confirm;
 #[cfg_attr(docsrs, doc(cfg(feature = "password")))]
 pub mod password;
 
-// #[cfg(feature = "json")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "json")))]
-// pub mod json;
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
+pub mod json;
 
 // #[cfg(feature = "listbox")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]

@@ -1,15 +1,11 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::json::Json,
+    Signal,
 };
-
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::json::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for JSON navigation and manipulation.
 ///
@@ -20,17 +16,14 @@ pub type Keymap = fn(
 /// | <kbd>↑</kbd>           | Move the cursor up to the previous node
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::json::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+pub fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -51,7 +44,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.up();
+            ctx.json.stream.up();
         }
 
         Event::Key(KeyEvent {
@@ -66,7 +59,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.down();
+            ctx.json.stream.down();
         }
 
         // Fold/Unfold
@@ -76,10 +69,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.json_state.stream.toggle();
+            ctx.json.stream.toggle();
         }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }
