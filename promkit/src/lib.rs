@@ -1,7 +1,8 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use promkit_widgets;
+pub use promkit_widgets::core as core;
+pub use promkit_widgets as widgets;
 
 pub mod preset;
 pub mod suggest;
