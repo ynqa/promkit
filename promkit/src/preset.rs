@@ -30,9 +30,9 @@ pub mod query_selector;
 // #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
 // pub mod tree;
 
-// #[cfg(feature = "form")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "form")))]
-// pub mod form;
+#[cfg(feature = "form")]
+#[cfg_attr(docsrs, doc(cfg(feature = "form")))]
+pub mod form;
 
 #[cfg(feature = "text")]
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]

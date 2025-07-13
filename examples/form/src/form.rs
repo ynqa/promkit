@@ -1,11 +1,13 @@
 use promkit::{
-    crossterm::style::{Color, ContentStyle},
+    core::crossterm::style::{Color, ContentStyle},
     preset::form::Form,
-    promkit_widgets::text_editor,
+    widgets::text_editor,
+    Prompt,
 };
 
-fn main() -> anyhow::Result<()> {
-    let mut p = Form::new([
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let ret = Form::new([
         text_editor::State {
             prefix: String::from("❯❯ "),
             prefix_style: ContentStyle {
@@ -43,7 +45,8 @@ fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
     ])
-    .prompt()?;
-    println!("result: {:?}", p.run()?);
+    .run()
+    .await?;
+    println!("result: {:?}", ret);
     Ok(())
 }

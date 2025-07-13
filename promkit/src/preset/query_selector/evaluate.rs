@@ -1,12 +1,9 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
-    },
+    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
     preset::query_selector::QuerySelector,
+    widgets::text_editor,
     Signal,
 };
-use promkit_widgets::text_editor;
 
 pub fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
     match event {

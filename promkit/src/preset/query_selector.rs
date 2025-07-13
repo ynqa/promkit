@@ -1,6 +1,6 @@
 //! Facilitates querying and selecting from a set of options in a structured format.
 
-use std::{cell::RefCell, fmt::Display};
+use std::fmt::Display;
 
 use crate::{
     core::{
