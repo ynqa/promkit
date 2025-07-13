@@ -7,8 +7,6 @@ use crate::{
     Signal,
 };
 
-pub type Keymap = fn(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal>;
-
 /// Default key bindings for the listbox.
 ///
 /// | Key                    | Action

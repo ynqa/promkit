@@ -17,7 +17,7 @@ use crate::{
         text::{self, Text},
         text_editor::{self, Mode},
     },
-    Prompt, Signal,
+    Signal,
 };
 
 pub mod evaluate;

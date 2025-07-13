@@ -1,15 +1,11 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::checkbox::Checkbox,
+    Signal,
 };
-
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::checkbox::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the checkbox interface.
 ///
@@ -20,17 +16,14 @@ pub type Keymap = fn(
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle the checkbox state for the current item
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::checkbox::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+pub fn default(event: &Event, ctx: &mut Checkbox) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -45,7 +38,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.backward();
+            ctx.checkbox.checkbox.backward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -53,7 +46,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.backward();
+            ctx.checkbox.checkbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -62,7 +55,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.forward();
+            ctx.checkbox.checkbox.forward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -70,7 +63,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.forward();
+            ctx.checkbox.checkbox.forward();
         }
 
         Event::Key(KeyEvent {
@@ -78,9 +71,9 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.checkbox_state.checkbox.toggle(),
+        }) => ctx.checkbox.checkbox.toggle(),
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

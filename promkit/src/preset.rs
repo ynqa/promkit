@@ -1,6 +1,6 @@
-// #[cfg(feature = "checkbox")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
-// pub mod checkbox;
+#[cfg(feature = "checkbox")]
+#[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
+pub mod checkbox;
 
 #[cfg(feature = "readline")]
 #[cfg_attr(docsrs, doc(cfg(feature = "readline")))]
