@@ -120,23 +120,16 @@ pub trait Prompt {
 
         self.initialize().await?;
 
-        loop {
-            match EVENT_STREAM.lock().await.next().await {
-                Some(Ok(event)) => {
-                    match event {
-                        Event::Resize(_, _) => {
-                            self.renderer().render().await?;
-                        }
-                        _ => {
-                            // Evaluate the event using the engine
-                            if self.evaluate(&event).await? == Signal::Quit {
-                                break;
-                            }
-                        }
+        while let Some(event) = EVENT_STREAM.lock().await.next().await {
+            match event {
+                Ok(event) => {
+                    // Evaluate the event using the engine
+                    if self.evaluate(&event).await? == Signal::Quit {
+                        break;
                     }
                 }
-                _ => {
-                    // Handle error or end of stream
+                Err(e) => {
+                    eprintln!("Error reading event: {}", e);
                     break;
                 }
             }
