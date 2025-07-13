@@ -15,8 +15,14 @@ use crate::{
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
-pub fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
     match event {
+        // Resize the listbox.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Exit the listbox.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
