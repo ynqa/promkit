@@ -1,17 +1,18 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use promkit_widgets::core as core;
 pub use promkit_widgets as widgets;
+pub use promkit_widgets::core;
 
 pub mod preset;
 pub mod suggest;
 pub mod validate;
 
-use std::io;
+use std::{io, sync::LazyLock};
 
 use futures::StreamExt;
 use scopeguard::defer;
+use tokio::sync::Mutex;
 
 use promkit_widgets::core::{
     crossterm::{
@@ -22,6 +23,9 @@ use promkit_widgets::core::{
     },
     render::SharedRenderer,
 };
+
+static EVENT_STREAM: LazyLock<Mutex<EventStream>> =
+    LazyLock::new(|| Mutex::new(EventStream::new()));
 
 /// Represents the signal to control the flow of a prompt.
 ///
@@ -94,7 +98,6 @@ pub trait Prompt {
                 io::stdout(),
                 cursor::Show,
                 event::DisableMouseCapture,
-                cursor::MoveToNextLine(1),
             )
             .ok();
             disable_raw_mode().ok();
@@ -103,10 +106,8 @@ pub trait Prompt {
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        let mut stream = EventStream::new();
-
         loop {
-            match stream.next().await {
+            match EVENT_STREAM.lock().await.next().await {
                 Some(Ok(event)) => {
                     match event {
                         Event::Resize(_, _) => {
