@@ -1,56 +1,81 @@
 //! Offers functionality for reading input from the user.
 
-use std::{cell::RefCell, collections::HashSet};
+use std::collections::HashSet;
 
 use promkit_widgets::{
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
     listbox::{self, Listbox},
     text::{self, Text},
     text_editor::{self, History},
 };
 
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    snapshot::Snapshot,
     suggest::Suggest,
-    switch::ActiveKeySwitcher,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    Prompt,
+    Prompt, Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+/// Represent the indices of various components in the readline preset.
+pub enum Index {
+    Title = 0,
+    Readline = 1,
+    Suggestion = 2,
+    ErrorMessage = 3,
+}
+
+/// Represents the focus state of the readline interface.
+enum Focus {
+    Readline,
+    Suggestion,
+}
 
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
 /// It supports various configurations
 /// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
-    /// State for the title displayed above the input field.
-    title_state: text::State,
-    /// State for the text editor where user input is entered.
-    text_editor_state: text_editor::State,
-    suggest: Option<Suggest>,
-    suggest_state: listbox::State,
-    /// Optional validator for input validation with custom error messages.
-    validator: Option<ValidatorManager<str>>,
-    /// State for displaying error messages based on input validation.
-    error_message_state: text::State,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Focus state to track which component is currently focused.
+    pub focus: Focus,
+    /// Holds a title's renderer state, used for rendering the title section.
+    pub title: text::State,
+    /// Holds a text editor's renderer state, used for rendering the text input area.
+    pub readline: text_editor::State,
+    /// Optional suggest component for autocomplete functionality.
+    pub suggest: Option<Suggest>,
+    /// Holds a suggest box's renderer state, used when rendering suggestions for autocomplete.
+    pub suggestions: listbox::State,
+    /// Optional validator manager for input validation.
+    pub validator: Option<ValidatorManager<str>>,
+    /// Holds an error message's renderer state, used for rendering error messages.
+    pub error_message: text::State,
 }
 
 impl Default for Readline {
     fn default() -> Self {
         Self {
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default as keymap::Keymap)
-                .register("on_suggest", self::keymap::on_suggest),
-            title_state: text::State {
+            renderer: None,
+            focus: Focus::Readline,
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            text_editor_state: text_editor::State {
+            readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
                 prefix: String::from("❯❯ "),
@@ -70,7 +95,7 @@ impl Default for Readline {
                 lines: Default::default(),
             },
             suggest: Default::default(),
-            suggest_state: listbox::State {
+            suggestions: listbox::State {
                 listbox: Listbox::from_displayable(Vec::<String>::new()),
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
@@ -85,7 +110,7 @@ impl Default for Readline {
                 lines: Some(3),
             },
             validator: Default::default(),
-            error_message_state: text::State {
+            error_message: text::State {
                 text: Default::default(),
                 style: ContentStyle {
                     foreground_color: Some(Color::DarkRed),
@@ -95,6 +120,62 @@ impl Default for Readline {
                 lines: None,
             },
         }
+    }
+}
+
+impl crate::Prompt for Readline {
+    type Index = Index;
+
+    fn renderer(&self) -> SharedRenderer<Self::Index> {
+        self.renderer
+    }
+
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Readline, self.readline.create_pane(size.0, size.1)),
+                    (
+                        Index::Suggestion,
+                        self.suggestions.create_pane(size.0, size.1),
+                    ),
+                    (
+                        Index::ErrorMessage,
+                        self.error_message.create_pane(size.0, size.1),
+                    ),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        match self.focus {
+            Focus::Readline => evaluate::readline(event, self),
+            Focus::Suggestion => evaluate::suggestion(event, self),
+        }
+    }
+
+    type Return = String;
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        let ret = self
+            .text_editor_snapshot
+            .after()
+            .texteditor
+            .text_without_cursor()
+            .to_string();
+
+        // Keep history over state reset
+        let history = self.text_editor_snapshot.after_mut().history.take();
+        self.text_editor_snapshot.reset_after_to_init();
+        self.text_editor_snapshot.after_mut().history = history;
+
+        Ok(ret)
     }
 }
 
@@ -171,8 +252,12 @@ impl Readline {
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    pub fn register_keymap<K: AsRef<str>>(
+        mut self,
+        key: K,
+        evaluator: evaluate::Evaluator,
+    ) -> Self {
+        self.keymap = self.keymap.register(key, evaluator);
         self
     }
 
@@ -188,17 +273,7 @@ impl Readline {
 
     /// Initiates the prompt process,
     /// displaying the configured UI elements and handling user input.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
-                suggest: self.suggest,
-                suggest_snapshot: Snapshot::<listbox::State>::new(self.suggest_state),
-                validator: self.validator,
-                error_message_snapshot: Snapshot::<text::State>::new(self.error_message_state),
-            },
-        })
+    pub fn run(self) -> anyhow::Result<Self::Return> {
+        self.run()
     }
 }

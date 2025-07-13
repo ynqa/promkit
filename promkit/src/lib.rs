@@ -96,7 +96,7 @@ pub trait Prompt {
     ///
     /// Returns a `Result` containing the produced result or an error.
     async fn run(&mut self) -> anyhow::Result<Self::Return> {
-        defer!{
+        defer! {
             execute!(
                 io::stdout(),
                 cursor::Show,
