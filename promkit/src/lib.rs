@@ -49,12 +49,6 @@ pub enum Signal {
 /// are evaluated, and how the final result is produced.
 #[async_trait::async_trait]
 pub trait Prompt {
-    /// The type of index used to identify different components in the prompt.
-    type Index: Ord + Send + Sync + 'static;
-
-    /// Returns a shared renderer for the prompt.
-    fn renderer(&self) -> SharedRenderer<Self::Index>;
-
     /// Initializes the handler, preparing it for use.
     /// This method is called before the prompt starts running.
     ///
