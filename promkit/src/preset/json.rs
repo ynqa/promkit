@@ -87,7 +87,7 @@ impl crate::Prompt for Json {
 
 impl Json {
     /// Creates a new JSON preset with the provided JSON stream.
-    pub fn new_with_json(stream: JsonStream) -> Self {
+    pub fn new(stream: JsonStream) -> Self {
         Self {
             renderer: None,
             evaluator_fn: evaluate::default,

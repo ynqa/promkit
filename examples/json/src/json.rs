@@ -249,5 +249,5 @@ async fn main() -> anyhow::Result<()> {
         .iter(),
     );
 
-    Json::new_with_json(stream).title("JSON viewer").run().await
+    Json::new(stream).title("JSON viewer").run().await
 }

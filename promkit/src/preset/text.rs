@@ -72,7 +72,7 @@ impl crate::Prompt for Text {
 
 impl Text {
     /// Creates a new `Text` instance with the provided text.
-    pub fn new_with_text<T: AsRef<str>>(text: T) -> Self {
+    pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
             renderer: None,
             evaluator_fn: evaluate::default,

@@ -9,7 +9,7 @@ pub struct Confirm(Readline);
 
 impl Confirm {
     /// Creates a new `Confirm` prompt with a specified prefix.
-    pub fn new_with_prefix<T: AsRef<str>>(prefix: T) -> Self {
+    pub fn new<T: AsRef<str>>(prefix: T) -> Self {
         Self(
             Readline::default()
                 .prefix(format!("{} (y/n) ", prefix.as_ref()))
