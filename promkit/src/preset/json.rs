@@ -26,6 +26,7 @@ pub enum Index {
     Json = 1,
 }
 
+/// Type alias for the evaluator function used in the JSON preset.
 pub type Evaluator = fn(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal>;
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.

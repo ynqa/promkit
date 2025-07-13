@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = ["tree"] }
+tokio = { workspace = true }
 
 [[bin]]
 name = "tree"

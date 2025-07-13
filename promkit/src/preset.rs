@@ -26,9 +26,9 @@ pub mod json;
 #[cfg_attr(docsrs, doc(cfg(feature = "query-selector")))]
 pub mod query_selector;
 
-// #[cfg(feature = "tree")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
-// pub mod tree;
+#[cfg(feature = "tree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
+pub mod tree;
 
 #[cfg(feature = "form")]
 #[cfg_attr(docsrs, doc(cfg(feature = "form")))]

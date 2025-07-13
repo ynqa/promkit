@@ -28,7 +28,7 @@ pub struct Text {
     /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator_fn: Evaluator,
     /// Text state containing the text to be displayed.
-    pub state: text::State,
+    pub text: text::State,
 }
 
 #[async_trait::async_trait]
@@ -43,7 +43,7 @@ impl crate::Prompt for Text {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_panes(
-                [(Index::Text, self.state.create_pane(size.0, size.1))],
+                [(Index::Text, self.text.create_pane(size.0, size.1))],
                 true,
             )
             .await?,
@@ -57,7 +57,7 @@ impl crate::Prompt for Text {
         self.renderer
             .as_ref()
             .unwrap()
-            .update([(Index::Text, self.state.create_pane(size.0, size.1))])
+            .update([(Index::Text, self.text.create_pane(size.0, size.1))])
             .render()
             .await?;
         ret
@@ -76,7 +76,7 @@ impl Text {
         Self {
             renderer: None,
             evaluator_fn: evaluate::default,
-            state: text::State {
+            text: text::State {
                 text: text::Text::from(text),
                 style: Default::default(),
                 lines: None,
@@ -86,7 +86,7 @@ impl Text {
 
     /// Sets the style for the text component.
     pub fn style(mut self, style: ContentStyle) -> Self {
-        self.state.style = style;
+        self.text.style = style;
         self
     }
 

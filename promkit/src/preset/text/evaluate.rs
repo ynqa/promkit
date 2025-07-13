@@ -43,7 +43,7 @@ pub fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.state.text.backward();
+            ctx.text.text.backward();
         }
 
         Event::Key(KeyEvent {
@@ -58,7 +58,7 @@ pub fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.state.text.forward();
+            ctx.text.text.forward();
         }
 
         _ => (),
