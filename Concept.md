@@ -39,13 +39,14 @@ making customization and extension easier.
 ### Event-Loop
 
 These three functions collectively form the core of "event-loop" logic.
-Here is the important part of the actual event-loop from the new async
+Here is the important part of the actual event-loop from the async
 [Prompt::run](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#method.run):
 
 ```rust
-// Core part of event-loop (v0.10.0 - async implementation)
+// Initialize the prompt state
 self.initialize().await?;
 
+// Start the event loop
 while let Some(event) = EVENT_STREAM.lock().await.next().await {
     match event {
         Ok(event) => {
@@ -61,6 +62,7 @@ while let Some(event) = EVENT_STREAM.lock().await.next().await {
     }
 }
 
+// Finalize the prompt and return the result
 self.finalize()
 ```
 
@@ -93,7 +95,7 @@ flowchart LR
     E -->|Quit| Finalize[Finalize]
 ```
 
-In the current implementation of promkit (v0.10.0), event handling is centralized and async.
+In the current implementation of promkit, event handling is centralized and async.
 All events are processed sequentially within the async
 [Prompt::run](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#method.run)
 method and propagated to each implementation through the
