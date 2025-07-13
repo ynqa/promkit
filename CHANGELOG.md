@@ -12,7 +12,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Async support**: Full async/await pattern implementation for better performance and responsiveness
 - **SharedRenderer**: Thread-safe rendering system with `Arc<Renderer<K>>` and `SkipMap` for efficient pane management
-- **Lifecycle management**: Clear separation of `initialize`, `evaluate`, and `finalize` phases for better control flow
+- **Lifecycle management**: Clear separation of `initialize`, `evaluate`, and `finalize` phases for better control flow through the `Prompt` trait. The actual event loop implementation demonstrates this lifecycle:
+  
+  ```rust
+  async fn run(&mut self) -> anyhow::Result<Self::Return> {［
+      // 1. Initialize phase
+      self.initialize().await?;
+
+      // 2. Event evaluation loop
+      while let Some(event) = EVENT_STREAM.lock().await.next().await {
+          match event {
+              Ok(event) => {
+                  if self.evaluate(&event).await? == Signal::Quit {
+                      break; // Exit loop when quit signal received
+                  }
+              }
+              ... /// Handle errors
+          }
+      }
+
+      // 3. Finalize phase
+      self.finalize()
+  }
+  ```
+  
+  **Phase breakdown:**
+  - `initialize()`: Called once before entering the event loop for setup
+  - `evaluate()`: Called for each event, returns `Signal::Continue` or `Signal::Quit`
+  - `finalize()`: Called after loop exit to produce the final result
+  - Singleton `EVENT_STREAM` prevents cursor position read errors across multiple prompts
 
 ### Changed
 - Migrated to async/await pattern throughout the codebase

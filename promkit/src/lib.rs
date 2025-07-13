@@ -128,8 +128,7 @@ pub trait Prompt {
                         break;
                     }
                 }
-                Err(e) => {
-                    eprintln!("Error reading event: {}", e);
+                Err(_) => {
                     break;
                 }
             }
