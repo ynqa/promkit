@@ -70,38 +70,26 @@ As a diagram:
 flowchart LR
     subgraph promkit["promkit: event-loop"]
         direction LR
-        A[User Input] --> L[Determine behavior that matches key event]
+        A[Observe user input] --> B
+        B[Interpret as crossterm event] --> C
 
-        subgraph B_event["promkit: event-handler"]
+        subgraph presets["promkit: presets"]
             direction LR
-            L[Determine behavior that matches key event] --> D[Request: update state]
+            C[Run operations corresponding to the observed events] --> D[Update state]
+
+            subgraph widgets["promkit-widgets"]
+                direction LR
+                D[Update state] --> |if needed| Y[Generate panes]
+            end
+
+            Y --> Z[Render widgets]
+            D --> E{Evaluate}
         end
 
-        D --> F[Update state]
-
-        subgraph update_state["promkit-widgets"]
-            direction LR
-            F[Update state]
-        end
-
-        F --> C{Evaluate}
-        C -->|Continue| G[Request: generate pane for rendering]
-        G[Request: generate pane for rendering] --> output_pane
-        
-        subgraph gen_pane["promkit-widgets"]
-            direction LR
-            output_pane[Generate pane for rendering]
-        end
-
-        subgraph promkit_core["promkit-core"]
-            direction LR
-            output_pane --> H[Rendering]
-        end
-
-        H --> A
+        E -->|Continue| A
     end
 
-    C -->|Break out of loop| E[Exit]
+    E -->|Quit| F[Break out of loop]
 ```
 
 In the current implementation of promkit (v0.10.0), event handling is centralized and async.
