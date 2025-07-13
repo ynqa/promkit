@@ -26,7 +26,8 @@ each implemented in dedicated modules:
 
 - **Rendering**: Processing to visually display the generated panes
   - **promkit-core**: Responsible for basic terminal operations and concurrent rendering
-  - [SharedRenderer](https://docs.rs/promkit-core/0.10.0/promkit_core/render/type.SharedRenderer.html) (`Arc<Renderer<K>>`) provides thread-safe rendering with `SkipMap` for efficient pane management
+  - [SharedRenderer](https://docs.rs/promkit-core/0.2.0/promkit_core/render/type.SharedRenderer.html) (`Arc<Renderer<K>>`) provides thread-safe rendering with `SkipMap` for efficient pane management
+  - Components now actively trigger rendering (Push-based) rather than being rendered by the event loop
   - [Terminal](https://docs.rs/promkit_core/0.1.1/terminal/struct.Terminal.html) handles rendering with `Mutex` for concurrent access
     - Currently uses full rendering with plans to implement differential rendering in the future.
   - [Pane](https://docs.rs/promkit_core/0.1.1/pane/struct.Pane.html)
