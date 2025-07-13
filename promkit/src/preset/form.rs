@@ -10,14 +10,12 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     widgets::{cursor::Cursor, text_editor},
     Signal,
 };
 
 mod evaluate;
-
-/// Represents the indices of various components in the form preset.
-pub type Evaluator = fn(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal>;
 
 /// Represents the visual styles for different states of text editor components.
 pub struct Style {
@@ -34,7 +32,7 @@ pub struct Form {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<usize>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
     /// State for the multiple text editor components.
     pub readlines: Cursor<Vec<text_editor::State>>,
     /// Default styles applied to text editors.
@@ -65,24 +63,13 @@ impl crate::Prompt for Form {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator)(event, self).await;
 
         // Update the styles based on the current position.
         self.overwrite_styles();
 
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update(
-                self.readlines
-                    .contents()
-                    .iter()
-                    .enumerate()
-                    .map(|(i, state)| (i, state.create_pane(size.0, size.1))),
-            )
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -136,10 +123,29 @@ impl Form {
 
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             readlines: Cursor::new(readlines, 0, false),
             focus_styles,
             unfocus_styles,
+        }
+    }
+
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update(
+                        self.readlines
+                            .contents()
+                            .iter()
+                            .enumerate()
+                            .map(|(i, state)| (i, state.create_pane(width, height))),
+                    )
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
         }
     }
 
