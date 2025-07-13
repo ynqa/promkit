@@ -15,7 +15,7 @@ use crate::{
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
-pub fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,

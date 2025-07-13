@@ -5,9 +5,7 @@ use crate::{
         crossterm::{self, event::Event, style::ContentStyle},
         render::{Renderer, SharedRenderer},
         PaneFactory,
-    },
-    widgets::text,
-    Signal,
+    }, preset::Evaluator, widgets::text, Signal
 };
 
 pub mod evaluate;
@@ -18,15 +16,12 @@ pub enum Index {
     Text = 0,
 }
 
-/// Type alias for the evaluator function used in the `Text` prompt.
-pub type Evaluator = fn(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal>;
-
 /// Represents a text component for displaying static text in a prompt.
 pub struct Text {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
     /// Text state containing the text to be displayed.
     pub text: text::State,
 }
@@ -46,7 +41,7 @@ impl crate::Prompt for Text {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
         self.renderer
             .as_ref()
@@ -69,7 +64,7 @@ impl Text {
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             text: text::State {
                 text: text::Text::from(text),
                 style: Default::default(),
@@ -85,8 +80,8 @@ impl Text {
     }
 
     /// Sets the evaluator function for the text prompt.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
-        self.evaluator_fn = evaluator;
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
     }
 }

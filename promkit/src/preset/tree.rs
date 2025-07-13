@@ -33,7 +33,7 @@ pub struct Tree {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator<Self>,
+    pub evaluator: Evaluator<Self>,
     /// State for the title displayed above the tree.
     pub title: text::State,
     /// State for the tree itself.
@@ -58,7 +58,7 @@ impl crate::Prompt for Tree {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self).await;
+        let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
         self.renderer
             .as_ref()
@@ -84,7 +84,7 @@ impl Tree {
     pub fn new(root: Node) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: |event, ctx| Box::pin(evaluate::default(event, ctx)),
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -157,7 +157,7 @@ impl Tree {
 
     /// Sets the evaluator function for processing events in the tree.
     pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
-        self.evaluator_fn = evaluator;
+        self.evaluator = evaluator;
         self
     }
 }
