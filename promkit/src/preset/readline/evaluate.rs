@@ -5,9 +5,22 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    preset::readline::Readline,
+    preset::readline::{Focus, Readline},
     Signal,
 };
+
+pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+    match ctx.focus {
+        Focus::Readline => {
+            // Handle the readline input events.
+            return readline(event, ctx).await;
+        }
+        Focus::Suggestion => {
+            // Handle the suggestion input events.
+            return suggestion(event, ctx).await;
+        }
+    }
+}
 
 /// Default key bindings for the text editor.
 ///
@@ -28,7 +41,7 @@ use crate::{
 /// | <kbd>Alt + F</kbd>     | Move the cursor to the next nearest character within set (default: whitespace)
 /// | <kbd>Ctrl + W</kbd>    | Erase to the previous nearest character within set (default: whitespace)
 /// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
-pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -84,7 +97,8 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
                         .texteditor
                         .replace(&ctx.suggestions.listbox.get().to_string());
 
-                    ctx.evaluator_fn = suggestion;
+                    // Enter suggestion mode.
+                    ctx.focus = Focus::Suggestion;
                 }
             }
         }
@@ -223,7 +237,7 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     Ok(Signal::Continue)
 }
 
-pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
@@ -265,7 +279,8 @@ pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
         _ => {
             ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
 
-            ctx.evaluator_fn = readline;
+            // Switch focus back to the readline input.
+            ctx.focus = Focus::Readline;
         }
     }
     Ok(Signal::Continue)

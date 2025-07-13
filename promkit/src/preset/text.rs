@@ -5,7 +5,10 @@ use crate::{
         crossterm::{self, event::Event, style::ContentStyle},
         render::{Renderer, SharedRenderer},
         PaneFactory,
-    }, preset::Evaluator, widgets::text, Signal
+    },
+    preset::Evaluator,
+    widgets::text,
+    Signal,
 };
 
 pub mod evaluate;
