@@ -80,8 +80,7 @@ impl crate::Prompt for Checkbox {
 }
 
 impl Checkbox {
-    /// Creates a new `Checkbox` instance with the provided items.
-    pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
+    fn new_with_checkbox(checkbox: checkbox::Checkbox) -> Self {
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
@@ -93,7 +92,7 @@ impl Checkbox {
                 ..Default::default()
             },
             checkbox: checkbox::State {
-                checkbox: checkbox::Checkbox::from_displayable(items),
+                checkbox,
                 cursor: String::from("❯ "),
                 active_mark: '☒',
                 inactive_mark: '☐',
@@ -107,31 +106,14 @@ impl Checkbox {
         }
     }
 
+    /// Creates a new `Checkbox` instance with the provided items.
+    pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
+        Self::new_with_checkbox(checkbox::Checkbox::from_displayable(items))
+    }
+
     /// Creates a new `Checkbox` instance with the provided items and their checked states.
     pub fn new_with_checked<T: Display, I: IntoIterator<Item = (T, bool)>>(items: I) -> Self {
-        Self {
-            renderer: None,
-            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
-            title: text::State {
-                style: ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            checkbox: checkbox::State {
-                checkbox: checkbox::Checkbox::new_with_checked(items),
-                cursor: String::from("❯ "),
-                active_mark: '☒',
-                inactive_mark: '☐',
-                active_item_style: ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                },
-                inactive_item_style: ContentStyle::default(),
-                lines: Default::default(),
-            },
-        }
+        Self::new_with_checkbox(checkbox::Checkbox::new_with_checked(items))
     }
 
     /// Sets the title text displayed above the checkbox list.
