@@ -95,10 +95,12 @@ fn impl_promkit_derive(ast: &DeriveInput) -> Result<TokenStream, Error> {
 
     Ok(quote! {
         impl #name {
-            pub fn build(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+            pub async fn build(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+                use promkit::Prompt;
+
                 let states = #combined_states;
                 let mut form = promkit::preset::form::Form::new(states);
-                let results = form.prompt()?.run()?;
+                let results = form.run().await?;
 
                 #(#field_assignments)*
 

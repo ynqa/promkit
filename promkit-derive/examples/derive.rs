@@ -1,4 +1,4 @@
-use promkit::crossterm::style::{Color, ContentStyle};
+use promkit::core::crossterm::style::{Color, ContentStyle};
 use promkit_derive::Promkit;
 
 #[derive(Default, Debug, Promkit)]
@@ -19,9 +19,10 @@ struct Profile {
     age: usize,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut ret = Profile::default();
-    ret.build()?;
+    ret.build().await?;
     dbg!(ret);
     Ok(())
 }
