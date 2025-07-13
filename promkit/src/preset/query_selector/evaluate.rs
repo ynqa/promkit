@@ -5,8 +5,14 @@ use crate::{
     Signal,
 };
 
-pub fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
     match event {
+        // Resize the query selector.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Exit the query selector.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

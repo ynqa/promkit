@@ -12,6 +12,7 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     widgets::{
         listbox::{self, Listbox},
         text::{self, Text},
@@ -30,9 +31,6 @@ pub enum Index {
     List = 2,
 }
 
-/// Type alias for the evaluator function used in the `QuerySelector` prompt.
-pub type Evaluator = fn(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal>;
-
 /// Used to process and filter a list of options
 /// based on the input text in the `QuerySelector` component.
 pub type Filter = fn(&str, &Vec<String>) -> Vec<String>;
@@ -44,7 +42,7 @@ pub struct QuerySelector {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
     /// State for the title displayed above the query selection.
     pub title: text::State,
     /// State for the text editor component.
@@ -80,7 +78,8 @@ impl crate::Prompt for QuerySelector {
         // Store the previous text in the readline before evaluating the event.
         let prev = self.readline.texteditor.text_without_cursor().to_string();
 
-        let ret = (self.evaluator_fn)(event, self);
+        // Evaluate the event using the provided evaluator function.
+        let ret = (self.evaluator)(event, self).await;
 
         // If the text in the readline has changed, we need to filter the list.
         if prev != self.readline.texteditor.text_without_cursor().to_string() {
@@ -99,16 +98,8 @@ impl crate::Prompt for QuerySelector {
 
         // Update the renderer with the new state of the components.
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, self.title.create_pane(size.0, size.1)),
-                (Index::Readline, self.readline.create_pane(size.0, size.1)),
-                (Index::List, self.list.create_pane(size.0, size.1)),
-            ])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
+
         ret
     }
 
@@ -138,7 +129,7 @@ impl QuerySelector {
         let listbox = Listbox::from_displayable(items);
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -252,8 +243,25 @@ impl QuerySelector {
     }
 
     /// Sets the evaluator function for the text prompt.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
-        self.evaluator_fn = evaluator;
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
+    }
+
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Readline, self.readline.create_pane(width, height)),
+                        (Index::List, self.list.create_pane(width, height)),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

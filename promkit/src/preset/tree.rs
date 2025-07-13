@@ -153,7 +153,7 @@ impl Tree {
         self
     }
 
-    /// Render the tree with the specified width and height.
+    /// Render the prompt with the specified width and height.
     async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
