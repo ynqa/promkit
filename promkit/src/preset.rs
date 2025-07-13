@@ -10,9 +10,9 @@ pub mod readline;
 #[cfg_attr(docsrs, doc(cfg(feature = "confirm")))]
 pub mod confirm;
 
-// #[cfg(feature = "password")]
-// #[cfg_attr(docsrs, doc(cfg(feature = "password")))]
-// pub mod password;
+#[cfg(feature = "password")]
+#[cfg_attr(docsrs, doc(cfg(feature = "password")))]
+pub mod password;
 
 // #[cfg(feature = "json")]
 // #[cfg_attr(docsrs, doc(cfg(feature = "json")))]

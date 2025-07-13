@@ -12,12 +12,13 @@ use crate::preset::readline::Readline;
 /// It masks the input with a specified character for privacy and security.
 pub struct Password(Readline);
 
-impl Password {
-    /// Creates a new `Password` instance with default settings, using '*' as the mask character.
-    pub async fn default() -> anyhow::Result<Self> {
-        Ok(Self(Readline::try_default().await.mask('*')))
+impl Default for Password {
+    fn default() -> Self {
+        Self(Readline::default().mask('*'))
     }
+}
 
+impl Password {
     /// Sets the title text displayed above the password input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self = Password(self.0.title(text));
@@ -64,10 +65,8 @@ impl Password {
         self
     }
 
-    /// Displays the password prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result,
-    /// which is the user's input.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        self.0.prompt()
+    /// Runs the password prompt, allowing the user to input a password.
+    pub async fn run(&mut self) -> anyhow::Result<String> {
+        self.0.run().await
     }
 }
