@@ -56,6 +56,7 @@ impl<K: Ord + Send + 'static> Renderer<K> {
         self
     }
 
+    // TODO: Implement diff rendering
     pub async fn render(&self) -> anyhow::Result<()> {
         let panes: Vec<Pane> = self
             .panes
