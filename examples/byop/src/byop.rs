@@ -12,7 +12,7 @@ use promkit::{
             render::{Renderer, SharedRenderer},
             PaneFactory,
         },
-        spinner, text, text_editor,
+        spinner, text::{self, Text}, text_editor,
     },
     Prompt, Signal,
 };
@@ -115,13 +115,21 @@ impl BYOP {
         })
     }
 
-    async fn heavy_task(&self) -> anyhow::Result<()> {
+    async fn heavy_task(&mut self) -> anyhow::Result<()> {
         {
             let mut task_state = self.task_state.0.write().await;
             *task_state = TaskState::Running;
         };
+
         // NOTE: Simulating a heavy task with a sleep.
         tokio::time::sleep(Duration::from_secs(5)).await;
+
+        // Update the result state after the task is done.
+        self.result.text = Text::from(format!(
+            "result: {}",
+            self.readline.texteditor.text_without_cursor()
+        ));
+
         {
             let mut task_state = self.task_state.0.write().await;
             *task_state = TaskState::Idle;
