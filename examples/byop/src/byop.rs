@@ -169,6 +169,7 @@ struct BYOP {
     renderer: SharedRenderer<Index>,
     task_monitor: Arc<TaskMonitor>,
     readline: text_editor::State,
+    spinner: Arc<spinner::Spinner>,
 }
 
 #[async_trait::async_trait]
@@ -229,6 +230,12 @@ impl BYOP {
             task_monitor: Arc::new(TaskMonitor::new(renderer.clone())),
             renderer,
             readline,
+            spinner: Arc::new(
+                spinner::Spinner::default()
+                    .frames(spinner::frame::DOTS.clone())
+                    .suffix("Executing...")
+                    .duration(Duration::from_millis(100)),
+            ),
         })
     }
 
@@ -422,14 +429,14 @@ impl BYOP {
     async fn spawn(&mut self) -> anyhow::Result<()> {
         let renderer = self.renderer.clone();
         let task_monitor = Arc::clone(&self.task_monitor);
+        let spinner = Arc::clone(&self.spinner);
+
         let spinner_task = tokio::spawn(async move {
             spinner::run(
-                spinner::frame::DOTS.clone(),
-                "Executing...",
-                Duration::from_millis(100),
+                spinner.as_ref(),
                 task_monitor.as_ref(),
                 Index::Spinner,
-                renderer.clone(),
+                renderer,
             )
             .await
         });
