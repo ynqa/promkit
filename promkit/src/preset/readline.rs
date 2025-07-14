@@ -88,7 +88,6 @@ impl Default for Readline {
                     foreground_color: Some(Color::DarkGreen),
                     ..Default::default()
                 },
-
                 active_char_style: ContentStyle {
                     background_color: Some(Color::DarkCyan),
                     ..Default::default()
