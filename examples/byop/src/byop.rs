@@ -15,9 +15,8 @@
 /// Enter to execute tasks. Use Ctrl+C to exit the prompt.
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
-use anyhow::Result;
 use promkit::{
-    async_trait,
+    anyhow, async_trait,
     core::{
         crossterm::{self, style::Color},
         grapheme::StyledGraphemes,
@@ -54,15 +53,19 @@ enum Index {
 /// Task events for monitor
 #[derive(Debug)]
 enum TaskEvent {
-    TaskStarted { handle: JoinHandle<Result<String>> },
-    TaskCompleted { result: Result<String> },
+    TaskStarted {
+        handle: JoinHandle<anyhow::Result<String>>,
+    },
+    TaskCompleted {
+        result: anyhow::Result<String>,
+    },
 }
 
 /// Task monitor daemon for managing background tasks
 struct TaskMonitor {
     event_sender: mpsc::UnboundedSender<TaskEvent>,
     monitor_handle: JoinHandle<()>,
-    task_handle: Arc<RwLock<Option<JoinHandle<Result<String>>>>>,
+    task_handle: Arc<RwLock<Option<JoinHandle<anyhow::Result<String>>>>>,
 }
 
 impl spinner::State for TaskMonitor {
