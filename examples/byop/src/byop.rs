@@ -1,4 +1,18 @@
-/// BYOP (Bring Your Own Preset) example for promkit.
+/// BYOP (Build Your Own Preset) example for promkit.
+///
+/// This example demonstrates how to create a custom prompt using the `promkit` library.
+/// It includes a text editor for input, a spinner for async task execution, and a task
+/// monitor for managing background tasks.
+/// The prompt allows users to enter text, start a heavy task (actually a simulated delay),
+/// and see the results (actually show the input text) or errors
+/// displayed in the UI. The example showcases the integration of various widgets and state
+/// management techniques to create a responsive and interactive command-line application.
+///
+/// # Example Usage
+/// To run this example, ensure you have the `promkit` library and its dependencies set up in
+/// your Rust project. Then, execute the main function which initializes the BYOP prompt and
+/// starts the event loop. You can interact with the prompt by typing commands and pressing
+/// Enter to execute tasks. Use Ctrl+C to exit the prompt.
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Result;
@@ -150,7 +164,7 @@ impl TaskMonitor {
     }
 }
 
-/// Bring Your Own Prompt
+/// Build Your Own Prompt
 struct BYOP {
     renderer: SharedRenderer<Index>,
     task_monitor: Arc<TaskMonitor>,

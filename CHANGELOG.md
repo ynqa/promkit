@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `spinner::State` trait: Interface for checking idle state asynchronously
   - `spinner::run` function: Executes frame-based spinner animations
   - `spinner::frame` module: Provides various spinner frame patterns
-- **BYOP (Bring Your Own Preset) example**: Custom prompt implementation example
+- **BYOP (Build Your Own Preset) example**: Custom prompt implementation example
   - Integration demo of spinner and text editor
   - UI state management during async task execution
   - Task start, completion, and cancellation functionality
