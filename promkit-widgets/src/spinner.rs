@@ -2,6 +2,9 @@ use tokio::time::Duration;
 
 use crate::core::{Pane, grapheme::StyledGraphemes, render::SharedRenderer};
 
+pub mod frame;
+use frame::Frame;
+
 #[async_trait::async_trait]
 pub trait State {
     async fn is_idle(&self) -> bool;
@@ -9,7 +12,7 @@ pub trait State {
 
 /// Spawn a background task that shows a spinner while the state is active.
 pub async fn run<S, I>(
-    spinner: &[String],
+    spinner: Frame,
     suffix: &str,
     duration: Duration,
     state: S,

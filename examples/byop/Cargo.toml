@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-widgets = { path = "../../promkit-widgets", features = ["texteditor"] }
+promkit-widgets = { path = "../../promkit-widgets", features = ["spinner", "texteditor"] }
 tokio = { workspace = true }
 
 [[bin]]
