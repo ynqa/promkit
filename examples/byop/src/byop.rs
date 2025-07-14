@@ -48,28 +48,41 @@ enum TaskEvent {
 struct TaskMonitor {
     event_sender: mpsc::UnboundedSender<TaskEvent>,
     _monitor_handle: JoinHandle<()>,
+    _task_handle: Arc<RwLock<Option<JoinHandle<Result<String>>>>>,
 }
 
 impl TaskMonitor {
     fn new(renderer: SharedRenderer<Index>, shared_task_handle: SharedTaskHandle) -> Self {
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
+        let task_handle = Arc::new(RwLock::new(None));
+        let task_handle_clone = task_handle.clone();
 
         // Event handling daemon
         let monitor_handle = tokio::spawn(async move {
             while let Some(event) = event_receiver.recv().await {
                 match event {
                     TaskEvent::TaskStarted { handle } => {
-                        // Store the handle for spinner state management
+                        // Store the handle for task management
                         {
-                            let mut handle_guard = shared_task_handle.0.write().await;
+                            let mut handle_guard = task_handle_clone.write().await;
                             *handle_guard = Some(handle);
+                        }
+                        // Update shared state to indicate task is running
+                        {
+                            let mut running_guard = shared_task_handle.0.write().await;
+                            *running_guard = true;
                         }
                     }
                     TaskEvent::TaskCompleted { result } => {
-                        // Clear the task handle to indicate completion
+                        // Clear the task handle
                         {
-                            let mut handle_guard = shared_task_handle.0.write().await;
+                            let mut handle_guard = task_handle_clone.write().await;
                             *handle_guard = None;
+                        }
+                        // Update shared state to indicate task is idle
+                        {
+                            let mut running_guard = shared_task_handle.0.write().await;
+                            *running_guard = false;
                         }
 
                         // Update UI based on result
@@ -116,17 +129,30 @@ impl TaskMonitor {
         Self {
             event_sender,
             _monitor_handle: monitor_handle,
+            _task_handle: task_handle,
+        }
+    }
+
+    fn abort_task(&self) {
+        if let Some(handle) = self._task_handle.blocking_read().as_ref() {
+            handle.abort();
         }
     }
 }
 
-/// Shared task handle for managing task state.
+/// Shared task state for managing task execution status.
 #[derive(Clone)]
-struct SharedTaskHandle(Arc<RwLock<Option<JoinHandle<Result<String>>>>>);
+struct SharedTaskHandle(Arc<RwLock<bool>>);
+
+impl SharedTaskHandle {
+    fn new() -> Self {
+        Self(Arc::new(RwLock::new(false)))
+    }
+}
 
 impl spinner::State for SharedTaskHandle {
     async fn is_idle(&self) -> bool {
-        self.0.read().await.is_none()
+        !*self.0.read().await
     }
 }
 
@@ -157,9 +183,7 @@ impl Prompt for BYOP {
         let ret = self.readline.texteditor.text_without_cursor().to_string();
 
         // Clean up any running task
-        if let Some(handle) = self.shared_task_handle.0.blocking_read().as_ref() {
-            handle.abort();
-        }
+        self.task_monitor.abort_task();
 
         // Reset the text editor state for the next prompt.
         self.readline.texteditor.erase_all();
@@ -194,7 +218,7 @@ impl BYOP {
             .await?,
         );
 
-        let shared_task_handle = SharedTaskHandle(Arc::new(RwLock::new(None)));
+        let shared_task_handle = SharedTaskHandle::new();
         let task_monitor = TaskMonitor::new(renderer.clone(), shared_task_handle.clone());
 
         Ok(Self {
@@ -207,7 +231,7 @@ impl BYOP {
 
     async fn start_heavy_task(&mut self) -> anyhow::Result<()> {
         // Check if task is already running
-        if self.shared_task_handle.0.read().await.is_some() {
+        if *self.shared_task_handle.0.read().await {
             return Ok(());
         }
 
@@ -254,7 +278,7 @@ impl BYOP {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                let is_running = self.shared_task_handle.0.read().await.is_some();
+                let is_running = *self.shared_task_handle.0.read().await;
                 if !is_running {
                     // Start the heavy task in background
                     self.start_heavy_task().await?;
