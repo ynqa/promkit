@@ -1,31 +1,25 @@
-use std::sync::LazyLock;
+pub type Frame = &'static [&'static str];
 
-pub type Frame = Vec<&'static str>;
+pub const DOTS: Frame = &["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-pub static DOTS: LazyLock<Frame> =
-    LazyLock::new(|| vec!["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]);
+pub const HAMBURGER: Frame = &["☱", "☲", "☴"];
 
-pub const HAMBURGER: LazyLock<Frame> = LazyLock::new(|| vec!["☱", "☲", "☴"]);
+pub const ARC: Frame = &["◜", "◠", "◝", "◞", "◡", "◟"];
 
-pub const ARC: LazyLock<Frame> = LazyLock::new(|| vec!["◜", "◠", "◝", "◞", "◡", "◟"]);
+pub const CIRCLE: Frame = &["◡", "⊙", "◠"];
 
-pub const CIRCLE: LazyLock<Frame> = LazyLock::new(|| vec!["◡", "⊙", "◠"]);
+pub const SQUARE_CORNERS: Frame = &["◰", "◳", "◲", "◱"];
 
-pub const SQUARE_CORNERS: LazyLock<Frame> = LazyLock::new(|| vec!["◰", "◳", "◲", "◱"]);
+pub const CIRCLE_QUARTERS: Frame = &["◴", "◷", "◶", "◵"];
 
-pub const CIRCLE_QUARTERS: LazyLock<Frame> = LazyLock::new(|| vec!["◴", "◷", "◶", "◵"]);
+pub const CIRCLE_HALVES: Frame = &["◐", "◓", "◑", "◒"];
 
-pub const CIRCLE_HALVES: LazyLock<Frame> = LazyLock::new(|| vec!["◐", "◓", "◑", "◒"]);
+pub const TOGGLE: Frame = &["⊶", "⊷"];
 
-pub const TOGGLE: LazyLock<Frame> = LazyLock::new(|| vec!["⊶", "⊷"]);
+pub const CLOCK: Frame = &[
+    "🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚",
+];
 
-pub const CLOCK: LazyLock<Frame> = LazyLock::new(|| {
-    vec![
-        "🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘", "🕙", "🕚",
-    ]
-});
+pub const EARTH: Frame = &["🌍", "🌎", "🌏"];
 
-pub const EARTH: LazyLock<Frame> = LazyLock::new(|| vec!["🌍", "🌎", "🌏"]);
-
-pub const MOON: LazyLock<Frame> =
-    LazyLock::new(|| vec!["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]);
+pub const MOON: Frame = &["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"];

@@ -24,7 +24,7 @@ pub struct Spinner {
 impl Default for Spinner {
     fn default() -> Self {
         Self {
-            frames: frame::DOTS.clone(),
+            frames: frame::DOTS,
             suffix: String::new(),
             duration: Duration::from_millis(100),
         }

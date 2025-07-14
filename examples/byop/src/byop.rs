@@ -232,7 +232,7 @@ impl BYOP {
             readline,
             spinner: Arc::new(
                 spinner::Spinner::default()
-                    .frames(spinner::frame::DOTS.clone())
+                    .frames(spinner::frame::DOTS)
                     .suffix("Executing...")
                     .duration(Duration::from_millis(100)),
             ),
