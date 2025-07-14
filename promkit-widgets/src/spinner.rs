@@ -1,4 +1,4 @@
-use tokio::time::Duration;
+use std::time::Duration;
 
 use crate::core::{Pane, grapheme::StyledGraphemes, render::SharedRenderer};
 
@@ -6,7 +6,7 @@ pub mod frame;
 use frame::Frame;
 
 pub trait State {
-    async fn is_idle(&self) -> bool;
+    fn is_idle(&self) -> impl Future<Output = bool> + Send;
 }
 
 /// Spawn a background task that shows a spinner while the state is active.
