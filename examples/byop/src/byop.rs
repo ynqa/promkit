@@ -34,29 +34,21 @@ enum Index {
     Result = 2,
 }
 
-/// Represents the state of the task.
-#[derive(Clone, PartialEq, Eq)]
-enum TaskState {
-    Idle,
-    Running,
-}
-
-/// Shared state for the task, allowing concurrent access.
+/// Shared task handle for managing task state.
 #[derive(Clone)]
-struct SharedTaskState(Arc<RwLock<TaskState>>);
+struct SharedTaskHandle(Arc<RwLock<Option<tokio::task::JoinHandle<Result<String>>>>>);
 
-impl spinner::State for SharedTaskState {
+impl spinner::State for SharedTaskHandle {
     async fn is_idle(&self) -> bool {
-        *self.0.read().await == TaskState::Idle
+        self.0.read().await.is_none()
     }
 }
 
 /// Bring Your Own Prompt
 struct BYOP {
     renderer: SharedRenderer<Index>,
-    task_state: SharedTaskState,
+    shared_task_handle: SharedTaskHandle,
     readline: text_editor::State,
-    task_handle: Option<tokio::task::JoinHandle<Result<String>>>,
 }
 
 #[async_trait::async_trait]
@@ -78,7 +70,7 @@ impl Prompt for BYOP {
         let ret = self.readline.texteditor.text_without_cursor().to_string();
 
         // Clean up any running task
-        if let Some(handle) = &self.task_handle {
+        if let Some(handle) = self.shared_task_handle.0.blocking_read().as_ref() {
             handle.abort();
         }
 
@@ -115,15 +107,14 @@ impl BYOP {
                 )
                 .await?,
             ),
-            task_state: SharedTaskState(Arc::new(RwLock::new(TaskState::Idle))),
+            shared_task_handle: SharedTaskHandle(Arc::new(RwLock::new(None))),
             readline,
-            task_handle: None,
         })
     }
 
     async fn start_heavy_task(&mut self) -> anyhow::Result<()> {
         // Check if task is already running
-        if *self.task_state.0.read().await == TaskState::Running {
+        if self.shared_task_handle.0.read().await.is_some() {
             return Ok(());
         }
 
@@ -134,22 +125,17 @@ impl BYOP {
             .await?;
 
         let input_text = self.readline.texteditor.text_without_cursor().to_string();
-        let task_state = self.task_state.clone();
+        let shared_task_handle = self.shared_task_handle.clone();
         let renderer = self.renderer.clone();
-
-        {
-            let mut state = task_state.0.write().await;
-            *state = TaskState::Running;
-        }
 
         let handle = tokio::spawn(async move {
             // NOTE: Simulating a heavy task with a sleep.
-            tokio::time::sleep(Duration::from_secs(5)).await;
+            tokio::time::sleep(Duration::from_secs(3)).await;
 
-            // Set task state to idle
+            // Clear the task handle to indicate completion
             {
-                let mut state = task_state.0.write().await;
-                *state = TaskState::Idle;
+                let mut handle_guard = shared_task_handle.0.write().await;
+                *handle_guard = None;
             }
 
             // Trigger a render to show the result
@@ -170,7 +156,12 @@ impl BYOP {
             Ok(input_text)
         });
 
-        self.task_handle = Some(handle);
+        // Store the handle
+        {
+            let mut handle_guard = self.shared_task_handle.0.write().await;
+            *handle_guard = Some(handle);
+        }
+
         Ok(())
     }
 
@@ -188,24 +179,21 @@ impl BYOP {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                let current_state = self.task_state.0.read().await.clone();
-                match current_state {
-                    TaskState::Idle => {
-                        // Start the heavy task in background
-                        self.start_heavy_task().await?;
-                    }
-                    TaskState::Running => {
-                        self.renderer
-                            .update([(
-                                Index::Result,
-                                Pane::new(
-                                    vec![StyledGraphemes::from("Task is currently running...")],
-                                    0,
-                                ),
-                            )])
-                            .render()
-                            .await?;
-                    }
+                let is_running = self.shared_task_handle.0.read().await.is_some();
+                if !is_running {
+                    // Start the heavy task in background
+                    self.start_heavy_task().await?;
+                } else {
+                    self.renderer
+                        .update([(
+                            Index::Result,
+                            Pane::new(
+                                vec![StyledGraphemes::from("Task is currently running...")],
+                                0,
+                            ),
+                        )])
+                        .render()
+                        .await?;
                 }
             }
 
@@ -330,14 +318,14 @@ impl BYOP {
     }
 
     async fn spawn(&mut self) -> anyhow::Result<()> {
-        let task_state = self.task_state.clone();
+        let shared_task_handle = self.shared_task_handle.clone();
         let renderer = self.renderer.clone();
         let spinner_task = tokio::spawn(async move {
             spinner::run(
                 spinner::frame::DOTS.clone(),
                 "Executing...",
                 Duration::from_millis(100),
-                task_state.clone(),
+                shared_task_handle.clone(),
                 Index::Spinner,
                 renderer.clone(),
             )
