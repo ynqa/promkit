@@ -1,3 +1,4 @@
+/// BYOP (Bring Your Own Preset) example for promkit.
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Result;
@@ -18,7 +19,8 @@ use promkit::{
             render::{Renderer, SharedRenderer},
             PaneFactory,
         },
-        spinner, text_editor,
+        spinner::{self, State},
+        text_editor,
     },
     Prompt, Signal,
 };
@@ -26,8 +28,6 @@ use tokio::{
     sync::{mpsc, RwLock},
     task::JoinHandle,
 };
-
-/// BYOP (Bring Your Own Preset) example for promkit.
 
 /// Represents the indices of various components in BYOP.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -47,15 +47,30 @@ enum TaskEvent {
 /// Task monitor daemon for managing background tasks
 struct TaskMonitor {
     event_sender: mpsc::UnboundedSender<TaskEvent>,
-    _monitor_handle: JoinHandle<()>,
-    _task_handle: Arc<RwLock<Option<JoinHandle<Result<String>>>>>,
+    monitor_handle: JoinHandle<()>,
+    task_handle: Arc<RwLock<Option<JoinHandle<Result<String>>>>>,
+}
+
+impl spinner::State for TaskMonitor {
+    async fn is_idle(&self) -> bool {
+        // Check if the task is currently running
+        let running = self.task_handle.read().await;
+        running.is_none() || running.as_ref().map_or(true, |handle| handle.is_finished())
+    }
+}
+
+impl spinner::State for &TaskMonitor {
+    async fn is_idle(&self) -> bool {
+        // Delegate to the TaskMonitor
+        (*self).is_idle().await
+    }
 }
 
 impl TaskMonitor {
-    fn new(renderer: SharedRenderer<Index>, shared_task_handle: SharedTaskHandle) -> Self {
+    fn new(renderer: SharedRenderer<Index>) -> Self {
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
         let task_handle = Arc::new(RwLock::new(None));
-        let task_handle_clone = task_handle.clone();
+        let task_handle_internal = task_handle.clone();
 
         // Event handling daemon
         let monitor_handle = tokio::spawn(async move {
@@ -64,25 +79,15 @@ impl TaskMonitor {
                     TaskEvent::TaskStarted { handle } => {
                         // Store the handle for task management
                         {
-                            let mut handle_guard = task_handle_clone.write().await;
+                            let mut handle_guard = task_handle_internal.write().await;
                             *handle_guard = Some(handle);
-                        }
-                        // Update shared state to indicate task is running
-                        {
-                            let mut running_guard = shared_task_handle.0.write().await;
-                            *running_guard = true;
                         }
                     }
                     TaskEvent::TaskCompleted { result } => {
                         // Clear the task handle
                         {
-                            let mut handle_guard = task_handle_clone.write().await;
+                            let mut handle_guard = task_handle_internal.write().await;
                             *handle_guard = None;
-                        }
-                        // Update shared state to indicate task is idle
-                        {
-                            let mut running_guard = shared_task_handle.0.write().await;
-                            *running_guard = false;
                         }
 
                         // Update UI based on result
@@ -128,39 +133,27 @@ impl TaskMonitor {
 
         Self {
             event_sender,
-            _monitor_handle: monitor_handle,
-            _task_handle: task_handle,
+            monitor_handle,
+            task_handle,
         }
+    }
+
+    fn abort_all(&self) {
+        self.monitor_handle.abort();
+        self.abort_task();
     }
 
     fn abort_task(&self) {
-        if let Some(handle) = self._task_handle.blocking_read().as_ref() {
+        if let Some(handle) = self.task_handle.blocking_read().as_ref() {
             handle.abort();
         }
-    }
-}
-
-/// Shared task state for managing task execution status.
-#[derive(Clone)]
-struct SharedTaskHandle(Arc<RwLock<bool>>);
-
-impl SharedTaskHandle {
-    fn new() -> Self {
-        Self(Arc::new(RwLock::new(false)))
-    }
-}
-
-impl spinner::State for SharedTaskHandle {
-    async fn is_idle(&self) -> bool {
-        !*self.0.read().await
     }
 }
 
 /// Bring Your Own Prompt
 struct BYOP {
     renderer: SharedRenderer<Index>,
-    shared_task_handle: SharedTaskHandle,
-    task_monitor: TaskMonitor,
+    task_monitor: Arc<TaskMonitor>,
     readline: text_editor::State,
 }
 
@@ -182,8 +175,8 @@ impl Prompt for BYOP {
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         let ret = self.readline.texteditor.text_without_cursor().to_string();
 
-        // Clean up any running task
-        self.task_monitor.abort_task();
+        // Abort any running tasks and clear the task monitor
+        self.task_monitor.abort_all();
 
         // Reset the text editor state for the next prompt.
         self.readline.texteditor.erase_all();
@@ -218,20 +211,16 @@ impl BYOP {
             .await?,
         );
 
-        let shared_task_handle = SharedTaskHandle::new();
-        let task_monitor = TaskMonitor::new(renderer.clone(), shared_task_handle.clone());
-
         Ok(Self {
+            task_monitor: Arc::new(TaskMonitor::new(renderer.clone())),
             renderer,
-            shared_task_handle,
-            task_monitor,
             readline,
         })
     }
 
     async fn start_heavy_task(&mut self) -> anyhow::Result<()> {
         // Check if task is already running
-        if *self.shared_task_handle.0.read().await {
+        if !self.task_monitor.is_idle().await {
             return Ok(());
         }
 
@@ -278,7 +267,7 @@ impl BYOP {
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                let is_running = *self.shared_task_handle.0.read().await;
+                let is_running = !self.task_monitor.is_idle().await;
                 if !is_running {
                     // Start the heavy task in background
                     self.start_heavy_task().await?;
@@ -417,14 +406,14 @@ impl BYOP {
     }
 
     async fn spawn(&mut self) -> anyhow::Result<()> {
-        let shared_task_handle = self.shared_task_handle.clone();
         let renderer = self.renderer.clone();
+        let task_monitor = Arc::clone(&self.task_monitor);
         let spinner_task = tokio::spawn(async move {
             spinner::run(
                 spinner::frame::DOTS.clone(),
                 "Executing...",
                 Duration::from_millis(100),
-                shared_task_handle.clone(),
+                task_monitor.as_ref(),
                 Index::Spinner,
                 renderer.clone(),
             )
@@ -440,7 +429,5 @@ impl BYOP {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    loop {
-        BYOP::try_default().await?.spawn().await?
-    }
+    BYOP::try_default().await?.spawn().await
 }
