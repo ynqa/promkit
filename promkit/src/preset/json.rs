@@ -10,6 +10,7 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     widgets::{
         jsonstream::{self, format::RowFormatter, JsonStream},
         text::{self, Text},
@@ -26,15 +27,12 @@ pub enum Index {
     Json = 1,
 }
 
-/// Type alias for the evaluator function used in the JSON preset.
-pub type Evaluator = fn(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal>;
-
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
     /// State for the title text.
     pub title: text::State,
     /// State for the JSON data, including formatting and rendering options.
@@ -43,12 +41,6 @@ pub struct Json {
 
 #[async_trait::async_trait]
 impl crate::Prompt for Json {
-    type Index = Index;
-
-    fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
@@ -65,17 +57,9 @@ impl crate::Prompt for Json {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, self.title.create_pane(size.0, size.1)),
-                (Index::Json, self.json.create_pane(size.0, size.1)),
-            ])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -91,7 +75,7 @@ impl Json {
     pub fn new(stream: JsonStream) -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::default,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -170,8 +154,24 @@ impl Json {
     }
 
     /// Sets the evaluator function for handling events in the JSON preset.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
-        self.evaluator_fn = evaluator;
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
+    }
+
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Json, self.json.create_pane(width, height)),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

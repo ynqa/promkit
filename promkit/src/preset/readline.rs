@@ -12,6 +12,7 @@ use crate::{
         render::{Renderer, SharedRenderer},
         PaneFactory,
     },
+    preset::Evaluator,
     suggest::Suggest,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     widgets::{
@@ -33,8 +34,12 @@ pub enum Index {
     ErrorMessage = 3,
 }
 
-/// Type alias for the evaluator function used in the `Readline` prompt.
-pub type Evaluator = fn(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal>;
+/// Represents the focus state of the readline,
+/// determining which component is currently active for input handling.
+pub enum Focus {
+    Readline,
+    Suggestion,
+}
 
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
@@ -44,7 +49,9 @@ pub struct Readline {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
-    pub evaluator_fn: Evaluator,
+    pub evaluator: Evaluator<Self>,
+    /// Holds the focus state for event handling, determining which component is currently focused.
+    pub focus: Focus,
     /// Holds a title's renderer state, used for rendering the title section.
     pub title: text::State,
     /// Holds a text editor's renderer state, used for rendering the text input area.
@@ -63,7 +70,8 @@ impl Default for Readline {
     fn default() -> Self {
         Self {
             renderer: None,
-            evaluator_fn: evaluate::readline,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
+            focus: Focus::Readline,
             title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
@@ -121,12 +129,6 @@ impl Default for Readline {
 
 #[async_trait::async_trait]
 impl crate::Prompt for Readline {
-    type Index = Index;
-
-    fn renderer(&self) -> SharedRenderer<Self::Index> {
-        self.renderer.clone().unwrap()
-    }
-
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
@@ -151,25 +153,9 @@ impl crate::Prompt for Readline {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let ret = (self.evaluator_fn)(event, self);
+        let ret = (self.evaluator)(event, self).await;
         let size = crossterm::terminal::size()?;
-        self.renderer
-            .as_ref()
-            .unwrap()
-            .update([
-                (Index::Title, self.title.create_pane(size.0, size.1)),
-                (Index::Readline, self.readline.create_pane(size.0, size.1)),
-                (
-                    Index::Suggestion,
-                    self.suggestions.create_pane(size.0, size.1),
-                ),
-                (
-                    Index::ErrorMessage,
-                    self.error_message.create_pane(size.0, size.1),
-                ),
-            ])
-            .render()
-            .await?;
+        self.render(size.0, size.1).await?;
         ret
     }
 
@@ -259,8 +245,8 @@ impl Readline {
     }
 
     /// Sets the function to evaluate the input, allowing for custom evaluation logic.
-    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
-        self.evaluator_fn = evaluator;
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
     }
 
@@ -272,5 +258,29 @@ impl Readline {
     ) -> Self {
         self.validator = Some(ValidatorManager::new(validator, error_message_generator));
         self
+    }
+
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Readline, self.readline.create_pane(width, height)),
+                        (
+                            Index::Suggestion,
+                            self.suggestions.create_pane(width, height),
+                        ),
+                        (
+                            Index::ErrorMessage,
+                            self.error_message.create_pane(width, height),
+                        ),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

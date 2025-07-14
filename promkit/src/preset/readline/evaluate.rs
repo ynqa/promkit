@@ -5,9 +5,42 @@ use crate::{
         event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
         style::ContentStyle,
     },
-    preset::readline::Readline,
+    preset::readline::{Focus, Readline},
     Signal,
 };
+
+pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+    // Handle the common events for both readline and suggestion modes.
+    match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
+        Event::Key(KeyEvent {
+            code: KeyCode::Char('c'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => return Err(anyhow::anyhow!("ctrl+c")),
+
+        _ => {
+            match ctx.focus {
+                Focus::Readline => {
+                    // Handle the readline input events.
+                    return readline(event, ctx).await;
+                }
+                Focus::Suggestion => {
+                    // Handle the suggestion input events.
+                    return suggestion(event, ctx).await;
+                }
+            }
+        }
+    }
+
+    Ok(Signal::Continue)
+}
 
 /// Default key bindings for the text editor.
 ///
@@ -28,8 +61,9 @@ use crate::{
 /// | <kbd>Alt + F</kbd>     | Move the cursor to the next nearest character within set (default: whitespace)
 /// | <kbd>Ctrl + W</kbd>    | Erase to the previous nearest character within set (default: whitespace)
 /// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
-pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
+        // Return the input text when the validation passes.
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
@@ -63,13 +97,8 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
                 }
             };
         }
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('c'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Err(anyhow::anyhow!("ctrl+c")),
 
+        // Try to autocomplete
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
@@ -84,7 +113,8 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
                         .texteditor
                         .replace(&ctx.suggestions.listbox.get().to_string());
 
-                    ctx.evaluator_fn = suggestion;
+                    // Enter suggestion mode.
+                    ctx.focus = Focus::Suggestion;
                 }
             }
         }
@@ -223,15 +253,9 @@ pub fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     Ok(Signal::Continue)
 }
 
-pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
+pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
-        Event::Key(KeyEvent {
-            code: KeyCode::Char('c'),
-            modifiers: KeyModifiers::CONTROL,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => return Err(anyhow::anyhow!("ctrl+c")),
-
+        // Move cursor in the suggestion list.
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
@@ -262,10 +286,11 @@ pub fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
                 .replace(&ctx.suggestions.listbox.get().to_string());
         }
 
+        // Switch back to the readline input.
         _ => {
             ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
 
-            ctx.evaluator_fn = readline;
+            ctx.focus = Focus::Readline;
         }
     }
     Ok(Signal::Continue)

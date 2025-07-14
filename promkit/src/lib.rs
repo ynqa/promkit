@@ -14,14 +14,11 @@ use futures::StreamExt;
 use scopeguard::defer;
 use tokio::sync::Mutex;
 
-use core::{
-    crossterm::{
-        cursor,
-        event::{self, Event, EventStream},
-        execute,
-        terminal::{disable_raw_mode, enable_raw_mode},
-    },
-    render::SharedRenderer,
+use core::crossterm::{
+    cursor,
+    event::{self, Event, EventStream},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
 
 /// Singleton for EventStream. If a new EventStream is created for each Prompt::run,
@@ -49,12 +46,6 @@ pub enum Signal {
 /// are evaluated, and how the final result is produced.
 #[async_trait::async_trait]
 pub trait Prompt {
-    /// The type of index used to identify different components in the prompt.
-    type Index: Ord + Send + Sync + 'static;
-
-    /// Returns a shared renderer for the prompt.
-    fn renderer(&self) -> SharedRenderer<Self::Index>;
-
     /// Initializes the handler, preparing it for use.
     /// This method is called before the prompt starts running.
     ///

@@ -16,8 +16,14 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the cursor up to the previous node
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,

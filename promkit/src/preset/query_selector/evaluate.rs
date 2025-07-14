@@ -5,8 +5,14 @@ use crate::{
     Signal,
 };
 
-pub fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
