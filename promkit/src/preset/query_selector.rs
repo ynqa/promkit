@@ -1,37 +1,128 @@
 //! Facilitates querying and selecting from a set of options in a structured format.
 
-use std::{cell::RefCell, fmt::Display};
-
-use promkit_widgets::{
-    listbox::{self, Listbox},
-    text::{self, Text},
-    text_editor::{self, Mode},
-};
+use std::fmt::Display;
 
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    snapshot::Snapshot,
-    switch::ActiveKeySwitcher,
-    Prompt,
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    widgets::{
+        listbox::{self, Listbox},
+        text::{self, Text},
+        text_editor::{self, Mode},
+    },
+    Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+/// Represents the indices of various components in the query selector preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Title = 0,
+    Readline = 1,
+    List = 2,
+}
+
+/// Type alias for the evaluator function used in the `QuerySelector` prompt.
+pub type Evaluator = fn(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal>;
+
+/// Used to process and filter a list of options
+/// based on the input text in the `QuerySelector` component.
+pub type Filter = fn(&str, &Vec<String>) -> Vec<String>;
 
 /// Represents a query selection component that combines a text editor
 /// for input and a list box
 /// for displaying filtered options based on the input.
 pub struct QuerySelector {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator_fn: Evaluator,
     /// State for the title displayed above the query selection.
-    title_state: text::State,
+    pub title: text::State,
     /// State for the text editor component.
-    text_editor_state: text_editor::State,
+    pub readline: text_editor::State,
+    /// Initial state for the list box component.
+    pub init_list: Listbox,
     /// State for the list box component.
-    listbox_state: listbox::State,
+    pub list: listbox::State,
     /// A filter function to apply to the list box items
     /// based on the text editor input.
-    filter: render::Filter,
+    pub filter: Filter,
+}
+
+#[async_trait::async_trait]
+impl crate::Prompt for QuerySelector {
+    type Index = Index;
+
+    fn renderer(&self) -> SharedRenderer<Self::Index> {
+        self.renderer.clone().unwrap()
+    }
+
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Readline, self.readline.create_pane(size.0, size.1)),
+                    (Index::List, self.list.create_pane(size.0, size.1)),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        // Store the previous text in the readline before evaluating the event.
+        let prev = self.readline.texteditor.text_without_cursor().to_string();
+
+        let ret = (self.evaluator_fn)(event, self);
+
+        // If the text in the readline has changed, we need to filter the list.
+        if prev != self.readline.texteditor.text_without_cursor().to_string() {
+            let query = self.readline.texteditor.text_without_cursor().to_string();
+            let list = (self.filter)(
+                &query,
+                &self
+                    .init_list
+                    .items()
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect(),
+            );
+            self.list.listbox = Listbox::from_displayable(list);
+        }
+
+        // Update the renderer with the new state of the components.
+        let size = crossterm::terminal::size()?;
+        self.renderer
+            .as_ref()
+            .unwrap()
+            .update([
+                (Index::Title, self.title.create_pane(size.0, size.1)),
+                (Index::Readline, self.readline.create_pane(size.0, size.1)),
+                (Index::List, self.list.create_pane(size.0, size.1)),
+            ])
+            .render()
+            .await?;
+        ret
+    }
+
+    type Return = String;
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        Ok(self.list.listbox.get().to_string())
+    }
 }
 
 impl QuerySelector {
@@ -45,20 +136,23 @@ impl QuerySelector {
     /// * `filter` - A function that takes the current input
     ///   from the text editor and the list of items,
     ///   returning a filtered list of items to display.
-    pub fn new<T, I>(items: I, filter: render::Filter) -> Self
+    pub fn new<T, I>(items: I, filter: Filter) -> Self
     where
         T: Display,
         I: IntoIterator<Item = T>,
     {
+        let listbox = Listbox::from_displayable(items);
         Self {
-            title_state: text::State {
+            renderer: None,
+            evaluator_fn: evaluate::default,
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            text_editor_state: text_editor::State {
+            readline: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
                 prefix: String::from("❯❯ "),
@@ -76,8 +170,9 @@ impl QuerySelector {
                 word_break_chars: Default::default(),
                 lines: Default::default(),
             },
-            listbox_state: listbox::State {
-                listbox: Listbox::from_displayable(items),
+            init_list: listbox.clone(),
+            list: listbox::State {
+                listbox,
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
                     foreground_color: Some(Color::DarkCyan),
@@ -86,100 +181,85 @@ impl QuerySelector {
                 inactive_item_style: Some(ContentStyle::default()),
                 lines: Default::default(),
             },
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
             filter,
         }
     }
 
     /// Sets the title text displayed above the query selection.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = Text::from(text);
+        self.title.text = Text::from(text);
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_state.style = style;
+        self.title.style = style;
         self
     }
 
     /// Sets the prefix string displayed before the input text in the text editor component.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.text_editor_state.prefix = prefix.as_ref().to_string();
+        self.readline.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the style for the prefix string in the text editor component.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.prefix_style = style;
+        self.readline.prefix_style = style;
         self
     }
 
     /// Sets the style for the active character (the character at the cursor position) in the text editor component.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.active_char_style = style;
+        self.readline.active_char_style = style;
         self
     }
 
     /// Sets the style for inactive characters (characters not at the cursor position) in the text editor component.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.inactive_char_style = style;
+        self.readline.inactive_char_style = style;
         self
     }
 
     /// Sets the editing mode for the text editor component.
     pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.text_editor_state.edit_mode = mode;
+        self.readline.edit_mode = mode;
         self
     }
 
     /// Sets the number of lines available for the text editor component.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.text_editor_state.lines = Some(lines);
+        self.readline.lines = Some(lines);
         self
     }
 
     /// Sets the cursor symbol used in the list box component.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.listbox_state.cursor = cursor.as_ref().to_string();
+        self.list.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items in the list box component.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.active_item_style = Some(style);
+        self.list.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items in the list box component.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.inactive_item_style = Some(style);
+        self.list.inactive_item_style = Some(style);
         self
     }
 
     /// Sets the number of lines available for the list box component.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
-        self.listbox_state.lines = Some(lines);
+        self.list.lines = Some(lines);
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    /// Sets the evaluator function for the text prompt.
+    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
+        self.evaluator_fn = evaluator;
         self
-    }
-
-    /// Displays the query select prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result,
-    /// which is the selected option.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
-                listbox_snapshot: Snapshot::<listbox::State>::new(self.listbox_state),
-                filter: self.filter,
-            },
-        })
     }
 }

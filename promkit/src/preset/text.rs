@@ -1,24 +1,82 @@
 //! Provides a static text display.
 
-use std::cell::RefCell;
+use crate::{
+    core::{
+        crossterm::{self, event::Event, style::ContentStyle},
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    widgets::text,
+    Signal,
+};
 
-use promkit_widgets::text;
+pub mod evaluate;
 
-use crate::{crossterm::style::ContentStyle, switch::ActiveKeySwitcher, Prompt};
+/// Represents the indices of various components in the text preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Text = 0,
+}
 
-pub mod keymap;
-pub mod render;
+/// Type alias for the evaluator function used in the `Text` prompt.
+pub type Evaluator = fn(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal>;
 
+/// Represents a text component for displaying static text in a prompt.
 pub struct Text {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
-    text_state: text::State,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator_fn: Evaluator,
+    /// Text state containing the text to be displayed.
+    pub text: text::State,
+}
+
+#[async_trait::async_trait]
+impl crate::Prompt for Text {
+    type Index = Index;
+
+    fn renderer(&self) -> SharedRenderer<Self::Index> {
+        self.renderer.clone().unwrap()
+    }
+
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [(Index::Text, self.text.create_pane(size.0, size.1))],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        let ret = (self.evaluator_fn)(event, self);
+        let size = crossterm::terminal::size()?;
+        self.renderer
+            .as_ref()
+            .unwrap()
+            .update([(Index::Text, self.text.create_pane(size.0, size.1))])
+            .render()
+            .await?;
+        ret
+    }
+
+    type Return = ();
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        Ok(())
+    }
 }
 
 impl Text {
+    /// Creates a new `Text` instance with the provided text.
     pub fn new<T: AsRef<str>>(text: T) -> Self {
         Self {
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            text_state: text::State {
+            renderer: None,
+            evaluator_fn: evaluate::default,
+            text: text::State {
                 text: text::Text::from(text),
                 style: Default::default(),
                 lines: None,
@@ -26,17 +84,15 @@ impl Text {
         }
     }
 
+    /// Sets the style for the text component.
     pub fn style(mut self, style: ContentStyle) -> Self {
-        self.text_state.style = style;
+        self.text.style = style;
         self
     }
 
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                text_state: self.text_state,
-            },
-        })
+    /// Sets the evaluator function for the text prompt.
+    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
+        self.evaluator_fn = evaluator;
+        self
     }
 }

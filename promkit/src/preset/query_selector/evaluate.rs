@@ -1,29 +1,18 @@
-use promkit_widgets::text_editor;
-
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    preset, PromptSignal,
+    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    preset::query_selector::QuerySelector,
+    widgets::text_editor,
+    Signal,
 };
 
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::query_selector::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
-
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::query_selector::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
-    let text_editor_after_mut = renderer.text_editor_snapshot.after_mut();
-    let listbox_after_mut = renderer.listbox_snapshot.after_mut();
-
+pub fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -38,7 +27,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            text_editor_after_mut.texteditor.backward();
+            ctx.readline.texteditor.backward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Right,
@@ -46,20 +35,20 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            text_editor_after_mut.texteditor.forward();
+            ctx.readline.texteditor.forward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Char('a'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => text_editor_after_mut.texteditor.move_to_head(),
+        }) => ctx.readline.texteditor.move_to_head(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('e'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => text_editor_after_mut.texteditor.move_to_tail(),
+        }) => ctx.readline.texteditor.move_to_tail(),
 
         // Erase char(s).
         Event::Key(KeyEvent {
@@ -67,13 +56,13 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => text_editor_after_mut.texteditor.erase(),
+        }) => ctx.readline.texteditor.erase(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('u'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => text_editor_after_mut.texteditor.erase_all(),
+        }) => ctx.readline.texteditor.erase_all(),
 
         // Move cursor.
         Event::Key(KeyEvent {
@@ -82,7 +71,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            listbox_after_mut.listbox.backward();
+            ctx.list.listbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -91,7 +80,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            listbox_after_mut.listbox.forward();
+            ctx.list.listbox.forward();
         }
 
         // Input char.
@@ -106,12 +95,12 @@ pub fn default(
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match text_editor_after_mut.edit_mode {
-            text_editor::Mode::Insert => text_editor_after_mut.texteditor.insert(*ch),
-            text_editor::Mode::Overwrite => text_editor_after_mut.texteditor.overwrite(*ch),
+        }) => match ctx.readline.edit_mode {
+            text_editor::Mode::Insert => ctx.readline.texteditor.insert(*ch),
+            text_editor::Mode::Overwrite => ctx.readline.texteditor.overwrite(*ch),
         },
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

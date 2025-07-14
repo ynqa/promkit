@@ -1,39 +1,105 @@
 //! Enables parsing and interaction with JSON data.
 
-use std::cell::RefCell;
-
-use promkit_widgets::{
-    jsonstream::{self, format::RowFormatter, JsonStream},
-    text::{self, Text},
-};
-
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    switch::ActiveKeySwitcher,
-    Prompt,
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    widgets::{
+        jsonstream::{self, format::RowFormatter, JsonStream},
+        text::{self, Text},
+    },
+    Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+/// Represents the indices of various components in the JSON preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Title = 0,
+    Json = 1,
+}
+
+/// Type alias for the evaluator function used in the JSON preset.
+pub type Evaluator = fn(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal>;
 
 /// Represents a JSON preset for rendering JSON data and titles with customizable styles.
 pub struct Json {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
-    title_state: text::State,
-    json_state: jsonstream::State,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator_fn: Evaluator,
+    /// State for the title text.
+    pub title: text::State,
+    /// State for the JSON data, including formatting and rendering options.
+    pub json: jsonstream::State,
+}
+
+#[async_trait::async_trait]
+impl crate::Prompt for Json {
+    type Index = Index;
+
+    fn renderer(&self) -> SharedRenderer<Self::Index> {
+        self.renderer.clone().unwrap()
+    }
+
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Json, self.json.create_pane(size.0, size.1)),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        let ret = (self.evaluator_fn)(event, self);
+        let size = crossterm::terminal::size()?;
+        self.renderer
+            .as_ref()
+            .unwrap()
+            .update([
+                (Index::Title, self.title.create_pane(size.0, size.1)),
+                (Index::Json, self.json.create_pane(size.0, size.1)),
+            ])
+            .render()
+            .await?;
+        ret
+    }
+
+    type Return = ();
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        Ok(())
+    }
 }
 
 impl Json {
+    /// Creates a new JSON preset with the provided JSON stream.
     pub fn new(stream: JsonStream) -> Self {
         Self {
-            title_state: text::State {
+            renderer: None,
+            evaluator_fn: evaluate::default,
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            json_state: jsonstream::State {
+            json: jsonstream::State {
                 stream,
                 formatter: RowFormatter {
                     curly_brackets_style: ContentStyle {
@@ -64,59 +130,48 @@ impl Json {
                 },
                 lines: Default::default(),
             },
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
     /// Sets the title text for the JSON preset.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = Text::from(text);
+        self.title.text = Text::from(text);
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_state.style = style;
+        self.title.style = style;
         self
     }
 
     /// Sets the number of lines to be used for rendering the JSON data.
     pub fn json_lines(mut self, lines: usize) -> Self {
-        self.json_state.lines = Some(lines);
+        self.json.lines = Some(lines);
         self
     }
 
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.json_state.formatter.indent = indent;
+        self.json.formatter.indent = indent;
         self
     }
 
     /// Sets the attribute for active (currently selected) items.
     pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.formatter.active_item_attribute = attr;
+        self.json.formatter.active_item_attribute = attr;
         self
     }
 
     /// Sets the attribute for inactive (not currently selected) items.
     pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json_state.formatter.inactive_item_attribute = attr;
+        self.json.formatter.inactive_item_attribute = attr;
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    /// Sets the evaluator function for handling events in the JSON preset.
+    pub fn evaluator(mut self, evaluator: Evaluator) -> Self {
+        self.evaluator_fn = evaluator;
         self
-    }
-
-    /// Creates a prompt based on the current configuration of the `Json` instance.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                json_state: self.json_state,
-            },
-        })
     }
 }

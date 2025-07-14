@@ -1,12 +1,14 @@
 use promkit::{
     preset::json::Json,
-    promkit_widgets::{
+    widgets::{
         jsonstream::JsonStream,
         serde_json::{self, Deserializer},
     },
+    Prompt,
 };
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(
         Deserializer::from_str(
             r#"
@@ -247,7 +249,5 @@ fn main() -> anyhow::Result<()> {
         .iter(),
     );
 
-    let mut p = Json::new(stream).title("JSON viewer").prompt()?;
-    println!("result: {:?}", p.run()?);
-    Ok(())
+    Json::new(stream).title("JSON viewer").run().await
 }

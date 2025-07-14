@@ -1,36 +1,29 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::checkbox::Checkbox,
+    Signal,
 };
 
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::tree::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
-
-/// Default key bindings for the tree.
+/// Default key bindings for the checkbox interface.
 ///
 /// | Key                    | Action
 /// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the tree view
+/// | <kbd>Enter</kbd>       | Exit the interface
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
-/// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::tree::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+/// | <kbd>Space</kbd>       | Toggle the checkbox state for the current item
+pub fn default(event: &Event, ctx: &mut Checkbox) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -45,7 +38,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.tree_state.tree.backward();
+            ctx.checkbox.checkbox.backward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -53,7 +46,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.tree_state.tree.backward();
+            ctx.checkbox.checkbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -62,7 +55,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.tree_state.tree.forward();
+            ctx.checkbox.checkbox.forward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -70,20 +63,17 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.tree_state.tree.forward();
+            ctx.checkbox.checkbox.forward();
         }
 
-        // Fold/Unfold
         Event::Key(KeyEvent {
             code: KeyCode::Char(' '),
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => {
-            renderer.tree_state.tree.toggle();
-        }
+        }) => ctx.checkbox.checkbox.toggle(),
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

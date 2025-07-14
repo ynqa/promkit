@@ -1,36 +1,28 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::listbox::Listbox,
+    Signal,
 };
 
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::json::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
-
-/// Default key bindings for JSON navigation and manipulation.
+/// Default key bindings for the listbox.
 ///
 /// | Key                    | Action
 /// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the JSON viewer
+/// | <kbd>Enter</kbd>       | Exit the listbox
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
-/// | <kbd>↑</kbd>           | Move the cursor up to the previous node
-/// | <kbd>↓</kbd>           | Move the cursor down to the next node
-/// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::json::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+/// | <kbd>↑</kbd>           | Move the selection up
+/// | <kbd>↓</kbd>           | Move the selection down
+pub fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
     match event {
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -51,7 +43,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.up();
+            ctx.listbox.listbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -66,20 +58,10 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.json_state.stream.down();
-        }
-
-        // Fold/Unfold
-        Event::Key(KeyEvent {
-            code: KeyCode::Char(' '),
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        }) => {
-            renderer.json_state.stream.toggle();
+            ctx.listbox.listbox.forward();
         }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

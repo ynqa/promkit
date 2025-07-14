@@ -6,8 +6,9 @@ The core design principle of promkit is the clear separation of the following th
 each implemented in dedicated modules:
 
 - **Event Handlers**: Define behaviors for keyboard inputs (such as when <kbd>Enter</kbd> is pressed)
-  - **promkit**: Responsible for implementing event handlers, combining widgets and handling corresponding events
-  - In the future, there is potential to further separate event handlers to improve customizability.
+  - **promkit**: Responsible for implementing [Prompt](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html) trait, combining widgets and handling corresponding events
+  - The new async `Prompt` trait provides `initialize`, `evaluate`, and `finalize` methods for complete lifecycle management
+  - Event processing is now handled through a singleton `EventStream` for asynchronous event handling
 
 - **State Updates**: Managing and updating the internal state of widgets
   - **promkit-widgets**: Responsible for state management of various widgets and pane generation
@@ -24,8 +25,10 @@ each implemented in dedicated modules:
 >   - navigating the list vs. recalling input history
 
 - **Rendering**: Processing to visually display the generated panes
-  - **promkit-core**: Responsible for basic terminal operations
-  - [Terminal](https://docs.rs/promkit_core/0.1.1/terminal/struct.Terminal.html) handles rendering
+  - **promkit-core**: Responsible for basic terminal operations and concurrent rendering
+  - [SharedRenderer](https://docs.rs/promkit-core/0.2.0/promkit_core/render/type.SharedRenderer.html) (`Arc<Renderer<K>>`) provides thread-safe rendering with `SkipMap` for efficient pane management
+  - Components now actively trigger rendering (Push-based) rather than being rendered by the event loop
+  - [Terminal](https://docs.rs/promkit_core/0.1.1/terminal/struct.Terminal.html) handles rendering with `Mutex` for concurrent access
     - Currently uses full rendering with plans to implement differential rendering in the future.
   - [Pane](https://docs.rs/promkit_core/0.1.1/pane/struct.Pane.html)
   defines the data structures for rendering
@@ -36,78 +39,67 @@ making customization and extension easier.
 ### Event-Loop
 
 These three functions collectively form the core of "event-loop" logic.
-Here is the important part of the actual event-loop from
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run):
+Here is the important part of the actual event-loop from the async
+[Prompt::run](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#method.run):
 
 ```rust
-// Core part of event-loop
-loop {
-    // Read events
-    let ev = event::read()?;
+// Initialize the prompt state
+self.initialize().await?;
 
-    // Evaluate events and update state
-    if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
-        // Exit processing
-        break;
+// Start the event loop
+while let Some(event) = EVENT_STREAM.lock().await.next().await {
+    match event {
+        Ok(event) => {
+            // Evaluate the event and update state
+            if self.evaluate(&event).await? == Signal::Quit {
+                break;
+            }
+        }
+        Err(e) => {
+            eprintln!("Error reading event: {}", e);
+            break;
+        }
     }
-
-    // Render based on the latest state
-    let size = crossterm::terminal::size()?;
-    terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
 }
+
+// Finalize the prompt and return the result
+self.finalize()
 ```
 
 As a diagram:
 
 ```mermaid
 flowchart LR
+    Initialize[Initilaize] --> A
     subgraph promkit["promkit: event-loop"]
         direction LR
-        A[User Input] --> L[Determine behavior that matches key event]
+        A[Observe user input] --> B
+        B[Interpret as crossterm event] --> C
 
-        subgraph B_event["promkit: event-handler"]
+        subgraph presets["promkit: presets"]
             direction LR
-            L[Determine behavior that matches key event] --> D[Request: update state]
+            C[Run operations corresponding to the observed events] --> D[Update state]
+
+            subgraph widgets["promkit-widgets"]
+                direction LR
+                D[Update state] --> |if needed| Y[Generate panes]
+            end
+
+            Y --> Z[Render widgets]
+            D --> E{Evaluate}
         end
 
-        D --> F[Update state]
-
-        subgraph update_state["promkit-widgets"]
-            direction LR
-            F[Update state]
-        end
-
-        F --> C{Evaluate}
-        C -->|Continue| G[Request: generate pane for rendering]
-        G[Request: generate pane for rendering] --> output_pane
-        
-        subgraph gen_pane["promkit-widgets"]
-            direction LR
-            output_pane[Generate pane for rendering]
-        end
-
-        subgraph promkit_core["promkit-core"]
-            direction LR
-            output_pane --> H[Rendering]
-        end
-
-        H --> A
+        E -->|Continue| A
     end
 
-    C -->|Break out of loop| E[Exit]
+    E -->|Quit| Finalize[Finalize]
 ```
 
-In the current implementation of promkit, event handling is centralized.
-That is, all events are processed sequentially within
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run)
-and propagated to each widget through
-[Renderer.evaluate](https://docs.rs/promkit/0.9.1/promkit/trait.Renderer.html#tymethod.evaluate).
-
-> [!NOTE]
-> The current implementation of
-> [Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run)
-> is provisional. In the future,
-> we plan to introduce more flexible event processing and rendering mechanisms.
+In the current implementation of promkit, event handling is centralized and async.
+All events are processed sequentially within the async
+[Prompt::run](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#method.run)
+method and propagated to each implementation through the
+[Prompt::evaluate](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#tymethod.evaluate) method.
 
 ## Customizability
 
@@ -170,44 +162,40 @@ trait for your data structure, you can use it like other standard widgets.
 e.g. https://github.com/ynqa/empiriqa/blob/v0.1.0/src/queue.rs
 
 2. **Defining custom presets**: By combining multiple widgets and implementing your own event handlers, 
-you can create completely customized presets. In that case, you need to implement
-[Renderer](https://docs.rs/promkit/0.9.1/promkit/trait.Renderer.html) trait.
+you can create completely customized presets. In that case, you need to implement the async
+[Prompt](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html) trait.
 
-This allows you to leave event-loop logic to promkit (i.e., you can execute
-[Prompt<T: Renderer>::run](https://docs.rs/promkit/0.9.1/promkit/struct.Prompt.html#method.run))
-while implementing your own rendering logic and event handling.
-
-3. **Customizing Event-Loop**: One of the important features of promkit is the clear separation
-between widgets (UI elements) and renderer (rendering logic). This separation allows users to flexibly
-control how the two interact.
-
-For example, [jnv](https://github.com/ynqa/jnv) project implements its own Renderer to allow 
-widgets to directly control rendering (excerpt below):
+This allows you to leave event-loop logic to promkit (i.e., you can execute the async
+[Prompt::run](https://docs.rs/promkit/0.10.0/promkit/trait.Prompt.html#method.run))
+while implementing your own rendering logic and event handling with full async support.
 
 ```rust
-// Implementation example in jnv
-pub struct Renderer {
-    terminal: Terminal,
-    panes: [Pane; PANE_SIZE],
-}
+// Example of implementing the new Prompt trait
+#[async_trait::async_trait]
+impl Prompt for MyCustomPrompt {
+    type Index = MyIndex;
+    type Return = MyResult;
 
-impl Renderer {
-    pub fn update_and_draw<I: IntoIterator<Item = (PaneIndex, Pane)>>(
-        &mut self,
-        iter: I,
-    ) -> anyhow::Result<()> {
-        for (index, pane) in iter {
-            self.panes[index as usize] = pane;
+    fn renderer(&self) -> SharedRenderer<Self::Index> {
+        self.renderer.clone()
+    }
+
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        // Initialize your prompt state
+        self.renderer.render().await
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        // Handle events and update state
+        match event {
+            // Your event handling logic
+            _ => Ok(Signal::Continue),
         }
-        self.terminal.draw(&self.panes)?;
-        Ok(())
+    }
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        // Produce final result
+        Ok(self.result.clone())
     }
 }
 ```
-
-With this approach, widgets can hold an instance of `Renderer` directly and actively request 
-rendering by calling `update_and_draw` method when their state is updated.
-
-In the future, we plan to extend promkit to allow users to more intuitively and flexibly compose 
-their own event-loop logic. This will make it easier to customize according to the characteristics 
-and requirements of each application, aiming to accommodate a wider range of use cases.

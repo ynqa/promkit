@@ -2,23 +2,17 @@
 
 use crate::Prompt;
 
-use crate::preset::readline::{render, Readline};
+use crate::preset::readline::Readline;
 
 /// A wrapper around `Readline` for creating simple yes/no confirmation prompts.
 pub struct Confirm(Readline);
 
 impl Confirm {
-    /// Creates a new `Confirm` instance with a specified prompt text.
-    /// The prompt text is formatted
-    /// to include "(y/n)" to indicate the expected input.
-    ///
-    /// # Arguments
-    ///
-    /// * `text` - The text to display as part of the confirmation prompt.
-    pub fn new<T: AsRef<str>>(text: T) -> Self {
+    /// Creates a new `Confirm` prompt with a specified prefix.
+    pub fn new<T: AsRef<str>>(prefix: T) -> Self {
         Self(
             Readline::default()
-                .prefix(format!("{} (y/n) ", text.as_ref()))
+                .prefix(format!("{} (y/n) ", prefix.as_ref()))
                 .validator(
                     |text| -> bool {
                         ["yes", "no", "y", "n", "Y", "N"]
@@ -30,10 +24,8 @@ impl Confirm {
         )
     }
 
-    /// Displays the confirmation prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result,
-    /// which is the user's input.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        self.0.prompt()
+    /// Sets the title text displayed above the confirmation prompt.
+    pub async fn run(&mut self) -> anyhow::Result<String> {
+        self.0.run().await
     }
 }
