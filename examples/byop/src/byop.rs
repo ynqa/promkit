@@ -1,8 +1,14 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
+use anyhow::Result;
 use promkit::{
     async_trait,
-    core::crossterm::{self, style::Color},
+    core::{
+        crossterm::{self, style::Color},
+        grapheme::StyledGraphemes,
+        pane::EMPTY_PANE,
+        Pane,
+    },
     widgets::{
         core::{
             crossterm::{
@@ -12,7 +18,7 @@ use promkit::{
             render::{Renderer, SharedRenderer},
             PaneFactory,
         },
-        spinner, text::{self, Text}, text_editor,
+        spinner, text_editor,
     },
     Prompt, Signal,
 };
@@ -50,7 +56,7 @@ struct BYOP {
     renderer: SharedRenderer<Index>,
     task_state: SharedTaskState,
     readline: text_editor::State,
-    result: text::State,
+    task_handle: Option<tokio::task::JoinHandle<Result<String>>>,
 }
 
 #[async_trait::async_trait]
@@ -70,6 +76,11 @@ impl Prompt for BYOP {
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         let ret = self.readline.texteditor.text_without_cursor().to_string();
+
+        // Clean up any running task
+        if let Some(handle) = &self.task_handle {
+            handle.abort();
+        }
 
         // Reset the text editor state for the next prompt.
         self.readline.texteditor.erase_all();
@@ -96,44 +107,70 @@ impl BYOP {
             ..Default::default()
         };
 
-        let result = text::State::default();
-
         Ok(Self {
             renderer: SharedRenderer::new(
                 Renderer::try_new_with_panes(
-                    [
-                        (Index::Readline, readline.create_pane(size.0, size.1)),
-                        (Index::Result, result.create_pane(size.0, size.1)),
-                    ],
+                    [(Index::Readline, readline.create_pane(size.0, size.1))],
                     true,
                 )
                 .await?,
             ),
             task_state: SharedTaskState(Arc::new(RwLock::new(TaskState::Idle))),
             readline,
-            result,
+            task_handle: None,
         })
     }
 
-    async fn heavy_task(&mut self) -> anyhow::Result<()> {
+    async fn start_heavy_task(&mut self) -> anyhow::Result<()> {
+        // Check if task is already running
+        if *self.task_state.0.read().await == TaskState::Running {
+            return Ok(());
+        }
+
+        // Clear previous result and show spinner
+        self.renderer
+            .update([(Index::Result, EMPTY_PANE.clone())])
+            .render()
+            .await?;
+
+        let input_text = self.readline.texteditor.text_without_cursor().to_string();
+        let task_state = self.task_state.clone();
+        let renderer = self.renderer.clone();
+
         {
-            let mut task_state = self.task_state.0.write().await;
-            *task_state = TaskState::Running;
-        };
+            let mut state = task_state.0.write().await;
+            *state = TaskState::Running;
+        }
 
-        // NOTE: Simulating a heavy task with a sleep.
-        tokio::time::sleep(Duration::from_secs(5)).await;
+        let handle = tokio::spawn(async move {
+            // NOTE: Simulating a heavy task with a sleep.
+            tokio::time::sleep(Duration::from_secs(5)).await;
 
-        // Update the result state after the task is done.
-        self.result.text = Text::from(format!(
-            "result: {}",
-            self.readline.texteditor.text_without_cursor()
-        ));
+            // Set task state to idle
+            {
+                let mut state = task_state.0.write().await;
+                *state = TaskState::Idle;
+            }
 
-        {
-            let mut task_state = self.task_state.0.write().await;
-            *task_state = TaskState::Idle;
-        };
+            // Trigger a render to show the result
+            renderer
+                .update([
+                    (Index::Spinner, EMPTY_PANE.clone()),
+                    (
+                        Index::Result,
+                        Pane::new(
+                            vec![StyledGraphemes::from(format!("result: {}", input_text,))],
+                            0,
+                        ),
+                    ),
+                ])
+                .render()
+                .await?;
+
+            Ok(input_text)
+        });
+
+        self.task_handle = Some(handle);
         Ok(())
     }
 
@@ -144,18 +181,32 @@ impl BYOP {
                 self.render(*width, *height).await?;
             }
 
-            // Run the heavy task.
+            // Handle Enter key based on task state
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
             }) => {
-                self.heavy_task().await?;
-                // For representing the end of the prompt,
-                // reset the style of the cursor to default.
-                self.readline.active_char_style = ContentStyle::default();
-                return Ok(Signal::Quit);
+                let current_state = self.task_state.0.read().await.clone();
+                match current_state {
+                    TaskState::Idle => {
+                        // Start the heavy task in background
+                        self.start_heavy_task().await?;
+                    }
+                    TaskState::Running => {
+                        self.renderer
+                            .update([(
+                                Index::Result,
+                                Pane::new(
+                                    vec![StyledGraphemes::from("Task is currently running...")],
+                                    0,
+                                ),
+                            )])
+                            .render()
+                            .await?;
+                    }
+                }
             }
 
             // Quit
@@ -273,10 +324,7 @@ impl BYOP {
 
     async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
         self.renderer
-            .update([
-                (Index::Readline, self.readline.create_pane(width, height)),
-                (Index::Result, self.result.create_pane(width, height)),
-            ])
+            .update([(Index::Readline, self.readline.create_pane(width, height))])
             .render()
             .await
     }
