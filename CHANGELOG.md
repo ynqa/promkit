@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `evaluate()`: Called for each event, returns `Signal::Continue` or `Signal::Quit`
   - `finalize()`: Called after loop exit to produce the final result
   - Singleton `EVENT_STREAM` prevents cursor position read errors across multiple prompts
+- **Spinner widget**: New widget for displaying spinner animations during async task execution
+  - `spinner::State` trait: Interface for checking idle state asynchronously
+  - `spinner::run` function: Executes frame-based spinner animations
+  - `spinner::frame` module: Provides various spinner frame patterns
+- **BYOP (Build Your Own Preset) example**: Custom prompt implementation example
+  - Integration demo of spinner and text editor
+  - UI state management during async task execution
+  - Task start, completion, and cancellation functionality
 
 ### Changed
 - Migrated to async/await pattern throughout the codebase
@@ -50,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better thread safety with Arc-based renderer sharing
 - More efficient pane management using SkipMap data structure
 - Clearer application lifecycle with distinct phases
+- Better patterns and best practices for async task management
+- Enhanced user experience with spinner animations
 
 ### Technical Details
 - Introduced `Arc<Renderer<K>>` for thread-safe renderer sharing

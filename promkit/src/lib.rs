@@ -1,6 +1,8 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub use anyhow;
+pub use async_trait;
 pub use promkit_widgets as widgets;
 pub use promkit_widgets::core;
 

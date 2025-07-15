@@ -1,0 +1,13 @@
+[package]
+name = "byop"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+promkit = { path = "../../promkit" }
+tokio = { workspace = true }
+
+[[bin]]
+name = "byop"
+path = "src/byop.rs"

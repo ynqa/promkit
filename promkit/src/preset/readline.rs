@@ -25,8 +25,8 @@ use crate::{
 
 pub mod evaluate;
 
+/// Represents the indices of various components in the readline preset.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-/// Represent the indices of various components in the readline preset.
 pub enum Index {
     Title = 0,
     Readline = 1,
@@ -88,7 +88,6 @@ impl Default for Readline {
                     foreground_color: Some(Color::DarkGreen),
                     ..Default::default()
                 },
-
                 active_char_style: ContentStyle {
                     background_color: Some(Color::DarkCyan),
                     ..Default::default()
