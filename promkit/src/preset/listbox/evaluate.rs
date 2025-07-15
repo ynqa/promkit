@@ -1,15 +1,11 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::listbox::Listbox,
+    Signal,
 };
-
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::listbox::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the listbox.
 ///
@@ -19,17 +15,20 @@ pub type Keymap = fn(
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::listbox::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+pub async fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -50,7 +49,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.listbox_state.listbox.backward();
+            ctx.listbox.listbox.backward();
         }
 
         Event::Key(KeyEvent {
@@ -65,10 +64,10 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.listbox_state.listbox.forward();
+            ctx.listbox.listbox.forward();
         }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

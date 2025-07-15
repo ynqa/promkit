@@ -1,56 +1,85 @@
 //! Offers functionality for reading input from the user.
 
-use std::{cell::RefCell, collections::HashSet};
-
-use promkit_widgets::{
-    listbox::{self, Listbox},
-    text::{self, Text},
-    text_editor::{self, History},
-};
+use std::collections::HashSet;
 
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    snapshot::Snapshot,
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    preset::Evaluator,
     suggest::Suggest,
-    switch::ActiveKeySwitcher,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
-    Prompt,
+    widgets::{
+        listbox::{self, Listbox},
+        text::{self, Text},
+        text_editor::{self, History},
+    },
+    Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+/// Represents the indices of various components in the readline preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Title = 0,
+    Readline = 1,
+    Suggestion = 2,
+    ErrorMessage = 3,
+}
+
+/// Represents the focus state of the readline,
+/// determining which component is currently active for input handling.
+pub enum Focus {
+    Readline,
+    Suggestion,
+}
 
 /// `Readline` struct provides functionality
 /// for reading a single line of input from the user.
 /// It supports various configurations
 /// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
-    /// State for the title displayed above the input field.
-    title_state: text::State,
-    /// State for the text editor where user input is entered.
-    text_editor_state: text_editor::State,
-    suggest: Option<Suggest>,
-    suggest_state: listbox::State,
-    /// Optional validator for input validation with custom error messages.
-    validator: Option<ValidatorManager<str>>,
-    /// State for displaying error messages based on input validation.
-    error_message_state: text::State,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator: Evaluator<Self>,
+    /// Holds the focus state for event handling, determining which component is currently focused.
+    pub focus: Focus,
+    /// Holds a title's renderer state, used for rendering the title section.
+    pub title: text::State,
+    /// Holds a text editor's renderer state, used for rendering the text input area.
+    pub readline: text_editor::State,
+    /// Optional suggest component for autocomplete functionality.
+    pub suggest: Option<Suggest>,
+    /// Holds a suggest box's renderer state, used when rendering suggestions for autocomplete.
+    pub suggestions: listbox::State,
+    /// Optional validator manager for input validation.
+    pub validator: Option<ValidatorManager<str>>,
+    /// Holds an error message's renderer state, used for rendering error messages.
+    pub error_message: text::State,
 }
 
 impl Default for Readline {
     fn default() -> Self {
         Self {
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default as keymap::Keymap)
-                .register("on_suggest", self::keymap::on_suggest),
-            title_state: text::State {
+            renderer: None,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
+            focus: Focus::Readline,
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            text_editor_state: text_editor::State {
+            readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
                 prefix: String::from("❯❯ "),
@@ -59,7 +88,6 @@ impl Default for Readline {
                     foreground_color: Some(Color::DarkGreen),
                     ..Default::default()
                 },
-
                 active_char_style: ContentStyle {
                     background_color: Some(Color::DarkCyan),
                     ..Default::default()
@@ -70,7 +98,7 @@ impl Default for Readline {
                 lines: Default::default(),
             },
             suggest: Default::default(),
-            suggest_state: listbox::State {
+            suggestions: listbox::State {
                 listbox: Listbox::from_displayable(Vec::<String>::new()),
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
@@ -85,7 +113,7 @@ impl Default for Readline {
                 lines: Some(3),
             },
             validator: Default::default(),
-            error_message_state: text::State {
+            error_message: text::State {
                 text: Default::default(),
                 style: ContentStyle {
                     foreground_color: Some(Color::DarkRed),
@@ -98,16 +126,60 @@ impl Default for Readline {
     }
 }
 
+#[async_trait::async_trait]
+impl crate::Prompt for Readline {
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Readline, self.readline.create_pane(size.0, size.1)),
+                    (
+                        Index::Suggestion,
+                        self.suggestions.create_pane(size.0, size.1),
+                    ),
+                    (
+                        Index::ErrorMessage,
+                        self.error_message.create_pane(size.0, size.1),
+                    ),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        let ret = (self.evaluator)(event, self).await;
+        let size = crossterm::terminal::size()?;
+        self.render(size.0, size.1).await?;
+        ret
+    }
+
+    type Return = String;
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        let ret = self.readline.texteditor.text_without_cursor().to_string();
+
+        // Reset the text editor state for the next prompt.
+        self.readline.texteditor.erase_all();
+
+        Ok(ret)
+    }
+}
+
 impl Readline {
     /// Sets the title text displayed above the input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = Text::from(text);
+        self.title.text = Text::from(text);
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_state.style = style;
+        self.title.style = style;
         self
     }
 
@@ -119,60 +191,61 @@ impl Readline {
 
     /// Enables history functionality allowing navigation through previous inputs.
     pub fn enable_history(mut self) -> Self {
-        self.text_editor_state.history = Some(History::default());
+        self.readline.history = Some(History::default());
         self
     }
 
     /// Sets the prefix string displayed before the input text.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.text_editor_state.prefix = prefix.as_ref().to_string();
+        self.readline.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the character used for masking input text, typically used for password fields.
     pub fn mask(mut self, mask: char) -> Self {
-        self.text_editor_state.mask = Some(mask);
+        self.readline.mask = Some(mask);
         self
     }
 
     /// Sets the style for the prefix string.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.prefix_style = style;
+        self.readline.prefix_style = style;
         self
     }
 
     /// Sets the style for the currently active character in the input field.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.active_char_style = style;
+        self.readline.active_char_style = style;
         self
     }
 
     /// Sets the style for characters that are not currently active in the input field.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.text_editor_state.inactive_char_style = style;
+        self.readline.inactive_char_style = style;
         self
     }
 
     /// Sets the edit mode for the text editor, either insert or overwrite.
     pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
-        self.text_editor_state.edit_mode = mode;
+        self.readline.edit_mode = mode;
         self
     }
 
     /// Sets the characters to be for word break.
     pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
-        self.text_editor_state.word_break_chars = characters;
+        self.readline.word_break_chars = characters;
         self
     }
 
     /// Sets the number of lines available for rendering the text editor.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.text_editor_state.lines = Some(lines);
+        self.readline.lines = Some(lines);
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    /// Sets the function to evaluate the input, allowing for custom evaluation logic.
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
     }
 
@@ -186,19 +259,27 @@ impl Readline {
         self
     }
 
-    /// Initiates the prompt process,
-    /// displaying the configured UI elements and handling user input.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                text_editor_snapshot: Snapshot::<text_editor::State>::new(self.text_editor_state),
-                suggest: self.suggest,
-                suggest_snapshot: Snapshot::<listbox::State>::new(self.suggest_state),
-                validator: self.validator,
-                error_message_snapshot: Snapshot::<text::State>::new(self.error_message_state),
-            },
-        })
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Readline, self.readline.create_pane(width, height)),
+                        (
+                            Index::Suggestion,
+                            self.suggestions.create_pane(width, height),
+                        ),
+                        (
+                            Index::ErrorMessage,
+                            self.error_message.create_pane(width, height),
+                        ),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

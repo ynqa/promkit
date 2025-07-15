@@ -1,36 +1,35 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::json::Json,
+    Signal,
 };
 
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::checkbox::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
-
-/// Default key bindings for the checkbox interface.
+/// Default key bindings for JSON navigation and manipulation.
 ///
 /// | Key                    | Action
 /// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the interface
+/// | <kbd>Enter</kbd>       | Exit the JSON viewer
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
-/// | <kbd>↑</kbd>           | Move the selection up
-/// | <kbd>↓</kbd>           | Move the selection down
-/// | <kbd>Space</kbd>       | Toggle the checkbox state for the current item
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::checkbox::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+/// | <kbd>↑</kbd>           | Move the cursor up to the previous node
+/// | <kbd>↓</kbd>           | Move the cursor down to the next node
+/// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
+pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -44,16 +43,14 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => {
-            renderer.checkbox_state.checkbox.backward();
-        }
-        Event::Mouse(MouseEvent {
+        })
+        | Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
             column: _,
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.backward();
+            ctx.json.stream.up();
         }
 
         Event::Key(KeyEvent {
@@ -61,26 +58,27 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => {
-            renderer.checkbox_state.checkbox.forward();
-        }
-        Event::Mouse(MouseEvent {
+        })
+        | Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
             column: _,
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.checkbox_state.checkbox.forward();
+            ctx.json.stream.down();
         }
 
+        // Fold/Unfold
         Event::Key(KeyEvent {
             code: KeyCode::Char(' '),
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.checkbox_state.checkbox.toggle(),
+        }) => {
+            ctx.json.stream.toggle();
+        }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

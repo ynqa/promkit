@@ -1,48 +1,90 @@
 //! Supports creating and interacting with a tree structure for hierarchical data.
 
-use std::cell::RefCell;
-
-use promkit_widgets::{
-    text::{self, Text},
-    tree::{self, node::Node},
-};
-
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    switch::ActiveKeySwitcher,
-    Prompt,
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    preset::Evaluator,
+    widgets::{
+        text::{self, Text},
+        tree::{self, node::Node},
+    },
+    Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+/// Represents the indices of various components in the tree preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Title = 0,
+    Tree = 1,
+}
 
 /// Represents a tree component for creating
 /// and managing a hierarchical list of options.
 pub struct Tree {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator: Evaluator<Self>,
     /// State for the title displayed above the tree.
-    title_state: text::State,
+    pub title: text::State,
     /// State for the tree itself.
-    tree_state: tree::State,
+    pub tree: tree::State,
+}
+
+#[async_trait::async_trait]
+impl crate::Prompt for Tree {
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Tree, self.tree.create_pane(size.0, size.1)),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        let ret = (self.evaluator)(event, self).await;
+        let size = crossterm::terminal::size()?;
+        self.render(size.0, size.1).await?;
+        ret
+    }
+
+    type Return = Vec<String>;
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        Ok(self.tree.tree.get())
+    }
 }
 
 impl Tree {
-    /// Constructs a new `Tree` instance with a specified root node.
-    ///
-    /// # Arguments
-    ///
-    /// * `root` - The root node of the tree.
+    /// Creates a new `Tree` instance with the specified root node.
     pub fn new(root: Node) -> Self {
         Self {
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
-            title_state: text::State {
+            renderer: None,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            tree_state: tree::State {
+            tree: tree::State {
                 tree: tree::Tree::new(root),
                 folded_symbol: String::from("▶︎ "),
                 unfolded_symbol: String::from("▼ "),
@@ -59,67 +101,71 @@ impl Tree {
 
     /// Sets the title text displayed above the tree.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = Text::from(text);
+        self.title.text = Text::from(text);
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_state.style = style;
+        self.title.style = style;
         self
     }
 
     /// Sets the symbol used to indicate a folded (collapsed) node.
     pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree_state.folded_symbol = symbol.as_ref().to_string();
+        self.tree.folded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the symbol used to indicate an unfolded (expanded) node.
     pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree_state.unfolded_symbol = symbol.as_ref().to_string();
+        self.tree.unfolded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree_state.active_item_style = style;
+        self.tree.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree_state.inactive_item_style = style;
+        self.tree.inactive_item_style = style;
         self
     }
 
     /// Sets the number of lines to be used for displaying the tree.
     pub fn tree_lines(mut self, lines: usize) -> Self {
-        self.tree_state.lines = Some(lines);
+        self.tree.lines = Some(lines);
         self
     }
 
     /// Sets the indentation level for rendering the tree data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.tree_state.indent = indent;
+        self.tree.indent = indent;
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    /// Sets the evaluator function for processing events in the tree.
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
     }
 
-    /// Displays the tree prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result,
-    /// which is a list of selected options.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                tree_state: self.tree_state,
-            },
-        })
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Tree, self.tree.create_pane(width, height)),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

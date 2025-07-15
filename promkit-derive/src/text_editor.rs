@@ -5,22 +5,22 @@ use syn::{parse::Error, punctuated::Punctuated, spanned::Spanned, Meta, MetaName
 pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
     let mut prefix = quote! { String::from("❯❯ ") };
     let mut prefix_style = quote! {
-        promkit::crossterm::style::ContentStyle {
-            attributes: promkit::crossterm::style::Attributes::from(promkit::crossterm::style::Attribute::Bold),
+        promkit::core::crossterm::style::ContentStyle {
+            attributes: promkit::core::crossterm::style::Attributes::from(promkit::core::crossterm::style::Attribute::Bold),
             ..Default::default()
         }
     };
     let mut active_char_style = quote! {
-        promkit::crossterm::style::ContentStyle {
-            background_color: Some(promkit::crossterm::style::Color::DarkCyan),
+        promkit::core::crossterm::style::ContentStyle {
+            background_color: Some(promkit::core::crossterm::style::Color::DarkCyan),
             ..Default::default()
         }
     };
     let mut inactive_char_style = quote! {
-        promkit::crossterm::style::ContentStyle::default()
+        promkit::core::crossterm::style::ContentStyle::default()
     };
     let mut mask = quote! { None::<char> };
-    let mut edit_mode = quote! { promkit::promkit_widgets::text_editor::Mode::default() };
+    let mut edit_mode = quote! { promkit::widgets::text_editor::Mode::default() };
     let mut word_break_chars = quote! { std::collections::HashSet::from([' ']) };
 
     match &attr.meta {
@@ -84,7 +84,7 @@ pub fn create_state(attr: &syn::Attribute) -> Result<TokenStream, Error> {
     };
 
     Ok(quote! {
-        promkit::promkit_widgets::text_editor::State {
+        promkit::widgets::text_editor::State {
             texteditor: Default::default(),
             history: Default::default(),
             prefix: #prefix,

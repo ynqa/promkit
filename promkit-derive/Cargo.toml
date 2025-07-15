@@ -1,6 +1,6 @@
 [package]
 name = "promkit-derive"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A derive macro for promkit"
@@ -15,4 +15,7 @@ proc-macro = true
 syn = { version = "2.0.52", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
-promkit = { path = "../promkit", version = "=0.9.1", features = ["form"] }
+promkit = { path = "../promkit", version = "=0.10.0", features = ["form"] }
+
+[dev-dependencies]
+tokio = { workspace = true }

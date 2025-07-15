@@ -1,15 +1,11 @@
 use crate::{
-    crossterm::event::{
+    core::crossterm::event::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset, PromptSignal,
+    preset::tree::Tree,
+    Signal,
 };
-
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::tree::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
 
 /// Default key bindings for the tree.
 ///
@@ -20,17 +16,20 @@ pub type Keymap = fn(
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::tree::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
+pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -45,7 +44,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.tree_state.tree.backward();
+            ctx.tree.tree.backward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -53,7 +52,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.tree_state.tree.backward();
+            ctx.tree.tree.backward();
         }
 
         Event::Key(KeyEvent {
@@ -62,7 +61,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.tree_state.tree.forward();
+            ctx.tree.tree.forward();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -70,7 +69,7 @@ pub fn default(
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            renderer.tree_state.tree.forward();
+            ctx.tree.tree.forward();
         }
 
         // Fold/Unfold
@@ -80,10 +79,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.tree_state.tree.toggle();
+            ctx.tree.tree.toggle();
         }
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

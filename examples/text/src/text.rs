@@ -1,8 +1,9 @@
-use promkit::preset::text::Text;
+use promkit::{preset::text::Text, Prompt};
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     Text::new(std::fs::read_to_string("Cargo.toml")?)
-        .prompt()?
-        .run()?;
+        .run()
+        .await?;
     Ok(())
 }

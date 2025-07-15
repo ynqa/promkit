@@ -1,9 +1,11 @@
-use promkit::preset::listbox::Listbox;
+use promkit::{preset::listbox::Listbox, Prompt};
 
-fn main() -> anyhow::Result<()> {
-    let mut p = Listbox::new(0..100)
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let ret = Listbox::new(0..100)
         .title("What number do you like?")
-        .prompt()?;
-    println!("result: {:?}", p.run()?);
+        .run()
+        .await?;
+    println!("result: {:?}", ret);
     Ok(())
 }

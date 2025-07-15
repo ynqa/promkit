@@ -1,28 +1,75 @@
 //! Implements a list box for single or multiple selections from a list.
 
-use std::{cell::RefCell, fmt::Display};
-
-use promkit_widgets::{
-    listbox,
-    text::{self, Text},
-};
+use std::fmt::Display;
 
 use crate::{
-    crossterm::style::{Attribute, Attributes, Color, ContentStyle},
-    switch::ActiveKeySwitcher,
-    Prompt,
+    core::{
+        crossterm::{
+            self,
+            event::Event,
+            style::{Attribute, Attributes, Color, ContentStyle},
+        },
+        render::{Renderer, SharedRenderer},
+        PaneFactory,
+    },
+    preset::Evaluator,
+    widgets::{
+        listbox,
+        text::{self, Text},
+    },
+    Signal,
 };
 
-pub mod keymap;
-pub mod render;
+pub mod evaluate;
+
+/// Represents the indices of various components in the listbox preset.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+pub enum Index {
+    Title = 0,
+    Listbox = 1,
+}
 
 /// A component for creating and managing a selectable list of options.
 pub struct Listbox {
-    keymap: ActiveKeySwitcher<keymap::Keymap>,
+    /// Shared renderer for the prompt, allowing for rendering of UI components.
+    pub renderer: Option<SharedRenderer<Index>>,
+    /// Function to evaluate the input events and update the state of the prompt.
+    pub evaluator: Evaluator<Self>,
     /// State for the title displayed above the selectable list.
-    title_state: text::State,
+    pub title: text::State,
     /// State for the selectable list itself.
-    listbox_state: listbox::State,
+    pub listbox: listbox::State,
+}
+
+#[async_trait::async_trait]
+impl crate::Prompt for Listbox {
+    async fn initialize(&mut self) -> anyhow::Result<()> {
+        let size = crossterm::terminal::size()?;
+        self.renderer = Some(SharedRenderer::new(
+            Renderer::try_new_with_panes(
+                [
+                    (Index::Title, self.title.create_pane(size.0, size.1)),
+                    (Index::Listbox, self.listbox.create_pane(size.0, size.1)),
+                ],
+                true,
+            )
+            .await?,
+        ));
+        Ok(())
+    }
+
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
+        let ret = (self.evaluator)(event, self).await;
+        let size = crossterm::terminal::size()?;
+        self.render(size.0, size.1).await?;
+        ret
+    }
+
+    type Return = String;
+
+    fn finalize(&mut self) -> anyhow::Result<Self::Return> {
+        Ok(self.listbox.listbox.get().to_string())
+    }
 }
 
 impl Listbox {
@@ -35,14 +82,16 @@ impl Listbox {
     ///   that implement the `Display` trait, to be used as options.
     pub fn new<T: Display, I: IntoIterator<Item = T>>(items: I) -> Self {
         Self {
-            title_state: text::State {
+            renderer: None,
+            evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
+            title: text::State {
                 style: ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            listbox_state: listbox::State {
+            listbox: listbox::State {
                 listbox: listbox::Listbox::from_displayable(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
@@ -52,61 +101,64 @@ impl Listbox {
                 inactive_item_style: Some(ContentStyle::default()),
                 lines: Default::default(),
             },
-            keymap: ActiveKeySwitcher::new("default", self::keymap::default),
         }
     }
 
     /// Sets the title text displayed above the selectable list.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title_state.text = Text::from(text);
+        self.title.text = Text::from(text);
         self
     }
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title_state.style = style;
+        self.title.style = style;
         self
     }
 
     /// Sets the cursor symbol used to indicate the current selection.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.listbox_state.cursor = cursor.as_ref().to_string();
+        self.listbox.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.active_item_style = Some(style);
+        self.listbox.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox_state.inactive_item_style = Some(style);
+        self.listbox.inactive_item_style = Some(style);
         self
     }
 
     /// Sets the number of lines to be used for displaying the selectable list.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
-        self.listbox_state.lines = Some(lines);
+        self.listbox.lines = Some(lines);
         self
     }
 
-    pub fn register_keymap<K: AsRef<str>>(mut self, key: K, handler: keymap::Keymap) -> Self {
-        self.keymap = self.keymap.register(key, handler);
+    /// Sets the evaluator function for handling input events.
+    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
+        self.evaluator = evaluator;
         self
     }
 
-    /// Displays the select prompt and waits for user input.
-    /// Returns a `Result` containing the `Prompt` result,
-    /// which is the selected option.
-    pub fn prompt(self) -> anyhow::Result<Prompt<render::Renderer>> {
-        Ok(Prompt {
-            renderer: render::Renderer {
-                keymap: RefCell::new(self.keymap),
-                title_state: self.title_state,
-                listbox_state: self.listbox_state,
-            },
-        })
+    /// Render the prompt with the specified width and height.
+    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+        match self.renderer.as_ref() {
+            Some(renderer) => {
+                renderer
+                    .update([
+                        (Index::Title, self.title.create_pane(width, height)),
+                        (Index::Listbox, self.listbox.create_pane(width, height)),
+                    ])
+                    .render()
+                    .await
+            }
+            None => Err(anyhow::anyhow!("Renderer not initialized")),
+        }
     }
 }

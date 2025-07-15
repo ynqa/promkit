@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.9.1"
+version = "0.10.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -47,9 +47,12 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.1.1" }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.1.1" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.2.0" }
 radix_trie = { workspace = true }
+scopeguard = { workspace = true }
+tokio = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true

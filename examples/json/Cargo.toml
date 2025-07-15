@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = ["json"] }
+tokio = { workspace = true }
 
 [[bin]]
 name = "json"

@@ -1,5 +1,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub use promkit_core as core;
+
 pub mod cursor;
 
 #[cfg(feature = "checkbox")]
@@ -28,3 +30,7 @@ pub mod text_editor;
 #[cfg(feature = "tree")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
 pub mod tree;
+
+#[cfg(feature = "spinner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "spinner")))]
+pub mod spinner;

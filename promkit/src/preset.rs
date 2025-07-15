@@ -37,3 +37,14 @@ pub mod form;
 #[cfg(feature = "text")]
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
 pub mod text;
+
+use std::{future::Future, pin::Pin};
+
+use crate::{core::crossterm::event::Event, Signal};
+
+/// Type alias for the evaluator function used in the prompt.
+pub type Evaluator<T> =
+    for<'a> fn(
+        event: &'a Event,
+        ctx: &'a mut T,
+    ) -> Pin<Box<dyn Future<Output = Result<Signal, anyhow::Error>> + Send + 'a>>;

@@ -1,55 +1,44 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-pub use promkit_core;
-pub use promkit_core::crossterm;
-pub use promkit_widgets;
+pub use anyhow;
+pub use async_trait;
+pub use promkit_widgets as widgets;
+pub use promkit_widgets::core;
 
 pub mod preset;
-pub mod snapshot;
 pub mod suggest;
-pub mod switch;
 pub mod validate;
 
-use std::io;
+use std::{io, sync::LazyLock};
 
-use promkit_core::{
-    crossterm::{
-        cursor,
-        event::{self, Event},
-        execute,
-        terminal::{disable_raw_mode, enable_raw_mode},
-    },
-    terminal::Terminal,
-    Pane,
+use futures::StreamExt;
+use scopeguard::defer;
+use tokio::sync::Mutex;
+
+use core::crossterm::{
+    cursor,
+    event::{self, Event, EventStream},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode},
 };
+
+/// Singleton for EventStream. If a new EventStream is created for each Prompt::run,
+/// it causes the error "The cursor position could not be read within a normal duration".
+/// See https://github.com/crossterm-rs/crossterm/issues/963#issuecomment-2571259264 for more details.
+static EVENT_STREAM: LazyLock<Mutex<EventStream>> =
+    LazyLock::new(|| Mutex::new(EventStream::new()));
 
 /// Represents the signal to control the flow of a prompt.
 ///
 /// This enum is used to indicate whether a prompt should continue running
 /// or quit based on user input or other conditions.
 #[derive(Eq, PartialEq)]
-pub enum PromptSignal {
+pub enum Signal {
     /// Indicates that the prompt should continue to run and handle further events.
     Continue,
     /// Indicates that the prompt should quit and terminate its execution.
     Quit,
-}
-
-pub trait Finalizer {
-    /// The type of the result produced by the renderer.
-    type Return;
-
-    /// Finalizes the prompt and produces a result.
-    ///
-    /// This method is called after the prompt has been instructed to quit. It allows
-    /// the renderer to perform any necessary cleanup and produce a final result.
-    ///
-    /// # Returns
-    ///
-    /// Returns a `Result` containing the final result of the prompt. The type of the result
-    /// is defined by the `Return` associated type.
-    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
 }
 
 /// A trait for rendering components within a prompt.
@@ -57,22 +46,16 @@ pub trait Finalizer {
 /// This trait defines the essential functions required for rendering custom UI components
 /// in a prompt. Implementors of this trait can define how panes are created, how events
 /// are evaluated, and how the final result is produced.
-pub trait Renderer: Finalizer {
-    /// Creates a collection of panes based on the specified width.
-    ///
-    /// This method is responsible for generating the layout of the UI components
-    /// that will be displayed in the prompt. The width parameter allows the layout
-    /// to adapt to the current terminal width and height.
-    ///
-    /// # Parameters
-    ///
-    /// * `width`: The width of the terminal in characters.
-    /// * `height`: The height of the terminal in characters.
+#[async_trait::async_trait]
+pub trait Prompt {
+    /// Initializes the handler, preparing it for use.
+    /// This method is called before the prompt starts running.
     ///
     /// # Returns
     ///
-    /// Returns a vector of `Pane` objects that represent the layout of the UI components.
-    fn create_panes(&self, width: u16, height: u16) -> Vec<Pane>;
+    /// Returns a `Result` indicating success or failure of the initialization.
+    /// If successful, the renderer is ready to handle events and render the prompt.
+    async fn initialize(&mut self) -> anyhow::Result<()>;
 
     /// Evaluates an event and determines the next action for the prompt.
     ///
@@ -86,34 +69,25 @@ pub trait Renderer: Finalizer {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing a `PromptSignal`. `PromptSignal::Continue` indicates
-    /// that the prompt should continue running, while `PromptSignal::Quit` indicates that
+    /// Returns a `Result` containing a `Signal`. `Signal::Continue` indicates
+    /// that the prompt should continue running, while `Signal::Quit` indicates that
     /// the prompt should terminate its execution.
-    fn evaluate(&mut self, event: &Event) -> anyhow::Result<PromptSignal>;
-}
+    async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal>;
 
-/// Represents a customizable prompt that can handle user input and produce a result.
-///
-/// This struct encapsulates the rendering logic,
-/// event handling, and result production for a prompt.
-pub struct Prompt<T: Renderer> {
-    pub renderer: T,
-}
+    /// The type of the result produced by the renderer.
+    type Return;
 
-impl<T: Renderer> Drop for Prompt<T> {
-    fn drop(&mut self) {
-        execute!(
-            io::stdout(),
-            cursor::Show,
-            event::DisableMouseCapture,
-            cursor::MoveToNextLine(1),
-        )
-        .ok();
-        disable_raw_mode().ok();
-    }
-}
+    /// Finalizes the prompt and produces a result.
+    ///
+    /// This method is called after the prompt has been instructed to quit. It allows
+    /// the renderer to perform any necessary cleanup and produce a final result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the final result of the prompt. The type of the result
+    /// is defined by the `Return` associated type.
+    fn finalize(&mut self) -> anyhow::Result<Self::Return>;
 
-impl<T: Renderer> Prompt<T> {
     /// Runs the prompt, handling events and producing a result.
     ///
     /// This method initializes the terminal, and enters a loop
@@ -123,43 +97,36 @@ impl<T: Renderer> Prompt<T> {
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
-    pub fn run(&mut self) -> anyhow::Result<T::Return> {
+    async fn run(&mut self) -> anyhow::Result<Self::Return> {
+        defer! {
+            execute!(
+                io::stdout(),
+                cursor::Show,
+                event::DisableMouseCapture,
+            )
+            .ok();
+            disable_raw_mode().ok();
+        };
+
         enable_raw_mode()?;
         execute!(io::stdout(), cursor::Hide)?;
 
-        let size = crossterm::terminal::size()?;
-        let panes = self.renderer.create_panes(size.0, size.1);
-        let mut terminal = Terminal {
-            position: crossterm::cursor::position()?,
-        };
-        terminal.draw(&panes)?;
+        self.initialize().await?;
 
-        loop {
-            let ev = event::read()?;
-
-            match &ev {
-                Event::Resize(_, _) => {
-                    terminal.position = (0, 0);
-                    crossterm::execute!(
-                        io::stdout(),
-                        crossterm::terminal::Clear(crossterm::terminal::ClearType::Purge),
-                    )?;
-                }
-                _ => {
-                    if self.renderer.evaluate(&ev)? == PromptSignal::Quit {
-                        // Renderer has a possibility to disable the cursor color to indicate termination,
-                        // and so ensure to display the state of Renderer at the end.
-                        terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
+        while let Some(event) = EVENT_STREAM.lock().await.next().await {
+            match event {
+                Ok(event) => {
+                    // Evaluate the event using the engine
+                    if self.evaluate(&event).await? == Signal::Quit {
                         break;
                     }
                 }
+                Err(_) => {
+                    break;
+                }
             }
-
-            let size = crossterm::terminal::size()?;
-            terminal.draw(&self.renderer.create_panes(size.0, size.1))?;
         }
 
-        disable_raw_mode()?;
-        self.renderer.finalize()
+        self.finalize()
     }
 }

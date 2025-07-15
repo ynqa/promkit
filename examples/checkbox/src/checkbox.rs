@@ -1,7 +1,8 @@
-use promkit::preset::checkbox::Checkbox;
+use promkit::{preset::checkbox::Checkbox, Prompt};
 
-fn main() -> anyhow::Result<()> {
-    let mut p = Checkbox::new(vec![
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let ret = Checkbox::new(vec![
         "Apple",
         "Banana",
         "Orange",
@@ -15,7 +16,8 @@ fn main() -> anyhow::Result<()> {
     ])
     .title("What are your favorite fruits?")
     .checkbox_lines(5)
-    .prompt()?;
-    println!("result: {:?}", p.run()?);
+    .run()
+    .await?;
+    println!("result: {:?}", ret);
     Ok(())
 }

@@ -1,28 +1,28 @@
 use promkit_widgets::text_editor;
 
 use crate::{
-    crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    preset, PromptSignal,
+    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    preset::form::Form,
+    Signal,
 };
 
-pub type Keymap = fn(
-    event: &Event,
-    renderer: &mut preset::form::render::Renderer,
-) -> anyhow::Result<PromptSignal>;
-
-pub fn default(
-    event: &Event,
-    renderer: &mut preset::form::render::Renderer,
-) -> anyhow::Result<PromptSignal> {
-    let current_position = renderer.text_editor_states.position();
+/// Default event handler for the `Form` prompt.
+pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
+    let current_position = ctx.readlines.position();
 
     match event {
+        // Render for refreshing prompt on resize.
+        Event::Resize(width, height) => {
+            ctx.render(*width, *height).await?;
+        }
+
+        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Ok(PromptSignal::Quit),
+        }) => return Ok(Signal::Quit),
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
@@ -37,7 +37,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .backward();
         }
@@ -47,7 +47,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .forward();
         }
@@ -56,7 +56,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.text_editor_states.contents_mut()[current_position]
+        }) => ctx.readlines.contents_mut()[current_position]
             .texteditor
             .move_to_head(),
         Event::Key(KeyEvent {
@@ -64,7 +64,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.text_editor_states.contents_mut()[current_position]
+        }) => ctx.readlines.contents_mut()[current_position]
             .texteditor
             .move_to_tail(),
 
@@ -75,10 +75,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = renderer.text_editor_states.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines.contents_mut()[current_position]
                 .word_break_chars
                 .clone();
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .move_to_previous_nearest(&word_break_chars)
         }
@@ -89,10 +89,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = renderer.text_editor_states.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines.contents_mut()[current_position]
                 .word_break_chars
                 .clone();
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .move_to_next_nearest(&word_break_chars)
         }
@@ -103,7 +103,7 @@ pub fn default(
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.text_editor_states.contents_mut()[current_position]
+        }) => ctx.readlines.contents_mut()[current_position]
             .texteditor
             .erase(),
         Event::Key(KeyEvent {
@@ -111,7 +111,7 @@ pub fn default(
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => renderer.text_editor_states.contents_mut()[current_position]
+        }) => ctx.readlines.contents_mut()[current_position]
             .texteditor
             .erase_all(),
 
@@ -122,10 +122,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = renderer.text_editor_states.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines.contents_mut()[current_position]
                 .word_break_chars
                 .clone();
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .erase_to_previous_nearest(&word_break_chars)
         }
@@ -136,10 +136,10 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = renderer.text_editor_states.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines.contents_mut()[current_position]
                 .word_break_chars
                 .clone();
-            renderer.text_editor_states.contents_mut()[current_position]
+            ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .erase_to_next_nearest(&word_break_chars)
         }
@@ -150,7 +150,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.text_editor_states.backward();
+            ctx.readlines.backward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Down,
@@ -158,7 +158,7 @@ pub fn default(
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            renderer.text_editor_states.forward();
+            ctx.readlines.forward();
         }
 
         // Input char.
@@ -173,18 +173,16 @@ pub fn default(
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match renderer.text_editor_states.contents_mut()[current_position].edit_mode {
-            text_editor::Mode::Insert => renderer.text_editor_states.contents_mut()
-                [current_position]
+        }) => match ctx.readlines.contents_mut()[current_position].edit_mode {
+            text_editor::Mode::Insert => ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .insert(*ch),
-            text_editor::Mode::Overwrite => renderer.text_editor_states.contents_mut()
-                [current_position]
+            text_editor::Mode::Overwrite => ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .overwrite(*ch),
         },
 
         _ => (),
     }
-    Ok(PromptSignal::Continue)
+    Ok(Signal::Continue)
 }

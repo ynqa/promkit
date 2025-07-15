@@ -1,6 +1,6 @@
 [package]
 name = "promkit-widgets"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Widgets for promkit"
@@ -9,21 +9,25 @@ license = "MIT"
 readme = "README.md"
 
 [features]
-default = []
-all = ["checkbox", "jsonstream", "listbox", "text", "texteditor", "tree"]
+default = ["all"]
+all = ["checkbox", "jsonstream", "listbox", "spinner", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
 jsonstream = ["dep:serde", "dep:serde_json", "dep:rayon"]
 listbox = []
+spinner = ["dep:tokio"]
 text = []
 texteditor = []
 tree = []
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.1.1" }
+promkit-core = { path = "../promkit-core", version = "=0.2.0" }
+
+# Optional dependencies
+rayon = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
-rayon = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 # Enable `jsonstream` feature when `jsonz` testing
