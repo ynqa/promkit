@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> [!NOTE]
+> This changelog only documents minor and major version changes.
+> Patch versions are not included due to maintenance cost considerations.
+> More detailed version tracking may be described as the project matures.
+
 ## [Unreleased]
 
 ## [0.10.0] - 2025-07-xx
@@ -15,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lifecycle management**: Clear separation of `initialize`, `evaluate`, and `finalize` phases for better control flow through the `Prompt` trait. The actual event loop implementation demonstrates this lifecycle:
   
   ```rust
-  async fn run(&mut self) -> anyhow::Result<Self::Return> {［
+  async fn run(&mut self) -> anyhow::Result<Self::Return> {
       // 1. Initialize phase
       self.initialize().await?;
 
