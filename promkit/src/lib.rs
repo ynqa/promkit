@@ -26,7 +26,7 @@ use core::crossterm::{
 /// Singleton for EventStream. If a new EventStream is created for each Prompt::run,
 /// it causes the error "The cursor position could not be read within a normal duration".
 /// See https://github.com/crossterm-rs/crossterm/issues/963#issuecomment-2571259264 for more details.
-static EVENT_STREAM: LazyLock<Mutex<EventStream>> =
+pub static EVENT_STREAM: LazyLock<Mutex<EventStream>> =
     LazyLock::new(|| Mutex::new(EventStream::new()));
 
 /// Represents the signal to control the flow of a prompt.

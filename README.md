@@ -11,36 +11,36 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.10.0"
+promkit = "0.10.1"
 ```
 
 ## Features
 
 - Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
 - Modularized architecture
-  - [promkit-core](https://github.com/ynqa/promkit/tree/v0.10.0/promkit-core/)
+  - [promkit-core](https://github.com/ynqa/promkit/tree/v0.10.1/promkit-core/)
     - Core functionality for basic terminal operations and pane management
-  - [promkit-widgets](https://github.com/ynqa/promkit/tree/v0.10.0/promkit-widgets/)
+  - [promkit-widgets](https://github.com/ynqa/promkit/tree/v0.10.1/promkit-widgets/)
     - Various UI components (text, listbox, tree, etc.)
-  - [promkit](https://github.com/ynqa/promkit/tree/v0.10.0/promkit)
+  - [promkit](https://github.com/ynqa/promkit/tree/v0.10.1/promkit)
     - High-level presets and user interfaces
-  - [promkit-derive](https://github.com/ynqa/promkit/tree/v0.10.0/promkit-derive/)
+  - [promkit-derive](https://github.com/ynqa/promkit/tree/v0.10.1/promkit-derive/)
     - A Derive macro that simplifies interactive form input
 - Rich preset components
-  - [Readline](https://github.com/ynqa/promkit/tree/v0.10.0#readline) - Text input with auto-completion
-  - [Confirm](https://github.com/ynqa/promkit/tree/v0.10.0#confirm) - Yes/no confirmation prompt
-  - [Password](https://github.com/ynqa/promkit/tree/v0.10.0#password) - Password input with masking and validation
-  - [Form](https://github.com/ynqa/promkit/tree/v0.10.0#form) - Manage multiple text input fields
-  - [Listbox](https://github.com/ynqa/promkit/tree/v0.10.0#listbox) - Single selection interface from a list
-  - [QuerySelector](https://github.com/ynqa/promkit/tree/v0.10.0#queryselector) - Searchable selection interface
-  - [Checkbox](https://github.com/ynqa/promkit/tree/v0.10.0#checkbox) - Multiple selection checkbox interface
-  - [Tree](https://github.com/ynqa/promkit/tree/v0.10.0#tree) - Tree display for hierarchical data like file systems
-  - [JSON](https://github.com/ynqa/promkit/tree/v0.10.0#json) - Parse and interactively display JSON data
-  - [Text](https://github.com/ynqa/promkit/tree/v0.10.0#text) - Static text display
+  - [Readline](https://github.com/ynqa/promkit/tree/v0.10.1#readline) - Text input with auto-completion
+  - [Confirm](https://github.com/ynqa/promkit/tree/v0.10.1#confirm) - Yes/no confirmation prompt
+  - [Password](https://github.com/ynqa/promkit/tree/v0.10.1#password) - Password input with masking and validation
+  - [Form](https://github.com/ynqa/promkit/tree/v0.10.1#form) - Manage multiple text input fields
+  - [Listbox](https://github.com/ynqa/promkit/tree/v0.10.1#listbox) - Single selection interface from a list
+  - [QuerySelector](https://github.com/ynqa/promkit/tree/v0.10.1#queryselector) - Searchable selection interface
+  - [Checkbox](https://github.com/ynqa/promkit/tree/v0.10.1#checkbox) - Multiple selection checkbox interface
+  - [Tree](https://github.com/ynqa/promkit/tree/v0.10.1#tree) - Tree display for hierarchical data like file systems
+  - [JSON](https://github.com/ynqa/promkit/tree/v0.10.1#json) - Parse and interactively display JSON data
+  - [Text](https://github.com/ynqa/promkit/tree/v0.10.1#text) - Static text display
 
 ## Concept
 
-See [here](https://github.com/ynqa/promkit/tree/v0.10.0/Concept.md).
+See [here](https://github.com/ynqa/promkit/tree/v0.10.1/Concept.md).
 
 ## Projects using *promkit*
 
