@@ -15,7 +15,10 @@ proc-macro = true
 syn = { version = "2.0.52", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
-promkit = { path = "../promkit", version = "=0.10.0", features = ["form"] }
+# NOTE: The derive crate is incubating and not well maintained,
+# so we leave the path specification off for now.
+# However, ideally it should notice the latest version of promkit by specifying the path.
+promkit = { version = "=0.10.0", features = ["form"] }
 
 [dev-dependencies]
 tokio = { workspace = true }
