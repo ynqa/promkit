@@ -43,6 +43,14 @@ impl<C: Len> Cursor<C> {
         &mut self.contents
     }
 
+    /// Replaces the contents with new contents and adjusts the position if necessary.
+    pub fn replace_contents(&mut self, contents: C) {
+        self.contents = contents;
+        if self.position >= self.contents.len() {
+            self.position = self.contents.len().saturating_sub(1);
+        }
+    }
+
     /// Returns the current position of the cursor.
     pub fn position(&self) -> usize {
         self.position

@@ -32,6 +32,11 @@ impl Text {
         Self(Cursor::new(lines, 0, false))
     }
 
+    /// Replaces the contents with new contents and adjusts the position if necessary.
+    pub fn replace_contents(&mut self, text: Vec<StyledGraphemes>) {
+        self.0.replace_contents(text);
+    }
+
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.0.contents()
