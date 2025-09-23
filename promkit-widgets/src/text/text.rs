@@ -26,7 +26,9 @@ impl<T: AsRef<str>> From<T> for Text {
 }
 
 impl Text {
-    pub fn from(lines: Vec<StyledGraphemes>) -> Self {
+    /// Creates a new `Text` from styled graphemes without parsing a string.
+    /// Useful when the caller already has styled content prepared.
+    pub fn from_styled_graphemes(lines: Vec<StyledGraphemes>) -> Self {
         Self(Cursor::new(lines, 0, false))
     }
 
