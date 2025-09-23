@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle};
+use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
 
 mod text;
 pub use text::Text;
@@ -20,8 +20,12 @@ pub struct State {
 }
 
 impl State {
-    pub fn replace(&mut self, renderer: Self) {
-        *self = renderer;
+    pub fn replace(&mut self, state: Self) {
+        *self = state;
+    }
+
+    pub fn replace_text(&mut self, text: Vec<StyledGraphemes>) {
+        self.text.replace_contents(text);
     }
 }
 
