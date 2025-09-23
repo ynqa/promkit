@@ -92,7 +92,7 @@ impl Listbox {
                 ..Default::default()
             },
             listbox: listbox::State {
-                listbox: listbox::Listbox::from_displayable(items),
+                listbox: listbox::Listbox::from(items),
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
                     foreground_color: Some(Color::DarkCyan),

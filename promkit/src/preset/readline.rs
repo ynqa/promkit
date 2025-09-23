@@ -99,7 +99,7 @@ impl Default for Readline {
             },
             suggest: Default::default(),
             suggestions: listbox::State {
-                listbox: Listbox::from_displayable(Vec::<String>::new()),
+                listbox: Listbox::from(Vec::<String>::new()),
                 cursor: String::from("❯ "),
                 active_item_style: Some(ContentStyle {
                     foreground_color: Some(Color::DarkGrey),

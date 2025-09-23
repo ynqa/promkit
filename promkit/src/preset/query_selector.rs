@@ -93,7 +93,7 @@ impl crate::Prompt for QuerySelector {
                     .map(|s| s.to_string())
                     .collect(),
             );
-            self.list.listbox = Listbox::from_displayable(list);
+            self.list.listbox = Listbox::from(list);
         }
 
         // Update the renderer with the new state of the components.
@@ -126,7 +126,7 @@ impl QuerySelector {
         T: Display,
         I: IntoIterator<Item = T>,
     {
-        let listbox = Listbox::from_displayable(items);
+        let listbox = Listbox::from(items);
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),

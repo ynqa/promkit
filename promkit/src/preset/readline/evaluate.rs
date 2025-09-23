@@ -108,7 +108,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
             if let Some(suggest) = &ctx.suggest {
                 let text = ctx.readline.texteditor.text_without_cursor().to_string();
                 if let Some(candidates) = suggest.prefix_search(text) {
-                    ctx.suggestions.listbox = Listbox::from_displayable(candidates);
+                    ctx.suggestions.listbox = Listbox::from(candidates);
                     ctx.readline
                         .texteditor
                         .replace(&ctx.suggestions.listbox.get().to_string());
@@ -288,7 +288,7 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
 
         // Switch back to the readline input.
         _ => {
-            ctx.suggestions.listbox = Listbox::from_displayable(Vec::<String>::new());
+            ctx.suggestions.listbox = Listbox::from(Vec::<String>::new());
 
             ctx.focus = Focus::Readline;
         }
