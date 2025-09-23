@@ -26,6 +26,10 @@ impl<T: AsRef<str>> From<T> for Text {
 }
 
 impl Text {
+    pub fn from(lines: Vec<StyledGraphemes>) -> Self {
+        Self(Cursor::new(lines, 0, false))
+    }
+
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.0.contents()
