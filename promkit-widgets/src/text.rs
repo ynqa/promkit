@@ -13,7 +13,7 @@ pub struct State {
     pub text: Text,
 
     /// Style for the text string.
-    pub style: ContentStyle,
+    pub style: Option<ContentStyle>,
 
     /// Maximum number of lines to display.
     pub lines: Option<usize>,
@@ -42,7 +42,13 @@ impl PaneFactory for State {
             .iter()
             .enumerate()
             .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
-            .map(|(_, item)| item.clone().apply_style(self.style))
+            .map(|(_, item)| {
+                if let Some(style) = &self.style {
+                    item.clone().apply_style(style.clone())
+                } else {
+                    item.clone()
+                }
+            })
             .fold((vec![], 0), |(mut acc, pos), item| {
                 let rows = item.matrixify(width as usize, height, 0).0;
                 if pos < self.text.position() + height {

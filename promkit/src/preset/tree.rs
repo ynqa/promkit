@@ -78,10 +78,10 @@ impl Tree {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: ContentStyle {
+                style: Some(ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
-                },
+                }),
                 ..Default::default()
             },
             tree: tree::State {
@@ -107,7 +107,7 @@ impl Tree {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = style;
+        self.title.style = Some(style);
         self
     }
 

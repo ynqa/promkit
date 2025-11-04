@@ -73,7 +73,7 @@ impl Text {
 
     /// Sets the style for the text component.
     pub fn style(mut self, style: ContentStyle) -> Self {
-        self.text.style = style;
+        self.text.style = Some(style);
         self
     }
 

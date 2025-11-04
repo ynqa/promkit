@@ -73,10 +73,10 @@ impl Default for Readline {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             focus: Focus::Readline,
             title: text::State {
-                style: ContentStyle {
+                style: Some(ContentStyle {
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
-                },
+                }),
                 ..Default::default()
             },
             readline: text_editor::State {
@@ -115,11 +115,11 @@ impl Default for Readline {
             validator: Default::default(),
             error_message: text::State {
                 text: Default::default(),
-                style: ContentStyle {
+                style: Some(ContentStyle {
                     foreground_color: Some(Color::DarkRed),
                     attributes: Attributes::from(Attribute::Bold),
                     ..Default::default()
-                },
+                }),
                 lines: None,
             },
         }
@@ -179,7 +179,7 @@ impl Readline {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = style;
+        self.title.style = Some(style);
         self
     }
 
