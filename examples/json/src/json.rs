@@ -6,6 +6,7 @@ use std::{
 
 use clap::Parser;
 use promkit::{
+    core::crossterm::{event, execute, terminal},
     preset::json::Json,
     widgets::{
         jsonstream::JsonStream,
@@ -26,7 +27,7 @@ struct Args {
     title: String,
 }
 
-/// Reads JSON input from a file or stdin based on the provided arguments.
+/// Read JSON input from a file or stdin based on the provided arguments.
 fn parse_input(args: &Args) -> anyhow::Result<String> {
     let mut input = String::new();
 
@@ -45,7 +46,7 @@ fn parse_input(args: &Args) -> anyhow::Result<String> {
     Ok(input)
 }
 
-/// Parses a JSON string into a vector of serde_json::Value,
+/// Parse a JSON string into a vector of serde_json::Value,
 /// allowing for multiple JSON objects in the input.
 fn parse_json_stream(input: &str) -> anyhow::Result<Vec<Value>> {
     let stream: serde_json::StreamDeserializer<'_, serde_json::de::StrRead<'_>, Value> =
@@ -55,11 +56,31 @@ fn parse_json_stream(input: &str) -> anyhow::Result<Vec<Value>> {
         .map_err(anyhow::Error::from)
 }
 
+/// Ensure the terminal is restored to its original state when dropped.
+struct TerminalGuard;
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        let _ = execute!(
+            io::stdout(),
+            terminal::LeaveAlternateScreen,
+            event::DisableMouseCapture
+        );
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let input = parse_input(&args)?;
     let values = parse_json_stream(&input)?;
+
+    execute!(
+        io::stdout(),
+        terminal::EnterAlternateScreen,
+        event::EnableMouseCapture
+    )?;
+    let _terminal_guard = TerminalGuard;
 
     let stream = JsonStream::new(values.iter());
     Json::new(stream).title(args.title).run().await
