@@ -10,11 +10,11 @@ readme = "README.md"
 
 [features]
 default = ["all"]
-all = ["checkbox", "jsonstream", "listbox", "spinner", "text", "texteditor", "tree"]
+all = ["checkbox", "jsonstream", "listbox", "serde", "spinner", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
 jsonstream = ["dep:serde_json", "dep:rayon"]
-serde = ["dep:serde", "dep:termcfg"]
 listbox = []
+serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
 text = []
 texteditor = []
