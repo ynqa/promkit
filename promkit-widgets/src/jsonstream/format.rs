@@ -67,8 +67,16 @@ pub struct Config {
     pub null_value_style: ContentStyle,
 
     /// Attribute for the selected line.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::attribute_serde")
+    )]
     pub active_item_attribute: Attribute,
     /// Attribute for unselected lines.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::attribute_serde")
+    )]
     pub inactive_item_attribute: Attribute,
 
     /// The number of spaces used for indentation in the rendered JSON structure.
@@ -487,8 +495,8 @@ string_value_style = "fg=green"
 number_value_style = "fg=yellow"
 boolean_value_style = "fg=magenta"
 null_value_style = "fg=grey"
-active_item_attribute = "Underlined"
-inactive_item_attribute = "Dim"
+active_item_attribute = "underlined"
+inactive_item_attribute = "dim"
 overflow_mode = "LineWrap"
 "#;
 
