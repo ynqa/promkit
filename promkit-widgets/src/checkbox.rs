@@ -4,7 +4,7 @@ use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 mod inner;
 pub use inner::Checkbox;
 pub mod format;
-use format::Formatter;
+pub use format::{Config, Formatter};
 
 /// Represents the state of a `Checkbox` component.
 ///
@@ -17,24 +17,21 @@ pub struct State {
     /// The `Checkbox` component to be rendered.
     pub checkbox: Checkbox,
 
-    /// Rendering options for this widget.
-    pub formatter: Formatter,
-
-    /// Number of lines available for rendering.
-    pub lines: Option<usize>,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {
-                StyledGraphemes::from(format!("{} ", self.formatter.active_mark))
+                StyledGraphemes::from(format!("{} ", self.config.active_mark))
             } else {
-                StyledGraphemes::from(format!("{} ", self.formatter.inactive_mark))
+                StyledGraphemes::from(format!("{} ", self.config.inactive_mark))
             }
         };
 
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -50,20 +47,20 @@ impl PaneFactory for State {
             .map(|(i, item)| {
                 if i == self.checkbox.position() {
                     StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(&self.formatter.cursor),
+                        &StyledGraphemes::from(&self.config.cursor),
                         &f(i),
                         item,
                     ])
-                    .apply_style(self.formatter.active_item_style)
+                    .apply_style(self.config.active_item_style)
                 } else {
                     StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.formatter.cursor).widths()),
+                            " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
                         ),
                         &f(i),
                         item,
                     ])
-                    .apply_style(self.formatter.inactive_item_style)
+                    .apply_style(self.config.inactive_item_style)
                 }
             })
             .fold((vec![], 0), |(mut acc, pos), item| {

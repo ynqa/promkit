@@ -3,7 +3,7 @@ use promkit_core::crossterm::style::{Color, ContentStyle};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone)]
-pub struct Formatter {
+pub struct Config {
     pub folded_symbol: String,
     pub unfolded_symbol: String,
     #[cfg_attr(
@@ -17,9 +17,10 @@ pub struct Formatter {
     )]
     pub inactive_item_style: ContentStyle,
     pub indent: usize,
+    pub lines: Option<usize>,
 }
 
-impl Default for Formatter {
+impl Default for Config {
     fn default() -> Self {
         Self {
             folded_symbol: String::from("▶︎ "),
@@ -30,6 +31,7 @@ impl Default for Formatter {
             },
             inactive_item_style: ContentStyle::default(),
             indent: 2,
+            lines: None,
         }
     }
 }
@@ -40,18 +42,19 @@ mod tests {
     mod serde_compatibility {
         use promkit_core::crossterm::style::{Attribute, Color};
 
-        use super::super::Formatter;
+        use super::super::Config;
 
         #[test]
-        fn formatter_fields_are_fully_loaded_from_toml() {
+        fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
 folded_symbol = "> "
 unfolded_symbol = "v "
 active_item_style = "fg=cyan,attr=bold"
 inactive_item_style = "fg=grey"
 indent = 4
+lines = 9
 "#;
-            let formatter: Formatter = toml::from_str(input).unwrap();
+            let formatter: Config = toml::from_str(input).unwrap();
 
             assert_eq!(formatter.folded_symbol, "> ");
             assert_eq!(formatter.unfolded_symbol, "v ");
@@ -65,6 +68,9 @@ indent = 4
                 Some(Color::Grey),
             );
             assert_eq!(formatter.indent, 4);
+            assert_eq!(formatter.lines, Some(9));
         }
     }
 }
+
+pub type Formatter = Config;

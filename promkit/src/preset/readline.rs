@@ -73,18 +73,19 @@ impl Default for Readline {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             focus: Focus::Readline,
             title: text::State {
-                formatter: text::format::Formatter {
+                config: text::format::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     }),
+                    ..Default::default()
                 },
                 ..Default::default()
             },
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
-                formatter: text_editor::format::Formatter {
+                config: text_editor::format::Config {
                     prefix: String::from("❯❯ "),
                     mask: Default::default(),
                     prefix_style: ContentStyle {
@@ -96,15 +97,15 @@ impl Default for Readline {
                         ..Default::default()
                     },
                     inactive_char_style: ContentStyle::default(),
+                    edit_mode: Default::default(),
+                    word_break_chars: HashSet::from([' ']),
+                    lines: Default::default(),
                 },
-                edit_mode: Default::default(),
-                word_break_chars: HashSet::from([' ']),
-                lines: Default::default(),
             },
             suggest: Default::default(),
             suggestions: listbox::State {
                 listbox: Listbox::from(Vec::<String>::new()),
-                formatter: listbox::format::Formatter {
+                config: listbox::format::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkGrey),
@@ -115,20 +116,20 @@ impl Default for Readline {
                         foreground_color: Some(Color::DarkGrey),
                         ..Default::default()
                     }),
+                    lines: Some(3),
                 },
-                lines: Some(3),
             },
             validator: Default::default(),
             error_message: text::State {
                 text: Default::default(),
-                formatter: text::format::Formatter {
+                config: text::format::Config {
                     style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkRed),
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     }),
+                    lines: None,
                 },
-                lines: None,
             },
         }
     }
@@ -187,7 +188,7 @@ impl Readline {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.formatter.style = Some(style);
+        self.title.config.style = Some(style);
         self
     }
 
@@ -205,49 +206,49 @@ impl Readline {
 
     /// Sets the prefix string displayed before the input text.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.readline.formatter.prefix = prefix.as_ref().to_string();
+        self.readline.config.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the character used for masking input text, typically used for password fields.
     pub fn mask(mut self, mask: char) -> Self {
-        self.readline.formatter.mask = Some(mask);
+        self.readline.config.mask = Some(mask);
         self
     }
 
     /// Sets the style for the prefix string.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.readline.formatter.prefix_style = style;
+        self.readline.config.prefix_style = style;
         self
     }
 
     /// Sets the style for the currently active character in the input field.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.formatter.active_char_style = style;
+        self.readline.config.active_char_style = style;
         self
     }
 
     /// Sets the style for characters that are not currently active in the input field.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.formatter.inactive_char_style = style;
+        self.readline.config.inactive_char_style = style;
         self
     }
 
     /// Sets the edit mode for the text editor, either insert or overwrite.
     pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
-        self.readline.edit_mode = mode;
+        self.readline.config.edit_mode = mode;
         self
     }
 
     /// Sets the characters to be for word break.
     pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
-        self.readline.word_break_chars = characters;
+        self.readline.config.word_break_chars = characters;
         self
     }
 
     /// Sets the number of lines available for rendering the text editor.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.readline.lines = Some(lines);
+        self.readline.config.lines = Some(lines);
         self
     }
 

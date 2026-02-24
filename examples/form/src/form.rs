@@ -9,7 +9,7 @@ use promkit::{
 async fn main() -> anyhow::Result<()> {
     let ret = Form::new([
         text_editor::State {
-            formatter: text_editor::format::Formatter {
+            config: text_editor::format::Config {
                 prefix: String::from("❯❯ "),
                 prefix_style: ContentStyle {
                     foreground_color: Some(Color::DarkRed),
@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
         text_editor::State {
-            formatter: text_editor::format::Formatter {
+            config: text_editor::format::Config {
                 prefix: String::from("❯❯ "),
                 prefix_style: ContentStyle {
                     foreground_color: Some(Color::DarkGreen),
@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
             ..Default::default()
         },
         text_editor::State {
-            formatter: text_editor::format::Formatter {
+            config: text_editor::format::Config {
                 prefix: String::from("❯❯ "),
                 prefix_style: ContentStyle {
                     foreground_color: Some(Color::DarkBlue),

@@ -13,7 +13,7 @@ use crate::{
     preset::Evaluator,
     widgets::{
         text::{self, Text},
-        tree::{self, format::Formatter, node::Node},
+        tree::{self, format::Config, node::Node},
     },
     Signal,
 };
@@ -78,17 +78,18 @@ impl Tree {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                formatter: text::format::Formatter {
+                config: text::format::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     }),
+                    ..Default::default()
                 },
                 ..Default::default()
             },
             tree: tree::State {
                 tree: tree::Tree::new(root),
-                formatter: Formatter {
+                config: Config {
                     folded_symbol: String::from("▶︎ "),
                     unfolded_symbol: String::from("▼ "),
                     active_item_style: ContentStyle {
@@ -97,8 +98,8 @@ impl Tree {
                     },
                     inactive_item_style: ContentStyle::default(),
                     indent: 2,
+                    lines: Default::default(),
                 },
-                lines: Default::default(),
             },
         }
     }
@@ -111,43 +112,43 @@ impl Tree {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.formatter.style = Some(style);
+        self.title.config.style = Some(style);
         self
     }
 
     /// Sets the symbol used to indicate a folded (collapsed) node.
     pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.formatter.folded_symbol = symbol.as_ref().to_string();
+        self.tree.config.folded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the symbol used to indicate an unfolded (expanded) node.
     pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.formatter.unfolded_symbol = symbol.as_ref().to_string();
+        self.tree.config.unfolded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.formatter.active_item_style = style;
+        self.tree.config.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.formatter.inactive_item_style = style;
+        self.tree.config.inactive_item_style = style;
         self
     }
 
     /// Sets the number of lines to be used for displaying the tree.
     pub fn tree_lines(mut self, lines: usize) -> Self {
-        self.tree.lines = Some(lines);
+        self.tree.config.lines = Some(lines);
         self
     }
 
     /// Sets the indentation level for rendering the tree data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.tree.formatter.indent = indent;
+        self.tree.config.indent = indent;
         self
     }
 

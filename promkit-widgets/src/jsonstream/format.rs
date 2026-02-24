@@ -22,7 +22,7 @@ pub enum OverflowMode {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone)]
-pub struct Formatter {
+pub struct Config {
     /// Style for {}.
     #[cfg_attr(
         feature = "serde",
@@ -79,9 +79,11 @@ pub struct Formatter {
 
     /// Rendering behavior when a line exceeds the terminal width.
     pub overflow_mode: OverflowMode,
+    /// Number of lines available for rendering.
+    pub lines: Option<usize>,
 }
 
-impl Default for Formatter {
+impl Default for Config {
     fn default() -> Self {
         Self {
             curly_brackets_style: Default::default(),
@@ -95,11 +97,12 @@ impl Default for Formatter {
             inactive_item_attribute: Attribute::NoBold,
             indent: Default::default(),
             overflow_mode: OverflowMode::default(),
+            lines: Default::default(),
         }
     }
 }
 
-impl Formatter {
+impl Config {
     fn truncate_line_with_ellipsis(line: StyledGraphemes, width: usize) -> StyledGraphemes {
         if line.widths() <= width {
             return line;
@@ -379,7 +382,7 @@ mod tests {
             .trim();
 
             assert_eq!(
-                Formatter {
+                Config {
                     indent: 4,
                     ..Default::default()
                 }
@@ -404,7 +407,7 @@ mod tests {
             let rows = create_rows([&value]);
             let width = 12;
 
-            let lines = Formatter {
+            let lines = Config {
                 indent: 2,
                 overflow_mode: OverflowMode::Ellipsis,
                 ..Default::default()
@@ -428,7 +431,7 @@ mod tests {
             let rows = create_rows([&value]);
             let width = 12;
 
-            let lines = Formatter {
+            let lines = Config {
                 indent: 2,
                 overflow_mode: OverflowMode::LineWrap,
                 ..Default::default()
@@ -452,7 +455,7 @@ mod tests {
 
         #[test]
         fn missing_new_fields_are_filled_by_default() {
-            let mut value = serde_json::to_value(Formatter {
+            let mut value = serde_json::to_value(Config {
                 indent: 4,
                 ..Default::default()
             })
@@ -461,19 +464,22 @@ mod tests {
             obj.remove("active_item_attribute");
             obj.remove("inactive_item_attribute");
             obj.remove("overflow_mode");
+            obj.remove("lines");
 
-            let formatter: Formatter = serde_json::from_value(value).unwrap();
+            let formatter: Config = serde_json::from_value(value).unwrap();
 
             assert_eq!(formatter.indent, 4);
             assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.overflow_mode, OverflowMode::Ellipsis);
+            assert_eq!(formatter.lines, None);
         }
 
         #[test]
-        fn formatter_fields_are_fully_loaded_from_toml() {
+        fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
 indent = 4
+lines = 7
 curly_brackets_style = "attr=bold"
 square_brackets_style = "attr=bold"
 key_style = "fg=cyan"
@@ -486,9 +492,10 @@ inactive_item_attribute = "Dim"
 overflow_mode = "LineWrap"
 "#;
 
-            let formatter: Formatter = toml::from_str(input).unwrap();
+            let formatter: Config = toml::from_str(input).unwrap();
 
             assert_eq!(formatter.indent, 4);
+            assert_eq!(formatter.lines, Some(7));
             assert_eq!(
                 formatter.curly_brackets_style.attributes,
                 Attributes::from(Attribute::Bold),
@@ -521,4 +528,5 @@ overflow_mode = "LineWrap"
     }
 }
 
-pub type RowFormatter = Formatter;
+pub type Formatter = Config;
+pub type RowFormatter = Config;

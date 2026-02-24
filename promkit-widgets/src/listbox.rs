@@ -4,7 +4,7 @@ use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 mod inner;
 pub use inner::Listbox;
 pub mod format;
-use format::Formatter;
+pub use format::{Config, Formatter};
 
 /// Represents the state of a `Listbox` component, including its appearance and behavior.
 /// This state includes the currently selected item, styles for active and inactive items,
@@ -13,16 +13,13 @@ use format::Formatter;
 pub struct State {
     /// The `Listbox` component to be rendered.
     pub listbox: Listbox,
-    /// Rendering options for this widget.
-    pub formatter: Formatter,
-
-    /// Number of lines available for rendering.
-    pub lines: Option<usize>,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -36,10 +33,10 @@ impl PaneFactory for State {
             .map(|(i, item)| {
                 if i == self.listbox.position() {
                     let init = StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(&self.formatter.cursor),
+                        &StyledGraphemes::from(&self.config.cursor),
                         item,
                     ]);
-                    if let Some(style) = &self.formatter.active_item_style {
+                    if let Some(style) = &self.config.active_item_style {
                         init.apply_style(*style)
                     } else {
                         init
@@ -47,11 +44,11 @@ impl PaneFactory for State {
                 } else {
                     let init = StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.formatter.cursor).widths()),
+                            " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
                         ),
                         item,
                     ]);
-                    if let Some(style) = &self.formatter.inactive_item_style {
+                    if let Some(style) = &self.config.inactive_item_style {
                         init.apply_style(*style)
                     } else {
                         init

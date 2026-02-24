@@ -3,7 +3,7 @@ use promkit_core::crossterm::style::{Color, ContentStyle};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone)]
-pub struct Formatter {
+pub struct Config {
     pub cursor: String,
     pub active_mark: char,
     pub inactive_mark: char,
@@ -17,9 +17,10 @@ pub struct Formatter {
         serde(with = "termcfg::crossterm_config::content_style_serde")
     )]
     pub inactive_item_style: ContentStyle,
+    pub lines: Option<usize>,
 }
 
-impl Default for Formatter {
+impl Default for Config {
     fn default() -> Self {
         Self {
             cursor: String::from("❯ "),
@@ -30,6 +31,7 @@ impl Default for Formatter {
                 ..Default::default()
             },
             inactive_item_style: ContentStyle::default(),
+            lines: None,
         }
     }
 }
@@ -40,19 +42,20 @@ mod tests {
     mod serde_compatibility {
         use promkit_core::crossterm::style::{Attribute, Color};
 
-        use super::super::Formatter;
+        use super::super::Config;
 
         #[test]
-        fn formatter_fields_are_fully_loaded_from_toml() {
+        fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
 cursor = "> "
 active_mark = "*"
 inactive_mark = "-"
 active_item_style = "fg=cyan,attr=bold"
 inactive_item_style = "fg=grey"
+lines = 5
 "#;
 
-            let formatter: Formatter = toml::from_str(input).unwrap();
+            let formatter: Config = toml::from_str(input).unwrap();
 
             assert_eq!(formatter.cursor, "> ");
             assert_eq!(formatter.active_mark, '*');
@@ -66,6 +69,9 @@ inactive_item_style = "fg=grey"
                 formatter.inactive_item_style.foreground_color,
                 Some(Color::Grey)
             );
+            assert_eq!(formatter.lines, Some(5));
         }
     }
 }
+
+pub type Formatter = Config;

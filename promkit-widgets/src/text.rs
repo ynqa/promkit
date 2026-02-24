@@ -4,7 +4,7 @@ use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 mod inner;
 pub use inner::Text;
 pub mod format;
-use format::Formatter;
+pub use format::{Config, Formatter};
 
 /// Represents the state of a text-based component within the application.
 ///
@@ -14,11 +14,8 @@ use format::Formatter;
 pub struct State {
     /// The text to be rendered.
     pub text: Text,
-    /// Rendering options for this widget.
-    pub formatter: Formatter,
-
-    /// Maximum number of lines to display.
-    pub lines: Option<usize>,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl State {
@@ -33,7 +30,7 @@ impl State {
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -45,7 +42,7 @@ impl PaneFactory for State {
             .enumerate()
             .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
             .map(|(_, item)| {
-                if let Some(style) = &self.formatter.style {
+                if let Some(style) = &self.config.style {
                     item.clone().apply_style(*style)
                 } else {
                     item.clone()

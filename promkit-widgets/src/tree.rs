@@ -6,7 +6,7 @@ use node::Kind;
 mod inner;
 pub use inner::Tree;
 pub mod format;
-use format::Formatter;
+pub use format::{Config, Formatter};
 
 /// Represents the state of a tree structure within the application.
 ///
@@ -18,26 +18,23 @@ use format::Formatter;
 #[derive(Clone)]
 pub struct State {
     pub tree: Tree,
-    /// Rendering options for this widget.
-    pub formatter: Formatter,
-
-    /// Number of lines available for rendering.
-    pub lines: Option<usize>,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {
-                Kind::Folded { .. } => &self.formatter.folded_symbol,
-                Kind::Unfolded { .. } => &self.formatter.unfolded_symbol,
+                Kind::Folded { .. } => &self.config.folded_symbol,
+                Kind::Unfolded { .. } => &self.config.unfolded_symbol,
             }
         };
 
         let indent = |kind: &Kind| -> usize {
             match kind {
                 Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => {
-                    path.len() * self.formatter.indent
+                    path.len() * self.config.indent
                 }
             }
         };
@@ -48,7 +45,7 @@ impl PaneFactory for State {
             }
         };
 
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -63,7 +60,7 @@ impl PaneFactory for State {
                 if i == self.tree.position() {
                     StyledGraphemes::from_str(
                         format!("{}{}{}", symbol(kind), " ".repeat(indent(kind)), id(kind),),
-                        self.formatter.active_item_style,
+                        self.config.active_item_style,
                     )
                 } else {
                     StyledGraphemes::from_str(
@@ -73,7 +70,7 @@ impl PaneFactory for State {
                             " ".repeat(indent(kind)),
                             id(kind),
                         ),
-                        self.formatter.inactive_item_style,
+                        self.config.inactive_item_style,
                     )
                 }
             })

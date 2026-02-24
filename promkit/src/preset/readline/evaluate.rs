@@ -90,7 +90,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
                     }
                     // For representing the end of the prompt,
                     // reset the style of the cursor to default.
-                    ctx.readline.formatter.active_char_style = ContentStyle::default();
+                    ctx.readline.config.active_char_style = ContentStyle::default();
                     Ok(Signal::Quit)
                 } else {
                     Ok(Signal::Continue)
@@ -158,7 +158,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
         }) => ctx
             .readline
             .texteditor
-            .move_to_previous_nearest(&ctx.readline.word_break_chars),
+            .move_to_previous_nearest(&ctx.readline.config.word_break_chars),
 
         Event::Key(KeyEvent {
             code: KeyCode::Char('f'),
@@ -168,7 +168,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
         }) => ctx
             .readline
             .texteditor
-            .move_to_next_nearest(&ctx.readline.word_break_chars),
+            .move_to_next_nearest(&ctx.readline.config.word_break_chars),
 
         // Erase char(s).
         Event::Key(KeyEvent {
@@ -193,7 +193,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
         }) => ctx
             .readline
             .texteditor
-            .erase_to_previous_nearest(&ctx.readline.word_break_chars),
+            .erase_to_previous_nearest(&ctx.readline.config.word_break_chars),
 
         Event::Key(KeyEvent {
             code: KeyCode::Char('d'),
@@ -203,7 +203,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
         }) => ctx
             .readline
             .texteditor
-            .erase_to_next_nearest(&ctx.readline.word_break_chars),
+            .erase_to_next_nearest(&ctx.readline.config.word_break_chars),
 
         // Choose history
         Event::Key(KeyEvent {
@@ -243,7 +243,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match ctx.readline.edit_mode {
+        }) => match ctx.readline.config.edit_mode {
             text_editor::Mode::Insert => ctx.readline.texteditor.insert(*ch),
             text_editor::Mode::Overwrite => ctx.readline.texteditor.overwrite(*ch),
         },

@@ -208,7 +208,7 @@ impl Byop {
         let size = crossterm::terminal::size()?;
 
         let readline = text_editor::State {
-            formatter: text_editor::format::Formatter {
+            config: text_editor::format::Config {
                 prefix: String::from("❯❯ "),
                 prefix_style: ContentStyle {
                     foreground_color: Some(Color::DarkGreen),
@@ -218,9 +218,9 @@ impl Byop {
                     background_color: Some(Color::DarkCyan),
                     ..Default::default()
                 },
+                word_break_chars: HashSet::from([' ']),
                 ..Default::default()
             },
-            word_break_chars: HashSet::from([' ']),
             ..Default::default()
         };
 
@@ -359,7 +359,7 @@ impl Byop {
             }) => self
                 .readline
                 .texteditor
-                .move_to_previous_nearest(&self.readline.word_break_chars),
+                .move_to_previous_nearest(&self.readline.config.word_break_chars),
 
             Event::Key(KeyEvent {
                 code: KeyCode::Char('f'),
@@ -369,7 +369,7 @@ impl Byop {
             }) => self
                 .readline
                 .texteditor
-                .move_to_next_nearest(&self.readline.word_break_chars),
+                .move_to_next_nearest(&self.readline.config.word_break_chars),
 
             // Erase char(s).
             Event::Key(KeyEvent {
@@ -394,7 +394,7 @@ impl Byop {
             }) => self
                 .readline
                 .texteditor
-                .erase_to_previous_nearest(&self.readline.word_break_chars),
+                .erase_to_previous_nearest(&self.readline.config.word_break_chars),
 
             Event::Key(KeyEvent {
                 code: KeyCode::Char('d'),
@@ -404,7 +404,7 @@ impl Byop {
             }) => self
                 .readline
                 .texteditor
-                .erase_to_next_nearest(&self.readline.word_break_chars),
+                .erase_to_next_nearest(&self.readline.config.word_break_chars),
 
             // Input char.
             Event::Key(KeyEvent {
