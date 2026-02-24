@@ -20,6 +20,7 @@ rayon = "1.11.0"
 scopeguard = "1.2.0"
 serde = "1.0.228"
 serde_json = { version = "1.0.149", features = ["preserve_order"] }
-termcfg = { version = "0.1.0", features = ["crossterm_0_29_0"] }
+# termcfg = { version = "0.1.0", features = ["crossterm_0_29_0"] }
+termcfg = { path = "../termcfg", version = "*", features = ["crossterm_0_29_0"] }
 tokio = { version = "1.49.0", features = ["full"] }
 unicode-width = "0.2.2"
