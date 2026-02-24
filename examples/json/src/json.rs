@@ -9,7 +9,7 @@ use promkit::{
     core::crossterm::{event, execute, terminal},
     preset::json::Json,
     widgets::{
-        jsonstream::JsonStream,
+        jsonstream::{format::OverflowMode, JsonStream},
         serde_json::{self, Deserializer, Value},
     },
     Prompt,
@@ -83,5 +83,9 @@ async fn main() -> anyhow::Result<()> {
     let _terminal_guard = TerminalGuard;
 
     let stream = JsonStream::new(values.iter());
-    Json::new(stream).title(args.title).run().await
+    Json::new(stream)
+        .title(args.title)
+        .overflow_mode(OverflowMode::LineWrap)
+        .run()
+        .await
 }

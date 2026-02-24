@@ -1,7 +1,7 @@
 use promkit::{
-    Prompt,
     core::crossterm::{cursor, terminal},
     preset::readline::Readline,
+    Prompt,
 };
 
 #[tokio::main]

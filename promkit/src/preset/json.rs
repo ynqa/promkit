@@ -12,7 +12,11 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        jsonstream::{self, format::RowFormatter, JsonStream},
+        jsonstream::{
+            self,
+            format::{OverflowMode, RowFormatter},
+            JsonStream,
+        },
         text::{self, Text},
     },
     Signal,
@@ -111,6 +115,7 @@ impl Json {
                     active_item_attribute: Attribute::Undercurled,
                     inactive_item_attribute: Attribute::Dim,
                     indent: 2,
+                    overflow_mode: OverflowMode::Ellipsis,
                 },
                 lines: Default::default(),
             },
@@ -138,6 +143,12 @@ impl Json {
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
         self.json.formatter.indent = indent;
+        self
+    }
+
+    /// Sets the overflow mode for rendering JSON values that exceed the available width.
+    pub fn overflow_mode(mut self, mode: OverflowMode) -> Self {
+        self.json.formatter.overflow_mode = mode;
         self
     }
 
