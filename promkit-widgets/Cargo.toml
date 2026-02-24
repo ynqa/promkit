@@ -12,7 +12,8 @@ readme = "README.md"
 default = ["all"]
 all = ["checkbox", "jsonstream", "listbox", "spinner", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
-jsonstream = ["dep:serde", "dep:serde_json", "dep:rayon"]
+jsonstream = ["dep:serde_json", "dep:rayon"]
+serde = ["dep:serde", "dep:termcfg"]
 listbox = []
 spinner = ["dep:tokio"]
 text = []
@@ -27,6 +28,7 @@ promkit-core = { path = "../promkit-core", version = "=0.2.0" }
 rayon = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+termcfg = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]

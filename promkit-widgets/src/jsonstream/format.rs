@@ -7,6 +7,7 @@ use super::jsonz::{ContainerType, Row, Value};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum OverflowMode {
     #[default]
@@ -18,21 +19,51 @@ pub enum OverflowMode {
     LineWrap,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone)]
 pub struct Formatter {
     /// Style for {}.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub curly_brackets_style: ContentStyle,
     /// Style for [].
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub square_brackets_style: ContentStyle,
     /// Style for "key".
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub key_style: ContentStyle,
     /// Style for string values.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub string_value_style: ContentStyle,
     /// Style for number values.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub number_value_style: ContentStyle,
     /// Style for boolean values.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub boolean_value_style: ContentStyle,
     /// Style for null values.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
     pub null_value_style: ContentStyle,
 
     /// Attribute for the selected line.
@@ -411,6 +442,31 @@ mod tests {
                     .iter()
                     .all(|line| !matches!(line.chars().last(), Some('…')))
             );
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    mod serde_compatibility {
+        use super::*;
+
+        #[test]
+        fn missing_new_fields_are_filled_by_default() {
+            let mut value = serde_json::to_value(Formatter {
+                indent: 4,
+                ..Default::default()
+            })
+            .unwrap();
+            let obj = value.as_object_mut().unwrap();
+            obj.remove("active_item_attribute");
+            obj.remove("inactive_item_attribute");
+            obj.remove("overflow_mode");
+
+            let formatter: Formatter = serde_json::from_value(value).unwrap();
+
+            assert_eq!(formatter.indent, 4);
+            assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
+            assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
+            assert_eq!(formatter.overflow_mode, OverflowMode::Ellipsis);
         }
     }
 }
