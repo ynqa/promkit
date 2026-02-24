@@ -14,7 +14,7 @@ use crate::{
     widgets::{
         jsonstream::{
             self,
-            format::{OverflowMode, RowFormatter},
+            format::{Formatter, OverflowMode},
             JsonStream,
         },
         text::{self, Text},
@@ -89,7 +89,7 @@ impl Json {
             },
             json: jsonstream::State {
                 stream,
-                formatter: RowFormatter {
+                formatter: Formatter {
                     curly_brackets_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()

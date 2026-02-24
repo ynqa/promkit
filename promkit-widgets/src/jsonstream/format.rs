@@ -19,7 +19,7 @@ pub enum OverflowMode {
 }
 
 #[derive(Clone)]
-pub struct RowFormatter {
+pub struct Formatter {
     /// Style for {}.
     pub curly_brackets_style: ContentStyle,
     /// Style for [].
@@ -50,7 +50,7 @@ pub struct RowFormatter {
     pub overflow_mode: OverflowMode,
 }
 
-impl Default for RowFormatter {
+impl Default for Formatter {
     fn default() -> Self {
         Self {
             curly_brackets_style: Default::default(),
@@ -68,7 +68,7 @@ impl Default for RowFormatter {
     }
 }
 
-impl RowFormatter {
+impl Formatter {
     fn truncate_line_with_ellipsis(line: StyledGraphemes, width: usize) -> StyledGraphemes {
         if line.widths() <= width {
             return line;
@@ -348,7 +348,7 @@ mod tests {
             .trim();
 
             assert_eq!(
-                RowFormatter {
+                Formatter {
                     indent: 4,
                     ..Default::default()
                 }
@@ -373,7 +373,7 @@ mod tests {
             let rows = create_rows([&value]);
             let width = 12;
 
-            let lines = RowFormatter {
+            let lines = Formatter {
                 indent: 2,
                 overflow_mode: OverflowMode::Ellipsis,
                 ..Default::default()
@@ -397,7 +397,7 @@ mod tests {
             let rows = create_rows([&value]);
             let width = 12;
 
-            let lines = RowFormatter {
+            let lines = Formatter {
                 indent: 2,
                 overflow_mode: OverflowMode::LineWrap,
                 ..Default::default()
@@ -414,3 +414,5 @@ mod tests {
         }
     }
 }
+
+pub type RowFormatter = Formatter;

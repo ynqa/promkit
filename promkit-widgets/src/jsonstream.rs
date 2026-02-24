@@ -4,7 +4,7 @@ use promkit_core::{Pane, PaneFactory};
 mod inner;
 pub use inner::JsonStream;
 pub mod format;
-use format::RowFormatter;
+use format::Formatter;
 pub mod jsonz;
 
 /// Represents the state of a JSON stream within the application.
@@ -17,7 +17,7 @@ pub mod jsonz;
 pub struct State {
     pub stream: JsonStream,
 
-    pub formatter: RowFormatter,
+    pub formatter: Formatter,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
