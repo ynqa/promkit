@@ -34,3 +34,4 @@ tokio = { workspace = true, optional = true }
 [dev-dependencies]
 # Enable `jsonstream` feature when `jsonz` testing
 promkit-widgets = { path = ".", features = ["jsonstream"] }
+toml = "0.9.8"

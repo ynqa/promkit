@@ -448,6 +448,7 @@ mod tests {
     #[cfg(feature = "serde")]
     mod serde_compatibility {
         use super::*;
+        use promkit_core::crossterm::style::{Attributes, Color};
 
         #[test]
         fn missing_new_fields_are_filled_by_default() {
@@ -467,6 +468,55 @@ mod tests {
             assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.overflow_mode, OverflowMode::Ellipsis);
+        }
+
+        #[test]
+        fn formatter_fields_are_fully_loaded_from_toml() {
+            let input = r#"
+indent = 4
+curly_brackets_style = "attr=bold"
+square_brackets_style = "attr=bold"
+key_style = "fg=cyan"
+string_value_style = "fg=green"
+number_value_style = "fg=yellow"
+boolean_value_style = "fg=magenta"
+null_value_style = "fg=grey"
+active_item_attribute = "Underlined"
+inactive_item_attribute = "Dim"
+overflow_mode = "LineWrap"
+"#;
+
+            let formatter: Formatter = toml::from_str(input).unwrap();
+
+            assert_eq!(formatter.indent, 4);
+            assert_eq!(
+                formatter.curly_brackets_style.attributes,
+                Attributes::from(Attribute::Bold),
+            );
+            assert_eq!(
+                formatter.square_brackets_style.attributes,
+                Attributes::from(Attribute::Bold),
+            );
+            assert_eq!(formatter.key_style.foreground_color, Some(Color::Cyan));
+            assert_eq!(
+                formatter.string_value_style.foreground_color,
+                Some(Color::Green),
+            );
+            assert_eq!(
+                formatter.number_value_style.foreground_color,
+                Some(Color::Yellow)
+            );
+            assert_eq!(
+                formatter.boolean_value_style.foreground_color,
+                Some(Color::Magenta),
+            );
+            assert_eq!(
+                formatter.null_value_style.foreground_color,
+                Some(Color::Grey)
+            );
+            assert_eq!(formatter.active_item_attribute, Attribute::Underlined);
+            assert_eq!(formatter.inactive_item_attribute, Attribute::Dim);
+            assert_eq!(formatter.overflow_mode, OverflowMode::LineWrap);
         }
     }
 }

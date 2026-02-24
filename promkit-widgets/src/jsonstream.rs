@@ -15,8 +15,10 @@ pub mod jsonz;
 /// the JSON output.
 #[derive(Clone)]
 pub struct State {
+    /// The current JSON stream being processed.
     pub stream: JsonStream,
 
+    /// Theme configuration for styling the JSON output.
     pub formatter: Formatter,
 
     /// Number of lines available for rendering.
