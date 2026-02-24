@@ -14,7 +14,7 @@ use crate::{
     widgets::{
         jsonstream::{
             self,
-            format::{Config, OverflowMode},
+            config::{Config, OverflowMode},
             JsonStream,
         },
         text::{self, Text},
@@ -81,7 +81,7 @@ impl Json {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()

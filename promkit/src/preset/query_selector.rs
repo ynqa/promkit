@@ -131,7 +131,7 @@ impl QuerySelector {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
@@ -143,7 +143,7 @@ impl QuerySelector {
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
-                config: text_editor::format::Config {
+                config: text_editor::config::Config {
                     prefix: String::from("❯❯ "),
                     mask: None,
                     prefix_style: ContentStyle {
@@ -163,7 +163,7 @@ impl QuerySelector {
             init_list: listbox.clone(),
             list: listbox::State {
                 listbox,
-                config: listbox::format::Config {
+                config: listbox::config::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkCyan),

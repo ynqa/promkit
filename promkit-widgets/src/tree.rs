@@ -5,8 +5,8 @@ use node::Kind;
 #[path = "tree/tree.rs"]
 mod inner;
 pub use inner::Tree;
-pub mod format;
-pub use format::{Config, Formatter};
+pub mod config;
+pub use config::Config;
 
 /// Represents the state of a tree structure within the application.
 ///

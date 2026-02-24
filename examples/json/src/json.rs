@@ -9,7 +9,7 @@ use promkit::{
     core::crossterm::{event, execute, terminal},
     preset::json::Json,
     widgets::{
-        jsonstream::{format::OverflowMode, JsonStream},
+        jsonstream::{config::OverflowMode, JsonStream},
         serde_json::{self, Deserializer, Value},
     },
     Prompt,

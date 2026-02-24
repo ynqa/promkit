@@ -3,8 +3,8 @@ use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 #[path = "checkbox/checkbox.rs"]
 mod inner;
 pub use inner::Checkbox;
-pub mod format;
-pub use format::{Config, Formatter};
+pub mod config;
+pub use config::Config;
 
 /// Represents the state of a `Checkbox` component.
 ///

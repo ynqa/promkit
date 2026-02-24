@@ -58,5 +58,3 @@ lines = 8
         }
     }
 }
-
-pub type Formatter = Config;

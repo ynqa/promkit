@@ -3,8 +3,8 @@ use promkit_core::{Pane, PaneFactory};
 #[path = "jsonstream/jsonstream.rs"]
 mod inner;
 pub use inner::JsonStream;
-pub mod format;
-pub use format::{Config, Formatter};
+pub mod config;
+pub use config::Config;
 pub mod jsonz;
 
 /// Represents the state of a JSON stream within the application.

@@ -3,8 +3,8 @@ use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 #[path = "listbox/listbox.rs"]
 mod inner;
 pub use inner::Listbox;
-pub mod format;
-pub use format::{Config, Formatter};
+pub mod config;
+pub use config::Config;
 
 /// Represents the state of a `Listbox` component, including its appearance and behavior.
 /// This state includes the currently selected item, styles for active and inactive items,

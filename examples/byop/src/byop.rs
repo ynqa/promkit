@@ -208,7 +208,7 @@ impl Byop {
         let size = crossterm::terminal::size()?;
 
         let readline = text_editor::State {
-            config: text_editor::format::Config {
+            config: text_editor::config::Config {
                 prefix: String::from("❯❯ "),
                 prefix_style: ContentStyle {
                     foreground_color: Some(Color::DarkGreen),

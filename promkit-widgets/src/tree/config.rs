@@ -72,5 +72,3 @@ lines = 9
         }
     }
 }
-
-pub type Formatter = Config;

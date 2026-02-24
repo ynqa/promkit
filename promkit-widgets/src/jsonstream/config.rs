@@ -535,6 +535,3 @@ overflow_mode = "LineWrap"
         }
     }
 }
-
-pub type Formatter = Config;
-pub type RowFormatter = Config;

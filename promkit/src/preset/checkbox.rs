@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        checkbox::{self, format::Config},
+        checkbox::{self, config::Config},
         text::{self, Text},
     },
     Signal,
@@ -85,7 +85,7 @@ impl Checkbox {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()

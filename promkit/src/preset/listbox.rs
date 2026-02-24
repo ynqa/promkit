@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        listbox::{self, format::Config},
+        listbox::{self, config::Config},
         text::{self, Text},
     },
     Signal,
@@ -85,7 +85,7 @@ impl Listbox {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()

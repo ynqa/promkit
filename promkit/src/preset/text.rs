@@ -7,7 +7,7 @@ use crate::{
         PaneFactory,
     },
     preset::Evaluator,
-    widgets::text::{self, format::Config},
+    widgets::text::{self, config::Config},
     Signal,
 };
 

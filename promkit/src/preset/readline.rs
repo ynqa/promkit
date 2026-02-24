@@ -73,7 +73,7 @@ impl Default for Readline {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             focus: Focus::Readline,
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
@@ -85,7 +85,7 @@ impl Default for Readline {
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
-                config: text_editor::format::Config {
+                config: text_editor::config::Config {
                     prefix: String::from("❯❯ "),
                     mask: Default::default(),
                     prefix_style: ContentStyle {
@@ -105,7 +105,7 @@ impl Default for Readline {
             suggest: Default::default(),
             suggestions: listbox::State {
                 listbox: Listbox::from(Vec::<String>::new()),
-                config: listbox::format::Config {
+                config: listbox::config::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkGrey),
@@ -122,7 +122,7 @@ impl Default for Readline {
             validator: Default::default(),
             error_message: text::State {
                 text: Default::default(),
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkRed),
                         attributes: Attributes::from(Attribute::Bold),

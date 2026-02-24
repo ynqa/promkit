@@ -13,7 +13,7 @@ use crate::{
     preset::Evaluator,
     widgets::{
         text::{self, Text},
-        tree::{self, format::Config, node::Node},
+        tree::{self, config::Config, node::Node},
     },
     Signal,
 };
@@ -78,7 +78,7 @@ impl Tree {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                config: text::format::Config {
+                config: text::config::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()

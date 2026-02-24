@@ -5,8 +5,8 @@ pub use history::History;
 #[path = "text_editor/text_editor.rs"]
 mod inner;
 pub use inner::{Mode, TextEditor};
-pub mod format;
-pub use format::{Config, Formatter};
+pub mod config;
+pub use config::Config;
 
 #[derive(Clone, Default)]
 pub struct State {

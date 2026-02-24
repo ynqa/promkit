@@ -36,5 +36,3 @@ lines = 2
         }
     }
 }
-
-pub type Formatter = Config;
