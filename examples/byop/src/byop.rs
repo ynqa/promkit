@@ -72,7 +72,7 @@ impl spinner::State for TaskMonitor {
     async fn is_idle(&self) -> bool {
         // Check if the task is currently running
         let running = self.task_handle.read().await;
-        running.is_none() || running.as_ref().map_or(true, |handle| handle.is_finished())
+        running.is_none() || running.as_ref().is_none_or(|handle| handle.is_finished())
     }
 }
 
@@ -168,7 +168,7 @@ impl TaskMonitor {
 }
 
 /// Build Your Own Prompt
-struct BYOP {
+struct Byop {
     renderer: SharedRenderer<Index>,
     task_monitor: Arc<TaskMonitor>,
     readline: text_editor::State,
@@ -176,7 +176,7 @@ struct BYOP {
 }
 
 #[async_trait::async_trait]
-impl Prompt for BYOP {
+impl Prompt for Byop {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
@@ -203,7 +203,7 @@ impl Prompt for BYOP {
     }
 }
 
-impl BYOP {
+impl Byop {
     async fn try_default() -> anyhow::Result<Self> {
         let size = crossterm::terminal::size()?;
 
@@ -453,5 +453,5 @@ impl BYOP {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    BYOP::try_default().await?.spawn().await
+    Byop::try_default().await?.spawn().await
 }

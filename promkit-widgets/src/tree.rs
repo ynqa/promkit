@@ -2,8 +2,9 @@ use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::
 
 pub mod node;
 use node::Kind;
-mod tree;
-pub use tree::Tree;
+#[path = "tree/tree.rs"]
+mod inner;
+pub use inner::Tree;
 
 /// Represents the state of a tree structure within the application.
 ///

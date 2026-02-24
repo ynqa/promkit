@@ -4,8 +4,9 @@ use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::
 
 mod history;
 pub use history::History;
-mod text_editor;
-pub use text_editor::{Mode, TextEditor};
+#[path = "text_editor/text_editor.rs"]
+mod inner;
+pub use inner::{Mode, TextEditor};
 
 #[derive(Clone, Default)]
 pub struct State {

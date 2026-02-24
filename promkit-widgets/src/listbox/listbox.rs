@@ -37,6 +37,10 @@ impl Listbox {
         self.0.contents().len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.contents().is_empty()
+    }
+
     pub fn push_string(&mut self, item: String) {
         self.0.contents_mut().push(StyledGraphemes::from(item));
     }

@@ -1,7 +1,8 @@
 use promkit_core::{Pane, PaneFactory};
 
-mod jsonstream;
-pub use jsonstream::JsonStream;
+#[path = "jsonstream/jsonstream.rs"]
+mod inner;
+pub use inner::JsonStream;
 pub mod format;
 use format::RowFormatter;
 pub mod jsonz;

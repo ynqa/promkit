@@ -1,7 +1,8 @@
 use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
 
-mod text;
-pub use text::Text;
+#[path = "text/text.rs"]
+mod inner;
+pub use inner::Text;
 
 /// Represents the state of a text-based component within the application.
 ///
@@ -44,7 +45,7 @@ impl PaneFactory for State {
             .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
             .map(|(_, item)| {
                 if let Some(style) = &self.style {
-                    item.clone().apply_style(style.clone())
+                    item.clone().apply_style(*style)
                 } else {
                     item.clone()
                 }

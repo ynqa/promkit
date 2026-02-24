@@ -1,7 +1,8 @@
 use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
 
-mod checkbox;
-pub use checkbox::Checkbox;
+#[path = "checkbox/checkbox.rs"]
+mod inner;
+pub use inner::Checkbox;
 
 /// Represents the state of a `Checkbox` component.
 ///

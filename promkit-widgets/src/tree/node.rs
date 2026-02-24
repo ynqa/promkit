@@ -80,10 +80,7 @@ impl TryFrom<&path::PathBuf> for Node {
                         path.file_name()
                             .and_then(|name| name.to_str())
                             .ok_or_else(|| {
-                                std::io::Error::new(
-                                    std::io::ErrorKind::Other,
-                                    "Failed to convert file name to string",
-                                )
+                                std::io::Error::other("Failed to convert file name to string")
                             })?
                             .to_string(),
                     ));
@@ -101,12 +98,7 @@ impl TryFrom<&path::PathBuf> for Node {
             id: dir_path
                 .file_name()
                 .and_then(|name| name.to_str())
-                .ok_or_else(|| {
-                    std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Failed to convert directory name to string",
-                    )
-                })?
+                .ok_or_else(|| std::io::Error::other("Failed to convert directory name to string"))?
                 .to_string(),
             children,
             children_visible: false,
