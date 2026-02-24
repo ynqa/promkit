@@ -131,26 +131,30 @@ impl QuerySelector {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: Some(ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 ..Default::default()
             },
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
-                prefix: String::from("❯❯ "),
-                mask: None,
-                prefix_style: ContentStyle {
-                    foreground_color: Some(Color::DarkGreen),
-                    ..Default::default()
+                formatter: text_editor::format::Formatter {
+                    prefix: String::from("❯❯ "),
+                    mask: None,
+                    prefix_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    active_char_style: ContentStyle {
+                        background_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_char_style: ContentStyle::default(),
                 },
-                active_char_style: ContentStyle {
-                    background_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                },
-                inactive_char_style: ContentStyle::default(),
                 edit_mode: Default::default(),
                 word_break_chars: Default::default(),
                 lines: Default::default(),
@@ -158,12 +162,14 @@ impl QuerySelector {
             init_list: listbox.clone(),
             list: listbox::State {
                 listbox,
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle::default()),
+                formatter: listbox::format::Formatter {
+                    cursor: String::from("❯ "),
+                    active_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    }),
+                    inactive_item_style: Some(ContentStyle::default()),
+                },
                 lines: Default::default(),
             },
             filter,
@@ -178,31 +184,31 @@ impl QuerySelector {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = Some(style);
+        self.title.formatter.style = Some(style);
         self
     }
 
     /// Sets the prefix string displayed before the input text in the text editor component.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.readline.prefix = prefix.as_ref().to_string();
+        self.readline.formatter.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the style for the prefix string in the text editor component.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.readline.prefix_style = style;
+        self.readline.formatter.prefix_style = style;
         self
     }
 
     /// Sets the style for the active character (the character at the cursor position) in the text editor component.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.active_char_style = style;
+        self.readline.formatter.active_char_style = style;
         self
     }
 
     /// Sets the style for inactive characters (characters not at the cursor position) in the text editor component.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.inactive_char_style = style;
+        self.readline.formatter.inactive_char_style = style;
         self
     }
 
@@ -220,19 +226,19 @@ impl QuerySelector {
 
     /// Sets the cursor symbol used in the list box component.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.list.cursor = cursor.as_ref().to_string();
+        self.list.formatter.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items in the list box component.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.list.active_item_style = Some(style);
+        self.list.formatter.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items in the list box component.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.list.inactive_item_style = Some(style);
+        self.list.formatter.inactive_item_style = Some(style);
         self
     }
 

@@ -90,7 +90,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
                     }
                     // For representing the end of the prompt,
                     // reset the style of the cursor to default.
-                    ctx.readline.active_char_style = ContentStyle::default();
+                    ctx.readline.formatter.active_char_style = ContentStyle::default();
                     Ok(Signal::Quit)
                 } else {
                     Ok(Signal::Continue)

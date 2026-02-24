@@ -208,13 +208,16 @@ impl Byop {
         let size = crossterm::terminal::size()?;
 
         let readline = text_editor::State {
-            prefix: String::from("❯❯ "),
-            prefix_style: ContentStyle {
-                foreground_color: Some(Color::DarkGreen),
-                ..Default::default()
-            },
-            active_char_style: ContentStyle {
-                background_color: Some(Color::DarkCyan),
+            formatter: text_editor::format::Formatter {
+                prefix: String::from("❯❯ "),
+                prefix_style: ContentStyle {
+                    foreground_color: Some(Color::DarkGreen),
+                    ..Default::default()
+                },
+                active_char_style: ContentStyle {
+                    background_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
             word_break_chars: HashSet::from([' ']),

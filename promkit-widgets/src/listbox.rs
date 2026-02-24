@@ -1,8 +1,10 @@
-use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
+use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 
 #[path = "listbox/listbox.rs"]
 mod inner;
 pub use inner::Listbox;
+pub mod format;
+use format::Formatter;
 
 /// Represents the state of a `Listbox` component, including its appearance and behavior.
 /// This state includes the currently selected item, styles for active and inactive items,
@@ -11,14 +13,8 @@ pub use inner::Listbox;
 pub struct State {
     /// The `Listbox` component to be rendered.
     pub listbox: Listbox,
-
-    /// Symbol for the selected line.
-    pub cursor: String,
-
-    /// Style for the selected line.
-    pub active_item_style: Option<ContentStyle>,
-    /// Style for un-selected lines.
-    pub inactive_item_style: Option<ContentStyle>,
+    /// Rendering options for this widget.
+    pub formatter: Formatter,
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
@@ -39,9 +35,11 @@ impl PaneFactory for State {
             .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
             .map(|(i, item)| {
                 if i == self.listbox.position() {
-                    let init =
-                        StyledGraphemes::from_iter([&StyledGraphemes::from(&self.cursor), item]);
-                    if let Some(style) = &self.active_item_style {
+                    let init = StyledGraphemes::from_iter([
+                        &StyledGraphemes::from(&self.formatter.cursor),
+                        item,
+                    ]);
+                    if let Some(style) = &self.formatter.active_item_style {
                         init.apply_style(*style)
                     } else {
                         init
@@ -49,11 +47,11 @@ impl PaneFactory for State {
                 } else {
                     let init = StyledGraphemes::from_iter([
                         &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.cursor).widths()),
+                            " ".repeat(StyledGraphemes::from(&self.formatter.cursor).widths()),
                         ),
                         item,
                     ]);
-                    if let Some(style) = &self.inactive_item_style {
+                    if let Some(style) = &self.formatter.inactive_item_style {
                         init.apply_style(*style)
                     } else {
                         init

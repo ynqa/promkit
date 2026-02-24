@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        checkbox,
+        checkbox::{self, format::Formatter},
         text::{self, Text},
     },
     Signal,
@@ -85,22 +85,26 @@ impl Checkbox {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: Some(ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 ..Default::default()
             },
             checkbox: checkbox::State {
                 checkbox,
-                cursor: String::from("❯ "),
-                active_mark: '☒',
-                inactive_mark: '☐',
-                active_item_style: ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
+                formatter: Formatter {
+                    cursor: String::from("❯ "),
+                    active_mark: '☒',
+                    inactive_mark: '☐',
+                    active_item_style: ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_item_style: ContentStyle::default(),
                 },
-                inactive_item_style: ContentStyle::default(),
                 lines: Default::default(),
             },
         }
@@ -124,31 +128,31 @@ impl Checkbox {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = Some(style);
+        self.title.formatter.style = Some(style);
         self
     }
 
     /// Sets the cursor symbol used to indicate the current selection.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.checkbox.cursor = cursor.as_ref().to_string();
+        self.checkbox.formatter.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the mark symbol used to indicate selected items.
     pub fn active_mark(mut self, mark: char) -> Self {
-        self.checkbox.active_mark = mark;
+        self.checkbox.formatter.active_mark = mark;
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.checkbox.active_item_style = style;
+        self.checkbox.formatter.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.checkbox.inactive_item_style = style;
+        self.checkbox.formatter.inactive_item_style = style;
         self
     }
 

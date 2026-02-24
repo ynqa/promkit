@@ -1,8 +1,10 @@
-use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
+use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 
 #[path = "text/text.rs"]
 mod inner;
 pub use inner::Text;
+pub mod format;
+use format::Formatter;
 
 /// Represents the state of a text-based component within the application.
 ///
@@ -12,9 +14,8 @@ pub use inner::Text;
 pub struct State {
     /// The text to be rendered.
     pub text: Text,
-
-    /// Style for the text string.
-    pub style: Option<ContentStyle>,
+    /// Rendering options for this widget.
+    pub formatter: Formatter,
 
     /// Maximum number of lines to display.
     pub lines: Option<usize>,
@@ -44,7 +45,7 @@ impl PaneFactory for State {
             .enumerate()
             .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
             .map(|(_, item)| {
-                if let Some(style) = &self.style {
+                if let Some(style) = &self.formatter.style {
                     item.clone().apply_style(*style)
                 } else {
                     item.clone()

@@ -73,26 +73,30 @@ impl Default for Readline {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             focus: Focus::Readline,
             title: text::State {
-                style: Some(ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 ..Default::default()
             },
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
-                prefix: String::from("❯❯ "),
-                mask: Default::default(),
-                prefix_style: ContentStyle {
-                    foreground_color: Some(Color::DarkGreen),
-                    ..Default::default()
+                formatter: text_editor::format::Formatter {
+                    prefix: String::from("❯❯ "),
+                    mask: Default::default(),
+                    prefix_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    active_char_style: ContentStyle {
+                        background_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_char_style: ContentStyle::default(),
                 },
-                active_char_style: ContentStyle {
-                    background_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                },
-                inactive_char_style: ContentStyle::default(),
                 edit_mode: Default::default(),
                 word_break_chars: HashSet::from([' ']),
                 lines: Default::default(),
@@ -100,26 +104,30 @@ impl Default for Readline {
             suggest: Default::default(),
             suggestions: listbox::State {
                 listbox: Listbox::from(Vec::<String>::new()),
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkGrey),
-                    background_color: Some(Color::DarkYellow),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkGrey),
-                    ..Default::default()
-                }),
+                formatter: listbox::format::Formatter {
+                    cursor: String::from("❯ "),
+                    active_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        background_color: Some(Color::DarkYellow),
+                        ..Default::default()
+                    }),
+                    inactive_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        ..Default::default()
+                    }),
+                },
                 lines: Some(3),
             },
             validator: Default::default(),
             error_message: text::State {
                 text: Default::default(),
-                style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkRed),
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkRed),
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 lines: None,
             },
         }
@@ -179,7 +187,7 @@ impl Readline {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = Some(style);
+        self.title.formatter.style = Some(style);
         self
     }
 
@@ -197,31 +205,31 @@ impl Readline {
 
     /// Sets the prefix string displayed before the input text.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.readline.prefix = prefix.as_ref().to_string();
+        self.readline.formatter.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the character used for masking input text, typically used for password fields.
     pub fn mask(mut self, mask: char) -> Self {
-        self.readline.mask = Some(mask);
+        self.readline.formatter.mask = Some(mask);
         self
     }
 
     /// Sets the style for the prefix string.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.readline.prefix_style = style;
+        self.readline.formatter.prefix_style = style;
         self
     }
 
     /// Sets the style for the currently active character in the input field.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.active_char_style = style;
+        self.readline.formatter.active_char_style = style;
         self
     }
 
     /// Sets the style for characters that are not currently active in the input field.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.inactive_char_style = style;
+        self.readline.formatter.inactive_char_style = style;
         self
     }
 

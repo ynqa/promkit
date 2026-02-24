@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        listbox,
+        listbox::{self, format::Formatter},
         text::{self, Text},
     },
     Signal,
@@ -85,20 +85,24 @@ impl Listbox {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: Some(ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 ..Default::default()
             },
             listbox: listbox::State {
                 listbox: listbox::Listbox::from(items),
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle::default()),
+                formatter: Formatter {
+                    cursor: String::from("❯ "),
+                    active_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    }),
+                    inactive_item_style: Some(ContentStyle::default()),
+                },
                 lines: Default::default(),
             },
         }
@@ -112,25 +116,25 @@ impl Listbox {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = Some(style);
+        self.title.formatter.style = Some(style);
         self
     }
 
     /// Sets the cursor symbol used to indicate the current selection.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.listbox.cursor = cursor.as_ref().to_string();
+        self.listbox.formatter.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox.active_item_style = Some(style);
+        self.listbox.formatter.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox.inactive_item_style = Some(style);
+        self.listbox.formatter.inactive_item_style = Some(style);
         self
     }
 

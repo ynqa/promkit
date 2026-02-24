@@ -13,7 +13,7 @@ use crate::{
     preset::Evaluator,
     widgets::{
         text::{self, Text},
-        tree::{self, node::Node},
+        tree::{self, format::Formatter, node::Node},
     },
     Signal,
 };
@@ -78,23 +78,27 @@ impl Tree {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: Some(ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
-                    ..Default::default()
-                }),
+                formatter: text::format::Formatter {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
+                },
                 ..Default::default()
             },
             tree: tree::State {
                 tree: tree::Tree::new(root),
-                folded_symbol: String::from("▶︎ "),
-                unfolded_symbol: String::from("▼ "),
-                active_item_style: ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
+                formatter: Formatter {
+                    folded_symbol: String::from("▶︎ "),
+                    unfolded_symbol: String::from("▼ "),
+                    active_item_style: ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_item_style: ContentStyle::default(),
+                    indent: 2,
                 },
-                inactive_item_style: ContentStyle::default(),
                 lines: Default::default(),
-                indent: 2,
             },
         }
     }
@@ -107,31 +111,31 @@ impl Tree {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = Some(style);
+        self.title.formatter.style = Some(style);
         self
     }
 
     /// Sets the symbol used to indicate a folded (collapsed) node.
     pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.folded_symbol = symbol.as_ref().to_string();
+        self.tree.formatter.folded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the symbol used to indicate an unfolded (expanded) node.
     pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.unfolded_symbol = symbol.as_ref().to_string();
+        self.tree.formatter.unfolded_symbol = symbol.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.active_item_style = style;
+        self.tree.formatter.active_item_style = style;
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.inactive_item_style = style;
+        self.tree.formatter.inactive_item_style = style;
         self
     }
 
@@ -143,7 +147,7 @@ impl Tree {
 
     /// Sets the indentation level for rendering the tree data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.tree.indent = indent;
+        self.tree.formatter.indent = indent;
         self
     }
 

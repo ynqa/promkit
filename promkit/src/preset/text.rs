@@ -7,7 +7,7 @@ use crate::{
         PaneFactory,
     },
     preset::Evaluator,
-    widgets::text,
+    widgets::text::{self, format::Formatter},
     Signal,
 };
 
@@ -65,7 +65,7 @@ impl Text {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             text: text::State {
                 text: text::Text::from(text),
-                style: Default::default(),
+                formatter: Formatter::default(),
                 lines: None,
             },
         }
@@ -73,7 +73,7 @@ impl Text {
 
     /// Sets the style for the text component.
     pub fn style(mut self, style: ContentStyle) -> Self {
-        self.text.style = Some(style);
+        self.text.formatter.style = Some(style);
         self
     }
 
