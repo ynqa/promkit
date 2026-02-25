@@ -85,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
     let stream = JsonStream::new(values.iter());
     Json::new(stream)
         .title(args.title)
-        .overflow_mode(OverflowMode::LineWrap)
+        .overflow_mode(OverflowMode::Wrap)
         .run()
         .await
 }

@@ -13,10 +13,10 @@ pub enum OverflowMode {
     #[default]
     /// Truncates lines that exceed the available width
     /// and appends an ellipsis character (…).
-    Ellipsis,
+    Truncate,
     /// Wraps lines that exceed the available width
     /// onto the next line without truncation.
-    LineWrap,
+    Wrap,
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -257,11 +257,11 @@ impl Config {
             let mut line: StyledGraphemes = vec![indent, content].into_iter().collect();
 
             match self.overflow_mode {
-                OverflowMode::Ellipsis => {
+                OverflowMode::Truncate => {
                     line = Self::truncate_line_with_ellipsis(line, width);
                     formatted.push(line);
                 }
-                OverflowMode::LineWrap => {
+                OverflowMode::Wrap => {
                     formatted.extend(Self::wrap_line(line, width));
                 }
             }
@@ -417,7 +417,7 @@ mod tests {
 
             let lines = Config {
                 indent: 2,
-                overflow_mode: OverflowMode::Ellipsis,
+                overflow_mode: OverflowMode::Truncate,
                 ..Default::default()
             }
             .format_for_terminal_display(&rows, width);
@@ -441,7 +441,7 @@ mod tests {
 
             let lines = Config {
                 indent: 2,
-                overflow_mode: OverflowMode::LineWrap,
+                overflow_mode: OverflowMode::Wrap,
                 ..Default::default()
             }
             .format_for_terminal_display(&rows, width);
@@ -479,7 +479,7 @@ mod tests {
             assert_eq!(formatter.indent, 4);
             assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
-            assert_eq!(formatter.overflow_mode, OverflowMode::Ellipsis);
+            assert_eq!(formatter.overflow_mode, OverflowMode::Truncate);
             assert_eq!(formatter.lines, None);
         }
 
@@ -497,7 +497,7 @@ boolean_value_style = "fg=magenta"
 null_value_style = "fg=grey"
 active_item_attribute = "underlined"
 inactive_item_attribute = "dim"
-overflow_mode = "LineWrap"
+overflow_mode = "Wrap"
 "#;
 
             let formatter: Config = toml::from_str(input).unwrap();
@@ -531,7 +531,7 @@ overflow_mode = "LineWrap"
             );
             assert_eq!(formatter.active_item_attribute, Attribute::Underlined);
             assert_eq!(formatter.inactive_item_attribute, Attribute::Dim);
-            assert_eq!(formatter.overflow_mode, OverflowMode::LineWrap);
+            assert_eq!(formatter.overflow_mode, OverflowMode::Wrap);
         }
     }
 }

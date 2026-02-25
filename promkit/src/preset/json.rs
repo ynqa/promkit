@@ -118,7 +118,7 @@ impl Json {
                     active_item_attribute: Attribute::Undercurled,
                     inactive_item_attribute: Attribute::Dim,
                     indent: 2,
-                    overflow_mode: OverflowMode::Ellipsis,
+                    overflow_mode: OverflowMode::Truncate,
                     lines: Default::default(),
                 },
             },
