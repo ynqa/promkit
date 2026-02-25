@@ -101,7 +101,7 @@ pub async fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<S
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match ctx.readline.edit_mode {
+        }) => match ctx.readline.config.edit_mode {
             text_editor::Mode::Insert => ctx.readline.texteditor.insert(*ch),
             text_editor::Mode::Overwrite => ctx.readline.texteditor.overwrite(*ch),
         },

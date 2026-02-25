@@ -1,9 +1,12 @@
-use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle, grapheme::StyledGraphemes};
+use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 
 pub mod node;
 use node::Kind;
-mod tree;
-pub use tree::Tree;
+#[path = "tree/tree.rs"]
+mod inner;
+pub use inner::Tree;
+pub mod config;
+pub use config::Config;
 
 /// Represents the state of a tree structure within the application.
 ///
@@ -15,39 +18,24 @@ pub use tree::Tree;
 #[derive(Clone)]
 pub struct State {
     pub tree: Tree,
-
-    /// Symbol representing folded items.
-    pub folded_symbol: String,
-    /// Symbol representing unfolded items.
-    pub unfolded_symbol: String,
-
-    /// Style for the selected line.
-    pub active_item_style: ContentStyle,
-    /// Style for un-selected lines.
-    pub inactive_item_style: ContentStyle,
-
-    /// Number of lines available for rendering.
-    pub lines: Option<usize>,
-
-    /// The number of spaces used for indenting child items in the tree.
-    /// This value determines how much horizontal space is used to visually
-    /// represent the hierarchical structure of the tree. Each level of
-    /// indentation typically represents a deeper level in the tree hierarchy.
-    pub indent: usize,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
         let symbol = |kind: &Kind| -> &str {
             match kind {
-                Kind::Folded { .. } => &self.folded_symbol,
-                Kind::Unfolded { .. } => &self.unfolded_symbol,
+                Kind::Folded { .. } => &self.config.folded_symbol,
+                Kind::Unfolded { .. } => &self.config.unfolded_symbol,
             }
         };
 
         let indent = |kind: &Kind| -> usize {
             match kind {
-                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => path.len() * self.indent,
+                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => {
+                    path.len() * self.config.indent
+                }
             }
         };
 
@@ -57,7 +45,7 @@ impl PaneFactory for State {
             }
         };
 
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -72,7 +60,7 @@ impl PaneFactory for State {
                 if i == self.tree.position() {
                     StyledGraphemes::from_str(
                         format!("{}{}{}", symbol(kind), " ".repeat(indent(kind)), id(kind),),
-                        self.active_item_style,
+                        self.config.active_item_style,
                     )
                 } else {
                     StyledGraphemes::from_str(
@@ -82,7 +70,7 @@ impl PaneFactory for State {
                             " ".repeat(indent(kind)),
                             id(kind),
                         ),
-                        self.inactive_item_style,
+                        self.config.inactive_item_style,
                     )
                 }
             })

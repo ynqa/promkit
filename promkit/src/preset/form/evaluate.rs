@@ -76,6 +76,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             let word_break_chars = ctx.readlines.contents_mut()[current_position]
+                .config
                 .word_break_chars
                 .clone();
             ctx.readlines.contents_mut()[current_position]
@@ -90,6 +91,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             let word_break_chars = ctx.readlines.contents_mut()[current_position]
+                .config
                 .word_break_chars
                 .clone();
             ctx.readlines.contents_mut()[current_position]
@@ -123,6 +125,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             let word_break_chars = ctx.readlines.contents_mut()[current_position]
+                .config
                 .word_break_chars
                 .clone();
             ctx.readlines.contents_mut()[current_position]
@@ -137,6 +140,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             let word_break_chars = ctx.readlines.contents_mut()[current_position]
+                .config
                 .word_break_chars
                 .clone();
             ctx.readlines.contents_mut()[current_position]
@@ -173,7 +177,10 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match ctx.readlines.contents_mut()[current_position].edit_mode {
+        }) => match ctx.readlines.contents_mut()[current_position]
+            .config
+            .edit_mode
+        {
             text_editor::Mode::Insert => ctx.readlines.contents_mut()[current_position]
                 .texteditor
                 .insert(*ch),

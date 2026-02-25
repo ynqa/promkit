@@ -19,7 +19,7 @@ impl Checkbox {
     /// Creates a new `Checkbox` from a vector of `fmt::Display`.
     pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
         Self {
-            listbox: Listbox::from_displayable(items),
+            listbox: Listbox::from(items),
             picked: HashSet::new(),
         }
     }
@@ -59,7 +59,7 @@ impl Checkbox {
             .collect::<HashSet<usize>>();
 
         Self {
-            listbox: Listbox::from_displayable(listbox_items),
+            listbox: Listbox::from(listbox_items),
             picked: picked_indices,
         }
     }

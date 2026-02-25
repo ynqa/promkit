@@ -131,10 +131,10 @@ impl History {
         if !self.exists(&item) {
             let init_state = self.cursor.contents_mut().pop_back().unwrap();
             self.cursor.contents_mut().push_back(item);
-            if let Some(limit) = self.limit_size {
-                if limit < self.cursor.contents_mut().len() {
-                    self.cursor.contents_mut().pop_front();
-                }
+            if let Some(limit) = self.limit_size
+                && limit < self.cursor.contents_mut().len()
+            {
+                self.cursor.contents_mut().pop_front();
             }
             self.cursor.contents_mut().push_back(init_state);
         }

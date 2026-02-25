@@ -19,9 +19,8 @@ impl Default for Listbox {
     }
 }
 
-impl Listbox {
-    /// Creates a new `Listbox` from a vector of `fmt::Display`.
-    pub fn from_displayable<E: fmt::Display, I: IntoIterator<Item = E>>(items: I) -> Self {
+impl<E: fmt::Display, I: IntoIterator<Item = E>> From<I> for Listbox {
+    fn from(items: I) -> Self {
         Self(Cursor::new(
             items
                 .into_iter()
@@ -31,9 +30,15 @@ impl Listbox {
             false,
         ))
     }
+}
 
+impl Listbox {
     pub fn len(&self) -> usize {
         self.0.contents().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.contents().is_empty()
     }
 
     pub fn push_string(&mut self, item: String) {

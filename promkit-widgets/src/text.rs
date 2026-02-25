@@ -1,7 +1,10 @@
-use promkit_core::{Pane, PaneFactory, crossterm::style::ContentStyle};
+use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
 
-mod text;
-pub use text::Text;
+#[path = "text/text.rs"]
+mod inner;
+pub use inner::Text;
+pub mod config;
+pub use config::Config;
 
 /// Represents the state of a text-based component within the application.
 ///
@@ -11,23 +14,23 @@ pub use text::Text;
 pub struct State {
     /// The text to be rendered.
     pub text: Text,
-
-    /// Style for the text string.
-    pub style: ContentStyle,
-
-    /// Maximum number of lines to display.
-    pub lines: Option<usize>,
+    /// Configuration for rendering and behavior.
+    pub config: Config,
 }
 
 impl State {
-    pub fn replace(&mut self, renderer: Self) {
-        *self = renderer;
+    pub fn replace(&mut self, state: Self) {
+        *self = state;
+    }
+
+    pub fn replace_text(&mut self, text: Vec<StyledGraphemes>) {
+        self.text.replace_contents(text);
     }
 }
 
 impl PaneFactory for State {
     fn create_pane(&self, width: u16, height: u16) -> Pane {
-        let height = match self.lines {
+        let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
@@ -38,7 +41,13 @@ impl PaneFactory for State {
             .iter()
             .enumerate()
             .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
-            .map(|(_, item)| item.clone().apply_style(self.style))
+            .map(|(_, item)| {
+                if let Some(style) = &self.config.style {
+                    item.clone().apply_style(*style)
+                } else {
+                    item.clone()
+                }
+            })
             .fold((vec![], 0), |(mut acc, pos), item| {
                 let rows = item.matrixify(width as usize, height, 0).0;
                 if pos < self.text.position() + height {

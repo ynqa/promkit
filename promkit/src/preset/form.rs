@@ -92,15 +92,15 @@ impl Form {
                 (Vec::new(), Vec::new(), Vec::new()),
                 |(mut readlines, mut focus_styles, mut unfocus_styles), state| {
                     let focus_style = Style {
-                        prefix_style: state.prefix_style,
-                        active_char_style: state.active_char_style,
-                        inactive_char_style: state.inactive_char_style,
+                        prefix_style: state.config.prefix_style,
+                        active_char_style: state.config.active_char_style,
+                        inactive_char_style: state.config.inactive_char_style,
                     };
 
                     let unfocus_style = Style {
                         prefix_style: ContentStyle {
                             attributes: Attributes::from(Attribute::Dim),
-                            ..state.prefix_style
+                            ..state.config.prefix_style
                         },
                         active_char_style: ContentStyle {
                             attributes: Attributes::from(Attribute::Dim),
@@ -108,7 +108,7 @@ impl Form {
                         },
                         inactive_char_style: ContentStyle {
                             attributes: Attributes::from(Attribute::Dim),
-                            ..state.inactive_char_style
+                            ..state.config.inactive_char_style
                         },
                     };
 
@@ -158,13 +158,13 @@ impl Form {
             .enumerate()
             .for_each(|(i, state)| {
                 if i == current_position {
-                    state.prefix_style = self.focus_styles[i].prefix_style;
-                    state.inactive_char_style = self.focus_styles[i].inactive_char_style;
-                    state.active_char_style = self.focus_styles[i].active_char_style;
+                    state.config.prefix_style = self.focus_styles[i].prefix_style;
+                    state.config.inactive_char_style = self.focus_styles[i].inactive_char_style;
+                    state.config.active_char_style = self.focus_styles[i].active_char_style;
                 } else {
-                    state.prefix_style = self.unfocus_styles[i].prefix_style;
-                    state.inactive_char_style = self.unfocus_styles[i].inactive_char_style;
-                    state.active_char_style = self.unfocus_styles[i].active_char_style;
+                    state.config.prefix_style = self.unfocus_styles[i].prefix_style;
+                    state.config.inactive_char_style = self.unfocus_styles[i].inactive_char_style;
+                    state.config.active_char_style = self.unfocus_styles[i].active_char_style;
                 }
             });
     }

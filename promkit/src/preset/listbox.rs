@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        listbox,
+        listbox::{self, config::Config},
         text::{self, Text},
     },
     Signal,
@@ -85,21 +85,26 @@ impl Listbox {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
+                config: text::config::Config {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
                     ..Default::default()
                 },
                 ..Default::default()
             },
             listbox: listbox::State {
-                listbox: listbox::Listbox::from_displayable(items),
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle::default()),
-                lines: Default::default(),
+                listbox: listbox::Listbox::from(items),
+                config: Config {
+                    cursor: String::from("❯ "),
+                    active_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    }),
+                    inactive_item_style: Some(ContentStyle::default()),
+                    lines: Default::default(),
+                },
             },
         }
     }
@@ -112,31 +117,31 @@ impl Listbox {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = style;
+        self.title.config.style = Some(style);
         self
     }
 
     /// Sets the cursor symbol used to indicate the current selection.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.listbox.cursor = cursor.as_ref().to_string();
+        self.listbox.config.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox.active_item_style = Some(style);
+        self.listbox.config.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.listbox.inactive_item_style = Some(style);
+        self.listbox.config.inactive_item_style = Some(style);
         self
     }
 
     /// Sets the number of lines to be used for displaying the selectable list.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
-        self.listbox.lines = Some(lines);
+        self.listbox.config.lines = Some(lines);
         self
     }
 

@@ -93,7 +93,7 @@ impl crate::Prompt for QuerySelector {
                     .map(|s| s.to_string())
                     .collect(),
             );
-            self.list.listbox = Listbox::from_displayable(list);
+            self.list.listbox = Listbox::from(list);
         }
 
         // Update the renderer with the new state of the components.
@@ -126,13 +126,16 @@ impl QuerySelector {
         T: Display,
         I: IntoIterator<Item = T>,
     {
-        let listbox = Listbox::from_displayable(items);
+        let listbox = Listbox::from(items);
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
+                config: text::config::Config {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -140,31 +143,35 @@ impl QuerySelector {
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: None,
-                prefix: String::from("❯❯ "),
-                mask: None,
-                prefix_style: ContentStyle {
-                    foreground_color: Some(Color::DarkGreen),
-                    ..Default::default()
+                config: text_editor::config::Config {
+                    prefix: String::from("❯❯ "),
+                    mask: None,
+                    prefix_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    active_char_style: ContentStyle {
+                        background_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_char_style: ContentStyle::default(),
+                    edit_mode: Default::default(),
+                    word_break_chars: Default::default(),
+                    lines: Default::default(),
                 },
-                active_char_style: ContentStyle {
-                    background_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                },
-                inactive_char_style: ContentStyle::default(),
-                edit_mode: Default::default(),
-                word_break_chars: Default::default(),
-                lines: Default::default(),
             },
             init_list: listbox.clone(),
             list: listbox::State {
                 listbox,
-                cursor: String::from("❯ "),
-                active_item_style: Some(ContentStyle {
-                    foreground_color: Some(Color::DarkCyan),
-                    ..Default::default()
-                }),
-                inactive_item_style: Some(ContentStyle::default()),
-                lines: Default::default(),
+                config: listbox::config::Config {
+                    cursor: String::from("❯ "),
+                    active_item_style: Some(ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    }),
+                    inactive_item_style: Some(ContentStyle::default()),
+                    lines: Default::default(),
+                },
             },
             filter,
         }
@@ -178,67 +185,67 @@ impl QuerySelector {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = style;
+        self.title.config.style = Some(style);
         self
     }
 
     /// Sets the prefix string displayed before the input text in the text editor component.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.readline.prefix = prefix.as_ref().to_string();
+        self.readline.config.prefix = prefix.as_ref().to_string();
         self
     }
 
     /// Sets the style for the prefix string in the text editor component.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.readline.prefix_style = style;
+        self.readline.config.prefix_style = style;
         self
     }
 
     /// Sets the style for the active character (the character at the cursor position) in the text editor component.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.active_char_style = style;
+        self.readline.config.active_char_style = style;
         self
     }
 
     /// Sets the style for inactive characters (characters not at the cursor position) in the text editor component.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.inactive_char_style = style;
+        self.readline.config.inactive_char_style = style;
         self
     }
 
     /// Sets the editing mode for the text editor component.
     pub fn edit_mode(mut self, mode: Mode) -> Self {
-        self.readline.edit_mode = mode;
+        self.readline.config.edit_mode = mode;
         self
     }
 
     /// Sets the number of lines available for the text editor component.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.readline.lines = Some(lines);
+        self.readline.config.lines = Some(lines);
         self
     }
 
     /// Sets the cursor symbol used in the list box component.
     pub fn cursor<T: AsRef<str>>(mut self, cursor: T) -> Self {
-        self.list.cursor = cursor.as_ref().to_string();
+        self.list.config.cursor = cursor.as_ref().to_string();
         self
     }
 
     /// Sets the style for active (currently selected) items in the list box component.
     pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.list.active_item_style = Some(style);
+        self.list.config.active_item_style = Some(style);
         self
     }
 
     /// Sets the style for inactive (not currently selected) items in the list box component.
     pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.list.inactive_item_style = Some(style);
+        self.list.config.inactive_item_style = Some(style);
         self
     }
 
     /// Sets the number of lines available for the list box component.
     pub fn listbox_lines(mut self, lines: usize) -> Self {
-        self.list.lines = Some(lines);
+        self.list.config.lines = Some(lines);
         self
     }
 

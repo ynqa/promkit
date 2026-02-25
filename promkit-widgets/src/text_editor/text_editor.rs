@@ -5,6 +5,7 @@ use promkit_core::grapheme::{StyledGrapheme, StyledGraphemes};
 use crate::cursor::Cursor;
 
 /// Edit mode.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default)]
 pub enum Mode {
     #[default]

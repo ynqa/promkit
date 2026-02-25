@@ -72,7 +72,7 @@ impl spinner::State for TaskMonitor {
     async fn is_idle(&self) -> bool {
         // Check if the task is currently running
         let running = self.task_handle.read().await;
-        running.is_none() || running.as_ref().map_or(true, |handle| handle.is_finished())
+        running.is_none() || running.as_ref().is_none_or(|handle| handle.is_finished())
     }
 }
 
@@ -168,7 +168,7 @@ impl TaskMonitor {
 }
 
 /// Build Your Own Prompt
-struct BYOP {
+struct Byop {
     renderer: SharedRenderer<Index>,
     task_monitor: Arc<TaskMonitor>,
     readline: text_editor::State,
@@ -176,7 +176,7 @@ struct BYOP {
 }
 
 #[async_trait::async_trait]
-impl Prompt for BYOP {
+impl Prompt for Byop {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
@@ -203,21 +203,24 @@ impl Prompt for BYOP {
     }
 }
 
-impl BYOP {
+impl Byop {
     async fn try_default() -> anyhow::Result<Self> {
         let size = crossterm::terminal::size()?;
 
         let readline = text_editor::State {
-            prefix: String::from("❯❯ "),
-            prefix_style: ContentStyle {
-                foreground_color: Some(Color::DarkGreen),
+            config: text_editor::config::Config {
+                prefix: String::from("❯❯ "),
+                prefix_style: ContentStyle {
+                    foreground_color: Some(Color::DarkGreen),
+                    ..Default::default()
+                },
+                active_char_style: ContentStyle {
+                    background_color: Some(Color::DarkCyan),
+                    ..Default::default()
+                },
+                word_break_chars: HashSet::from([' ']),
                 ..Default::default()
             },
-            active_char_style: ContentStyle {
-                background_color: Some(Color::DarkCyan),
-                ..Default::default()
-            },
-            word_break_chars: HashSet::from([' ']),
             ..Default::default()
         };
 
@@ -356,7 +359,7 @@ impl BYOP {
             }) => self
                 .readline
                 .texteditor
-                .move_to_previous_nearest(&self.readline.word_break_chars),
+                .move_to_previous_nearest(&self.readline.config.word_break_chars),
 
             Event::Key(KeyEvent {
                 code: KeyCode::Char('f'),
@@ -366,7 +369,7 @@ impl BYOP {
             }) => self
                 .readline
                 .texteditor
-                .move_to_next_nearest(&self.readline.word_break_chars),
+                .move_to_next_nearest(&self.readline.config.word_break_chars),
 
             // Erase char(s).
             Event::Key(KeyEvent {
@@ -391,7 +394,7 @@ impl BYOP {
             }) => self
                 .readline
                 .texteditor
-                .erase_to_previous_nearest(&self.readline.word_break_chars),
+                .erase_to_previous_nearest(&self.readline.config.word_break_chars),
 
             Event::Key(KeyEvent {
                 code: KeyCode::Char('d'),
@@ -401,7 +404,7 @@ impl BYOP {
             }) => self
                 .readline
                 .texteditor
-                .erase_to_next_nearest(&self.readline.word_break_chars),
+                .erase_to_next_nearest(&self.readline.config.word_break_chars),
 
             // Input char.
             Event::Key(KeyEvent {
@@ -453,5 +456,5 @@ impl BYOP {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    BYOP::try_default().await?.spawn().await
+    Byop::try_default().await?.spawn().await
 }

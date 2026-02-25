@@ -10,15 +10,16 @@ members = [
 ]
 
 [workspace.dependencies]
-anyhow = "1.0.98"
-async-trait = "0.1.88"
+anyhow = "1.0.102"
+async-trait = "0.1.89"
 crossbeam-skiplist = "0.1.3"
 crossterm = { version = "0.29.0", features = ["use-dev-tty", "event-stream", "serde"] }
-futures = "0.3.31"
-radix_trie = "0.2.1"
-rayon = "1.10.0"
+futures = "0.3.32"
+radix_trie = "0.3.0"
+rayon = "1.11.0"
 scopeguard = "1.2.0"
-serde = "1.0.219"
-serde_json = { version = "1.0.140", features = ["preserve_order"] }
-tokio = { version = "1.46.1", features = ["full"] }
-unicode-width = "0.2.1"
+serde = "1.0.228"
+serde_json = { version = "1.0.149", features = ["preserve_order"] }
+termcfg = { version = "0.2.0", features = ["crossterm_0_29_0"] }
+tokio = { version = "1.49.0", features = ["full"] }
+unicode-width = "0.2.2"

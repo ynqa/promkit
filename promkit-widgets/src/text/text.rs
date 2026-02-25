@@ -26,6 +26,17 @@ impl<T: AsRef<str>> From<T> for Text {
 }
 
 impl Text {
+    /// Creates a new `Text` from styled graphemes without parsing a string.
+    /// Useful when the caller already has styled content prepared.
+    pub fn from_styled_graphemes(lines: Vec<StyledGraphemes>) -> Self {
+        Self(Cursor::new(lines, 0, false))
+    }
+
+    /// Replaces the contents with new contents and adjusts the position if necessary.
+    pub fn replace_contents(&mut self, text: Vec<StyledGraphemes>) {
+        self.0.replace_contents(text);
+    }
+
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
         self.0.contents()

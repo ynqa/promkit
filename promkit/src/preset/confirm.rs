@@ -14,11 +14,7 @@ impl Confirm {
             Readline::default()
                 .prefix(format!("{} (y/n) ", prefix.as_ref()))
                 .validator(
-                    |text| -> bool {
-                        ["yes", "no", "y", "n", "Y", "N"]
-                            .iter()
-                            .any(|yn| *yn == text)
-                    },
+                    |text| -> bool { ["yes", "no", "y", "n", "Y", "N"].contains(&text) },
                     |_| String::from("Please type 'y' or 'n' as an answer"),
                 ),
         )

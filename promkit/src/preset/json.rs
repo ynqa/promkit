@@ -12,7 +12,11 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        jsonstream::{self, format::RowFormatter, JsonStream},
+        jsonstream::{
+            self,
+            config::{Config, OverflowMode},
+            JsonStream,
+        },
         text::{self, Text},
     },
     Signal,
@@ -77,15 +81,18 @@ impl Json {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             title: text::State {
-                style: ContentStyle {
-                    attributes: Attributes::from(Attribute::Bold),
+                config: text::config::Config {
+                    style: Some(ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    }),
                     ..Default::default()
                 },
                 ..Default::default()
             },
             json: jsonstream::State {
                 stream,
-                formatter: RowFormatter {
+                config: Config {
                     curly_brackets_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
@@ -111,8 +118,9 @@ impl Json {
                     active_item_attribute: Attribute::Undercurled,
                     inactive_item_attribute: Attribute::Dim,
                     indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    lines: Default::default(),
                 },
-                lines: Default::default(),
             },
         }
     }
@@ -125,31 +133,37 @@ impl Json {
 
     /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.style = style;
+        self.title.config.style = Some(style);
         self
     }
 
     /// Sets the number of lines to be used for rendering the JSON data.
     pub fn json_lines(mut self, lines: usize) -> Self {
-        self.json.lines = Some(lines);
+        self.json.config.lines = Some(lines);
         self
     }
 
     /// Sets the indentation level for rendering the JSON data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.json.formatter.indent = indent;
+        self.json.config.indent = indent;
+        self
+    }
+
+    /// Sets the overflow mode for rendering JSON values that exceed the available width.
+    pub fn overflow_mode(mut self, mode: OverflowMode) -> Self {
+        self.json.config.overflow_mode = mode;
         self
     }
 
     /// Sets the attribute for active (currently selected) items.
     pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json.formatter.active_item_attribute = attr;
+        self.json.config.active_item_attribute = attr;
         self
     }
 
     /// Sets the attribute for inactive (not currently selected) items.
     pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json.formatter.inactive_item_attribute = attr;
+        self.json.config.inactive_item_attribute = attr;
         self
     }
 
