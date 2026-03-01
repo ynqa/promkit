@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.11.1"
+version = "0.12.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -16,20 +16,23 @@ path = "src/lib.rs"
 default = []
 all = [
     "checkbox",
+    "confirm",
     "form",
     "json",
     "listbox",
+    "password",
     "query-selector",
     "readline",
-    "password",
-    "confirm",
+    "spinner",
     "text",
     "tree",
 ]
 checkbox = ["promkit-widgets/checkbox", "promkit-widgets/text"]
+confirm = ["readline"]
 form = ["promkit-widgets/texteditor"]
 json = ["promkit-widgets/jsonstream", "promkit-widgets/text"]
 listbox = ["promkit-widgets/listbox", "promkit-widgets/text"]
+password = ["readline"]
 query-selector = [
     "promkit-widgets/listbox",
     "promkit-widgets/text",
@@ -40,8 +43,7 @@ readline = [
     "promkit-widgets/text",
     "promkit-widgets/texteditor",
 ]
-password = ["readline"]
-confirm = ["readline"]
+spinner = ["promkit-widgets/spinner"]
 text = ["promkit-widgets/text"]
 tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
@@ -49,7 +51,7 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.3.1" }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.4.0" }
 radix_trie = { workspace = true }
 scopeguard = { workspace = true }
 tokio = { workspace = true }
