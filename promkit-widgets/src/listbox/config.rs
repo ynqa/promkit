@@ -22,8 +22,8 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             cursor: String::from("❯ "),
-            active_item_style: Some(ContentStyle::default()),
-            inactive_item_style: Some(ContentStyle::default()),
+            active_item_style: None,
+            inactive_item_style: None,
             lines: None,
         }
     }
