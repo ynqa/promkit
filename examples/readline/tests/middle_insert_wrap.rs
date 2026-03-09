@@ -11,10 +11,11 @@ use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 
 const TERMINAL_ROWS: u16 = 6;
 const TERMINAL_COLS: u16 = 80;
-const RESIZED_TERMINAL_COLS: u16 = 72;
 const INITIAL_CURSOR_ROW: u16 = 6;
 const INITIAL_CURSOR_COL: u16 = 1;
 const INPUT_TEXT: &str = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr";
+const INSERTED_TEXT: &str = "HELLOWORLD!!!!";
+const LEFT_MOVES: usize = 20;
 
 fn read_expected_screen(path: &PathBuf) -> anyhow::Result<Vec<String>> {
     let content = fs::read_to_string(path)?;
@@ -98,11 +99,11 @@ fn spawn_readline() -> anyhow::Result<(
 }
 
 #[test]
-fn resize_wrap() -> anyhow::Result<()> {
+fn middle_insert_wrap() -> anyhow::Result<()> {
     let case_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cases");
-    let expected = read_expected_screen(&case_dir.join("resize_wrap.expected.txt"))?;
+    let expected = read_expected_screen(&case_dir.join("middle_insert_wrap.after.txt"))?;
 
-    let (mut child, master, mut writer, output, reader_thread) = spawn_readline()?;
+    let (mut child, _master, mut writer, output, reader_thread) = spawn_readline()?;
 
     let cpr = format!("\x1b[{};{}R", INITIAL_CURSOR_ROW, INITIAL_CURSOR_COL);
     writer.write_all(cpr.as_bytes())?;
@@ -111,20 +112,20 @@ fn resize_wrap() -> anyhow::Result<()> {
 
     writer.write_all(INPUT_TEXT.as_bytes())?;
     writer.flush()?;
-    thread::sleep(Duration::from_millis(250));
+    thread::sleep(Duration::from_millis(120));
 
-    for cols in (RESIZED_TERMINAL_COLS..TERMINAL_COLS).rev() {
-        master.resize(PtySize {
-            rows: TERMINAL_ROWS,
-            cols,
-            pixel_width: 0,
-            pixel_height: 0,
-        })?;
-        thread::sleep(Duration::from_millis(150));
+    for _ in 0..LEFT_MOVES {
+        writer.write_all(b"\x1b[D")?;
+        writer.flush()?;
+        thread::sleep(Duration::from_millis(20));
     }
 
+    writer.write_all(INSERTED_TEXT.as_bytes())?;
+    writer.flush()?;
+    thread::sleep(Duration::from_millis(250));
+
     let snapshot = output.lock().expect("failed to lock output buffer").clone();
-    assert_screen(&snapshot, TERMINAL_ROWS, RESIZED_TERMINAL_COLS, &expected);
+    assert_screen(&snapshot, TERMINAL_ROWS, TERMINAL_COLS, &expected);
 
     writer.write_all(b"\r")?;
     writer.flush()?;
