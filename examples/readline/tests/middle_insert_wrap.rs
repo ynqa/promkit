@@ -1,5 +1,3 @@
-mod support;
-
 use std::{
     io::{Read, Write},
     sync::{Arc, Mutex},
@@ -8,7 +6,7 @@ use std::{
 };
 
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
-use support::{assert_screen_eq, pad_to_cols, Screen};
+use termharness::screen::{assert_screen_eq, pad_to_cols, Screen};
 
 const TERMINAL_ROWS: u16 = 6;
 const TERMINAL_COLS: u16 = 80;

@@ -1,5 +1,6 @@
 use unicode_width::UnicodeWidthStr;
 
+/// A builder for constructing a screen representation for testing purposes.
 #[derive(Debug)]
 pub struct Screen {
     cols: u16,
@@ -8,6 +9,7 @@ pub struct Screen {
 }
 
 impl Screen {
+    // Create a new screen with the specified dimensions, initialized with blank lines.
     pub fn new(cols: u16, rows: u16) -> Self {
         Self {
             cols,
@@ -16,6 +18,7 @@ impl Screen {
         }
     }
 
+    // Set the content of a specific row, padding it to the terminal width.
     pub fn line(mut self, row: u16, content: &str) -> Self {
         let row = row as usize;
         assert!(row < self.rows as usize, "row {row} is out of bounds");
@@ -24,6 +27,7 @@ impl Screen {
         self
     }
 
+    // Build the final screen representation as a vector of strings, filling in blank lines where necessary.
     pub fn build(self) -> Vec<String> {
         let blank = " ".repeat(self.cols as usize);
         self.lines
