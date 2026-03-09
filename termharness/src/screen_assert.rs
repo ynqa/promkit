@@ -32,7 +32,7 @@ fn format_screen_line(line: Option<&String>) -> String {
 }
 
 /// Format an entire screen, prefixing each line with its row number and marking differences.
-fn format_screen(lines: &[String], total_rows: usize) -> Vec<String> {
+pub fn format_screen(lines: &[String], total_rows: usize) -> Vec<String> {
     (0..total_rows)
         .map(|row| format!("  r{row:02} {}", format_screen_line(lines.get(row))))
         .collect()
