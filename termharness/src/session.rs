@@ -8,7 +8,9 @@ use std::{
 
 use anyhow::Result;
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
+use vt100::Parser;
 
+use crate::screen::pad_to_cols;
 use crate::terminal::TerminalSize;
 
 pub struct Session {
@@ -16,6 +18,7 @@ pub struct Session {
     pub master: Box<dyn MasterPty + Send>,
     pub writer: Box<dyn Write + Send>,
     pub output: Arc<Mutex<Vec<u8>>>,
+    screen: Arc<Mutex<Parser>>,
     pub reader_thread: Option<JoinHandle<()>>,
     pub size: TerminalSize,
 }
@@ -41,16 +44,25 @@ impl Session {
         let master = pair.master;
         let output = Arc::new(Mutex::new(Vec::new()));
         let output_reader = Arc::clone(&output);
+        let screen = Arc::new(Mutex::new(Parser::new(size.rows, size.cols, 0)));
+        let screen_reader = Arc::clone(&screen);
         let mut reader = master.try_clone_reader()?;
         let reader_thread = thread::spawn(move || {
             let mut buf = [0_u8; 4096];
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) => break,
-                    Ok(n) => output_reader
-                        .lock()
-                        .expect("failed to lock output buffer")
-                        .extend_from_slice(&buf[..n]),
+                    Ok(n) => {
+                        let chunk = &buf[..n];
+                        output_reader
+                            .lock()
+                            .expect("failed to lock output buffer")
+                            .extend_from_slice(chunk);
+                        screen_reader
+                            .lock()
+                            .expect("failed to lock screen parser")
+                            .process(chunk);
+                    }
                     Err(err) if err.kind() == std::io::ErrorKind::Interrupted => continue,
                     Err(_) => break,
                 }
@@ -63,9 +75,36 @@ impl Session {
             master,
             writer,
             output,
+            screen,
             reader_thread: Some(reader_thread),
             size,
         })
+    }
+
+    pub fn resize(&mut self, size: TerminalSize) -> Result<()> {
+        self.master.resize(PtySize {
+            rows: size.rows,
+            cols: size.cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        })?;
+        self.screen
+            .lock()
+            .expect("failed to lock screen parser")
+            .screen_mut()
+            .set_size(size.rows, size.cols);
+        self.size = size;
+        Ok(())
+    }
+
+    pub fn screen_snapshot(&self) -> Vec<String> {
+        let screen = self.screen.lock().expect("failed to lock screen parser");
+        let (_, cols) = screen.screen().size();
+        screen
+            .screen()
+            .rows(0, cols)
+            .map(|row| pad_to_cols(cols, &row))
+            .collect()
     }
 }
 

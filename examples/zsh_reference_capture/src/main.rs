@@ -1,8 +1,7 @@
 use std::{io::Write, thread, time::Duration};
 
-use portable_pty::{CommandBuilder, PtySize};
+use portable_pty::CommandBuilder;
 use termharness::{
-    screen::pad_to_cols,
     screen_assert::format_screen,
     session::Session,
     terminal::TerminalSize,
@@ -12,23 +11,8 @@ const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 32;
 const RESIZED_TERMINAL_COLS: u16 = 28;
 
-fn render_screen(snapshot: &[u8], rows: u16, cols: u16) -> Vec<String> {
-    let mut parser = vt100::Parser::new(rows, cols, 0);
-    parser.process(snapshot);
-    parser
-        .screen()
-        .rows(0, cols)
-        .map(|row| pad_to_cols(cols, &row))
-        .collect()
-}
-
 fn print_screen(label: &str, session: &Session) {
-    let snapshot = session
-        .output
-        .lock()
-        .expect("failed to lock output buffer")
-        .clone();
-    let screen = render_screen(&snapshot, TERMINAL_ROWS, TERMINAL_COLS);
+    let screen = session.screen_snapshot();
 
     println!("== {label} ==");
     for line in format_screen(&screen, TERMINAL_ROWS as usize) {
@@ -37,12 +21,7 @@ fn print_screen(label: &str, session: &Session) {
 }
 
 fn resize(session: &mut Session, cols: u16) -> anyhow::Result<()> {
-    session.master.resize(PtySize {
-        rows: TERMINAL_ROWS,
-        cols,
-        pixel_width: 0,
-        pixel_height: 0,
-    })?;
+    session.resize(TerminalSize::new(TERMINAL_ROWS, cols))?;
     thread::sleep(Duration::from_millis(120));
     print_screen(&format!("resize -> {cols} cols"), session);
     Ok(())
