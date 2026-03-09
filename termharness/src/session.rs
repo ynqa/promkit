@@ -68,3 +68,34 @@ impl Session {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod session {
+        use super::*;
+
+        mod spawn {
+            use super::*;
+
+            #[test]
+            fn success() -> Result<()> {
+                let mut cmd = CommandBuilder::new("echo");
+                cmd.arg("Hello, world!");
+                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80))?;
+
+                // Wait for the child process to exit and the reader thread to finish.
+                session.child.wait()?;
+                if let Some(reader_thread) = session.reader_thread.take() {
+                    reader_thread.join().expect("reader thread panicked");
+                }
+
+                let output = session.output.lock().unwrap();
+                let output = String::from_utf8_lossy(&output);
+                assert!(output.contains("Hello, world!"));
+                Ok(())
+            }
+        }
+    }
+}
