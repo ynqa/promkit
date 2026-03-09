@@ -89,3 +89,31 @@ fn format_screen(lines: &[String], total_rows: usize) -> Vec<String> {
         .map(|row| format!("  r{row:02} {}", format_screen_line(lines.get(row))))
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod screen {
+        use super::*;
+
+        #[test]
+        fn build() {
+            let screen = Screen::new(5, 3)
+                .line(0, "Hi")
+                .unwrap()
+                .line(2, "Bye")
+                .unwrap()
+                .build();
+
+            assert_eq!(
+                screen,
+                vec![
+                    "Hi   ".to_string(),
+                    "     ".to_string(),
+                    "Bye  ".to_string(),
+                ]
+            );
+        }
+    }
+}
