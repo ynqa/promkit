@@ -1,13 +1,14 @@
+mod support;
+
 use std::{
-    fs,
     io::{Read, Write},
-    path::PathBuf,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
 };
 
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
+use support::{assert_screen_eq, pad_to_cols, Screen};
 
 const TERMINAL_ROWS: u16 = 6;
 const TERMINAL_COLS: u16 = 80;
@@ -16,42 +17,19 @@ const INITIAL_CURSOR_ROW: u16 = 6;
 const INITIAL_CURSOR_COL: u16 = 1;
 const INPUT_TEXT: &str = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr";
 
-fn read_expected_screen(path: &PathBuf) -> anyhow::Result<Vec<String>> {
-    let content = fs::read_to_string(path)?;
-    Ok(content
-        .lines()
-        .map(|line| line.trim_end().to_string())
-        .collect())
-}
-
 fn render_screen(snapshot: &[u8], rows: u16, cols: u16) -> Vec<String> {
     let mut parser = vt100::Parser::new(rows, cols, 0);
     parser.process(snapshot);
     parser
         .screen()
         .rows(0, cols)
-        .map(|row| row.trim_end().to_string())
+        .map(|row| pad_to_cols(cols, &row))
         .collect()
-}
-
-fn format_screen_dump(lines: &[String]) -> String {
-    lines
-        .iter()
-        .enumerate()
-        .map(|(i, line)| format!("r{i:02}: {:?}", line))
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 fn assert_screen(snapshot: &[u8], rows: u16, cols: u16, expected: &[String]) {
     let actual = render_screen(snapshot, rows, cols);
-    assert_eq!(
-        actual,
-        expected,
-        "screen mismatch\nexpected:\n{}\nactual:\n{}",
-        format_screen_dump(expected),
-        format_screen_dump(&actual)
-    );
+    assert_screen_eq(expected, &actual);
 }
 
 fn spawn_readline() -> anyhow::Result<(
@@ -99,8 +77,14 @@ fn spawn_readline() -> anyhow::Result<(
 
 #[test]
 fn resize_wrap() -> anyhow::Result<()> {
-    let case_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cases");
-    let expected = read_expected_screen(&case_dir.join("resize_wrap.expected.txt"))?;
+    let expected = Screen::new(RESIZED_TERMINAL_COLS, TERMINAL_ROWS)
+        .line(3, "Hi!")
+        .line(
+            4,
+            "❯❯ abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopq",
+        )
+        .line(5, "r")
+        .build();
 
     let (mut child, master, mut writer, output, reader_thread) = spawn_readline()?;
 
