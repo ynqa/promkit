@@ -7,15 +7,15 @@ use std::{
     time::Duration,
 };
 
-use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 
 const TERMINAL_ROWS: u16 = 6;
 const TERMINAL_COLS: u16 = 80;
 const INITIAL_CURSOR_ROW: u16 = 6; // 1-based CPR
 const INITIAL_CURSOR_COL: u16 = 1; // 1-based CPR
+const RESIZED_TERMINAL_COLS: u16 = 72;
 
-const BEFORE_TEXT: &str =
-    "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr";
+const BEFORE_TEXT: &str = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr";
 const INSERTED_TEXT: &str = "HELLOWORLD!!!!";
 const LEFT_MOVES: usize = 20;
 const EXPECTED_RESULT: &str =
@@ -52,7 +52,10 @@ fn read_expected_screen(path: &PathBuf) -> anyhow::Result<Vec<String>> {
         .map(|line| line.trim_end().to_string())
         .collect::<Vec<_>>();
     if lines.is_empty() {
-        return Err(anyhow::anyhow!("empty expected screen file: {}", path.display()));
+        return Err(anyhow::anyhow!(
+            "empty expected screen file: {}",
+            path.display()
+        ));
     }
     Ok(lines)
 }
@@ -65,20 +68,11 @@ fn assert_screen(
     expect_wrapped: bool,
     stage: &str,
 ) -> anyhow::Result<()> {
-    let mut parser = vt100::Parser::new(rows, cols, 0);
-    parser.process(snapshot);
-    let screen = parser.screen();
+    let actual = render_screen(snapshot, rows, cols);
+    let expected_dump = format_screen_dump(expected);
+    let actual_dump = format_screen_dump(&actual);
 
-    let actual = screen
-        .rows(0, cols)
-        .map(|row| row.trim_end().to_string())
-        .collect::<Vec<_>>();
-
-    if std::env::var("PROMKIT_TEST_DUMP_SCREEN")
-        .ok()
-        .as_deref()
-        == Some("1")
-    {
+    if std::env::var("PROMKIT_TEST_DUMP_SCREEN").ok().as_deref() == Some("1") {
         eprintln!("[{stage}] screen dump:");
         for (i, row) in actual.iter().enumerate() {
             eprintln!("r{i:02}: {row:?}");
@@ -87,16 +81,18 @@ fn assert_screen(
 
     assert!(
         expected.len() <= actual.len(),
-        "[{stage}] expected lines overflow: expected={}, actual={}",
+        "[{stage}] expected lines overflow: expected={}, actual={}\nexpected:\n{}\nactual:\n{}",
         expected.len(),
-        actual.len()
+        actual.len(),
+        expected_dump,
+        actual_dump
     );
 
     for (i, exp) in expected.iter().enumerate() {
         assert_eq!(
             actual[i], *exp,
-            "[{stage}] row mismatch at {}: expected {:?}, got {:?}",
-            i, exp, actual[i]
+            "[{stage}] row mismatch at {}: expected {:?}, got {:?}\nexpected:\n{}\nactual:\n{}",
+            i, exp, actual[i], expected_dump, actual_dump
         );
     }
 
@@ -111,16 +107,20 @@ fn assert_screen(
         })?;
         assert!(
             !next_row.trim().is_empty(),
-            "[{stage}] expected wrapped text on row {}",
-            prompt_row + 1
+            "[{stage}] expected wrapped text on row {}\nexpected:\n{}\nactual:\n{}",
+            prompt_row + 1,
+            expected_dump,
+            actual_dump
         );
     } else {
         if let Some(next_row) = actual.get(prompt_row + 1) {
             assert!(
                 next_row.trim().is_empty(),
-                "[{stage}] expected no wrapped text but got {:?} on row {}",
+                "[{stage}] expected no wrapped text but got {:?} on row {}\nexpected:\n{}\nactual:\n{}",
                 next_row,
-                prompt_row + 1
+                prompt_row + 1,
+                expected_dump,
+                actual_dump
             );
         }
     }
@@ -128,8 +128,28 @@ fn assert_screen(
     Ok(())
 }
 
+fn render_screen(snapshot: &[u8], rows: u16, cols: u16) -> Vec<String> {
+    let mut parser = vt100::Parser::new(rows, cols, 0);
+    parser.process(snapshot);
+    parser
+        .screen()
+        .rows(0, cols)
+        .map(|row| row.trim_end().to_string())
+        .collect::<Vec<_>>()
+}
+
+fn format_screen_dump(lines: &[String]) -> String {
+    lines
+        .iter()
+        .enumerate()
+        .map(|(i, line)| format!("r{i:02}: {:?}", line))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn spawn_readline() -> anyhow::Result<(
     Box<dyn portable_pty::Child + Send + Sync>,
+    Box<dyn MasterPty + Send>,
     Box<dyn Write + Send>,
     Arc<Mutex<Vec<u8>>>,
     thread::JoinHandle<()>,
@@ -147,9 +167,10 @@ fn spawn_readline() -> anyhow::Result<(
     let child = pair.slave.spawn_command(cmd)?;
     drop(pair.slave);
 
+    let master = pair.master;
     let output = Arc::new(Mutex::new(Vec::<u8>::new()));
     let output_reader = Arc::clone(&output);
-    let mut reader = pair.master.try_clone_reader()?;
+    let mut reader = master.try_clone_reader()?;
     let reader_thread = thread::spawn(move || {
         let mut buf = [0_u8; 4096];
         loop {
@@ -165,8 +186,8 @@ fn spawn_readline() -> anyhow::Result<(
         }
     });
 
-    let writer = pair.master.take_writer()?;
-    Ok((child, writer, output, reader_thread))
+    let writer = master.take_writer()?;
+    Ok((child, master, writer, output, reader_thread))
 }
 
 #[test]
@@ -177,7 +198,7 @@ fn wraps_when_inserting_in_middle_with_bottom_cursor_start() -> anyhow::Result<(
     let expected_before = read_expected_screen(&before_file)?;
     let expected_after = read_expected_screen(&after_file)?;
 
-    let (mut child, mut writer, output, reader_thread) = spawn_readline()?;
+    let (mut child, _master, mut writer, output, reader_thread) = spawn_readline()?;
 
     // crossterm asks CPR with ESC[6n on startup.
     let cpr = format!("\x1b[{};{}R", INITIAL_CURSOR_ROW, INITIAL_CURSOR_COL);
@@ -187,10 +208,7 @@ fn wraps_when_inserting_in_middle_with_bottom_cursor_start() -> anyhow::Result<(
 
     run_events(&mut writer, &[InputEvent::Type(BEFORE_TEXT)])?;
     thread::sleep(Duration::from_millis(250));
-    let before_snapshot = output
-        .lock()
-        .expect("failed to lock output buffer")
-        .clone();
+    let before_snapshot = output.lock().expect("failed to lock output buffer").clone();
     assert_screen(
         &before_snapshot,
         TERMINAL_ROWS,
@@ -202,13 +220,13 @@ fn wraps_when_inserting_in_middle_with_bottom_cursor_start() -> anyhow::Result<(
 
     run_events(
         &mut writer,
-        &[InputEvent::Left(LEFT_MOVES), InputEvent::Type(INSERTED_TEXT)],
+        &[
+            InputEvent::Left(LEFT_MOVES),
+            InputEvent::Type(INSERTED_TEXT),
+        ],
     )?;
     thread::sleep(Duration::from_millis(250));
-    let after_snapshot = output
-        .lock()
-        .expect("failed to lock output buffer")
-        .clone();
+    let after_snapshot = output.lock().expect("failed to lock output buffer").clone();
     assert_screen(
         &after_snapshot,
         TERMINAL_ROWS,
@@ -223,10 +241,7 @@ fn wraps_when_inserting_in_middle_with_bottom_cursor_start() -> anyhow::Result<(
 
     let status = child.wait()?;
     reader_thread.join().expect("reader thread panicked");
-    let all_output = output
-        .lock()
-        .expect("failed to lock output buffer")
-        .clone();
+    let all_output = output.lock().expect("failed to lock output buffer").clone();
     let full_text = String::from_utf8_lossy(&all_output);
 
     assert!(
@@ -236,6 +251,75 @@ fn wraps_when_inserting_in_middle_with_bottom_cursor_start() -> anyhow::Result<(
     );
     assert!(
         full_text.contains(&format!("result: \"{EXPECTED_RESULT}\"")),
+        "unexpected final output: {full_text:?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn does_not_duplicate_title_when_resizing_to_wrap_bottom_prompt() -> anyhow::Result<()> {
+    let case_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cases");
+    let before_file = case_dir.join("resize_wrap.before.txt");
+    let after_file = case_dir.join("resize_wrap.after.txt");
+    let expected_before = read_expected_screen(&before_file)?;
+    let expected_after = read_expected_screen(&after_file)?;
+
+    let (mut child, master, mut writer, output, reader_thread) = spawn_readline()?;
+
+    let cpr = format!("\x1b[{};{}R", INITIAL_CURSOR_ROW, INITIAL_CURSOR_COL);
+    writer.write_all(cpr.as_bytes())?;
+    writer.flush()?;
+    thread::sleep(Duration::from_millis(200));
+
+    run_events(&mut writer, &[InputEvent::Type(BEFORE_TEXT)])?;
+    thread::sleep(Duration::from_millis(250));
+
+    let before_snapshot = output.lock().expect("failed to lock output buffer").clone();
+    assert_screen(
+        &before_snapshot,
+        TERMINAL_ROWS,
+        TERMINAL_COLS,
+        &expected_before,
+        false,
+        "before-resize",
+    )?;
+
+    for cols in (RESIZED_TERMINAL_COLS..TERMINAL_COLS).rev() {
+        master.resize(PtySize {
+            rows: TERMINAL_ROWS,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        })?;
+        thread::sleep(Duration::from_millis(150));
+    }
+
+    let resized_snapshot = output.lock().expect("failed to lock output buffer").clone();
+    assert_screen(
+        &resized_snapshot,
+        TERMINAL_ROWS,
+        RESIZED_TERMINAL_COLS,
+        &expected_after,
+        true,
+        "after-resize",
+    )?;
+
+    run_events(&mut writer, &[InputEvent::Enter])?;
+    drop(writer);
+
+    let status = child.wait()?;
+    reader_thread.join().expect("reader thread panicked");
+    let all_output = output.lock().expect("failed to lock output buffer").clone();
+    let full_text = String::from_utf8_lossy(&all_output);
+
+    assert!(
+        status.success(),
+        "readline exited with code {}: {full_text:?}",
+        status.exit_code()
+    );
+    assert!(
+        full_text.contains(&format!("result: \"{BEFORE_TEXT}\"")),
         "unexpected final output: {full_text:?}"
     );
 
