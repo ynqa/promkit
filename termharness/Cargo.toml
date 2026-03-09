@@ -15,5 +15,6 @@ path = "src/lib.rs"
 [dependencies]
 anyhow = { workspace = true }
 portable-pty = "0.9.0"
+thiserror = { workspace = true }
 unicode-width = { workspace = true }
 vt100 = "0.16.2"

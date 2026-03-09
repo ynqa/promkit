@@ -76,12 +76,12 @@ fn spawn_readline() -> anyhow::Result<(
 #[test]
 fn resize_wrap() -> anyhow::Result<()> {
     let expected = Screen::new(RESIZED_TERMINAL_COLS, TERMINAL_ROWS)
-        .line(3, "Hi!")
+        .line(3, "Hi!")?
         .line(
             4,
             "❯❯ abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopq",
-        )
-        .line(5, "r")
+        )?
+        .line(5, "r")?
         .build();
 
     let (mut child, master, mut writer, output, reader_thread) = spawn_readline()?;

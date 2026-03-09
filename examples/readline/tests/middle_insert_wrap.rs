@@ -77,12 +77,12 @@ fn spawn_readline() -> anyhow::Result<(
 #[test]
 fn middle_insert_wrap() -> anyhow::Result<()> {
     let expected = Screen::new(TERMINAL_COLS, TERMINAL_ROWS)
-        .line(3, "Hi!")
+        .line(3, "Hi!")?
         .line(
             4,
             "❯❯ abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxHELLOWORLD!!!!yzabcdefghijk",
-        )
-        .line(5, "lmnopqr")
+        )?
+        .line(5, "lmnopqr")?
         .build();
 
     let (mut child, _master, mut writer, output, reader_thread) = spawn_readline()?;

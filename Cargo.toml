@@ -23,4 +23,5 @@ serde = "1.0.228"
 serde_json = { version = "1.0.149", features = ["preserve_order"] }
 termcfg = { version = "0.2.0", features = ["crossterm_0_29_0"] }
 tokio = { version = "1.49.0", features = ["full"] }
+thiserror = "2.0.18"
 unicode-width = "0.2.2"

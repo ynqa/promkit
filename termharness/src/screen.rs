@@ -1,3 +1,4 @@
+use crate::error::ScreenError;
 use unicode_width::UnicodeWidthStr;
 
 /// A builder for constructing a screen representation for testing purposes.
@@ -19,12 +20,16 @@ impl Screen {
     }
 
     // Set the content of a specific row, padding it to the terminal width.
-    pub fn line(mut self, row: u16, content: &str) -> Self {
-        let row = row as usize;
-        assert!(row < self.rows as usize, "row {row} is out of bounds");
+    pub fn line(mut self, row: u16, content: &str) -> Result<Self, ScreenError> {
+        if row >= self.rows {
+            return Err(ScreenError::RowOutOfBounds {
+                row,
+                rows: self.rows,
+            });
+        }
 
-        self.lines[row] = Some(pad_to_cols(self.cols, content));
-        self
+        self.lines[row as usize] = Some(pad_to_cols(self.cols, content));
+        Ok(self)
     }
 
     // Build the final screen representation as a vector of strings, filling in blank lines where necessary.
