@@ -1,6 +1,6 @@
 pub mod error;
-pub mod formatting;
-use formatting::format_screen_diff;
+pub mod screen_diff;
+use screen_diff::format_screen_diff;
 pub mod screen;
 
 pub fn assert_screen_eq(expected: &[String], actual: &[String]) {
