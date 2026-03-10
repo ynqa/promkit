@@ -9,6 +9,7 @@ members = [
   "promkit-widgets",
   "termharness",
   "zsh_reference_capture",
+  "zsh_reference_capture/zsh_pretend",
 ]
 
 [workspace.dependencies]
