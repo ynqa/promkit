@@ -13,8 +13,8 @@ name = "termharness"
 path = "src/lib.rs"
 
 [dependencies]
+alacritty_terminal = "0.25.1"
 anyhow = { workspace = true }
 portable-pty = "0.9.0"
 thiserror = { workspace = true }
 unicode-width = { workspace = true }
-vt100 = "0.16.2"

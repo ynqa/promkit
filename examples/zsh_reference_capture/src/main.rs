@@ -1,11 +1,7 @@
 use std::{io::Write, thread, time::Duration};
 
 use portable_pty::CommandBuilder;
-use termharness::{
-    screen_assert::format_screen,
-    session::Session,
-    terminal::TerminalSize,
-};
+use termharness::{screen_assert::format_screen, session::Session, terminal::TerminalSize};
 
 const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 32;
@@ -52,9 +48,7 @@ fn main() -> anyhow::Result<()> {
     thread::sleep(Duration::from_millis(300));
     print_screen("run echo", &session);
 
-    session
-        .writer
-        .write_all(b"this is terminal test suite!")?;
+    session.writer.write_all(b"this is terminal test suite!")?;
     session.writer.flush()?;
     thread::sleep(Duration::from_millis(200));
     print_screen("type text", &session);

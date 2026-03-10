@@ -6,19 +6,79 @@ use std::{
     thread::JoinHandle,
 };
 
+use alacritty_terminal::{
+    event::VoidListener,
+    term::{Config, Term, cell::Flags, test::TermSize},
+    vte::ansi::Processor,
+};
 use anyhow::Result;
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
-use vt100::Parser;
 
 use crate::screen::pad_to_cols;
 use crate::terminal::TerminalSize;
+
+struct Screen {
+    parser: Processor,
+    terminal: Term<VoidListener>,
+}
+
+impl Screen {
+    fn new(size: TerminalSize) -> Self {
+        let size = TermSize::new(size.cols as usize, size.rows as usize);
+        Self {
+            parser: Processor::new(),
+            terminal: Term::new(Config::default(), &size, VoidListener),
+        }
+    }
+
+    fn process(&mut self, chunk: &[u8]) {
+        self.parser.advance(&mut self.terminal, chunk);
+    }
+
+    fn resize(&mut self, size: TerminalSize) {
+        let size = TermSize::new(size.cols as usize, size.rows as usize);
+        self.terminal.resize(size);
+    }
+
+    fn snapshot(&self, size: TerminalSize) -> Vec<String> {
+        let mut lines = Vec::with_capacity(size.rows as usize);
+        let mut current_line = None;
+
+        for indexed in self.terminal.grid().display_iter() {
+            if current_line != Some(indexed.point.line.0) {
+                lines.push(String::new());
+                current_line = Some(indexed.point.line.0);
+            }
+
+            let line = lines
+                .last_mut()
+                .expect("display iterator should yield rows");
+            if indexed.cell.flags.contains(Flags::WIDE_CHAR_SPACER) {
+                continue;
+            }
+
+            line.push(indexed.cell.c);
+            if let Some(zerowidth) = indexed.cell.zerowidth() {
+                for ch in zerowidth {
+                    line.push(*ch);
+                }
+            }
+        }
+
+        lines.resize(size.rows as usize, String::new());
+        lines
+            .into_iter()
+            .map(|line| pad_to_cols(size.cols, &line))
+            .collect()
+    }
+}
 
 pub struct Session {
     pub child: Box<dyn Child + Send + Sync>,
     pub master: Box<dyn MasterPty + Send>,
     pub writer: Box<dyn Write + Send>,
     pub output: Arc<Mutex<Vec<u8>>>,
-    screen: Arc<Mutex<Parser>>,
+    screen: Arc<Mutex<Screen>>,
     pub reader_thread: Option<JoinHandle<()>>,
     pub size: TerminalSize,
 }
@@ -44,7 +104,7 @@ impl Session {
         let master = pair.master;
         let output = Arc::new(Mutex::new(Vec::new()));
         let output_reader = Arc::clone(&output);
-        let screen = Arc::new(Mutex::new(Parser::new(size.rows, size.cols, 0)));
+        let screen = Arc::new(Mutex::new(Screen::new(size)));
         let screen_reader = Arc::clone(&screen);
         let mut reader = master.try_clone_reader()?;
         let reader_thread = thread::spawn(move || {
@@ -91,20 +151,16 @@ impl Session {
         self.screen
             .lock()
             .expect("failed to lock screen parser")
-            .screen_mut()
-            .set_size(size.rows, size.cols);
+            .resize(size);
         self.size = size;
         Ok(())
     }
 
     pub fn screen_snapshot(&self) -> Vec<String> {
-        let screen = self.screen.lock().expect("failed to lock screen parser");
-        let (_, cols) = screen.screen().size();
-        screen
-            .screen()
-            .rows(0, cols)
-            .map(|row| pad_to_cols(cols, &row))
-            .collect()
+        self.screen
+            .lock()
+            .expect("failed to lock screen parser")
+            .snapshot(self.size)
     }
 }
 
@@ -134,6 +190,36 @@ mod tests {
                 let output = String::from_utf8_lossy(&output);
                 assert!(output.contains("Hello, world!"));
                 Ok(())
+            }
+        }
+
+        mod screen {
+            use super::*;
+
+            #[test]
+            fn resize_reflows_wrapped_lines() {
+                let mut screen = Screen::new(TerminalSize::new(3, 8));
+                screen.process(b"abcdefghij");
+
+                assert_eq!(
+                    screen.snapshot(TerminalSize::new(3, 8)),
+                    vec![
+                        "abcdefgh".to_string(),
+                        "ij      ".to_string(),
+                        "        ".to_string(),
+                    ]
+                );
+
+                screen.resize(TerminalSize::new(3, 6));
+
+                assert_eq!(
+                    screen.snapshot(TerminalSize::new(3, 6)),
+                    vec![
+                        "abcdef".to_string(),
+                        "ghij  ".to_string(),
+                        "      ".to_string(),
+                    ]
+                );
             }
         }
     }
