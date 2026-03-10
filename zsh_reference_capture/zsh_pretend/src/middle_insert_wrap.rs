@@ -1,7 +1,7 @@
 use std::{path::PathBuf, process::Command, thread, time::Duration};
 
 use portable_pty::CommandBuilder;
-use zsh_reference_capture::capture::{move_cursor_left, print_screen, send_bytes, spawn_session};
+use zsherio::capture::{move_cursor_left, print_screen, send_bytes, spawn_session};
 
 const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 40;

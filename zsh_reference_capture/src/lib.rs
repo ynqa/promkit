@@ -1,1 +1,2 @@
-pub mod capture;
+pub use zsherio::capture;
+pub use zsherio::scenario;

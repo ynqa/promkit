@@ -18,4 +18,4 @@ portable-pty = { workspace = true }
 promkit = { path = "../../promkit", features = ["readline"] }
 termharness = { path = "../../termharness" }
 tokio = { workspace = true }
-zsh-reference-capture = { path = ".." }
+zsherio = { path = "../../zsherio" }

@@ -1,5 +1,4 @@
 use std::{
-    fmt,
     fs::File,
     io::{self, Write},
     path::Path,
@@ -8,7 +7,6 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{bail, ensure};
 use termharness::screen_assert::format_screen;
 use termharness::session::Session;
 
@@ -16,14 +14,13 @@ pub type StepAction = Arc<dyn Fn(&mut Session) -> anyhow::Result<()> + Send + Sy
 
 #[derive(Clone)]
 pub struct Scenario {
-    pub name: &'static str,
+    pub name: String,
     pub steps: Vec<ScenarioStep>,
 }
 
 #[derive(Clone)]
 pub struct ScenarioStep {
-    pub label: &'static str,
-    pub compare: bool,
+    pub label: String,
     pub settle: Duration,
     pub action: StepAction,
 }
@@ -31,7 +28,6 @@ pub struct ScenarioStep {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ScenarioRecord {
     pub label: String,
-    pub compare: bool,
     pub screen: Vec<String>,
 }
 
@@ -43,25 +39,19 @@ pub struct ScenarioRun {
 }
 
 impl Scenario {
-    pub fn new(name: &'static str) -> Self {
+    pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name,
+            name: name.into(),
             steps: Vec::new(),
         }
     }
 
-    pub fn step<F>(
-        mut self,
-        label: &'static str,
-        compare: bool,
-        settle: Duration,
-        action: F,
-    ) -> Self
+    pub fn step<F, S>(mut self, label: S, settle: Duration, action: F) -> Self
     where
         F: Fn(&mut Session) -> anyhow::Result<()> + Send + Sync + 'static,
+        S: Into<String>,
     {
-        self.steps
-            .push(ScenarioStep::new(label, compare, settle, action));
+        self.steps.push(ScenarioStep::new(label, settle, action));
         self
     }
 
@@ -78,14 +68,13 @@ impl Scenario {
 
             let screen = session.screen_snapshot();
             records.push(ScenarioRecord {
-                label: step.label.to_string(),
-                compare: step.compare,
+                label: step.label.clone(),
                 screen: format_screen(&screen, screen.len()),
             });
         }
 
         Ok(ScenarioRun {
-            scenario_name: self.name.to_string(),
+            scenario_name: self.name.clone(),
             target_name: target_name.into(),
             records,
         })
@@ -93,13 +82,13 @@ impl Scenario {
 }
 
 impl ScenarioStep {
-    pub fn new<F>(label: &'static str, compare: bool, settle: Duration, action: F) -> Self
+    pub fn new<F, S>(label: S, settle: Duration, action: F) -> Self
     where
         F: Fn(&mut Session) -> anyhow::Result<()> + Send + Sync + 'static,
+        S: Into<String>,
     {
         Self {
-            label,
-            compare,
+            label: label.into(),
             settle,
             action: Arc::new(action),
         }
@@ -107,50 +96,6 @@ impl ScenarioStep {
 }
 
 impl ScenarioRun {
-    pub fn compare(&self, other: &Self) -> anyhow::Result<()> {
-        ensure!(
-            self.scenario_name == other.scenario_name,
-            "scenario mismatch: '{}' != '{}'",
-            self.scenario_name,
-            other.scenario_name
-        );
-
-        let expected = self.comparable_records();
-        let actual = other.comparable_records();
-
-        ensure!(
-            expected.len() == actual.len(),
-            "comparable step count mismatch for scenario '{}': '{}' has {}, '{}' has {}",
-            self.scenario_name,
-            self.target_name,
-            expected.len(),
-            other.target_name,
-            actual.len()
-        );
-
-        for (index, (expected, actual)) in expected.iter().zip(actual.iter()).enumerate() {
-            ensure!(
-                expected.label == actual.label,
-                "step label mismatch at comparable step {index} for scenario '{}': '{}' != '{}'",
-                self.scenario_name,
-                expected.label,
-                actual.label
-            );
-
-            if expected.screen != actual.screen {
-                bail!(
-                    "screen mismatch for scenario '{}' at step '{}' ({} vs {})",
-                    self.scenario_name,
-                    expected.label,
-                    self.target_name,
-                    other.target_name,
-                );
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn write_to<W: Write>(&self, mut writer: W) -> anyhow::Result<()> {
         for (index, record) in self.records.iter().enumerate() {
             writeln!(writer, "== {} ==", record.label)?;
@@ -174,11 +119,35 @@ impl ScenarioRun {
     pub fn write_to_stdout(&self) -> anyhow::Result<()> {
         self.write_to(io::stdout())
     }
+}
 
-    fn comparable_records(&self) -> Vec<&ScenarioRecord> {
-        self.records
-            .iter()
-            .filter(|record| record.compare)
-            .collect()
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn write_to_matches_print_screen_style() {
+        let run = ScenarioRun {
+            scenario_name: "middle_insert_wrap".to_string(),
+            target_name: "zsh".to_string(),
+            records: vec![
+                ScenarioRecord {
+                    label: "type text".to_string(),
+                    screen: vec!["  r00 |hello|".to_string(), "  r01 |world|".to_string()],
+                },
+                ScenarioRecord {
+                    label: "insert text".to_string(),
+                    screen: vec!["  r00 |hello again|".to_string()],
+                },
+            ],
+        };
+
+        let mut output = Vec::new();
+        run.write_to(&mut output).unwrap();
+
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "== type text ==\n  r00 |hello|\n  r01 |world|\n\n== insert text ==\n  r00 |hello again|\n"
+        );
     }
 }

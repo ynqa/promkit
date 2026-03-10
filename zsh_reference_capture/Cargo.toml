@@ -4,15 +4,5 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
-[[bin]]
-name = "zsh_resize_wrap"
-path = "src/zsh_resize_wrap.rs"
-
-[[bin]]
-name = "zsh_middle_insert_wrap"
-path = "src/zsh_middle_insert_wrap.rs"
-
 [dependencies]
-anyhow = { workspace = true }
-portable-pty = { workspace = true }
-termharness = { path = "../termharness" }
+zsherio = { path = "../zsherio" }
