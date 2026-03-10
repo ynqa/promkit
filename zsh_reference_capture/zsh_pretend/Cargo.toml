@@ -4,7 +4,18 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[[bin]]
+name = "zsh-pretend"
+path = "src/main.rs"
+
+[[bin]]
+name = "middle_insert_wrap"
+path = "src/middle_insert_wrap.rs"
+
 [dependencies]
 anyhow = { workspace = true }
+portable-pty = { workspace = true }
 promkit = { path = "../../promkit", features = ["readline"] }
+termharness = { path = "../../termharness" }
 tokio = { workspace = true }
+zsh-reference-capture = { path = ".." }
