@@ -16,5 +16,4 @@ path = "src/lib.rs"
 alacritty_terminal = "0.25.1"
 anyhow = { workspace = true }
 portable-pty = { workspace = true }
-thiserror = { workspace = true }
 unicode-width = { workspace = true }

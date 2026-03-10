@@ -6,6 +6,7 @@ use std::{
     thread::JoinHandle,
 };
 
+use crate::terminal::TerminalSize;
 use alacritty_terminal::{
     event::VoidListener,
     term::{Config, Term, cell::Flags, test::TermSize},
@@ -13,9 +14,19 @@ use alacritty_terminal::{
 };
 use anyhow::Result;
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
+use unicode_width::UnicodeWidthStr;
 
-use crate::screen::pad_to_cols;
-use crate::terminal::TerminalSize;
+fn pad_to_cols(cols: u16, content: &str) -> String {
+    let width = content.width();
+    assert!(
+        width <= cols as usize,
+        "line width {width} exceeds terminal width {cols}"
+    );
+
+    let mut line = String::from(content);
+    line.push_str(&" ".repeat(cols as usize - width));
+    line
+}
 
 struct Screen {
     parser: Processor,
