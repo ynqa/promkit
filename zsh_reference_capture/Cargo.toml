@@ -8,6 +8,10 @@ publish = false
 name = "zsh_resize_wrap"
 path = "src/zsh_resize_wrap.rs"
 
+[[bin]]
+name = "zsh_middle_insert_wrap"
+path = "src/zsh_middle_insert_wrap.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 portable-pty = "0.9.0"
