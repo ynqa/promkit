@@ -18,8 +18,9 @@ fn main() -> anyhow::Result<()> {
         TERMINAL_COLS,
     )?;
 
+    respond_to_cursor_position_request(&mut session, TERMINAL_ROWS, 1)?;
     wait_for_prompt(&session)?;
-    print_screen("move cursor to bottom", &session, TERMINAL_ROWS as usize);
+    print_screen("startup", &session, TERMINAL_ROWS as usize);
 
     send_bytes(&mut session, INPUT_TEXT.as_bytes())?;
     thread::sleep(Duration::from_millis(200));
@@ -36,11 +37,38 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+fn respond_to_cursor_position_request(
+    session: &mut termharness::session::Session,
+    row: u16,
+    col: u16,
+) -> anyhow::Result<()> {
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while std::time::Instant::now() < deadline {
+        let requested = {
+            let output = session
+                .output
+                .lock()
+                .expect("failed to lock session output buffer");
+            output.windows(4).any(|window| window == b"\x1b[6n")
+        };
+        if requested {
+            let response = format!("\x1b[{row};{col}R");
+            send_bytes(session, response.as_bytes())?;
+            return Ok(());
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+
+    Err(anyhow::anyhow!(
+        "timed out waiting for cursor position request"
+    ))
+}
+
 fn wait_for_prompt(session: &termharness::session::Session) -> anyhow::Result<()> {
     let deadline = std::time::Instant::now() + Duration::from_secs(2);
     while std::time::Instant::now() < deadline {
         let screen = session.screen_snapshot();
-        if screen.last().is_some_and(|line| line.starts_with("❯❯ ")) {
+        if screen.iter().any(|line| line.starts_with("❯❯ ")) {
             return Ok(());
         }
         thread::sleep(Duration::from_millis(20));

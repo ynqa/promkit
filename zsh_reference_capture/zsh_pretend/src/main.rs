@@ -1,4 +1,4 @@
-use std::{env, io};
+use std::io;
 
 use promkit::core::crossterm::{self, cursor, terminal};
 
