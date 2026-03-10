@@ -13,7 +13,11 @@ const TIMES_TO_MOVE_CURSOR_LEFT: usize = 30;
 fn resize(session: &mut Session, cols: u16) -> anyhow::Result<()> {
     session.resize(TerminalSize::new(TERMINAL_ROWS, cols))?;
     thread::sleep(Duration::from_millis(120));
-    print_screen(&format!("resize -> {cols} cols"), session, TERMINAL_ROWS as usize);
+    print_screen(
+        &format!("resize -> {cols} cols"),
+        session,
+        TERMINAL_ROWS as usize,
+    );
     Ok(())
 }
 
