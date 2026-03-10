@@ -3,6 +3,10 @@ use std::io::Write;
 use portable_pty::CommandBuilder;
 use termharness::{screen_assert::format_screen, session::Session, terminal::TerminalSize};
 
+pub fn spawn_session(cmd: CommandBuilder, rows: u16, cols: u16) -> anyhow::Result<Session> {
+    Session::spawn(cmd, TerminalSize::new(rows, cols))
+}
+
 pub fn spawn_zsh_session(rows: u16, cols: u16) -> anyhow::Result<Session> {
     let mut cmd = CommandBuilder::new("/bin/zsh");
     cmd.arg("-fi");
@@ -10,7 +14,7 @@ pub fn spawn_zsh_session(rows: u16, cols: u16) -> anyhow::Result<Session> {
     cmd.env("RPS1", "");
     cmd.env("RPROMPT", "");
     cmd.env("PROMPT_EOL_MARK", "");
-    Session::spawn(cmd, TerminalSize::new(rows, cols))
+    spawn_session(cmd, rows, cols)
 }
 
 pub fn send_bytes(session: &mut Session, bytes: &[u8]) -> anyhow::Result<()> {
