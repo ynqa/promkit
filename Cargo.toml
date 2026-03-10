@@ -8,8 +8,7 @@ members = [
   "promkit-derive",
   "promkit-widgets",
   "termharness",
-  "zsh_reference_capture",
-  "zsh_reference_capture/zsh_pretend",
+  "zsh_pretend",
   "zsherio",
 ]
 

@@ -4,7 +4,8 @@ use promkit::{
     Prompt,
 };
 
-pub async fn run() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     loop {
         match Readline::default().run().await {
             Ok(command) => {

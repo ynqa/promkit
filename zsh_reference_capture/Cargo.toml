@@ -1,8 +1,0 @@
-[package]
-name = "zsh-reference-capture"
-version = "0.1.0"
-edition = "2021"
-publish = false
-
-[dependencies]
-zsherio = { path = "../zsherio" }

@@ -1,0 +1,14 @@
+[package]
+name = "zsh-pretend"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "zsh-pretend"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+promkit = { path = "../promkit", features = ["readline"] }
+tokio = { workspace = true }
