@@ -4,8 +4,9 @@ use portable_pty::CommandBuilder;
 use termharness::{screen_assert::format_screen, session::Session, terminal::TerminalSize};
 
 const TERMINAL_ROWS: u16 = 10;
-const TERMINAL_COLS: u16 = 32;
-const RESIZED_TERMINAL_COLS: u16 = 28;
+const TERMINAL_COLS: u16 = 40;
+const RESIZED_TERMINAL_COLS: u16 = 20;
+const TIMES_TO_MOVE_CURSOR_LEFT: usize = 30;
 
 fn print_screen(label: &str, session: &Session) {
     let screen = session.screen_snapshot();
@@ -43,7 +44,7 @@ fn main() -> anyhow::Result<()> {
 
     session
         .writer
-        .write_all(b"echo \"ynqa is a software engineer\"\r")?;
+        .write_all(b"\"ynqa is a software engineer\"\r")?;
     session.writer.flush()?;
     thread::sleep(Duration::from_millis(300));
     print_screen("run echo", &session);
@@ -53,6 +54,13 @@ fn main() -> anyhow::Result<()> {
     thread::sleep(Duration::from_millis(200));
     print_screen("type text", &session);
 
+    
+    for _ in 0..TIMES_TO_MOVE_CURSOR_LEFT {
+        session.writer.write_all(b"\x1b[D")?;
+    }
+    session.writer.flush()?;
+    thread::sleep(Duration::from_millis(200));
+    print_screen("move cursor left", &session);
     for cols in (RESIZED_TERMINAL_COLS..TERMINAL_COLS).rev() {
         resize(&mut session, cols)?;
     }
