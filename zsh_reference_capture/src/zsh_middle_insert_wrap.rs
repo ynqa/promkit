@@ -1,7 +1,8 @@
-use std::{io::Write, thread, time::Duration};
+use std::{thread, time::Duration};
 
-use portable_pty::CommandBuilder;
-use termharness::{screen_assert::format_screen, session::Session, terminal::TerminalSize};
+use zsh_reference_capture::capture::{
+    move_cursor_left, move_cursor_to, print_screen, send_bytes, spawn_zsh_session,
+};
 
 const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 40;
@@ -9,60 +10,27 @@ const INPUT_TEXT: &str = "ynqa is a software engineer who writes terminal tools 
 const INSERTED_TEXT: &str = " and open source maintainer";
 const TIMES_TO_MOVE_CURSOR_LEFT: usize = 36;
 
-fn print_screen(label: &str, session: &Session) {
-    let screen = session.screen_snapshot();
-
-    println!("== {label} ==");
-    for line in format_screen(&screen, TERMINAL_ROWS as usize) {
-        println!("{line}");
-    }
-}
-
 fn main() -> anyhow::Result<()> {
-    let mut cmd = CommandBuilder::new("/bin/zsh");
-    cmd.arg("-fi");
-    cmd.env("PS1", "❯❯ ");
-    cmd.env("RPS1", "");
-    cmd.env("RPROMPT", "");
-    cmd.env("PROMPT_EOL_MARK", "");
-    let mut session = Session::spawn(cmd, TerminalSize::new(TERMINAL_ROWS, TERMINAL_COLS))?;
+    let mut session = spawn_zsh_session(TERMINAL_ROWS, TERMINAL_COLS)?;
 
     thread::sleep(Duration::from_millis(300));
-    print_screen("spawn", &session);
+    print_screen("spawn", &session, TERMINAL_ROWS as usize);
 
-    let move_cursor_to_bottom = format!("printf '\\x1b[{};1H'\r", TERMINAL_ROWS);
-    session.writer.write_all(move_cursor_to_bottom.as_bytes())?;
-    session.writer.flush()?;
+    move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;
     thread::sleep(Duration::from_millis(300));
-    print_screen("move cursor to bottom", &session);
+    print_screen("move cursor to bottom", &session, TERMINAL_ROWS as usize);
 
-    session.writer.write_all(INPUT_TEXT.as_bytes())?;
-    session.writer.flush()?;
+    send_bytes(&mut session, INPUT_TEXT.as_bytes())?;
     thread::sleep(Duration::from_millis(200));
-    print_screen("type text", &session);
+    print_screen("type text", &session, TERMINAL_ROWS as usize);
 
-    for _ in 0..TIMES_TO_MOVE_CURSOR_LEFT {
-        session.writer.write_all(b"\x1b[D")?;
-    }
-    session.writer.flush()?;
+    move_cursor_left(&mut session, TIMES_TO_MOVE_CURSOR_LEFT)?;
     thread::sleep(Duration::from_millis(200));
-    print_screen("move cursor left", &session);
+    print_screen("move cursor left", &session, TERMINAL_ROWS as usize);
 
-    session.writer.write_all(INSERTED_TEXT.as_bytes())?;
-    session.writer.flush()?;
+    send_bytes(&mut session, INSERTED_TEXT.as_bytes())?;
     thread::sleep(Duration::from_millis(250));
-    print_screen("insert text", &session);
-
-    session.writer.write_all(b"\x03exit\r")?;
-    session.writer.flush()?;
-    drop(session.writer);
-    let _ = session.child.wait()?;
-    session
-        .reader_thread
-        .take()
-        .expect("reader thread should exist")
-        .join()
-        .expect("reader thread panicked");
+    print_screen("insert text", &session, TERMINAL_ROWS as usize);
 
     Ok(())
 }
