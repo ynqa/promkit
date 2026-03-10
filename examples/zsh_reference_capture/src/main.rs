@@ -54,7 +54,10 @@ fn main() -> anyhow::Result<()> {
     thread::sleep(Duration::from_millis(200));
     print_screen("type text", &session);
 
-    
+    // IMPORTANT: Move the zsh edit cursor far enough left so that, at the
+    // narrowest resized width, it is no longer sitting on the active input's
+    // reflow boundary. Otherwise, growing the terminal back can reflow the
+    // active input differently and push older wrapped output out of view.
     for _ in 0..TIMES_TO_MOVE_CURSOR_LEFT {
         session.writer.write_all(b"\x1b[D")?;
     }
