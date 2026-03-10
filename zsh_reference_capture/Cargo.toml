@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[[bin]]
+name = "zsh_resize_wrap"
+path = "src/zsh_resize_wrap.rs"
+
 [dependencies]
 anyhow = { workspace = true }
 portable-pty = "0.9.0"
