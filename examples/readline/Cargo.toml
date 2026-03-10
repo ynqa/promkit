@@ -16,9 +16,3 @@ path = "src/readline.rs"
 [[bin]]
 name = "readline-loop"
 path = "src/readline_loop.rs"
-
-[dev-dependencies]
-portable-pty = "0.9.0"
-termharness = { path = "../../termharness" }
-unicode-width = { workspace = true }
-vt100 = "0.16.2"
