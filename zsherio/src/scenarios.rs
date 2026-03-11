@@ -2,8 +2,8 @@ pub mod middle_insert_wrap {
     use std::time::Duration;
 
     use crate::{
-        capture::{move_cursor_left, send_bytes},
         Scenario,
+        capture::{move_cursor_left, send_bytes},
     };
 
     pub const TERMINAL_ROWS: u16 = 10;
@@ -49,8 +49,8 @@ pub mod resize_wrap {
     use termharness::terminal::TerminalSize;
 
     use crate::{
-        capture::{move_cursor_left, send_bytes},
         Scenario,
+        capture::{move_cursor_left, send_bytes},
     };
 
     pub const TERMINAL_ROWS: u16 = 10;

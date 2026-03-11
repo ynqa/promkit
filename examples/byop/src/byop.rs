@@ -20,8 +20,6 @@ use promkit::{
     core::{
         crossterm::{self, style::Color},
         grapheme::StyledGraphemes,
-        pane::EMPTY_PANE,
-        Pane,
     },
     widgets::{
         core::{
@@ -30,7 +28,7 @@ use promkit::{
                 style::ContentStyle,
             },
             render::{Renderer, SharedRenderer},
-            PaneFactory,
+            GraphemeFactory,
         },
         spinner::{self, State},
         text_editor,
@@ -112,16 +110,13 @@ impl TaskMonitor {
                             Ok(input_text) => {
                                 let _ = renderer
                                     .update([
-                                        (Index::Spinner, EMPTY_PANE.clone()),
+                                        (Index::Spinner, StyledGraphemes::default()),
                                         (
                                             Index::Result,
-                                            Pane::new(
-                                                vec![StyledGraphemes::from(format!(
-                                                    "result: {}",
-                                                    input_text
-                                                ))],
-                                                0,
-                                            ),
+                                            StyledGraphemes::from(format!(
+                                                "result: {}",
+                                                input_text
+                                            )),
                                         ),
                                     ])
                                     .render()
@@ -130,14 +125,8 @@ impl TaskMonitor {
                             Err(_) => {
                                 let _ = renderer
                                     .update([
-                                        (Index::Spinner, EMPTY_PANE.clone()),
-                                        (
-                                            Index::Result,
-                                            Pane::new(
-                                                vec![StyledGraphemes::from("Task failed")],
-                                                0,
-                                            ),
-                                        ),
+                                        (Index::Spinner, StyledGraphemes::default()),
+                                        (Index::Result, StyledGraphemes::from("Task failed")),
                                     ])
                                     .render()
                                     .await;
@@ -225,8 +214,8 @@ impl Byop {
         };
 
         let renderer = SharedRenderer::new(
-            Renderer::try_new_with_panes(
-                [(Index::Readline, readline.create_pane(size.0, size.1))],
+            Renderer::try_new_with_graphemes(
+                [(Index::Readline, readline.create_graphemes(size.0, size.1))],
                 true,
             )
             .await?,
@@ -253,7 +242,7 @@ impl Byop {
 
         // Clear previous result and show spinner
         self.renderer
-            .update([(Index::Result, EMPTY_PANE.clone())])
+            .update([(Index::Result, StyledGraphemes::default())])
             .render()
             .await?;
 
@@ -302,10 +291,7 @@ impl Byop {
                     self.renderer
                         .update([(
                             Index::Result,
-                            Pane::new(
-                                vec![StyledGraphemes::from("Task is currently running...")],
-                                0,
-                            ),
+                            StyledGraphemes::from("Task is currently running..."),
                         )])
                         .render()
                         .await?;
@@ -427,7 +413,10 @@ impl Byop {
 
     async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
         self.renderer
-            .update([(Index::Readline, self.readline.create_pane(width, height))])
+            .update([(
+                Index::Readline,
+                self.readline.create_graphemes(width, height),
+            )])
             .render()
             .await
     }

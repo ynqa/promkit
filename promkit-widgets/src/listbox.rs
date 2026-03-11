@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{GraphemeFactory, grapheme::StyledGraphemes};
 
 #[path = "listbox/listbox.rs"]
 mod inner;
@@ -17,14 +17,14 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl GraphemeFactory for State {
+    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
 
-        let matrix = self
+        let lines = self
             .listbox
             .items()
             .iter()
@@ -54,15 +54,8 @@ impl PaneFactory for State {
                         init
                     }
                 }
-            })
-            .fold((vec![], 0), |(mut acc, pos), item| {
-                let rows = item.matrixify(width as usize, height, 0).0;
-                if pos < self.listbox.position() + height {
-                    acc.extend(rows);
-                }
-                (acc, pos + 1)
             });
 
-        Pane::new(matrix.0, 0)
+        StyledGraphemes::from_lines(lines)
     }
 }

@@ -205,8 +205,7 @@ impl Session {
                             }
                         }
 
-                        let keep_from =
-                            scan.len().saturating_sub(CURSOR_POSITION_REQUEST_LEN - 1);
+                        let keep_from = scan.len().saturating_sub(CURSOR_POSITION_REQUEST_LEN - 1);
                         tail = scan.split_off(keep_from);
                     }
                     Err(err) if err.kind() == std::io::ErrorKind::Interrupted => continue,

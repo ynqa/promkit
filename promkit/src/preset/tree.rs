@@ -8,7 +8,7 @@ use crate::{
             style::{Attribute, Attributes, Color, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
-        PaneFactory,
+        GraphemeFactory,
     },
     preset::Evaluator,
     widgets::{
@@ -45,10 +45,10 @@ impl crate::Prompt for Tree {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
+            Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_pane(size.0, size.1)),
-                    (Index::Tree, self.tree.create_pane(size.0, size.1)),
+                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
+                    (Index::Tree, self.tree.create_graphemes(size.0, size.1)),
                 ],
                 true,
             )
@@ -164,8 +164,8 @@ impl Tree {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_pane(width, height)),
-                        (Index::Tree, self.tree.create_pane(width, height)),
+                        (Index::Title, self.title.create_graphemes(width, height)),
+                        (Index::Tree, self.tree.create_graphemes(width, height)),
                     ])
                     .render()
                     .await

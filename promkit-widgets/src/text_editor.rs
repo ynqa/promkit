@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{GraphemeFactory, grapheme::StyledGraphemes};
 
 mod history;
 pub use history::History;
@@ -19,8 +19,8 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl GraphemeFactory for State {
+    fn create_graphemes(&self, _width: u16, _height: u16) -> StyledGraphemes {
         let mut buf = StyledGraphemes::default();
 
         let mut styled_prefix =
@@ -38,20 +38,6 @@ impl PaneFactory for State {
             .apply_style_at(self.texteditor.position(), self.config.active_char_style);
 
         buf.append(&mut styled);
-
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
-
-        let (matrix, offset) = buf.matrixify(
-            width as usize,
-            height,
-            (StyledGraphemes::from_str(&self.config.prefix, self.config.prefix_style).widths()
-                + self.texteditor.position())
-                / width as usize,
-        );
-
-        Pane::new(matrix, offset)
+        buf
     }
 }

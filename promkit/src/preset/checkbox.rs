@@ -10,7 +10,7 @@ use crate::{
             style::{Attribute, Attributes, Color, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
-        PaneFactory,
+        GraphemeFactory,
     },
     preset::Evaluator,
     widgets::{
@@ -47,10 +47,13 @@ impl crate::Prompt for Checkbox {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
+            Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_pane(size.0, size.1)),
-                    (Index::Checkbox, self.checkbox.create_pane(size.0, size.1)),
+                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
+                    (
+                        Index::Checkbox,
+                        self.checkbox.create_graphemes(size.0, size.1),
+                    ),
                 ],
                 true,
             )
@@ -175,8 +178,11 @@ impl Checkbox {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_pane(width, height)),
-                        (Index::Checkbox, self.checkbox.create_pane(width, height)),
+                        (Index::Title, self.title.create_graphemes(width, height)),
+                        (
+                            Index::Checkbox,
+                            self.checkbox.create_graphemes(width, height),
+                        ),
                     ])
                     .render()
                     .await
