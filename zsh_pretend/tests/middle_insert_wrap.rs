@@ -18,13 +18,7 @@ fn zsh_pretend_matches_zsh_for_middle_insert_wrap() -> anyhow::Result<()> {
     write_run_artifact(&expected)?;
     write_run_artifact(&actual)?;
 
-    assert_eq!(
-        actual.records,
-        expected.records,
-        "zsh-pretend output diverged from zsh\n\nexpected:\n{}\nactual:\n{}",
-        render_run(&expected)?,
-        render_run(&actual)?,
-    );
+    assert_runs_match(&expected, &actual)?;
 
     Ok(())
 }
@@ -95,6 +89,18 @@ fn render_run(run: &ScenarioRun) -> anyhow::Result<String> {
     let mut output = Vec::new();
     run.write_to(&mut output)?;
     Ok(String::from_utf8(output)?)
+}
+
+fn assert_runs_match(expected: &ScenarioRun, actual: &ScenarioRun) -> anyhow::Result<()> {
+    if actual.records == expected.records {
+        return Ok(());
+    }
+
+    anyhow::bail!(
+        "zsh-pretend output diverged from zsh\n\n== expected ==\n{}\n== actual ==\n{}",
+        render_run(expected)?,
+        render_run(actual)?,
+    )
 }
 
 fn write_run_artifact(run: &ScenarioRun) -> anyhow::Result<()> {
