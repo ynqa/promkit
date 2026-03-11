@@ -15,13 +15,13 @@ const TIMES_TO_MOVE_CURSOR_LEFT: usize = 36;
 fn scenario() -> Scenario {
     Scenario::new("middle_insert_wrap")
         .step("spawn", Duration::from_millis(300), |_session| Ok(()))
-        .step("type text", Duration::from_millis(200), |session| {
+        .step("type text", Duration::from_millis(100), |session| {
             send_bytes(session, INPUT_TEXT.as_bytes())
         })
-        .step("move cursor left", Duration::from_millis(200), |session| {
+        .step("move cursor left", Duration::from_millis(100), |session| {
             move_cursor_left(session, TIMES_TO_MOVE_CURSOR_LEFT)
         })
-        .step("insert text", Duration::from_millis(250), |session| {
+        .step("insert text", Duration::from_millis(100), |session| {
             send_bytes(session, INSERTED_TEXT.as_bytes())
         })
 }
