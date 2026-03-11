@@ -2,8 +2,8 @@ pub mod middle_insert_wrap {
     use std::time::Duration;
 
     use crate::{
-        Scenario,
         capture::{move_cursor_left, send_bytes},
+        Scenario,
     };
 
     pub const TERMINAL_ROWS: u16 = 10;
@@ -27,14 +27,30 @@ pub mod middle_insert_wrap {
     }
 }
 
+pub mod middle_prompt_start {
+    use std::time::Duration;
+
+    use crate::Scenario;
+
+    pub const TERMINAL_ROWS: u16 = 10;
+    pub const TERMINAL_COLS: u16 = 40;
+    pub const START_CURSOR_ROW: u16 = TERMINAL_ROWS / 2;
+    pub const START_CURSOR_COL: u16 = 0;
+
+    pub fn scenario() -> Scenario {
+        Scenario::new("middle_prompt_start")
+            .step("spawn", Duration::from_millis(300), |_session| Ok(()))
+    }
+}
+
 pub mod resize_wrap {
     use std::time::Duration;
 
     use termharness::terminal::TerminalSize;
 
     use crate::{
-        Scenario,
         capture::{move_cursor_left, send_bytes},
+        Scenario,
     };
 
     pub const TERMINAL_ROWS: u16 = 10;
