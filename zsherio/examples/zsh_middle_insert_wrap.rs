@@ -1,7 +1,10 @@
+use std::thread;
 use std::time::Duration;
 
 use zsherio::Scenario;
-use zsherio::capture::{move_cursor_left, move_cursor_to, send_bytes, spawn_zsh_session};
+use zsherio::capture::{
+    clear_screen_and_move_cursor_to, move_cursor_left, send_bytes, spawn_zsh_session,
+};
 
 const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 40;
@@ -12,11 +15,6 @@ const TIMES_TO_MOVE_CURSOR_LEFT: usize = 36;
 fn scenario() -> Scenario {
     Scenario::new("middle_insert_wrap")
         .step("spawn", Duration::from_millis(300), |_session| Ok(()))
-        .step(
-            "move cursor to bottom",
-            Duration::from_millis(300),
-            |session| move_cursor_to(session, TERMINAL_ROWS, 1),
-        )
         .step("type text", Duration::from_millis(200), |session| {
             send_bytes(session, INPUT_TEXT.as_bytes())
         })
@@ -30,6 +28,11 @@ fn scenario() -> Scenario {
 
 fn main() -> anyhow::Result<()> {
     let mut session = spawn_zsh_session(TERMINAL_ROWS, TERMINAL_COLS)?;
+
+    // Before create scenaro, move cursor to bottom.
+    clear_screen_and_move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;
+    thread::sleep(Duration::from_millis(300));
+
     let run = scenario().run("zsh", &mut session)?;
     run.write_to_stdout()
 }

@@ -2,7 +2,9 @@ use std::time::Duration;
 
 use termharness::{session::Session, terminal::TerminalSize};
 use zsherio::Scenario;
-use zsherio::capture::{move_cursor_left, move_cursor_to, send_bytes, spawn_zsh_session};
+use zsherio::capture::{
+    clear_screen_and_move_cursor_to, move_cursor_left, send_bytes, spawn_zsh_session,
+};
 
 const TERMINAL_ROWS: u16 = 10;
 const TERMINAL_COLS: u16 = 40;
@@ -19,7 +21,7 @@ fn scenario() -> Scenario {
         .step(
             "move cursor to bottom",
             Duration::from_millis(300),
-            |session| move_cursor_to(session, TERMINAL_ROWS, 1),
+            |session| clear_screen_and_move_cursor_to(session, TERMINAL_ROWS, 1),
         )
         .step("run echo", Duration::from_millis(300), |session| {
             send_bytes(session, b"\"ynqa is a software engineer\"\r")
