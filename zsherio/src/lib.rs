@@ -1,5 +1,6 @@
 pub mod capture;
 pub mod scenario;
+pub mod scenarios;
 
 pub use capture::{
     clear_screen_and_move_cursor_to, move_cursor_left, move_cursor_to, send_bytes, spawn_session,

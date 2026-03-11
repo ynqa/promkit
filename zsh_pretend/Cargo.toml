@@ -12,3 +12,8 @@ path = "src/main.rs"
 anyhow = { workspace = true }
 promkit = { path = "../promkit", features = ["readline"] }
 tokio = { workspace = true }
+
+[dev-dependencies]
+portable-pty = { workspace = true }
+termharness = { path = "../termharness" }
+zsherio = { path = "../zsherio" }
