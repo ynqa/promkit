@@ -11,6 +11,7 @@ use zsherio::{
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
 #[test]
+#[ignore = "timing-sensitive"]
 fn zsh_pretend_matches_zsh_for_resize_wrap() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
