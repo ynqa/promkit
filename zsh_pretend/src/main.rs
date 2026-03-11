@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
                 if y >= h.saturating_sub(1) {
                     println!();
                 }
-                println!("zsh: command not found: {command}");
+                println!("zsh: command not found: \"{command}\"");
             }
             Err(error) => {
                 println!("error: {error}");
