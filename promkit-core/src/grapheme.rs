@@ -1,7 +1,6 @@
 use std::{
     collections::VecDeque,
     fmt,
-    ops::{Deref, DerefMut},
 };
 
 use crossterm::style::{Attribute, ContentStyle};
@@ -61,19 +60,6 @@ impl StyledGrapheme {
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct StyledGraphemes(pub VecDeque<StyledGrapheme>);
 
-impl Deref for StyledGraphemes {
-    type Target = VecDeque<StyledGrapheme>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for StyledGraphemes {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl FromIterator<StyledGraphemes> for StyledGraphemes {
     fn from_iter<I: IntoIterator<Item = StyledGraphemes>>(iter: I) -> Self {
         let concatenated = iter
@@ -120,12 +106,44 @@ impl fmt::Debug for StyledGraphemes {
 }
 
 impl StyledGraphemes {
+    /// Creates styled graphemes from a string with a uniform style.
     pub fn from_str<S: AsRef<str>>(string: S, style: ContentStyle) -> Self {
         string
             .as_ref()
             .chars()
             .map(|ch| StyledGrapheme::new(ch, style))
             .collect()
+    }
+
+    /// Concatenates rows and inserts `\n` between rows.
+    pub fn from_lines<I>(lines: I) -> Self
+    where
+        I: IntoIterator<Item = StyledGraphemes>,
+    {
+        let mut merged = StyledGraphemes::default();
+        let mut lines = lines.into_iter().peekable();
+
+        while let Some(mut line) = lines.next() {
+            merged.append(&mut line);
+
+            if lines.peek().is_some() {
+                merged.push_back(StyledGrapheme::from('\n'));
+            }
+        }
+
+        merged
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &StyledGrapheme> {
+        self.0.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 
     /// Returns a `Vec<char>` containing the characters of all `Grapheme` instances in the collection.
@@ -138,41 +156,42 @@ impl StyledGraphemes {
         self.0.iter().map(|grapheme| grapheme.width).sum()
     }
 
-    /// Replaces all occurrences of a substring `from` with another substring `to` within the `StyledGraphemes`.
-    pub fn replace<S: AsRef<str>>(mut self, from: S, to: S) -> Self {
-        let from_len = from.as_ref().chars().count();
-        let to_len = to.as_ref().chars().count();
-
-        let mut offset = 0;
-        let diff = from_len.abs_diff(to_len);
-
-        let pos = self.find_all(from);
-
-        for p in pos {
-            let adjusted_pos = if to_len > from_len {
-                p + offset
-            } else {
-                p.saturating_sub(offset)
-            };
-            self.replace_range(adjusted_pos..adjusted_pos + from_len, &to);
-            offset += diff;
+    /// Returns a displayable format of the styled graphemes.
+    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
+        StyledGraphemesDisplay {
+            styled_graphemes: self,
         }
-
-        self
     }
 
-    /// Replaces the specified range with the given string.
-    pub fn replace_range<S: AsRef<str>>(&mut self, range: std::ops::Range<usize>, replacement: S) {
-        // Remove the specified range.
-        for _ in range.clone() {
-            self.0.remove(range.start);
-        }
+    pub fn get_mut(&mut self, idx: usize) -> Option<&mut StyledGrapheme> {
+        self.0.get_mut(idx)
+    }
 
-        // Insert the replacement at the start of the range.
-        let replacement_graphemes: StyledGraphemes = replacement.as_ref().into();
-        for grapheme in replacement_graphemes.0.iter().rev() {
-            self.0.insert(range.start, grapheme.clone());
-        }
+    pub fn push_back(&mut self, grapheme: StyledGrapheme) {
+        self.0.push_back(grapheme);
+    }
+
+    pub fn pop_back(&mut self) -> Option<StyledGrapheme> {
+        self.0.pop_back()
+    }
+
+    pub fn append(&mut self, other: &mut Self) {
+        self.0.append(&mut other.0);
+    }
+
+    pub fn insert(&mut self, idx: usize, grapheme: StyledGrapheme) {
+        self.0.insert(idx, grapheme);
+    }
+
+    pub fn remove(&mut self, idx: usize) -> Option<StyledGrapheme> {
+        self.0.remove(idx)
+    }
+
+    pub fn drain(
+        &mut self,
+        range: std::ops::Range<usize>,
+    ) -> std::collections::vec_deque::Drain<'_, StyledGrapheme> {
+        self.0.drain(range)
     }
 
     /// Applies a given style to all `StyledGrapheme` instances within the collection.
@@ -187,6 +206,14 @@ impl StyledGraphemes {
     pub fn apply_style_at(mut self, idx: usize, style: ContentStyle) -> Self {
         if let Some(grapheme) = self.0.get_mut(idx) {
             grapheme.apply_style(style);
+        }
+        self
+    }
+
+    /// Applies a given attribute to all `StyledGrapheme` instances within the collection.
+    pub fn apply_attribute(mut self, attr: Attribute) -> Self {
+        for styled_grapheme in &mut self.0 {
+            styled_grapheme.style.attributes.set(attr);
         }
         self
     }
@@ -256,38 +283,45 @@ impl StyledGraphemes {
         Some(self)
     }
 
-    /// Applies a given attribute to all `StyledGrapheme` instances within the collection.
-    pub fn apply_attribute(mut self, attr: Attribute) -> Self {
-        for styled_grapheme in &mut self.0 {
-            styled_grapheme.style.attributes.set(attr);
+    /// Replaces all occurrences of a substring `from` with another substring `to` within the `StyledGraphemes`.
+    pub fn replace<S: AsRef<str>>(mut self, from: S, to: S) -> Self {
+        let from_len = from.as_ref().chars().count();
+        let to_len = to.as_ref().chars().count();
+
+        let mut offset = 0;
+        let diff = from_len.abs_diff(to_len);
+
+        let pos = self.find_all(from);
+
+        for p in pos {
+            let adjusted_pos = if to_len > from_len {
+                p + offset
+            } else {
+                p.saturating_sub(offset)
+            };
+            self.replace_range(adjusted_pos..adjusted_pos + from_len, &to);
+            offset += diff;
         }
+
         self
     }
 
-    /// Returns a displayable format of the styled graphemes.
-    pub fn styled_display(&self) -> StyledGraphemesDisplay<'_> {
-        StyledGraphemesDisplay {
-            styled_graphemes: self,
-        }
-    }
-
-    /// Concatenates rows and inserts `\n` between rows.
-    pub fn from_lines<I>(lines: I) -> Self
-    where
-        I: IntoIterator<Item = StyledGraphemes>,
-    {
-        let mut merged = StyledGraphemes::default();
-        let mut lines = lines.into_iter().peekable();
-
-        while let Some(mut line) = lines.next() {
-            merged.append(&mut line);
-
-            if lines.peek().is_some() {
-                merged.push_back(StyledGrapheme::from('\n'));
-            }
+    /// Replaces the specified range with the given string.
+    pub fn replace_range<S: AsRef<str>>(
+        &mut self,
+        range: std::ops::Range<usize>,
+        replacement: S,
+    ) {
+        // Remove the specified range.
+        for _ in range.clone() {
+            self.0.remove(range.start);
         }
 
-        merged
+        // Insert the replacement at the start of the range.
+        let replacement_graphemes: StyledGraphemes = replacement.as_ref().into();
+        for grapheme in replacement_graphemes.0.iter().rev() {
+            self.0.insert(range.start, grapheme.clone());
+        }
     }
 
     /// Splits graphemes into display rows by newline and terminal width.
@@ -363,6 +397,25 @@ mod test {
         }
     }
 
+    mod from_lines {
+        use super::*;
+
+        #[test]
+        fn test_empty() {
+            let g = StyledGraphemes::from_lines(Vec::new());
+            assert!(g.is_empty());
+        }
+
+        #[test]
+        fn test_join() {
+            let g = StyledGraphemes::from_lines(vec![
+                StyledGraphemes::from("abc"),
+                StyledGraphemes::from("def"),
+            ]);
+            assert_eq!("abc\ndef", g.to_string());
+        }
+    }
+
     mod chars {
         use super::*;
 
@@ -384,42 +437,14 @@ mod test {
         }
     }
 
-    mod replace_char {
+    mod styled_display {
         use super::*;
 
         #[test]
         fn test() {
-            let graphemes = StyledGraphemes::from("banana");
-            assert_eq!("bonono", graphemes.replace("a", "o").to_string());
-        }
-
-        #[test]
-        fn test_with_nonexistent_character() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hello World", graphemes.replace("x", "o").to_string());
-        }
-
-        #[test]
-        fn test_with_empty_string() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hell Wrld", graphemes.replace("o", "").to_string());
-        }
-
-        #[test]
-        fn test_with_multiple_characters() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hellabc Wabcrld", graphemes.replace("o", "abc").to_string());
-        }
-    }
-
-    mod replace_range {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let mut graphemes = StyledGraphemes::from("Hello");
-            graphemes.replace_range(1..5, "i");
-            assert_eq!("Hi", graphemes.to_string());
+            let graphemes = StyledGraphemes::from("abc");
+            let display = graphemes.styled_display();
+            assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
         }
     }
 
@@ -467,6 +492,21 @@ mod test {
             };
             graphemes = graphemes.apply_style_at(5, new_style.clone()); // Out of bounds
             assert_eq!(graphemes.0.len(), 3); // Ensure no changes in length
+        }
+    }
+
+    mod apply_attribute {
+        use super::*;
+
+        #[test]
+        fn test() {
+            let mut graphemes = StyledGraphemes::from("abc");
+            graphemes = graphemes.apply_attribute(Attribute::Bold);
+            assert!(
+                graphemes
+                    .iter()
+                    .all(|g| g.style.attributes.has(Attribute::Bold))
+            );
         }
     }
 
@@ -557,48 +597,42 @@ mod test {
         }
     }
 
-    mod apply_attribute {
+    mod replace {
         use super::*;
 
         #[test]
         fn test() {
-            let mut graphemes = StyledGraphemes::from("abc");
-            graphemes = graphemes.apply_attribute(Attribute::Bold);
-            assert!(
-                graphemes
-                    .iter()
-                    .all(|g| g.style.attributes.has(Attribute::Bold))
-            );
+            let graphemes = StyledGraphemes::from("banana");
+            assert_eq!("bonono", graphemes.replace("a", "o").to_string());
+        }
+
+        #[test]
+        fn test_with_nonexistent_character() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hello World", graphemes.replace("x", "o").to_string());
+        }
+
+        #[test]
+        fn test_with_empty_string() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hell Wrld", graphemes.replace("o", "").to_string());
+        }
+
+        #[test]
+        fn test_with_multiple_characters() {
+            let graphemes = StyledGraphemes::from("Hello World");
+            assert_eq!("Hellabc Wabcrld", graphemes.replace("o", "abc").to_string());
         }
     }
 
-    mod styled_display {
+    mod replace_range {
         use super::*;
 
         #[test]
         fn test() {
-            let graphemes = StyledGraphemes::from("abc");
-            let display = graphemes.styled_display();
-            assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
-        }
-    }
-
-    mod from_lines {
-        use super::*;
-
-        #[test]
-        fn test_empty() {
-            let g = StyledGraphemes::from_lines(Vec::new());
-            assert!(g.is_empty());
-        }
-
-        #[test]
-        fn test_join() {
-            let g = StyledGraphemes::from_lines(vec![
-                StyledGraphemes::from("abc"),
-                StyledGraphemes::from("def"),
-            ]);
-            assert_eq!("abc\ndef", g.to_string());
+            let mut graphemes = StyledGraphemes::from("Hello");
+            graphemes.replace_range(1..5, "i");
+            assert_eq!("Hi", graphemes.to_string());
         }
     }
 
