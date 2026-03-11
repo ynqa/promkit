@@ -1,4 +1,4 @@
-use promkit_core::{GraphemeFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "checkbox/checkbox.rs"]
 mod inner;
@@ -21,7 +21,7 @@ pub struct State {
     pub config: Config,
 }
 
-impl GraphemeFactory for State {
+impl Widget for State {
     fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {

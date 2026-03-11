@@ -1,4 +1,4 @@
-use promkit_core::{GraphemeFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "jsonstream/jsonstream.rs"]
 mod inner;
@@ -22,7 +22,7 @@ pub struct State {
     pub config: Config,
 }
 
-impl GraphemeFactory for State {
+impl Widget for State {
     fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
         let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),

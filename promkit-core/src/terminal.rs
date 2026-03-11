@@ -36,9 +36,8 @@ impl Terminal {
         let mut remaining_lines = visible_height;
 
         for (pane_index, rows) in viewable_rows.iter().enumerate() {
-            let max_rows = 1.max((height as usize).saturating_sub(
-                used + viewable_rows.len() - 1 - pane_index,
-            ));
+            let max_rows = 1
+                .max((height as usize).saturating_sub(used + viewable_rows.len() - 1 - pane_index));
             let rows = rows.iter().take(max_rows).collect::<Vec<_>>();
             let row_count = rows.len();
             used += row_count;

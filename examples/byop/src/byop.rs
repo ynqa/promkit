@@ -28,7 +28,7 @@ use promkit::{
                 style::ContentStyle,
             },
             render::{Renderer, SharedRenderer},
-            GraphemeFactory,
+            Widget,
         },
         spinner::{self, State},
         text_editor,

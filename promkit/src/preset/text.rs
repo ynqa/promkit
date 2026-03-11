@@ -4,7 +4,7 @@ use crate::{
     core::{
         crossterm::{self, event::Event, style::ContentStyle},
         render::{Renderer, SharedRenderer},
-        GraphemeFactory,
+        Widget,
     },
     preset::Evaluator,
     widgets::text::{self, config::Config},

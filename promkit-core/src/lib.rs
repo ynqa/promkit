@@ -5,7 +5,7 @@ pub mod grapheme;
 pub mod render;
 pub mod terminal;
 
-pub trait GraphemeFactory {
+pub trait Widget {
     /// Creates styled graphemes with the given width and height.
     fn create_graphemes(&self, width: u16, height: u16) -> grapheme::StyledGraphemes;
 }

@@ -8,7 +8,7 @@ use crate::{
             style::{Attribute, Attributes, Color, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
-        GraphemeFactory,
+        Widget,
     },
     preset::Evaluator,
     widgets::{

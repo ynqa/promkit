@@ -1,4 +1,4 @@
-use promkit_core::{GraphemeFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "listbox/listbox.rs"]
 mod inner;
@@ -17,7 +17,7 @@ pub struct State {
     pub config: Config,
 }
 
-impl GraphemeFactory for State {
+impl Widget for State {
     fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
