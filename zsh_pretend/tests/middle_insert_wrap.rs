@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{path::PathBuf, thread, time::Duration};
 
 use portable_pty::CommandBuilder;
 use termharness::session::Session;
@@ -14,6 +14,9 @@ const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 fn zsh_pretend_matches_zsh_for_middle_insert_wrap() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
+
+    write_run_artifact(&expected)?;
+    write_run_artifact(&actual)?;
 
     assert_eq!(
         actual.records,
@@ -92,4 +95,15 @@ fn render_run(run: &ScenarioRun) -> anyhow::Result<String> {
     let mut output = Vec::new();
     run.write_to(&mut output)?;
     Ok(String::from_utf8(output)?)
+}
+
+fn write_run_artifact(run: &ScenarioRun) -> anyhow::Result<()> {
+    run.write_to_path(&artifact_path(run))
+}
+
+fn artifact_path(run: &ScenarioRun) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".artifacts")
+        .join(&run.scenario_name)
+        .join(format!("{}.txt", run.target_name))
 }
