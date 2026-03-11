@@ -91,3 +91,21 @@ pub mod resize_wrap {
         scenario
     }
 }
+
+pub mod small_terminal_overflow {
+    use std::time::Duration;
+
+    use crate::{capture::send_bytes, Scenario};
+
+    pub const TERMINAL_ROWS: u16 = 4;
+    pub const TERMINAL_COLS: u16 = 12;
+    pub const INPUT_TEXT: &str = "this input should overflow a tiny terminal viewport and keep wrapping";
+
+    pub fn scenario() -> Scenario {
+        Scenario::new("small_terminal_overflow")
+            .step("spawn", Duration::from_millis(300), |_session| Ok(()))
+            .step("type long text", Duration::from_millis(100), |session| {
+                send_bytes(session, INPUT_TEXT.as_bytes())
+            })
+    }
+}
