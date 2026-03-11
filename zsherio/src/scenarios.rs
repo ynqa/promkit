@@ -26,3 +26,52 @@ pub mod middle_insert_wrap {
             })
     }
 }
+
+pub mod resize_wrap {
+    use std::time::Duration;
+
+    use termharness::terminal::TerminalSize;
+
+    use crate::{
+        Scenario,
+        capture::{move_cursor_left, send_bytes},
+    };
+
+    pub const TERMINAL_ROWS: u16 = 10;
+    pub const TERMINAL_COLS: u16 = 40;
+    pub const RESIZED_TERMINAL_COLS: u16 = 20;
+    pub const TIMES_TO_MOVE_CURSOR_LEFT: usize = 30;
+
+    pub fn scenario() -> Scenario {
+        let mut scenario = Scenario::new("resize_wrap")
+            .step("spawn", Duration::from_millis(300), |_session| Ok(()))
+            .step("run echo", Duration::from_millis(100), |session| {
+                send_bytes(session, b"\"ynqa is a software engineer\"\r")
+            })
+            .step("type text", Duration::from_millis(100), |session| {
+                send_bytes(session, b"this is terminal test suite!")
+            });
+
+        // Move the cursor far enough left so resizes do not reflow the active
+        // input across the visible boundary.
+        scenario = scenario.step("move cursor left", Duration::from_millis(100), |session| {
+            move_cursor_left(session, TIMES_TO_MOVE_CURSOR_LEFT)
+        });
+        for cols in (RESIZED_TERMINAL_COLS..TERMINAL_COLS).rev() {
+            scenario = scenario.step(
+                format!("resize -> {cols} cols"),
+                Duration::from_millis(100),
+                move |session| session.resize(TerminalSize::new(TERMINAL_ROWS, cols)),
+            );
+        }
+        for cols in (RESIZED_TERMINAL_COLS + 1)..=TERMINAL_COLS {
+            scenario = scenario.step(
+                format!("resize -> {cols} cols"),
+                Duration::from_millis(100),
+                move |session| session.resize(TerminalSize::new(TERMINAL_ROWS, cols)),
+            );
+        }
+
+        scenario
+    }
+}
