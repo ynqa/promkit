@@ -8,6 +8,21 @@ pub fn spawn_session(cmd: CommandBuilder, rows: u16, cols: u16) -> anyhow::Resul
     Session::spawn(cmd, TerminalSize::new(rows, cols))
 }
 
+/// Spawn a session with the given command, terminal size, and initial cursor position.
+pub fn spawn_session_with_cursor(
+    cmd: CommandBuilder,
+    rows: u16,
+    cols: u16,
+    cursor_row: u16,
+    cursor_col: u16,
+) -> anyhow::Result<Session> {
+    Session::spawn_with_cursor(
+        cmd,
+        TerminalSize::new(rows, cols),
+        Some((cursor_row, cursor_col)),
+    )
+}
+
 /// Spawn a zsh session with the given terminal size.
 pub fn spawn_zsh_session(rows: u16, cols: u16) -> anyhow::Result<Session> {
     let mut cmd = CommandBuilder::new("/bin/zsh");
@@ -21,8 +36,12 @@ pub fn spawn_zsh_session(rows: u16, cols: u16) -> anyhow::Result<Session> {
 
 /// Send bytes to the session's stdin.
 pub fn send_bytes(session: &mut Session, bytes: &[u8]) -> anyhow::Result<()> {
-    session.writer.write_all(bytes)?;
-    session.writer.flush()?;
+    let mut writer = session
+        .writer
+        .lock()
+        .expect("failed to lock session writer");
+    writer.write_all(bytes)?;
+    writer.flush()?;
     Ok(())
 }
 
@@ -48,9 +67,13 @@ pub fn clear_screen_and_move_cursor_to(
 
 /// Move the cursor left by the given number of times.
 pub fn move_cursor_left(session: &mut Session, times: usize) -> anyhow::Result<()> {
+    let mut writer = session
+        .writer
+        .lock()
+        .expect("failed to lock session writer");
     for _ in 0..times {
-        session.writer.write_all(b"\x1b[D")?;
+        writer.write_all(b"\x1b[D")?;
     }
-    session.writer.flush()?;
+    writer.flush()?;
     Ok(())
 }
