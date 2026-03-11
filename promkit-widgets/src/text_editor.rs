@@ -20,11 +20,16 @@ pub struct State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, _height: u16) -> StyledGraphemes {
+    fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
+        if width == 0 {
+            return StyledGraphemes::default();
+        }
+
         let mut buf = StyledGraphemes::default();
 
         let mut styled_prefix =
             StyledGraphemes::from_str(&self.config.prefix, self.config.prefix_style);
+        let prefix_width = styled_prefix.widths();
 
         buf.append(&mut styled_prefix);
 
@@ -38,6 +43,24 @@ impl Widget for State {
             .apply_style_at(self.texteditor.position(), self.config.active_char_style);
 
         buf.append(&mut styled);
-        buf
+
+        let height = match self.config.lines {
+            Some(lines) => lines.min(height as usize),
+            None => height as usize,
+        };
+
+        let rows = buf.wrapped_lines(width as usize);
+        if rows.is_empty() || height == 0 {
+            return StyledGraphemes::default();
+        }
+
+        let lines = rows.len().min(height);
+        let mut start = (prefix_width + self.texteditor.position()) / width as usize;
+        let end = start + lines;
+        if end > rows.len() {
+            start = rows.len().saturating_sub(lines);
+        }
+
+        StyledGraphemes::from_lines(rows.into_iter().skip(start).take(lines))
     }
 }
