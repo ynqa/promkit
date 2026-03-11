@@ -17,6 +17,9 @@ use anyhow::Result;
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 use unicode_width::UnicodeWidthStr;
 
+const CURSOR_POSITION_REQUEST: &[u8] = b"\x1b[6n";
+const CURSOR_POSITION_REQUEST_LEN: usize = CURSOR_POSITION_REQUEST.len();
+
 fn pad_to_cols(cols: u16, content: &str) -> String {
     let width = content.width();
     assert!(
@@ -31,8 +34,8 @@ fn pad_to_cols(cols: u16, content: &str) -> String {
 
 fn cursor_position_request_count(buffer: &[u8]) -> usize {
     buffer
-        .windows(4)
-        .filter(|window| *window == b"\x1b[6n")
+        .windows(CURSOR_POSITION_REQUEST_LEN)
+        .filter(|window| *window == CURSOR_POSITION_REQUEST)
         .count()
 }
 
@@ -202,7 +205,8 @@ impl Session {
                             }
                         }
 
-                        let keep_from = scan.len().saturating_sub(3);
+                        let keep_from =
+                            scan.len().saturating_sub(CURSOR_POSITION_REQUEST_LEN - 1);
                         tail = scan.split_off(keep_from);
                     }
                     Err(err) if err.kind() == std::io::ErrorKind::Interrupted => continue,
