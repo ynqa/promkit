@@ -38,8 +38,11 @@ pub mod prompt_initial_render_at_mid_screen {
     pub const START_CURSOR_COL: u16 = 0;
 
     pub fn scenario() -> Scenario {
-        Scenario::new("prompt_initial_render_at_mid_screen")
-            .step("spawn", Duration::from_millis(300), |_session| Ok(()))
+        Scenario::new("prompt_initial_render_at_mid_screen").step(
+            "spawn",
+            Duration::from_millis(300),
+            |_session| Ok(()),
+        )
     }
 }
 
