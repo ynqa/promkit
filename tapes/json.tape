@@ -14,4 +14,3 @@ Space Sleep 1s
 Down@300ms 1 Sleep 1s
 Space Sleep 1s
 Up@300ms 2 Sleep 1s
-Enter Sleep 2s
