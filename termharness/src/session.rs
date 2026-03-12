@@ -10,7 +10,7 @@ use crate::terminal::TerminalSize;
 use alacritty_terminal::{
     event::VoidListener,
     index::{Column, Line, Point},
-    term::{Config, Term, cell::Flags, test::TermSize},
+    term::{self, Config, Term, cell::Flags, test::TermSize},
     vte::ansi::Processor,
 };
 use anyhow::Result;
@@ -134,9 +134,10 @@ impl Session {
     /// in a pseudo-terminal with the specified size and initial cursor position.
     pub fn spawn(
         mut cmd: CommandBuilder,
-        term_size: TerminalSize,
+        term_size: (u16, u16),
         cursor_pos: Option<(u16, u16)>,
     ) -> Result<Self> {
+        let term_size = TerminalSize::new(term_size.0, term_size.1);
         let pty = native_pty_system();
         let pair = pty.openpty(PtySize {
             rows: term_size.rows,
@@ -258,7 +259,7 @@ mod tests {
             fn success() -> Result<()> {
                 let mut cmd = CommandBuilder::new("echo");
                 cmd.arg("Hello, world!");
-                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), None)?;
+                let mut session = Session::spawn(cmd, (24, 80), None)?;
 
                 // Wait for the child process to exit and the reader thread to finish.
                 session.child.wait()?;
@@ -277,7 +278,7 @@ mod tests {
                 let mut cmd = CommandBuilder::new("/bin/bash");
                 cmd.arg("-lc");
                 cmd.arg(r#"printf 'abc\033[6n'; IFS= read -rsd R pos; printf '%sR' "$pos""#);
-                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), None)?;
+                let mut session = Session::spawn(cmd, (24, 80), None)?;
 
                 session.child.wait()?;
                 if let Some(reader_thread) = session.reader_thread.take() {
@@ -298,7 +299,7 @@ mod tests {
                 let mut cmd = CommandBuilder::new("/bin/bash");
                 cmd.arg("-lc");
                 cmd.arg(r#"printf '\033[6n'; IFS= read -rsd R pos; printf '%sR' "$pos""#);
-                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), Some((24, 1)))?;
+                let mut session = Session::spawn(cmd, (24, 80), Some((24, 1)))?;
 
                 session.child.wait()?;
                 if let Some(reader_thread) = session.reader_thread.take() {
