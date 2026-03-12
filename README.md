@@ -36,6 +36,7 @@ promkit = "0.11.1"
   - [Checkbox](https://github.com/ynqa/promkit/tree/main#checkbox) - Multiple selection checkbox interface
   - [Tree](https://github.com/ynqa/promkit/tree/main#tree) - Tree display for hierarchical data like file systems
   - [JSON](https://github.com/ynqa/promkit/tree/main#json) - Parse and interactively display JSON data
+  - [Text](https://github.com/ynqa/promkit/tree/main#text) - Static text display
 
 ## Concept
 
@@ -185,6 +186,21 @@ cargo run --bin json ${PATH_TO_JSON_FILE}
 [Code](./examples/json/src/json.rs)
 
 <img src="https://github.com/ynqa/promkit/assets/6745370/751af3ae-5aff-45ca-8729-34cd004ee7d9" width="50%" height="auto">
+
+## Text
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin text
+```
+
+</details>
+
+[Code](./examples/text/src/text.rs)
+
+<img src="xxxxx" width="50%" height="auto">
 
 ## License
 

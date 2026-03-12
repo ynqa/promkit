@@ -8,7 +8,7 @@ Set FontSize 32
 Set Width 1200
 Set Height 600
 
-Type@50ms "cargo run --bin form" Enter Sleep 1s
+Type@50ms "cargo run -q --bin form" Enter Sleep 1s
 Type "Hello" Sleep 1s
 Down 1 Sleep 1s
 Type "promkit" Sleep 1s

@@ -8,7 +8,7 @@ Set FontSize 32
 Set Width 1200
 Set Height 600
 
-Type@50ms "cargo run --bin query_selector" Enter Sleep 1s
+Type@50ms "cargo run -q --bin query-selector" Enter Sleep 1s
 Down 6 Sleep 1s
 Type "8" Sleep 1s
 Type "8" Sleep 1s
