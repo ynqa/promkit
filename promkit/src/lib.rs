@@ -116,7 +116,8 @@ pub trait Prompt {
         while let Some(event) = EVENT_STREAM.lock().await.next().await {
             match event {
                 Ok(event) => {
-                    // NOTE: For zsh_pretend/tests/resize_wrap.rs, skipping resize events here
+                    // NOTE: For zsh_pretend/tests/resize_roundtrip_wrap_reflow.rs, skipping
+                    // resize events here
                     // keeps output closer to zsh than evaluating resize as a normal input event.
                     if event.is_resize() {
                         continue;

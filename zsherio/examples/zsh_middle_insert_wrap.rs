@@ -2,7 +2,7 @@ use std::{thread, time::Duration};
 
 use zsherio::{
     opts::clear_screen_and_move_cursor_to,
-    scenarios::middle_insert_wrap::{TERMINAL_COLS, TERMINAL_ROWS, scenario},
+    scenarios::mid_buffer_insert_wrap::{TERMINAL_COLS, TERMINAL_ROWS, scenario},
     session::spawn_zsh_session,
 };
 

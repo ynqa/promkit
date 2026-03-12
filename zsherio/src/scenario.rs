@@ -191,7 +191,7 @@ mod tests {
             #[test]
             fn write_to_matches_print_screen_style() {
                 let run = ScenarioRun {
-                    scenario_name: "middle_insert_wrap".to_string(),
+                    scenario_name: "mid_buffer_insert_wrap".to_string(),
                     target_name: "zsh".to_string(),
                     records: vec![
                         ScenarioRecord {

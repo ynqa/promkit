@@ -5,7 +5,7 @@ use std::{thread, time::Duration};
 use portable_pty::CommandBuilder;
 use zsherio::{
     opts::clear_screen_and_move_cursor_to,
-    scenarios::small_terminal_overflow::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
+    scenarios::tiny_viewport_overflow_wrap_scroll::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
     session::{spawn_session, spawn_zsh_session},
     ScenarioRun,
 };
@@ -15,14 +15,14 @@ use crate::common::{render_scenario_run, wait_for_prompt, write_scenario_run_art
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
 #[test]
-fn zsh_pretend_matches_zsh_for_small_terminal_overflow() -> anyhow::Result<()> {
+fn zsh_pretend_parity_tiny_viewport_overflow_wrap_scroll() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
 
     write_scenario_run_artifact(&expected)?;
     write_scenario_run_artifact(&actual)?;
 
-    assert_scenario_runs_match_from_second_line(&expected, &actual)?;
+    assert_scenario_runs_match_ignoring_row0(&expected, &actual)?;
 
     Ok(())
 }
@@ -62,7 +62,7 @@ fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
 /// To keep this test focused on wrap/scroll behavior, we require strict
 /// equality for scenario shape (step count, labels, row count) and compare
 /// screen content from the second row (`r01`) onward.
-fn assert_scenario_runs_match_from_second_line(
+fn assert_scenario_runs_match_ignoring_row0(
     expected: &ScenarioRun,
     actual: &ScenarioRun,
 ) -> anyhow::Result<()> {

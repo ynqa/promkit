@@ -1,11 +1,10 @@
 mod common;
 
-use std::{thread, time::Duration};
-
 use portable_pty::CommandBuilder;
 use zsherio::{
-    opts::clear_screen_and_move_cursor_to,
-    scenarios::resize_wrap::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
+    scenarios::prompt_initial_render_at_mid_screen::{
+        scenario, START_CURSOR_COL, START_CURSOR_ROW, TERMINAL_COLS, TERMINAL_ROWS,
+    },
     session::{spawn_session, spawn_zsh_session},
     ScenarioRun,
 };
@@ -15,10 +14,7 @@ use crate::common::{assert_scenario_runs_match, wait_for_prompt, write_scenario_
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
 #[test]
-#[ignore = "timing-sensitive and currently unsupported: matching zsh under aggressive \
-            resize-wrap is too hard right now; run manually with `cargo test --release --test \
-            resize_wrap`"]
-fn zsh_pretend_matches_zsh_for_resize_wrap() -> anyhow::Result<()> {
+fn zsh_pretend_parity_prompt_initial_render_at_mid_screen() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
 
@@ -31,10 +27,11 @@ fn zsh_pretend_matches_zsh_for_resize_wrap() -> anyhow::Result<()> {
 }
 
 fn run_zsh() -> anyhow::Result<ScenarioRun> {
-    let mut session = spawn_zsh_session((TERMINAL_ROWS, TERMINAL_COLS), None)?;
-
-    clear_screen_and_move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;
-    thread::sleep(Duration::from_millis(300));
+    let mut session = spawn_zsh_session(
+        (TERMINAL_ROWS, TERMINAL_COLS),
+        Some((START_CURSOR_ROW, START_CURSOR_COL)),
+    )?;
+    wait_for_prompt(&session, |line| line.contains("❯❯ "))?;
 
     scenario().run("zsh", &mut session)
 }
@@ -43,10 +40,10 @@ fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
     let mut session = spawn_session(
         CommandBuilder::new(ZSH_PRETEND_BIN),
         (TERMINAL_ROWS, TERMINAL_COLS),
-        Some((TERMINAL_ROWS, 1)),
+        Some((START_CURSOR_ROW, START_CURSOR_COL)),
     )?;
 
-    wait_for_prompt(&session, |line| line.starts_with("❯❯ "))?;
+    wait_for_prompt(&session, |line| line.contains("❯❯ "))?;
 
     scenario().run("zsh-pretend", &mut session)
 }

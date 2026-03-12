@@ -1,20 +1,21 @@
 mod common;
 
+use std::{thread, time::Duration};
+
 use portable_pty::CommandBuilder;
 use zsherio::{
-    scenarios::middle_prompt_start::{
-        scenario, START_CURSOR_COL, START_CURSOR_ROW, TERMINAL_COLS, TERMINAL_ROWS,
-    },
+    opts::clear_screen_and_move_cursor_to,
+    scenarios::mid_buffer_insert_wrap::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
     session::{spawn_session, spawn_zsh_session},
     ScenarioRun,
 };
 
-use crate::common::{assert_scenario_runs_match, wait_for_prompt, write_scenario_run_artifact};
-
-const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
+use crate::common::{
+    assert_scenario_runs_match, wait_for_prompt, write_scenario_run_artifact, ZSH_PRETEND_BIN,
+};
 
 #[test]
-fn zsh_pretend_matches_zsh_for_middle_prompt_start() -> anyhow::Result<()> {
+fn zsh_pretend_parity_mid_buffer_insert_wrap() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
 
@@ -27,11 +28,10 @@ fn zsh_pretend_matches_zsh_for_middle_prompt_start() -> anyhow::Result<()> {
 }
 
 fn run_zsh() -> anyhow::Result<ScenarioRun> {
-    let mut session = spawn_zsh_session(
-        (TERMINAL_ROWS, TERMINAL_COLS),
-        Some((START_CURSOR_ROW, START_CURSOR_COL)),
-    )?;
-    wait_for_prompt(&session, |line| line.contains("❯❯ "))?;
+    let mut session = spawn_zsh_session((TERMINAL_ROWS, TERMINAL_COLS), None)?;
+
+    clear_screen_and_move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;
+    thread::sleep(Duration::from_millis(300));
 
     scenario().run("zsh", &mut session)
 }
@@ -40,10 +40,10 @@ fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
     let mut session = spawn_session(
         CommandBuilder::new(ZSH_PRETEND_BIN),
         (TERMINAL_ROWS, TERMINAL_COLS),
-        Some((START_CURSOR_ROW, START_CURSOR_COL)),
+        Some((TERMINAL_ROWS, 1)),
     )?;
 
-    wait_for_prompt(&session, |line| line.contains("❯❯ "))?;
+    wait_for_prompt(&session, |line| line.starts_with("❯❯ "))?;
 
     scenario().run("zsh-pretend", &mut session)
 }

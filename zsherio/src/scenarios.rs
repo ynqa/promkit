@@ -1,4 +1,4 @@
-pub mod middle_insert_wrap {
+pub mod mid_buffer_insert_wrap {
     use std::time::Duration;
 
     use crate::{
@@ -13,7 +13,7 @@ pub mod middle_insert_wrap {
     pub const TIMES_TO_MOVE_CURSOR_LEFT: usize = 36;
 
     pub fn scenario() -> Scenario {
-        Scenario::new("middle_insert_wrap")
+        Scenario::new("mid_buffer_insert_wrap")
             .step("spawn", Duration::from_millis(300), |_session| Ok(()))
             .step("type text", Duration::from_millis(100), |session| {
                 send_bytes(session, INPUT_TEXT.as_bytes())
@@ -27,7 +27,7 @@ pub mod middle_insert_wrap {
     }
 }
 
-pub mod middle_prompt_start {
+pub mod prompt_initial_render_at_mid_screen {
     use std::time::Duration;
 
     use crate::Scenario;
@@ -38,12 +38,12 @@ pub mod middle_prompt_start {
     pub const START_CURSOR_COL: u16 = 0;
 
     pub fn scenario() -> Scenario {
-        Scenario::new("middle_prompt_start")
+        Scenario::new("prompt_initial_render_at_mid_screen")
             .step("spawn", Duration::from_millis(300), |_session| Ok(()))
     }
 }
 
-pub mod resize_wrap {
+pub mod resize_roundtrip_wrap_reflow {
     use std::time::Duration;
 
     use termharness::terminal::TerminalSize;
@@ -59,7 +59,7 @@ pub mod resize_wrap {
     pub const TIMES_TO_MOVE_CURSOR_LEFT: usize = 30;
 
     pub fn scenario() -> Scenario {
-        let mut scenario = Scenario::new("resize_wrap")
+        let mut scenario = Scenario::new("resize_roundtrip_wrap_reflow")
             .step("spawn", Duration::from_millis(300), |_session| Ok(()))
             .step("run echo", Duration::from_millis(100), |session| {
                 send_bytes(session, b"\"ynqa is a software engineer\"\r")
@@ -92,7 +92,7 @@ pub mod resize_wrap {
     }
 }
 
-pub mod small_terminal_overflow {
+pub mod tiny_viewport_overflow_wrap_scroll {
     use std::time::Duration;
 
     use crate::{Scenario, opts::send_bytes};
@@ -103,7 +103,7 @@ pub mod small_terminal_overflow {
         "this input should overflow a tiny terminal viewport and keep wrapping";
 
     pub fn scenario() -> Scenario {
-        Scenario::new("small_terminal_overflow")
+        Scenario::new("tiny_viewport_overflow_wrap_scroll")
             .step("spawn", Duration::from_millis(300), |_session| Ok(()))
             .step("type long text", Duration::from_millis(100), |session| {
                 send_bytes(session, INPUT_TEXT.as_bytes())
