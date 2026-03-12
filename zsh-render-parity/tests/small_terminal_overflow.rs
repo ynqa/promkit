@@ -9,9 +9,7 @@ use zsherio::{
     ScenarioRun,
 };
 
-use self::common::{
-    assert_runs_match as assert_runs_match_strict, wait_for_prompt, write_run_artifact,
-};
+use self::common::{wait_for_prompt, write_run_artifact, render_scenario_run};
 
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
@@ -88,7 +86,11 @@ fn runs_match_from_second_line(expected: &ScenarioRun, actual: &ScenarioRun) -> 
 fn assert_runs_match(expected: &ScenarioRun, actual: &ScenarioRun) -> anyhow::Result<()> {
     if runs_match_from_second_line(expected, actual) {
         return Ok(());
+    } else {
+        anyhow::bail!(
+            "zsh-pretend output diverged from zsh (ignoring first line of each screen)\n\n== expected ==\n{}\n== actual ==\n{}",
+            render_scenario_run(expected)?,
+            render_scenario_run(actual)?,
+        )
     }
-
-    assert_runs_match_strict(expected, actual)
 }

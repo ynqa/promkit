@@ -9,7 +9,7 @@ use zsherio::{
     ScenarioRun,
 };
 
-use self::common::{assert_runs_match, wait_for_prompt, write_run_artifact};
+use self::common::{assert_scenario_runs_match, wait_for_prompt, write_run_artifact};
 
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
@@ -21,7 +21,7 @@ fn zsh_pretend_matches_zsh_for_middle_prompt_start() -> anyhow::Result<()> {
     write_run_artifact(&expected)?;
     write_run_artifact(&actual)?;
 
-    assert_runs_match(&expected, &actual)?;
+    assert_scenario_runs_match(&expected, &actual)?;
 
     Ok(())
 }
