@@ -5,7 +5,7 @@ use zsherio::{
     scenarios::middle_prompt_start::{
         scenario, START_CURSOR_COL, START_CURSOR_ROW, TERMINAL_COLS, TERMINAL_ROWS,
     },
-    session::spawn_session_with_cursor,
+    session::{spawn_session, spawn_zsh_session},
     ScenarioRun,
 };
 
@@ -27,18 +27,9 @@ fn zsh_pretend_matches_zsh_for_middle_prompt_start() -> anyhow::Result<()> {
 }
 
 fn run_zsh() -> anyhow::Result<ScenarioRun> {
-    let mut cmd = CommandBuilder::new("/bin/zsh");
-    cmd.arg("-fi");
-    cmd.env("PS1", "❯❯ ");
-    cmd.env("RPS1", "");
-    cmd.env("RPROMPT", "");
-    cmd.env("PROMPT_EOL_MARK", "");
-    let mut session = spawn_session_with_cursor(
-        cmd,
-        TERMINAL_ROWS,
-        TERMINAL_COLS,
-        START_CURSOR_ROW,
-        START_CURSOR_COL,
+    let mut session = spawn_zsh_session(
+        (TERMINAL_ROWS, TERMINAL_COLS),
+        Some((START_CURSOR_ROW, START_CURSOR_COL)),
     )?;
     wait_for_prompt(&session, |line| line.contains("❯❯ "))?;
 
@@ -46,12 +37,10 @@ fn run_zsh() -> anyhow::Result<ScenarioRun> {
 }
 
 fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
-    let mut session = spawn_session_with_cursor(
+    let mut session = spawn_session(
         CommandBuilder::new(ZSH_PRETEND_BIN),
-        TERMINAL_ROWS,
-        TERMINAL_COLS,
-        START_CURSOR_ROW,
-        START_CURSOR_COL,
+        (TERMINAL_ROWS, TERMINAL_COLS),
+        Some((START_CURSOR_ROW, START_CURSOR_COL)),
     )?;
 
     wait_for_prompt(&session, |line| line.contains("❯❯ "))?;

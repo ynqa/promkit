@@ -6,7 +6,7 @@ use portable_pty::CommandBuilder;
 use zsherio::{
     opts::clear_screen_and_move_cursor_to,
     scenarios::resize_wrap::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
-    session::{spawn_session_with_cursor, spawn_zsh_session},
+    session::{spawn_session, spawn_zsh_session},
     ScenarioRun,
 };
 
@@ -31,7 +31,7 @@ fn zsh_pretend_matches_zsh_for_resize_wrap() -> anyhow::Result<()> {
 }
 
 fn run_zsh() -> anyhow::Result<ScenarioRun> {
-    let mut session = spawn_zsh_session(TERMINAL_ROWS, TERMINAL_COLS)?;
+    let mut session = spawn_zsh_session((TERMINAL_ROWS, TERMINAL_COLS), None)?;
 
     clear_screen_and_move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;
     thread::sleep(Duration::from_millis(300));
@@ -40,12 +40,10 @@ fn run_zsh() -> anyhow::Result<ScenarioRun> {
 }
 
 fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
-    let mut session = spawn_session_with_cursor(
+    let mut session = spawn_session(
         CommandBuilder::new(ZSH_PRETEND_BIN),
-        TERMINAL_ROWS,
-        TERMINAL_COLS,
-        TERMINAL_ROWS,
-        1,
+        (TERMINAL_ROWS, TERMINAL_COLS),
+        Some((TERMINAL_ROWS, 1)),
     )?;
 
     wait_for_prompt(&session, |line| line.starts_with("❯❯ "))?;
