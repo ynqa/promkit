@@ -18,29 +18,29 @@ promkit = "0.11.1"
 
 - Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
 - Modularized architecture
-  - [promkit-core](https://github.com/ynqa/promkit/tree/main/promkit-core/)
+  - [promkit-core](./promkit-core/)
     - Core functionality for terminal rendering and keyed grapheme chunk management
-  - [promkit-widgets](https://github.com/ynqa/promkit/tree/main/promkit-widgets/)
+  - [promkit-widgets](./promkit-widgets/)
     - Various UI components (text, listbox, tree, etc.)
-  - [promkit](https://github.com/ynqa/promkit/tree/main/promkit)
+  - [promkit](./promkit/)
     - High-level presets and user interfaces
-  - [promkit-derive](https://github.com/ynqa/promkit/tree/main/promkit-derive/)
+  - [promkit-derive](./promkit-derive/)
     - A Derive macro that simplifies interactive form input
 - Rich preset components
-  - [Readline](https://github.com/ynqa/promkit/tree/main#readline) - Text input with auto-completion
-  - [Confirm](https://github.com/ynqa/promkit/tree/main#confirm) - Yes/no confirmation prompt
-  - [Password](https://github.com/ynqa/promkit/tree/main#password) - Password input with masking and validation
-  - [Form](https://github.com/ynqa/promkit/tree/main#form) - Manage multiple text input fields
-  - [Listbox](https://github.com/ynqa/promkit/tree/main#listbox) - Single selection interface from a list
-  - [QuerySelector](https://github.com/ynqa/promkit/tree/main#queryselector) - Searchable selection interface
-  - [Checkbox](https://github.com/ynqa/promkit/tree/main#checkbox) - Multiple selection checkbox interface
-  - [Tree](https://github.com/ynqa/promkit/tree/main#tree) - Tree display for hierarchical data like file systems
-  - [JSON](https://github.com/ynqa/promkit/tree/main#json) - Parse and interactively display JSON data
-  - [Text](https://github.com/ynqa/promkit/tree/main#text) - Static text display
+  - [Readline](#readline) - Text input with auto-completion
+  - [Confirm](#confirm) - Yes/no confirmation prompt
+  - [Password](#password) - Password input with masking and validation
+  - [Form](#form) - Manage multiple text input fields
+  - [Listbox](#listbox) - Single selection interface from a list
+  - [QuerySelector](#queryselector) - Searchable selection interface
+  - [Checkbox](#checkbox) - Multiple selection checkbox interface
+  - [Tree](#tree) - Tree display for hierarchical data like file systems
+  - [JSON](#json) - Parse and interactively display JSON data
+  - [Text](#text) - Static text display
 
 ## Concept
 
-See [here](https://github.com/ynqa/promkit/tree/main/Concept.md).
+See [here](./Concept.md).
 
 ## Projects using *promkit*
 
@@ -204,9 +204,7 @@ cargo run --bin text
 
 ## License
 
-This project is licensed under the MIT License.
-See the [LICENSE](https://github.com/ynqa/promkit/blob/main/LICENSE)
-file for details.
+[MIT License](./LICENSE)
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
