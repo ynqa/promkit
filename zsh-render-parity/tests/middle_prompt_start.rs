@@ -2,10 +2,10 @@ mod common;
 
 use portable_pty::CommandBuilder;
 use zsherio::{
-    capture::spawn_session_with_cursor,
     scenarios::middle_prompt_start::{
         scenario, START_CURSOR_COL, START_CURSOR_ROW, TERMINAL_COLS, TERMINAL_ROWS,
     },
+    session::spawn_session_with_cursor,
     ScenarioRun,
 };
 

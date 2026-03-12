@@ -1,8 +1,10 @@
-use std::thread;
-use std::time::Duration;
+use std::{thread, time::Duration};
 
-use zsherio::capture::{clear_screen_and_move_cursor_to, spawn_zsh_session};
-use zsherio::scenarios::resize_wrap::{TERMINAL_COLS, TERMINAL_ROWS, scenario};
+use zsherio::{
+    opts::clear_screen_and_move_cursor_to,
+    scenarios::resize_wrap::{TERMINAL_COLS, TERMINAL_ROWS, scenario},
+    session::{spawn_session_with_cursor, spawn_zsh_session},
+};
 
 fn main() -> anyhow::Result<()> {
     let mut session = spawn_zsh_session(TERMINAL_ROWS, TERMINAL_COLS)?;

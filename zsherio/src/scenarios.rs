@@ -3,7 +3,7 @@ pub mod middle_insert_wrap {
 
     use crate::{
         Scenario,
-        capture::{move_cursor_left, send_bytes},
+        opts::{move_cursor_left, send_bytes},
     };
 
     pub const TERMINAL_ROWS: u16 = 10;
@@ -50,7 +50,7 @@ pub mod resize_wrap {
 
     use crate::{
         Scenario,
-        capture::{move_cursor_left, send_bytes},
+        opts::{move_cursor_left, send_bytes},
     };
 
     pub const TERMINAL_ROWS: u16 = 10;
@@ -95,7 +95,7 @@ pub mod resize_wrap {
 pub mod small_terminal_overflow {
     use std::time::Duration;
 
-    use crate::{Scenario, capture::send_bytes};
+    use crate::{Scenario, opts::send_bytes};
 
     pub const TERMINAL_ROWS: u16 = 4;
     pub const TERMINAL_COLS: u16 = 12;

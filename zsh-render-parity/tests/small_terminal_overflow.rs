@@ -4,8 +4,9 @@ use std::{thread, time::Duration};
 
 use portable_pty::CommandBuilder;
 use zsherio::{
-    capture::{clear_screen_and_move_cursor_to, spawn_session_with_cursor, spawn_zsh_session},
+    opts::clear_screen_and_move_cursor_to,
     scenarios::small_terminal_overflow::{scenario, TERMINAL_COLS, TERMINAL_ROWS},
+    session::{spawn_session_with_cursor, spawn_zsh_session},
     ScenarioRun,
 };
 
