@@ -130,20 +130,17 @@ pub struct Session {
 }
 
 impl Session {
-    /// Spawn a new session by executing the given command in a pseudo-terminal with the specified size.
-    pub fn spawn(cmd: CommandBuilder, size: TerminalSize) -> Result<Self> {
-        Self::spawn_with_cursor(cmd, size, None)
-    }
-
-    pub fn spawn_with_cursor(
+    /// Spawn a new session by executing the given command
+    /// in a pseudo-terminal with the specified size and initial cursor position.
+    pub fn spawn(
         mut cmd: CommandBuilder,
-        size: TerminalSize,
-        cursor_position: Option<(u16, u16)>,
+        term_size: TerminalSize,
+        cursor_pos: Option<(u16, u16)>,
     ) -> Result<Self> {
         let pty = native_pty_system();
         let pair = pty.openpty(PtySize {
-            rows: size.rows,
-            cols: size.cols,
+            rows: term_size.rows,
+            cols: term_size.cols,
             pixel_width: 0,
             pixel_height: 0,
         })?;
@@ -158,9 +155,9 @@ impl Session {
         let master = pair.master;
         let output = Arc::new(Mutex::new(Vec::new()));
         let output_reader = Arc::clone(&output);
-        let screen = Arc::new(Mutex::new(match cursor_position {
-            Some((row, col)) => Screen::with_cursor(size, row, col),
-            None => Screen::new(size),
+        let screen = Arc::new(Mutex::new(match cursor_pos {
+            Some((row, col)) => Screen::with_cursor(term_size, row, col),
+            None => Screen::new(term_size),
         }));
         let screen_reader = Arc::clone(&screen);
         let writer = Arc::new(Mutex::new(master.take_writer()?));
@@ -220,7 +217,7 @@ impl Session {
             output,
             screen,
             reader_thread: Some(reader_thread),
-            size,
+            size: term_size,
         })
     }
 
@@ -261,7 +258,7 @@ mod tests {
             fn success() -> Result<()> {
                 let mut cmd = CommandBuilder::new("echo");
                 cmd.arg("Hello, world!");
-                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80))?;
+                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), None)?;
 
                 // Wait for the child process to exit and the reader thread to finish.
                 session.child.wait()?;
@@ -280,7 +277,7 @@ mod tests {
                 let mut cmd = CommandBuilder::new("/bin/bash");
                 cmd.arg("-lc");
                 cmd.arg(r#"printf 'abc\033[6n'; IFS= read -rsd R pos; printf '%sR' "$pos""#);
-                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80))?;
+                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), None)?;
 
                 session.child.wait()?;
                 if let Some(reader_thread) = session.reader_thread.take() {
@@ -301,8 +298,7 @@ mod tests {
                 let mut cmd = CommandBuilder::new("/bin/bash");
                 cmd.arg("-lc");
                 cmd.arg(r#"printf '\033[6n'; IFS= read -rsd R pos; printf '%sR' "$pos""#);
-                let mut session =
-                    Session::spawn_with_cursor(cmd, TerminalSize::new(24, 80), Some((24, 1)))?;
+                let mut session = Session::spawn(cmd, TerminalSize::new(24, 80), Some((24, 1)))?;
 
                 session.child.wait()?;
                 if let Some(reader_thread) = session.reader_thread.take() {
