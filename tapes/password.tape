@@ -8,7 +8,7 @@ Set FontSize 32
 Set Width 1200
 Set Height 600
 
-Type@50ms "cargo run -q --bin password" Enter Sleep 1s
+Type@50ms "cargo run -q --bin password" Enter Sleep 2s
 Type "abc" Sleep 1s
 Enter Sleep 1s
 Ctrl+U Type "password" Sleep 1s
