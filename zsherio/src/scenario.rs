@@ -7,7 +7,6 @@ use std::{
     time::Duration,
 };
 
-use termharness::screen_assert::format_screen;
 use termharness::session::Session;
 
 pub type StepAction = Arc<dyn Fn(&mut Session) -> anyhow::Result<()> + Send + Sync>;
@@ -121,33 +120,99 @@ impl ScenarioRun {
     }
 }
 
+/// Format a single line of the screen, replacing spaces with a visible character and marking missing lines.
+fn format_screen_line(line: Option<&String>) -> String {
+    match line {
+        Some(line) => format!("|{}|", line.replace(' ', "·")),
+        None => "<missing>".to_string(),
+    }
+}
+
+/// Format an entire screen, prefixing each line with its row number and marking differences.
+fn format_screen(lines: &[String], total_rows: usize) -> Vec<String> {
+    (0..total_rows)
+        .map(|row| format!("  r{row:02} {}", format_screen_line(lines.get(row))))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn write_to_matches_print_screen_style() {
-        let run = ScenarioRun {
-            scenario_name: "middle_insert_wrap".to_string(),
-            target_name: "zsh".to_string(),
-            records: vec![
-                ScenarioRecord {
-                    label: "type text".to_string(),
-                    screen: vec!["  r00 |hello|".to_string(), "  r01 |world|".to_string()],
-                },
-                ScenarioRecord {
-                    label: "insert text".to_string(),
-                    screen: vec!["  r00 |hello again|".to_string()],
-                },
-            ],
-        };
+    mod format_screen_line {
+        use super::*;
 
-        let mut output = Vec::new();
-        run.write_to(&mut output).unwrap();
+        #[test]
+        fn replaces_spaces() {
+            assert_eq!(format_screen_line(Some(&"a b c".to_string())), "|a·b·c|");
+        }
 
-        assert_eq!(
-            String::from_utf8(output).unwrap(),
-            "== type text ==\n  r00 |hello|\n  r01 |world|\n\n== insert text ==\n  r00 |hello again|\n"
-        );
+        #[test]
+        fn handles_empty_line() {
+            assert_eq!(format_screen_line(Some(&"".to_string())), "||");
+        }
+
+        #[test]
+        fn handles_missing_line() {
+            assert_eq!(format_screen_line(None), "<missing>");
+        }
+    }
+
+    mod format_screen {
+        use super::*;
+
+        #[test]
+        fn formats_multiple_lines() {
+            let lines = vec![
+                "line 1".to_string(),
+                "line 2".to_string(),
+                "line 3".to_string(),
+            ];
+            let formatted = format_screen(&lines, 5);
+            assert_eq!(
+                formatted,
+                vec![
+                    "  r00 |line·1|".to_string(),
+                    "  r01 |line·2|".to_string(),
+                    "  r02 |line·3|".to_string(),
+                    "  r03 <missing>".to_string(),
+                    "  r04 <missing>".to_string(),
+                ]
+            );
+        }
+    }
+
+    mod scenario_run {
+        use super::*;
+
+        mod write_to {
+            use super::*;
+
+            #[test]
+            fn write_to_matches_print_screen_style() {
+                let run = ScenarioRun {
+                    scenario_name: "middle_insert_wrap".to_string(),
+                    target_name: "zsh".to_string(),
+                    records: vec![
+                        ScenarioRecord {
+                            label: "type text".to_string(),
+                            screen: vec!["  r00 |hello|".to_string(), "  r01 |world|".to_string()],
+                        },
+                        ScenarioRecord {
+                            label: "insert text".to_string(),
+                            screen: vec!["  r00 |hello again|".to_string()],
+                        },
+                    ],
+                };
+
+                let mut output = Vec::new();
+                run.write_to(&mut output).unwrap();
+
+                assert_eq!(
+                    String::from_utf8(output).unwrap(),
+                    "== type text ==\n  r00 |hello|\n  r01 |world|\n\n== insert text ==\n  r00 |hello again|\n"
+                );
+            }
+        }
     }
 }
