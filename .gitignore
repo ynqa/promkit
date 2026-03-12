@@ -16,5 +16,5 @@ Cargo.lock
 # Ignore GIF files in the tapes directory
 tapes/*.gif
 
-# Ignore test artifacts emitted by zsh_pretend integration tests
-zsh_pretend/.artifacts/
+# Ignore test artifacts emitted by zsh-render-parity integration tests
+zsh-render-parity/.artifacts/
