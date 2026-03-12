@@ -9,7 +9,7 @@ use zsherio::{
     ScenarioRun,
 };
 
-use self::common::{wait_for_prompt, write_run_artifact, render_scenario_run};
+use crate::common::{render_scenario_run, wait_for_prompt, write_scenario_run_artifact};
 
 const ZSH_PRETEND_BIN: &str = env!("CARGO_BIN_EXE_zsh-pretend");
 
@@ -18,10 +18,10 @@ fn zsh_pretend_matches_zsh_for_small_terminal_overflow() -> anyhow::Result<()> {
     let expected = run_zsh()?;
     let actual = run_zsh_pretend()?;
 
-    write_run_artifact(&expected)?;
-    write_run_artifact(&actual)?;
+    write_scenario_run_artifact(&expected)?;
+    write_scenario_run_artifact(&actual)?;
 
-    assert_runs_match(&expected, &actual)?;
+    assert_scenario_runs_match_from_second_line(&expected, &actual)?;
 
     Ok(())
 }
@@ -63,29 +63,26 @@ fn run_zsh_pretend() -> anyhow::Result<ScenarioRun> {
 /// To keep this test focused on wrap/scroll behavior, we require strict
 /// equality for scenario shape (step count, labels, row count) and compare
 /// screen content from the second row (`r01`) onward.
-fn runs_match_from_second_line(expected: &ScenarioRun, actual: &ScenarioRun) -> bool {
-    if expected.records.len() != actual.records.len() {
-        return false;
-    }
+fn assert_scenario_runs_match_from_second_line(
+    expected: &ScenarioRun,
+    actual: &ScenarioRun,
+) -> anyhow::Result<()> {
+    let matches =
+        expected.records.len() == actual.records.len()
+            && expected.records.iter().zip(&actual.records).all(
+                |(expected_record, actual_record)| {
+                    expected_record.label == actual_record.label
+                        && expected_record.screen.len() == actual_record.screen.len()
+                        && expected_record
+                            .screen
+                            .iter()
+                            .skip(1)
+                            .eq(actual_record.screen.iter().skip(1))
+                },
+            );
 
-    expected
-        .records
-        .iter()
-        .zip(&actual.records)
-        .all(|(expected_record, actual_record)| {
-            expected_record.label == actual_record.label
-                && expected_record.screen.len() == actual_record.screen.len()
-                && expected_record
-                    .screen
-                    .iter()
-                    .skip(1)
-                    .eq(actual_record.screen.iter().skip(1))
-        })
-}
-
-fn assert_runs_match(expected: &ScenarioRun, actual: &ScenarioRun) -> anyhow::Result<()> {
-    if runs_match_from_second_line(expected, actual) {
-        return Ok(());
+    if matches {
+        Ok(())
     } else {
         anyhow::bail!(
             "zsh-pretend output diverged from zsh (ignoring first line of each screen)\n\n== expected ==\n{}\n== actual ==\n{}",

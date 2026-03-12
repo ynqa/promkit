@@ -27,7 +27,10 @@ pub fn wait_for_prompt(
 
 /// Assert that the two scenario runs match, and if not,
 /// return an error with a detailed diff of their outputs.
-pub fn assert_scenario_runs_match(expected: &ScenarioRun, actual: &ScenarioRun) -> anyhow::Result<()> {
+pub fn assert_scenario_runs_match(
+    expected: &ScenarioRun,
+    actual: &ScenarioRun,
+) -> anyhow::Result<()> {
     if actual.records == expected.records {
         return Ok(());
     }
@@ -45,7 +48,7 @@ pub fn render_scenario_run(run: &ScenarioRun) -> anyhow::Result<String> {
     Ok(String::from_utf8(output)?)
 }
 
-pub fn write_run_artifact(run: &ScenarioRun) -> anyhow::Result<()> {
+pub fn write_scenario_run_artifact(run: &ScenarioRun) -> anyhow::Result<()> {
     run.write_to_path(&artifact_path(run))
 }
 

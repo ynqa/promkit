@@ -1,7 +1,4 @@
-use std::{
-    collections::VecDeque,
-    fmt,
-};
+use std::{collections::VecDeque, fmt};
 
 use crossterm::style::{Attribute, ContentStyle};
 use unicode_width::UnicodeWidthChar;
@@ -307,11 +304,7 @@ impl StyledGraphemes {
     }
 
     /// Replaces the specified range with the given string.
-    pub fn replace_range<S: AsRef<str>>(
-        &mut self,
-        range: std::ops::Range<usize>,
-        replacement: S,
-    ) {
+    pub fn replace_range<S: AsRef<str>>(&mut self, range: std::ops::Range<usize>, replacement: S) {
         // Remove the specified range.
         for _ in range.clone() {
             self.0.remove(range.start);
