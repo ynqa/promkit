@@ -3,11 +3,11 @@ use std::{thread, time::Duration};
 use zsherio::{
     opts::clear_screen_and_move_cursor_to,
     scenarios::middle_insert_wrap::{TERMINAL_COLS, TERMINAL_ROWS, scenario},
-    session::{spawn_session_with_cursor, spawn_zsh_session},
+    session::spawn_zsh_session,
 };
 
 fn main() -> anyhow::Result<()> {
-    let mut session = spawn_zsh_session(TERMINAL_ROWS, TERMINAL_COLS)?;
+    let mut session = spawn_zsh_session((TERMINAL_ROWS, TERMINAL_COLS), None)?;
 
     // Before create scenaro, move cursor to bottom.
     clear_screen_and_move_cursor_to(&mut session, TERMINAL_ROWS, 1)?;

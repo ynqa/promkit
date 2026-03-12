@@ -10,7 +10,7 @@ use crate::terminal::TerminalSize;
 use alacritty_terminal::{
     event::VoidListener,
     index::{Column, Line, Point},
-    term::{self, Config, Term, cell::Flags, test::TermSize},
+    term::{Config, Term, cell::Flags, test::TermSize},
     vte::ansi::Processor,
 };
 use anyhow::Result;
