@@ -1,9 +1,10 @@
 [package]
-name = "event-dbg"
+name = "zsherio"
 version = "0.1.0"
 edition = "2024"
 publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-crossterm = { workspace = true }
+portable-pty = { workspace = true }
+termharness = { path = "../termharness" }

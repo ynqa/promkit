@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::core::{Pane, grapheme::StyledGraphemes, render::SharedRenderer};
+use crate::core::{grapheme::StyledGraphemes, render::SharedRenderer};
 
 pub mod frame;
 use frame::Frame;
@@ -74,13 +74,10 @@ where
             renderer
                 .update([(
                     index.clone(),
-                    Pane::new(
-                        vec![StyledGraphemes::from(format!(
-                            "{} {}",
-                            spinner.frames[frame_index], spinner.suffix
-                        ))],
-                        0,
-                    ),
+                    StyledGraphemes::from(format!(
+                        "{} {}",
+                        spinner.frames[frame_index], spinner.suffix
+                    )),
                 )])
                 .render()
                 .await?;

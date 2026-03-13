@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "checkbox/checkbox.rs"]
 mod inner;
@@ -21,8 +21,8 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl Widget for State {
+    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {
                 StyledGraphemes::from(format!("{} ", self.config.active_mark))
@@ -36,7 +36,7 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let matrix = self
+        let lines = self
             .checkbox
             .items()
             .iter()
@@ -62,15 +62,8 @@ impl PaneFactory for State {
                     ])
                     .apply_style(self.config.inactive_item_style)
                 }
-            })
-            .fold((vec![], 0), |(mut acc, pos), item| {
-                let rows = item.matrixify(width as usize, height, 0).0;
-                if pos < self.checkbox.position() + height {
-                    acc.extend(rows);
-                }
-                (acc, pos + 1)
             });
 
-        Pane::new(matrix.0, 0)
+        StyledGraphemes::from_lines(lines)
     }
 }

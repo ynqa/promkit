@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 mod history;
 pub use history::History;
@@ -19,12 +19,17 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl Widget for State {
+    fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
+        if width == 0 {
+            return StyledGraphemes::default();
+        }
+
         let mut buf = StyledGraphemes::default();
 
         let mut styled_prefix =
             StyledGraphemes::from_str(&self.config.prefix, self.config.prefix_style);
+        let prefix_width = styled_prefix.widths();
 
         buf.append(&mut styled_prefix);
 
@@ -44,14 +49,18 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let (matrix, offset) = buf.matrixify(
-            width as usize,
-            height,
-            (StyledGraphemes::from_str(&self.config.prefix, self.config.prefix_style).widths()
-                + self.texteditor.position())
-                / width as usize,
-        );
+        let rows = buf.wrapped_lines(width as usize);
+        if rows.is_empty() || height == 0 {
+            return StyledGraphemes::default();
+        }
 
-        Pane::new(matrix, offset)
+        let lines = rows.len().min(height);
+        let mut start = (prefix_width + self.texteditor.position()) / width as usize;
+        let end = start + lines;
+        if end > rows.len() {
+            start = rows.len().saturating_sub(lines);
+        }
+
+        StyledGraphemes::from_lines(rows.into_iter().skip(start).take(lines))
     }
 }

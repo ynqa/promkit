@@ -8,10 +8,9 @@ Set FontSize 32
 Set Width 1200
 Set Height 600
 
-Type@50ms "cargo run -q --example json" Enter Sleep 1s
+Type@50ms "cargo run -q --bin json test.json" Enter Sleep 2s
 Down@300ms 2 Sleep 1s
 Space Sleep 1s
 Down@300ms 1 Sleep 1s
 Space Sleep 1s
 Up@300ms 2 Sleep 1s
-Enter Sleep 2s

@@ -8,7 +8,7 @@ Set FontSize 32
 Set Width 1200
 Set Height 600
 
-Type@50ms "cargo run -q --example readline" Enter Sleep 1s
+Type@50ms "cargo run -q --bin readline" Enter Sleep 2s
 Type "Hello promkit!!" Sleep 1s
 Backspace 15 Type "a" Sleep 1s
 Tab 1 Sleep 1s

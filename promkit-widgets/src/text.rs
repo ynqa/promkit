@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "text/text.rs"]
 mod inner;
@@ -28,14 +28,14 @@ impl State {
     }
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl Widget for State {
+    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
         };
 
-        let matrix = self
+        let lines = self
             .text
             .items()
             .iter()
@@ -47,15 +47,8 @@ impl PaneFactory for State {
                 } else {
                     item.clone()
                 }
-            })
-            .fold((vec![], 0), |(mut acc, pos), item| {
-                let rows = item.matrixify(width as usize, height, 0).0;
-                if pos < self.text.position() + height {
-                    acc.extend(rows);
-                }
-                (acc, pos + 1)
             });
 
-        Pane::new(matrix.0, 0)
+        StyledGraphemes::from_lines(lines)
     }
 }

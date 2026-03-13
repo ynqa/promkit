@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 #[path = "jsonstream/jsonstream.rs"]
 mod inner;
@@ -22,8 +22,8 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl Widget for State {
+    fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
         let height = match self.config.lines {
             Some(lines) => lines.min(height as usize),
             None => height as usize,
@@ -32,6 +32,6 @@ impl PaneFactory for State {
         let rows = self.stream.extract_rows_from_current(height);
         let formatted_rows = self.config.format_for_terminal_display(&rows, width);
 
-        Pane::new(formatted_rows, 0)
+        StyledGraphemes::from_lines(formatted_rows)
     }
 }

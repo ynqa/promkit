@@ -21,10 +21,6 @@ use promkit::{
 struct Args {
     /// Optional path to a JSON file. Reads from stdin when omitted or when "-" is specified.
     input: Option<PathBuf>,
-
-    /// Title shown in the JSON viewer.
-    #[arg(short, long, default_value = "JSON viewer")]
-    title: String,
 }
 
 /// Read JSON input from a file or stdin based on the provided arguments.
@@ -84,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
 
     let stream = JsonStream::new(values.iter());
     Json::new(stream)
-        .title(args.title)
+        .title("JSON Viewer")
         .overflow_mode(OverflowMode::Wrap)
         .run()
         .await
