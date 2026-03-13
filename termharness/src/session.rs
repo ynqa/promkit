@@ -147,7 +147,7 @@ impl Session {
         })?;
 
         // Set the TERM environment variable to ensure consistent terminal behavior.
-        // Considaration: This should ideally be configurable,
+        // Consideration: This should ideally be configurable,
         // but for now we hardcode it to ensure tests run reliably.
         cmd.env("TERM", "xterm-256color");
         let child = pair.slave.spawn_command(cmd)?;
