@@ -22,7 +22,7 @@ tree = []
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.2.0" }
+promkit-core = { path = "../promkit-core", version = "=0.3.0" }
 
 # Optional dependencies
 rayon = { workspace = true, optional = true }
