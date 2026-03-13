@@ -8,6 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+          zsh --version
       - uses: actions/cache@v4
         with:
           path: |
