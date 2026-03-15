@@ -1,4 +1,4 @@
-use promkit_core::{Pane, PaneFactory, grapheme::StyledGraphemes};
+use promkit_core::{Widget, grapheme::StyledGraphemes};
 
 pub mod node;
 use node::Kind;
@@ -22,8 +22,8 @@ pub struct State {
     pub config: Config,
 }
 
-impl PaneFactory for State {
-    fn create_pane(&self, width: u16, height: u16) -> Pane {
+impl Widget for State {
+    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
         let symbol = |kind: &Kind| -> &str {
             match kind {
                 Kind::Folded { .. } => &self.config.folded_symbol,
@@ -50,9 +50,8 @@ impl PaneFactory for State {
             None => height as usize,
         };
 
-        let matrix = self
-            .tree
-            .kinds()
+        let kinds = self.tree.kinds();
+        let lines = kinds
             .iter()
             .enumerate()
             .filter(|(i, _)| *i >= self.tree.position() && *i < self.tree.position() + height)
@@ -73,15 +72,8 @@ impl PaneFactory for State {
                         self.config.inactive_item_style,
                     )
                 }
-            })
-            .fold((vec![], 0), |(mut acc, pos), item| {
-                let rows = item.matrixify(width as usize, height, 0).0;
-                if pos < self.tree.position() + height {
-                    acc.extend(rows);
-                }
-                (acc, pos + 1)
             });
 
-        Pane::new(matrix.0, 0)
+        StyledGraphemes::from_lines(lines)
     }
 }

@@ -4,7 +4,7 @@ use crate::{
     core::{
         crossterm::{self, event::Event, style::ContentStyle},
         render::{Renderer, SharedRenderer},
-        PaneFactory,
+        Widget,
     },
     preset::Evaluator,
     widgets::text::{self, config::Config},
@@ -34,8 +34,8 @@ impl crate::Prompt for Text {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
-                [(Index::Text, self.text.create_pane(size.0, size.1))],
+            Renderer::try_new_with_graphemes(
+                [(Index::Text, self.text.create_graphemes(size.0, size.1))],
                 true,
             )
             .await?,
@@ -87,7 +87,7 @@ impl Text {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
-                    .update([(Index::Text, self.text.create_pane(width, height))])
+                    .update([(Index::Text, self.text.create_graphemes(width, height))])
                     .render()
                     .await
             }

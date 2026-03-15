@@ -1,0 +1,19 @@
+[package]
+name = "termharness"
+version = "0.1.0"
+authors = ["ynqa <un.pensiero.vano@gmail.com>"]
+edition = "2024"
+description = "Test harness for terminal applications"
+repository = "https://github.com/ynqa/promkit"
+license = "MIT"
+readme = "README.md"
+
+[lib]
+name = "termharness"
+path = "src/lib.rs"
+
+[dependencies]
+alacritty_terminal = "0.25.1"
+anyhow = { workspace = true }
+portable-pty = { workspace = true }
+unicode-width = { workspace = true }

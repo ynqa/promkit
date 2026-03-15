@@ -10,7 +10,7 @@ use crate::{
             style::{Attribute, Attributes, Color, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
-        PaneFactory,
+        Widget,
     },
     preset::Evaluator,
     suggest::Suggest,
@@ -140,17 +140,20 @@ impl crate::Prompt for Readline {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
+            Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_pane(size.0, size.1)),
-                    (Index::Readline, self.readline.create_pane(size.0, size.1)),
+                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
+                    (
+                        Index::Readline,
+                        self.readline.create_graphemes(size.0, size.1),
+                    ),
                     (
                         Index::Suggestion,
-                        self.suggestions.create_pane(size.0, size.1),
+                        self.suggestions.create_graphemes(size.0, size.1),
                     ),
                     (
                         Index::ErrorMessage,
-                        self.error_message.create_pane(size.0, size.1),
+                        self.error_message.create_graphemes(size.0, size.1),
                     ),
                 ],
                 true,
@@ -274,15 +277,18 @@ impl Readline {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_pane(width, height)),
-                        (Index::Readline, self.readline.create_pane(width, height)),
+                        (Index::Title, self.title.create_graphemes(width, height)),
+                        (
+                            Index::Readline,
+                            self.readline.create_graphemes(width, height),
+                        ),
                         (
                             Index::Suggestion,
-                            self.suggestions.create_pane(width, height),
+                            self.suggestions.create_graphemes(width, height),
                         ),
                         (
                             Index::ErrorMessage,
-                            self.error_message.create_pane(width, height),
+                            self.error_message.create_graphemes(width, height),
                         ),
                     ])
                     .render()

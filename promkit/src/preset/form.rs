@@ -8,7 +8,7 @@ use crate::{
             style::{Attribute, Attributes, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
-        PaneFactory,
+        Widget,
     },
     preset::Evaluator,
     widgets::{cursor::Cursor, text_editor},
@@ -49,12 +49,12 @@ impl crate::Prompt for Form {
 
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_panes(
+            Renderer::try_new_with_graphemes(
                 self.readlines
                     .contents()
                     .iter()
                     .enumerate()
-                    .map(|(i, state)| (i, state.create_pane(size.0, size.1))),
+                    .map(|(i, state)| (i, state.create_graphemes(size.0, size.1))),
                 true,
             )
             .await?,
@@ -140,7 +140,7 @@ impl Form {
                             .contents()
                             .iter()
                             .enumerate()
-                            .map(|(i, state)| (i, state.create_pane(width, height))),
+                            .map(|(i, state)| (i, state.create_graphemes(width, height))),
                     )
                     .render()
                     .await

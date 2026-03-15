@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-promkit = { path = "../../promkit" }
+promkit = { path = "../../promkit", features = ["readline", "spinner"] }
 tokio = { workspace = true }
 
 [[bin]]
