@@ -13,14 +13,18 @@ impl Default for Text {
 
 impl<T: AsRef<str>> From<T> for Text {
     fn from(text: T) -> Self {
-        let lines: Vec<StyledGraphemes> = text
-            .as_ref()
-            .split('\n')
-            // Replace empty lines with null character to
-            // prevent them from being ignored at `style::Print`
-            .map(|line| if line.is_empty() { "\0" } else { line })
-            .map(StyledGraphemes::from)
-            .collect();
+        let value = text.as_ref();
+        let lines: Vec<StyledGraphemes> = if value.is_empty() {
+            Vec::new()
+        } else {
+            value
+                .split('\n')
+                // Replace empty lines with null character to
+                // prevent them from being ignored at `style::Print`
+                .map(|line| if line.is_empty() { "\0" } else { line })
+                .map(StyledGraphemes::from)
+                .collect()
+        };
         Self(Cursor::new(lines, 0, false))
     }
 }
@@ -57,5 +61,23 @@ impl Text {
     /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
     pub fn forward(&mut self) -> bool {
         self.0.forward()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Text;
+
+    #[test]
+    fn empty_input_creates_no_lines() {
+        let text = Text::from("");
+        assert!(text.items().is_empty());
+    }
+
+    #[test]
+    fn explicit_empty_lines_are_preserved() {
+        let text = Text::from("a\n\nb");
+        assert_eq!(text.items().len(), 3);
+        assert_eq!(text.items()[1].chars(), vec!['\0']);
     }
 }
