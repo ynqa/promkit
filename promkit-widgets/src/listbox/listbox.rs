@@ -15,7 +15,7 @@ pub struct Listbox(Cursor<Vec<StyledGraphemes>>);
 
 impl Default for Listbox {
     fn default() -> Self {
-        Self(Cursor::new(vec![StyledGraphemes::default()], 0, false))
+        Self(Cursor::new(Vec::new(), 0, false))
     }
 }
 
@@ -94,5 +94,17 @@ impl Listbox {
 
     pub fn is_tail(&self) -> bool {
         self.0.is_tail()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Listbox;
+
+    #[test]
+    fn default_is_empty() {
+        let listbox = Listbox::default();
+        assert!(listbox.is_empty());
+        assert_eq!(listbox.len(), 0);
     }
 }
