@@ -1,6 +1,6 @@
 [package]
 name = "promkit-widgets"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Widgets for promkit"
@@ -10,12 +10,13 @@ readme = "README.md"
 
 [features]
 default = []
-all = ["checkbox", "jsonstream", "listbox", "serde", "spinner", "text", "texteditor", "tree"]
+all = ["checkbox", "jsonstream", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
 jsonstream = ["dep:serde_json", "dep:rayon"]
 listbox = []
 serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
+status = ["text"]
 text = []
 texteditor = []
 tree = []

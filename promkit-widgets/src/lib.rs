@@ -23,6 +23,10 @@ pub mod listbox;
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
 pub mod text;
 
+#[cfg(feature = "status")]
+#[cfg_attr(docsrs, doc(cfg(feature = "status")))]
+pub mod status;
+
 #[cfg(feature = "texteditor")]
 #[cfg_attr(docsrs, doc(cfg(feature = "texteditor")))]
 pub mod text_editor;
