@@ -12,7 +12,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.10.0] - 2025-07-xx
+## [0.12.0] - 2026-03-15
+
+### Added
+
+- Added `termharness` to strengthen terminal screen diff tests and screen verification infrastructure
+- Added `zsherio` to enable render parity checks between `zsh` and `zsh-pretend`
+
+### Changed
+
+- Refactored Pane / matrixify-dependent rendering paths to simplify internal structure
+- Updated `promkit-core` to `v0.3.0` and `promkit-widgets` to `v0.4.0`
+
+### Fixed
+
+- Improved stability for cursor position capture and rendering during resize
+
+## [0.11.0] - 2026-02-25
+
+### Added
+
+- Introduced formatting/configuration mechanisms (`Formatter` / `Config`) for all widgets
+- Added a `serde` feature to support config loading via `termcfg`
+- Added wrapping (`Wrap`) and truncation (`Truncate`) controls to the JSON Viewer
+
+### Changed
+
+- Standardized config API naming (`RowFormatter` / `Formatter` / `Config` family)
+- Adopted `termcfg v0.2.0` and improved attribute handling
+- Refined text replacement APIs in `Text` / `State` (`replace_text`, `replace_contents`)
+- Updated `promkit-widgets` to `v0.3.0`
+
+## [0.10.0] - 2025-07-15
 
 ### Added
 - **Async support**: Full async/await pattern implementation for better performance and responsiveness
@@ -78,5 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For versions prior to 0.10.0, please refer to the git history or GitHub releases.
 
-[Unreleased]: https://github.com/ynqa/promkit/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/ynqa/promkit/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/ynqa/promkit/releases/tag/v0.12.0
+[0.11.0]: https://github.com/ynqa/promkit/releases/tag/v0.11.0
 [0.10.0]: https://github.com/ynqa/promkit/releases/tag/v0.10.0
