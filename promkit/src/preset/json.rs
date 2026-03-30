@@ -12,10 +12,10 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        jsonstream::{
+        json_tree::{
             self,
             config::{Config, OverflowMode},
-            JsonStream,
+            JsonTree,
         },
         text::{self, Text},
     },
@@ -40,7 +40,7 @@ pub struct Json {
     /// State for the title text.
     pub title: text::State,
     /// State for the JSON data, including formatting and rendering options.
-    pub json: jsonstream::State,
+    pub json: json_tree::State,
 }
 
 #[async_trait::async_trait]
@@ -75,8 +75,8 @@ impl crate::Prompt for Json {
 }
 
 impl Json {
-    /// Creates a new JSON preset with the provided JSON stream.
-    pub fn new(stream: JsonStream) -> Self {
+    /// Creates a new JSON preset with the provided JSON tree.
+    pub fn new(tree: JsonTree) -> Self {
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
@@ -90,8 +90,8 @@ impl Json {
                 },
                 ..Default::default()
             },
-            json: jsonstream::State {
-                stream,
+            json: json_tree::State {
+                tree,
                 config: Config {
                     curly_brackets_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),

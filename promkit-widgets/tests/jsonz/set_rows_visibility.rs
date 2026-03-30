@@ -1,6 +1,6 @@
 use serde_json::Deserializer;
 
-use promkit_widgets::jsonstream::jsonz::*;
+use promkit_widgets::json_tree::jsonz::*;
 
 #[test]
 fn test() {

@@ -9,7 +9,7 @@ use promkit::{
     core::crossterm::{event, execute, terminal},
     preset::json::Json,
     widgets::{
-        jsonstream::{config::OverflowMode, JsonStream},
+        json_tree::{config::OverflowMode, JsonTree},
         serde_json::{self, Deserializer, Value},
     },
     Prompt,
@@ -44,10 +44,10 @@ fn parse_input(args: &Args) -> anyhow::Result<String> {
 
 /// Parse a JSON string into a vector of serde_json::Value,
 /// allowing for multiple JSON objects in the input.
-fn parse_json_stream(input: &str) -> anyhow::Result<Vec<Value>> {
-    let stream: serde_json::StreamDeserializer<'_, serde_json::de::StrRead<'_>, Value> =
+fn parse_json_values(input: &str) -> anyhow::Result<Vec<Value>> {
+    let deserializer: serde_json::StreamDeserializer<'_, serde_json::de::StrRead<'_>, Value> =
         Deserializer::from_str(input).into_iter::<Value>();
-    stream
+    deserializer
         .collect::<Result<Vec<_>, _>>()
         .map_err(anyhow::Error::from)
 }
@@ -69,7 +69,7 @@ impl Drop for TerminalGuard {
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let input = parse_input(&args)?;
-    let values = parse_json_stream(&input)?;
+    let values = parse_json_values(&input)?;
 
     execute!(
         io::stdout(),
@@ -78,8 +78,8 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let _terminal_guard = TerminalGuard;
 
-    let stream = JsonStream::new(values.iter());
-    Json::new(stream)
+    let tree = JsonTree::new(values.iter());
+    Json::new(tree)
         .title("JSON Viewer")
         .overflow_mode(OverflowMode::Wrap)
         .run()

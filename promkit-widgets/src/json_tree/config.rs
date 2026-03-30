@@ -357,7 +357,7 @@ mod tests {
 
         use super::*;
 
-        use crate::jsonstream::jsonz::create_rows;
+        use crate::json_tree::jsonz::create_rows;
 
         #[test]
         fn test() {
@@ -405,7 +405,7 @@ mod tests {
     mod format_for_terminal_display {
         use super::*;
 
-        use crate::jsonstream::jsonz::create_rows;
+        use crate::json_tree::jsonz::create_rows;
 
         #[test]
         fn test_ellipsis_mode_truncates_with_ellipsis() {

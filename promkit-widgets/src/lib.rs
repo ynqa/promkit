@@ -8,11 +8,11 @@ pub mod cursor;
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
 
-#[cfg(feature = "jsonstream")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsonstream")))]
-pub mod jsonstream;
-#[cfg(feature = "jsonstream")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsonstream")))]
+#[cfg(feature = "jsontree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "jsontree")))]
+pub mod json_tree;
+#[cfg(feature = "jsontree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "jsontree")))]
 pub use serde_json;
 
 #[cfg(feature = "listbox")]
