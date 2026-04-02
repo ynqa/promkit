@@ -130,8 +130,8 @@ impl Config {
         }
 
         !s.contains([
-            ':', '#', '{', '}', '[', ']', ',', '&', '*', '?', '|', '>', '!', '%', '@', '`',
-            '\\', '"', '\'', '\n', '\r', '\t',
+            ':', '#', '{', '}', '[', ']', ',', '&', '*', '?', '|', '>', '!', '%', '@', '`', '\\',
+            '"', '\'', '\n', '\r', '\t',
         ])
     }
 
@@ -139,62 +139,17 @@ impl Config {
         if Self::is_plain_yaml_string(s) {
             s.to_string()
         } else {
-            format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', "\\n"))
+            format!(
+                "\"{}\"",
+                s.replace('\\', "\\\\")
+                    .replace('"', "\\\"")
+                    .replace('\n', "\\n")
+            )
         }
     }
 
     fn render_key(key: &str) -> String {
         Self::render_yaml_string(key)
-    }
-
-    fn truncate_line_with_ellipsis(line: StyledGraphemes, width: usize) -> StyledGraphemes {
-        if line.widths() <= width {
-            return line;
-        }
-
-        if width == 0 {
-            return StyledGraphemes::default();
-        }
-
-        let ellipsis: StyledGraphemes = StyledGraphemes::from("…");
-        let ellipsis_width = ellipsis.widths();
-        if width <= ellipsis_width {
-            return ellipsis;
-        }
-
-        let mut truncated = StyledGraphemes::default();
-        let mut current_width = 0;
-        for g in line.iter() {
-            if current_width + g.width() + ellipsis_width > width {
-                break;
-            }
-            truncated.push_back(g.clone());
-            current_width += g.width();
-        }
-
-        vec![truncated, ellipsis].into_iter().collect()
-    }
-
-    fn wrap_line(line: StyledGraphemes, width: usize) -> Vec<StyledGraphemes> {
-        let mut wrapped = vec![StyledGraphemes::default()];
-        let mut current_width = 0;
-
-        for g in line.iter() {
-            if g.width() > width {
-                continue;
-            }
-            if current_width + g.width() > width {
-                wrapped.push(StyledGraphemes::default());
-                current_width = 0;
-            }
-            wrapped
-                .last_mut()
-                .expect("wrapped always contains at least one row")
-                .push_back(g.clone());
-            current_width += g.width();
-        }
-
-        wrapped
     }
 
     fn render_collection_marker(&self, kind: &CollectionKind) -> StyledGraphemes {
@@ -219,7 +174,9 @@ impl Config {
             YamlNode::Boolean(b) => {
                 Some(StyledGraphemes::from(b.to_string()).apply_style(self.boolean_style))
             }
-            YamlNode::Number(n) => Some(StyledGraphemes::from(n.to_string()).apply_style(self.number_style)),
+            YamlNode::Number(n) => {
+                Some(StyledGraphemes::from(n.to_string()).apply_style(self.number_style))
+            }
             YamlNode::String(s) => Some(
                 StyledGraphemes::from(Self::render_yaml_string(s)).apply_style(self.string_style),
             ),
@@ -256,16 +213,13 @@ impl Config {
             }
 
             if let Some(key) = &row.key {
-                parts.push(
-                    StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style),
-                );
+                parts
+                    .push(StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style));
                 parts.push(StyledGraphemes::from(": "));
             }
 
             if let Some(tag) = &row.tag {
-                parts.push(
-                    StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style),
-                );
+                parts.push(StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style));
             }
 
             if let Some(value) = self.render_value(row) {
@@ -283,11 +237,11 @@ impl Config {
 
             match self.overflow_mode {
                 OverflowMode::Truncate => {
-                    line = Self::truncate_line_with_ellipsis(line, width);
+                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
                     formatted.push(line);
                 }
                 OverflowMode::Wrap => {
-                    formatted.extend(Self::wrap_line(line, width));
+                    formatted.extend(line.wrapped_lines(width));
                 }
             }
         }

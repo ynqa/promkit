@@ -76,11 +76,7 @@ impl RowOperation for Vec<Row> {
         while prev > 0 && self[prev].is_end() {
             prev -= 1;
         }
-        if self[prev].is_end() {
-            current
-        } else {
-            prev
-        }
+        if self[prev].is_end() { current } else { prev }
     }
 
     fn head(&self) -> usize {

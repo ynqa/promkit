@@ -111,56 +111,6 @@ impl Default for Config {
 }
 
 impl Config {
-    fn truncate_line_with_ellipsis(line: StyledGraphemes, width: usize) -> StyledGraphemes {
-        if line.widths() <= width {
-            return line;
-        }
-
-        if width == 0 {
-            return StyledGraphemes::default();
-        }
-
-        let ellipsis: StyledGraphemes = StyledGraphemes::from("…");
-        let ellipsis_width = ellipsis.widths();
-        if width <= ellipsis_width {
-            return ellipsis;
-        }
-
-        let mut truncated = StyledGraphemes::default();
-        let mut current_width = 0;
-        for g in line.iter() {
-            if current_width + g.width() + ellipsis_width > width {
-                break;
-            }
-            truncated.push_back(g.clone());
-            current_width += g.width();
-        }
-
-        vec![truncated, ellipsis].into_iter().collect()
-    }
-
-    fn wrap_line(line: StyledGraphemes, width: usize) -> Vec<StyledGraphemes> {
-        let mut wrapped = vec![StyledGraphemes::default()];
-        let mut current_width = 0;
-
-        for g in line.iter() {
-            if g.width() > width {
-                continue;
-            }
-            if current_width + g.width() > width {
-                wrapped.push(StyledGraphemes::default());
-                current_width = 0;
-            }
-            wrapped
-                .last_mut()
-                .expect("wrapped always contains at least one row")
-                .push_back(g.clone());
-            current_width += g.width();
-        }
-
-        wrapped
-    }
-
     /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
     pub fn format_for_terminal_display(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
@@ -258,11 +208,11 @@ impl Config {
 
             match self.overflow_mode {
                 OverflowMode::Truncate => {
-                    line = Self::truncate_line_with_ellipsis(line, width);
+                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
                     formatted.push(line);
                 }
                 OverflowMode::Wrap => {
-                    formatted.extend(Self::wrap_line(line, width));
+                    formatted.extend(line.wrapped_lines(width));
                 }
             }
         }

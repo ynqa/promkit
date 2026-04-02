@@ -6,13 +6,13 @@ use std::{
 
 use clap::Parser;
 use promkit::{
-    Prompt,
     core::crossterm::{event, execute, terminal},
     preset::yaml::Yaml,
     widgets::{
         serde_yaml::{Deserializer, Value},
-        yaml_tree::{YamlTree, config::OverflowMode},
+        yaml_tree::{config::OverflowMode, YamlTree},
     },
+    Prompt,
 };
 use serde::Deserialize;
 
