@@ -5,7 +5,9 @@ mod inner;
 pub use inner::JsonTree;
 pub mod config;
 pub use config::Config;
+
 pub mod jsonz;
+use jsonz::PrettyRender;
 
 /// Represents the state of a JSON tree within the application.
 ///
@@ -33,5 +35,12 @@ impl Widget for State {
         let formatted_rows = self.config.format_for_terminal_display(&rows, width);
 
         StyledGraphemes::from_lines(formatted_rows)
+    }
+}
+
+impl State {
+    /// Formats the raw JSON data into a pretty-printed string with indentation.
+    pub fn render_pretty_json(&self) -> String {
+        self.tree.rows().render_pretty(self.config.indent)
     }
 }

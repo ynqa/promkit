@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::jsonz::{ContainerType, PrettyRender, Row, Value};
+use super::jsonz::{ContainerType, Row, Value};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
@@ -218,11 +218,6 @@ impl Config {
         }
 
         formatted
-    }
-
-    /// Formats a slice of Rows to a raw JSON string, ignoring collapsed and truncated states
-    pub fn format_raw_json(&self, rows: &[Row]) -> String {
-        rows.render_pretty(self.indent)
     }
 }
 
