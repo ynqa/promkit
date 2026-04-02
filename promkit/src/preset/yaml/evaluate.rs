@@ -50,7 +50,7 @@ pub async fn default(event: &Event, ctx: &mut Yaml) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.yaml.tree.up();
+            ctx.yaml.document.up();
         }
 
         Event::Key(KeyEvent {
@@ -65,7 +65,7 @@ pub async fn default(event: &Event, ctx: &mut Yaml) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.yaml.tree.down();
+            ctx.yaml.document.down();
         }
 
         // Fold/Unfold
@@ -75,7 +75,7 @@ pub async fn default(event: &Event, ctx: &mut Yaml) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.yaml.tree.toggle();
+            ctx.yaml.document.toggle();
         }
 
         _ => (),

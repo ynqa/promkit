@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde_json::Deserializer;
 
-use promkit_widgets::json_tree::jsonz::*;
+use promkit_widgets::json::jsonz::*;
 
 #[test]
 fn test_tail_after_toggle() {

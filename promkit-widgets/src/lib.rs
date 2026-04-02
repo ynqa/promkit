@@ -8,18 +8,18 @@ pub mod cursor;
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
 
-#[cfg(feature = "jsontree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsontree")))]
-pub mod json_tree;
-#[cfg(feature = "jsontree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsontree")))]
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
+pub mod json;
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
 pub use serde_json;
 
-#[cfg(feature = "yamltree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "yamltree")))]
-pub mod yaml_tree;
-#[cfg(feature = "yamltree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "yamltree")))]
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
+pub mod yaml;
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
 pub use serde_yaml;
 
 #[cfg(feature = "listbox")]

@@ -50,7 +50,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.json.tree.up();
+            ctx.json.document.up();
         }
 
         Event::Key(KeyEvent {
@@ -65,7 +65,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.json.tree.down();
+            ctx.json.document.down();
         }
 
         // Fold/Unfold
@@ -75,7 +75,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.json.tree.toggle();
+            ctx.json.document.toggle();
         }
 
         _ => (),

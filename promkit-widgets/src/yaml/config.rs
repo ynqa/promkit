@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use crate::yaml_tree::yamlz::{CollectionKind, Row, YamlNode};
+use crate::yaml::yamlz::{CollectionKind, Row, YamlNode};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering YAML data.

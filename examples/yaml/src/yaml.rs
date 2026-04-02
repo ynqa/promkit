@@ -10,7 +10,7 @@ use promkit::{
     preset::yaml::Yaml,
     widgets::{
         serde_yaml::{Deserializer, Value},
-        yaml_tree::{config::OverflowMode, YamlTree},
+        yaml::{config::OverflowMode, Document},
     },
     Prompt,
 };
@@ -78,8 +78,8 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let _terminal_guard = TerminalGuard;
 
-    let tree = YamlTree::new(values.iter());
-    Yaml::new(tree)
+    let document = Document::new(values.iter());
+    Yaml::new(document)
         .title("YAML Viewer")
         .overflow_mode(OverflowMode::Wrap)
         .run()

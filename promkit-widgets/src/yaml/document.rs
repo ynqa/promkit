@@ -1,22 +1,22 @@
-use super::jsonz::{self, Row, RowOperation};
+use crate::yaml::yamlz::{self, Row, RowOperation};
 
-/// Represents a navigable JSON tree, allowing for efficient navigation and folding.
+/// Represents a navigable YAML document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
-pub struct JsonTree {
+pub struct Document {
     rows: Vec<Row>,
     position: usize,
 }
 
-impl JsonTree {
-    pub fn new<'a, I: IntoIterator<Item = &'a serde_json::Value>>(iter: I) -> Self {
+impl Document {
+    pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
         Self {
-            rows: jsonz::create_rows(iter),
+            rows: yamlz::create_rows(iter),
             position: 0,
         }
     }
 }
 
-impl JsonTree {
+impl Document {
     /// Returns a reference to the underlying vector of rows.
     pub fn rows(&self) -> &[Row] {
         &self.rows
@@ -33,13 +33,13 @@ impl JsonTree {
         self.position = index;
     }
 
-    /// Sets the visibility of all rows in the tree.
+    /// Sets the visibility of all rows.
     pub fn set_nodes_visibility(&mut self, collapsed: bool) {
-        self.rows.set_rows_visibility(collapsed);
+        self.rows.set_nodes_visibility(collapsed);
         self.position = 0;
     }
 
-    /// Moves the cursor backward through the tree.
+    /// Moves the cursor backward through rows.
     pub fn up(&mut self) -> bool {
         let index = self.rows.up(self.position);
         let ret = index != self.position;
@@ -47,13 +47,13 @@ impl JsonTree {
         ret
     }
 
-    /// Moves the cursor to the head position in the tree.
+    /// Moves the cursor to the head position.
     pub fn head(&mut self) -> bool {
         self.position = self.rows.head();
         true
     }
 
-    /// Moves the cursor forward through the tree.
+    /// Moves the cursor forward through rows.
     pub fn down(&mut self) -> bool {
         let index = self.rows.down(self.position);
         let ret = index != self.position;
@@ -61,7 +61,7 @@ impl JsonTree {
         ret
     }
 
-    /// Moves the cursor to the last position in the tree.
+    /// Moves the cursor to the last position.
     pub fn tail(&mut self) -> bool {
         self.position = self.rows.tail();
         true

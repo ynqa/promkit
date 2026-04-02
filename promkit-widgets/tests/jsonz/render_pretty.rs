@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use promkit_widgets::json_tree::jsonz::{PrettyRender, create_rows};
+use promkit_widgets::json::jsonz::{PrettyRender, create_rows};
 
 #[test]
 fn render_pretty() {

@@ -10,10 +10,10 @@ readme = "README.md"
 
 [features]
 default = []
-all = ["checkbox", "jsontree", "yamltree", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
+all = ["checkbox", "json", "yaml", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
-jsontree = ["dep:serde_json", "dep:rayon"]
-yamltree = ["jsontree", "dep:serde_yaml"]
+json = ["dep:serde_json", "dep:rayon"]
+yaml = ["json", "dep:serde_yaml"]
 listbox = []
 serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
@@ -35,6 +35,6 @@ termcfg = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
-# Enable `jsontree` feature when `jsonz` testing
-promkit-widgets = { path = ".", features = ["jsontree", "yamltree"] }
+# Enable `json` feature when `jsonz` testing
+promkit-widgets = { path = ".", features = ["json", "yaml"] }
 toml = "0.9.8"

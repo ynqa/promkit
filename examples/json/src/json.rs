@@ -9,7 +9,7 @@ use promkit::{
     core::crossterm::{event, execute, terminal},
     preset::json::Json,
     widgets::{
-        json_tree::{config::OverflowMode, JsonTree},
+        json::{config::OverflowMode, Document},
         serde_json::{self, Deserializer, Value},
     },
     Prompt,
@@ -78,8 +78,8 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let _terminal_guard = TerminalGuard;
 
-    let tree = JsonTree::new(values.iter());
-    Json::new(tree)
+    let document = Document::new(values.iter());
+    Json::new(document)
         .title("JSON Viewer")
         .overflow_mode(OverflowMode::Wrap)
         .run()

@@ -13,10 +13,10 @@ use crate::{
     preset::Evaluator,
     widgets::{
         text::{self, Text},
-        yaml_tree::{
+        yaml::{
             self,
             config::{Config, OverflowMode},
-            YamlTree,
+            Document,
         },
     },
     Signal,
@@ -40,7 +40,7 @@ pub struct Yaml {
     /// State for the title text.
     pub title: text::State,
     /// State for the YAML data, including formatting and rendering options.
-    pub yaml: yaml_tree::State,
+    pub yaml: yaml::State,
 }
 
 #[async_trait::async_trait]
@@ -75,8 +75,8 @@ impl crate::Prompt for Yaml {
 }
 
 impl Yaml {
-    /// Creates a new YAML preset with the provided YAML tree.
-    pub fn new(tree: YamlTree) -> Self {
+    /// Creates a new YAML preset with the provided YAML document.
+    pub fn new(document: Document) -> Self {
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
@@ -90,8 +90,8 @@ impl Yaml {
                 },
                 ..Default::default()
             },
-            yaml: yaml_tree::State {
-                tree,
+            yaml: yaml::State {
+                document,
                 config: Config {
                     map_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
