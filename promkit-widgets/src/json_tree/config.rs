@@ -436,19 +436,19 @@ mod tests {
         #[test]
         fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
-indent = 4
-lines = 7
-curly_brackets_style = "attr=bold"
-square_brackets_style = "attr=bold"
-key_style = "fg=cyan"
-string_value_style = "fg=green"
-number_value_style = "fg=yellow"
-boolean_value_style = "fg=magenta"
-null_value_style = "fg=grey"
-active_item_attribute = "underlined"
-inactive_item_attribute = "dim"
-overflow_mode = "Wrap"
-"#;
+                indent = 4
+                lines = 7
+                curly_brackets_style = "attr=bold"
+                square_brackets_style = "attr=bold"
+                key_style = "fg=cyan"
+                string_value_style = "fg=green"
+                number_value_style = "fg=yellow"
+                boolean_value_style = "fg=magenta"
+                null_value_style = "fg=grey"
+                active_item_attribute = "underlined"
+                inactive_item_attribute = "dim"
+                overflow_mode = "Wrap"
+            "#;
 
             let formatter: Config = toml::from_str(input).unwrap();
 
