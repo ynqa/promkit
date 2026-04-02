@@ -64,6 +64,72 @@ pub struct Row {
     pub v: Value,
 }
 
+pub trait PrettyRender {
+    fn render_pretty(&self, indent: usize) -> String;
+}
+
+impl PrettyRender for [Row] {
+    fn render_pretty(&self, indent: usize) -> String {
+        let mut result = String::new();
+        let mut first_in_container = true;
+
+        for (i, row) in self.iter().enumerate() {
+            if !matches!(row.v, Value::Close { .. }) {
+                if !result.is_empty() {
+                    result.push('\n');
+                }
+                result.push_str(&" ".repeat(indent * row.depth));
+            }
+
+            if let Some(key) = &row.k {
+                result.push('"');
+                result.push_str(key);
+                result.push_str("\": ");
+            }
+
+            match &row.v {
+                Value::Null => result.push_str("null"),
+                Value::Boolean(b) => result.push_str(&b.to_string()),
+                Value::Number(n) => result.push_str(&n.to_string()),
+                Value::String(s) => {
+                    result.push('"');
+                    result.push_str(&s.replace('\n', "\\n"));
+                    result.push('"');
+                }
+                Value::Empty { typ } => {
+                    result.push_str(typ.empty_str());
+                }
+                Value::Open { typ, .. } => {
+                    result.push_str(typ.open_str());
+                }
+                Value::Close { typ, .. } => {
+                    if !first_in_container {
+                        result.push('\n');
+                        result.push_str(&" ".repeat(indent * row.depth));
+                    }
+                    result.push_str(typ.close_str());
+                }
+            }
+
+            if i + 1 < self.len() {
+                if let Value::Close { .. } = self[i + 1].v {
+                } else if let Value::Open { .. } = row.v {
+                } else {
+                    result.push(',');
+                }
+            }
+
+            if let Value::Open { .. } = row.v {
+                first_in_container = true;
+            } else {
+                first_in_container = false;
+            }
+        }
+
+        result
+    }
+}
+
 pub trait RowOperation {
     fn up(&self, current: usize) -> usize;
     fn head(&self) -> usize;

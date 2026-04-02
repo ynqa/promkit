@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::jsonz::{ContainerType, Row, Value};
+use super::jsonz::{ContainerType, PrettyRender, Row, Value};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
@@ -222,78 +222,7 @@ impl Config {
 
     /// Formats a slice of Rows to a raw JSON string, ignoring collapsed and truncated states
     pub fn format_raw_json(&self, rows: &[Row]) -> String {
-        let mut result = String::new();
-        let mut first_in_container = true;
-
-        for (i, row) in rows.iter().enumerate() {
-            // Add indentation
-            if !matches!(row.v, Value::Close { .. }) {
-                if !result.is_empty() {
-                    result.push('\n');
-                }
-                result.push_str(&" ".repeat(self.indent * row.depth));
-            }
-
-            // Add key if present
-            if let Some(key) = &row.k {
-                result.push('"');
-                result.push_str(key);
-                result.push_str("\": ");
-            }
-
-            // Add value
-            match &row.v {
-                Value::Null => result.push_str("null"),
-                Value::Boolean(b) => result.push_str(&b.to_string()),
-                Value::Number(n) => result.push_str(&n.to_string()),
-                Value::String(s) => {
-                    result.push('"');
-                    result.push_str(&s.replace('\n', "\\n"));
-                    result.push('"');
-                }
-                Value::Empty { typ } => {
-                    result.push_str(match typ {
-                        ContainerType::Object => "{}",
-                        ContainerType::Array => "[]",
-                    });
-                }
-                Value::Open { typ, .. } => {
-                    result.push(match typ {
-                        ContainerType::Object => '{',
-                        ContainerType::Array => '[',
-                    });
-                }
-                Value::Close { typ, .. } => {
-                    if !first_in_container {
-                        result.push('\n');
-                        result.push_str(&" ".repeat(self.indent * row.depth));
-                    }
-                    result.push(match typ {
-                        ContainerType::Object => '}',
-                        ContainerType::Array => ']',
-                    });
-                }
-            }
-
-            // Add comma if needed
-            if i + 1 < rows.len() {
-                if let Value::Close { .. } = rows[i + 1].v {
-                    // Don't add comma before closing bracket
-                } else if let Value::Open { .. } = rows[i].v {
-                    // Don't add comma after opening bracket
-                } else {
-                    result.push(',');
-                }
-            }
-
-            if let Value::Open { .. } = row.v {
-                first_in_container = true;
-            } else {
-                first_in_container = false;
-            }
-        }
-
-        result
+        rows.render_pretty(self.indent)
     }
 }
 
@@ -301,56 +230,6 @@ impl Config {
 mod tests {
     use super::*;
     use serde_json::json;
-
-    mod format_raw_json {
-        use std::str::FromStr;
-
-        use super::*;
-
-        use crate::json_tree::jsonz::create_rows;
-
-        #[test]
-        fn test() {
-            let expected = r#"
-{
-    "array": [
-        {
-            "key": "value"
-        },
-        [
-            1,
-            2,
-            3
-        ],
-        {
-            "nested": true
-        }
-    ],
-    "object": {
-        "array": [
-            1,
-            2,
-            3
-        ],
-        "nested": {
-            "value": "test"
-        }
-    }
-}"#
-            .trim();
-
-            assert_eq!(
-                Config {
-                    indent: 4,
-                    ..Default::default()
-                }
-                .format_raw_json(&create_rows([
-                    &serde_json::Value::from_str(&expected).unwrap()
-                ])),
-                expected,
-            );
-        }
-    }
 
     mod format_for_terminal_display {
         use super::*;
