@@ -15,6 +15,13 @@ pub mod json_tree;
 #[cfg_attr(docsrs, doc(cfg(feature = "jsontree")))]
 pub use serde_json;
 
+#[cfg(feature = "yamltree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yamltree")))]
+pub mod yaml_tree;
+#[cfg(feature = "yamltree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yamltree")))]
+pub use serde_yaml;
+
 #[cfg(feature = "listbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
 pub mod listbox;

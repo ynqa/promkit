@@ -18,6 +18,10 @@ pub mod password;
 #[cfg_attr(docsrs, doc(cfg(feature = "json")))]
 pub mod json;
 
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
+pub mod yaml;
+
 #[cfg(feature = "listbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
 pub mod listbox;

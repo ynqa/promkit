@@ -10,9 +10,10 @@ readme = "README.md"
 
 [features]
 default = []
-all = ["checkbox", "jsontree", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
+all = ["checkbox", "jsontree", "yamltree", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
 jsontree = ["dep:serde_json", "dep:rayon"]
+yamltree = ["jsontree", "dep:serde_yaml"]
 listbox = []
 serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
@@ -29,10 +30,11 @@ promkit-core = { path = "../promkit-core", version = "=0.3.0" }
 rayon = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+serde_yaml = { workspace = true, optional = true }
 termcfg = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 # Enable `jsontree` feature when `jsonz` testing
-promkit-widgets = { path = ".", features = ["jsontree"] }
+promkit-widgets = { path = ".", features = ["jsontree", "yamltree"] }
 toml = "0.9.8"

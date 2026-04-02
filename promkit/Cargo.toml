@@ -19,6 +19,7 @@ all = [
     "confirm",
     "form",
     "json",
+    "yaml",
     "listbox",
     "password",
     "query-selector",
@@ -31,6 +32,7 @@ checkbox = ["promkit-widgets/checkbox", "promkit-widgets/text"]
 confirm = ["readline"]
 form = ["promkit-widgets/texteditor"]
 json = ["promkit-widgets/jsontree", "promkit-widgets/text"]
+yaml = ["promkit-widgets/yamltree", "promkit-widgets/text"]
 listbox = ["promkit-widgets/listbox", "promkit-widgets/text"]
 password = ["readline"]
 query-selector = [
