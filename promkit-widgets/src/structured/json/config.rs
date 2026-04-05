@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::jsonz::{Row, Value};
+use super::jsonz::{JsonNode, Row};
 use crate::structured::{ContainerNode, ContainerType};
 
 /// Defines the behavior for handling lines that
@@ -129,27 +129,27 @@ impl Config {
             }
 
             match &row.v {
-                Value::Null => {
+                JsonNode::Null => {
                     parts.push(StyledGraphemes::from("null").apply_style(self.null_value_style));
                 }
-                Value::Boolean(b) => {
+                JsonNode::Boolean(b) => {
                     parts.push(
                         StyledGraphemes::from(b.to_string()).apply_style(self.boolean_value_style),
                     );
                 }
-                Value::Number(n) => {
+                JsonNode::Number(n) => {
                     parts.push(
                         StyledGraphemes::from(n.to_string()).apply_style(self.number_value_style),
                     );
                 }
-                Value::String(s) => {
+                JsonNode::String(s) => {
                     let escaped = s.replace('\n', "\\n");
                     parts.push(
                         StyledGraphemes::from(format!("\"{}\"", escaped))
                             .apply_style(self.string_value_style),
                     );
                 }
-                Value::Container(node) => match node {
+                JsonNode::Container(node) => match node {
                     ContainerNode::Empty { typ } => {
                         let bracket_style = match typ {
                             ContainerType::Object => self.curly_brackets_style,
@@ -193,11 +193,11 @@ impl Config {
             if i + 1 < rows.len() {
                 if matches!(
                     &rows[i + 1].v,
-                    Value::Container(ContainerNode::Close { .. })
+                    JsonNode::Container(ContainerNode::Close { .. })
                 ) {
                 } else if matches!(
                     &rows[i].v,
-                    Value::Container(ContainerNode::Open {
+                    JsonNode::Container(ContainerNode::Open {
                         collapsed: false,
                         ..
                     })

@@ -52,9 +52,7 @@ impl ContainerType {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerNode {
     /// An empty container (e.g., `{}` or `[]`).
-    Empty {
-        typ: ContainerType,
-    },
+    Empty { typ: ContainerType },
     /// An opening container (e.g., `{` or `[`), with information
     /// about whether it's collapsed and its corresponding closing index.
     Open {
