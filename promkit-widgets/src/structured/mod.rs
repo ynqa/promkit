@@ -47,17 +47,23 @@ impl ContainerType {
     }
 }
 
-/// Structured row node for container representation.
+/// Container node of structured widget, which can be an empty container,
+/// an opening container, or a closing container.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerNode {
+    /// An empty container (e.g., `{}` or `[]`).
     Empty {
         typ: ContainerType,
     },
+    /// An opening container (e.g., `{` or `[`), with information
+    /// about whether it's collapsed and its corresponding closing index.
     Open {
         typ: ContainerType,
         collapsed: bool,
         close_index: usize,
     },
+    /// A closing container (e.g., `}` or `]`), with information
+    /// about whether it's collapsed and its corresponding opening index.
     Close {
         typ: ContainerType,
         collapsed: bool,
