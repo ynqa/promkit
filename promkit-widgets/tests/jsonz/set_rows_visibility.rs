@@ -34,7 +34,7 @@ fn test() {
 
     rows.set_rows_visibility(true);
     for row in &rows {
-        match &row.v {
+        match &row.node {
             JsonNode::Container(ContainerNode::Open { collapsed, .. })
             | JsonNode::Container(ContainerNode::Close { collapsed, .. }) => {
                 assert!(collapsed, "Node should be collapsed");
@@ -45,7 +45,7 @@ fn test() {
 
     rows.set_rows_visibility(false);
     for row in &rows {
-        match &row.v {
+        match &row.node {
             JsonNode::Container(ContainerNode::Open { collapsed, .. })
             | JsonNode::Container(ContainerNode::Close { collapsed, .. }) => {
                 assert!(!collapsed, "Node should be expanded");

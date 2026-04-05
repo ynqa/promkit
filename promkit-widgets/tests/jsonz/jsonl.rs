@@ -30,8 +30,8 @@ fn test_basic_jsonl() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 3,
@@ -42,24 +42,24 @@ fn test_basic_jsonl() {
         rows[1],
         Row {
             depth: 1,
-            k: Some("name".to_string()),
-            v: JsonNode::String("Alice".to_string()),
+            key: Some("name".to_string()),
+            node: JsonNode::String("Alice".to_string()),
         }
     );
     assert_eq!(
         rows[2],
         Row {
             depth: 1,
-            k: Some("age".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(30)),
+            key: Some("age".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(30)),
         }
     );
     assert_eq!(
         rows[3],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
@@ -71,8 +71,8 @@ fn test_basic_jsonl() {
         rows[4],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 7,
@@ -83,24 +83,24 @@ fn test_basic_jsonl() {
         rows[5],
         Row {
             depth: 1,
-            k: Some("name".to_string()),
-            v: JsonNode::String("Bob".to_string()),
+            key: Some("name".to_string()),
+            node: JsonNode::String("Bob".to_string()),
         }
     );
     assert_eq!(
         rows[6],
         Row {
             depth: 1,
-            k: Some("age".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(25)),
+            key: Some("age".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(25)),
         }
     );
     assert_eq!(
         rows[7],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 4,
@@ -110,7 +110,7 @@ fn test_basic_jsonl() {
 
     rows.toggle(0);
     assert_eq!(
-        rows[0].v,
+        rows[0].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
@@ -118,7 +118,7 @@ fn test_basic_jsonl() {
         })
     );
     assert_eq!(
-        rows[3].v,
+        rows[3].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
@@ -164,8 +164,8 @@ fn test_mixed_jsonl() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
@@ -176,8 +176,8 @@ fn test_mixed_jsonl() {
         rows[1],
         Row {
             depth: 1,
-            k: Some("array".to_string()),
-            v: JsonNode::Container(ContainerNode::Open {
+            key: Some("array".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 5,
@@ -190,8 +190,8 @@ fn test_mixed_jsonl() {
             rows[2 + i],
             Row {
                 depth: 2,
-                k: None,
-                v: JsonNode::Number(serde_json::Number::from(*num)),
+                key: None,
+                node: JsonNode::Number(serde_json::Number::from(*num)),
             }
         );
     }
@@ -201,8 +201,8 @@ fn test_mixed_jsonl() {
         rows[array_start],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 14,
@@ -214,8 +214,8 @@ fn test_mixed_jsonl() {
         rows[array_start + 1],
         Row {
             depth: 1,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
@@ -229,8 +229,8 @@ fn test_mixed_jsonl() {
         extracted[0],
         Row {
             depth: 1,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
@@ -241,16 +241,16 @@ fn test_mixed_jsonl() {
         extracted[1],
         Row {
             depth: 2,
-            k: Some("nested".to_string()),
-            v: JsonNode::Boolean(true),
+            key: Some("nested".to_string()),
+            node: JsonNode::Boolean(true),
         }
     );
     assert_eq!(
         extracted[2],
         Row {
             depth: 1,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: array_start + 1,
@@ -260,7 +260,7 @@ fn test_mixed_jsonl() {
 
     rows.toggle(array_start);
     assert_eq!(
-        rows[array_start].v,
+        rows[array_start].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,

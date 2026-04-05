@@ -25,7 +25,7 @@ fn test_on_open() {
     let index = rows.toggle(1);
     assert_eq!(index, 1);
     assert_eq!(
-        rows[1].v,
+        rows[1].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
@@ -33,7 +33,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[3].v,
+        rows[3].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
@@ -44,7 +44,7 @@ fn test_on_open() {
     let index = rows.toggle(4);
     assert_eq!(index, 4);
     assert_eq!(
-        rows[4].v,
+        rows[4].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
@@ -52,7 +52,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[8].v,
+        rows[8].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: true,
@@ -63,7 +63,7 @@ fn test_on_open() {
     let index = rows.toggle(0);
     assert_eq!(index, 0);
     assert_eq!(
-        rows[0].v,
+        rows[0].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
@@ -71,7 +71,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[9].v,
+        rows[9].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
@@ -81,7 +81,7 @@ fn test_on_open() {
 
     rows.toggle(0);
     assert_eq!(
-        rows[0].v,
+        rows[0].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
@@ -89,7 +89,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[9].v,
+        rows[9].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: false,
@@ -99,7 +99,7 @@ fn test_on_open() {
 
     rows.toggle(4);
     assert_eq!(
-        rows[4].v,
+        rows[4].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: false,
@@ -107,7 +107,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[8].v,
+        rows[8].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: false,
@@ -117,7 +117,7 @@ fn test_on_open() {
 
     rows.toggle(1);
     assert_eq!(
-        rows[1].v,
+        rows[1].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
@@ -125,7 +125,7 @@ fn test_on_open() {
         })
     );
     assert_eq!(
-        rows[3].v,
+        rows[3].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: false,
@@ -157,7 +157,7 @@ fn test_on_close() {
     let index = rows.toggle(3);
     assert_eq!(index, 1);
     assert_eq!(
-        rows[1].v,
+        rows[1].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
@@ -165,7 +165,7 @@ fn test_on_close() {
         })
     );
     assert_eq!(
-        rows[3].v,
+        rows[3].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
@@ -176,7 +176,7 @@ fn test_on_close() {
     let index = rows.toggle(8);
     assert_eq!(index, 4);
     assert_eq!(
-        rows[4].v,
+        rows[4].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
@@ -184,7 +184,7 @@ fn test_on_close() {
         })
     );
     assert_eq!(
-        rows[8].v,
+        rows[8].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: true,
@@ -195,7 +195,7 @@ fn test_on_close() {
     let index = rows.toggle(9);
     assert_eq!(index, 0);
     assert_eq!(
-        rows[0].v,
+        rows[0].node,
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
@@ -203,7 +203,7 @@ fn test_on_close() {
         })
     );
     assert_eq!(
-        rows[9].v,
+        rows[9].node,
         JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,

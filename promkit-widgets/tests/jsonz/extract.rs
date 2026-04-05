@@ -23,8 +23,8 @@ fn test_basic_extract() {
         extracted[0],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
@@ -35,8 +35,8 @@ fn test_basic_extract() {
         extracted[1],
         Row {
             depth: 1,
-            k: Some("a".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(1)),
+            key: Some("a".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(1)),
         }
     );
 
@@ -46,16 +46,16 @@ fn test_basic_extract() {
         extracted[0],
         Row {
             depth: 1,
-            k: Some("b".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(2)),
+            key: Some("b".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(2)),
         }
     );
     assert_eq!(
         extracted[1],
         Row {
             depth: 1,
-            k: Some("c".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(3)),
+            key: Some("c".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(3)),
         }
     );
 }
@@ -89,8 +89,8 @@ fn test_extract_with_collapsed_open() {
         extracted[0],
         Row {
             depth: 1,
-            k: Some("object".to_string()),
-            v: JsonNode::Container(ContainerNode::Open {
+            key: Some("object".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: true,
                 close_index: 4,
@@ -101,16 +101,16 @@ fn test_extract_with_collapsed_open() {
         extracted[1],
         Row {
             depth: 1,
-            k: Some("after".to_string()),
-            v: JsonNode::String("value".to_string()),
+            key: Some("after".to_string()),
+            node: JsonNode::String("value".to_string()),
         }
     );
     assert_eq!(
         extracted[2],
         Row {
             depth: 0,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
@@ -145,8 +145,8 @@ fn test_extract_nested_structure() {
         extracted[0],
         Row {
             depth: 2,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
@@ -157,16 +157,16 @@ fn test_extract_nested_structure() {
         extracted[1],
         Row {
             depth: 3,
-            k: Some("a".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(1)),
+            key: Some("a".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(1)),
         }
     );
     assert_eq!(
         extracted[2],
         Row {
             depth: 2,
-            k: None,
-            v: JsonNode::Container(ContainerNode::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
@@ -256,8 +256,8 @@ fn test_extract_complex_nested_collapsed() {
         extracted[0],
         Row {
             depth: 2,
-            k: Some("arr1".to_string()),
-            v: JsonNode::Container(ContainerNode::Open {
+            key: Some("arr1".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
@@ -268,8 +268,8 @@ fn test_extract_complex_nested_collapsed() {
         extracted[5],
         Row {
             depth: 4,
-            k: Some("d".to_string()),
-            v: JsonNode::Number(serde_json::Number::from(4)),
+            key: Some("d".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(4)),
         }
     );
 }
