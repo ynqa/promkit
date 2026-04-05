@@ -1,4 +1,4 @@
-use crate::yaml::yamlz::{self, Row, RowOperation};
+use crate::structured::yaml::yamlz::{self, Row, RowOperation};
 
 /// Represents a navigable YAML document, allowing for efficient row navigation and folding.
 #[derive(Clone)]

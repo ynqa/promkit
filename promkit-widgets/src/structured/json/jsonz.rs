@@ -1,40 +1,6 @@
 use rayon::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum ContainerType {
-    Object,
-    Array,
-}
-
-impl ContainerType {
-    pub fn open_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{",
-            ContainerType::Array => "[",
-        }
-    }
-
-    pub fn close_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "}",
-            ContainerType::Array => "]",
-        }
-    }
-
-    pub fn empty_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{}",
-            ContainerType::Array => "[]",
-        }
-    }
-
-    pub fn collapsed_preview(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{…}",
-            ContainerType::Array => "[…]",
-        }
-    }
-}
+pub use crate::structured::{ContainerType, PrettyRender};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -62,10 +28,6 @@ pub struct Row {
     pub depth: usize,
     pub k: Option<String>,
     pub v: Value,
-}
-
-pub trait PrettyRender {
-    fn render_pretty(&self, indent: usize) -> String;
 }
 
 impl PrettyRender for [Row] {

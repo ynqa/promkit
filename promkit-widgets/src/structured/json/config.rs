@@ -3,7 +3,8 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::jsonz::{ContainerType, Row, Value};
+use super::jsonz::{Row, Value};
+use crate::structured::ContainerType;
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
@@ -229,7 +230,7 @@ mod tests {
     mod format_for_terminal_display {
         use super::*;
 
-        use crate::json::jsonz::create_rows;
+        use crate::structured::json::jsonz::create_rows;
 
         #[test]
         fn test_ellipsis_mode_truncates_with_ellipsis() {

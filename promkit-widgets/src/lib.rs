@@ -8,19 +8,22 @@ pub mod cursor;
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
 
-#[cfg(feature = "json")]
-#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
-pub mod json;
+#[cfg(any(feature = "json", feature = "yaml"))]
+pub mod structured;
+
 #[cfg(feature = "json")]
 #[cfg_attr(docsrs, doc(cfg(feature = "json")))]
 pub use serde_json;
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
+pub use structured::json;
 
 #[cfg(feature = "yaml")]
 #[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
-pub mod yaml;
+pub use serde_yaml;
 #[cfg(feature = "yaml")]
 #[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
-pub use serde_yaml;
+pub use structured::yaml;
 
 #[cfg(feature = "listbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]

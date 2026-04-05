@@ -5,7 +5,8 @@ pub use document::Document;
 pub mod config;
 pub use config::Config;
 pub mod jsonz;
-use jsonz::PrettyRender;
+
+use crate::structured::PrettyRender;
 
 /// Represents JSON view state within the application.
 ///
