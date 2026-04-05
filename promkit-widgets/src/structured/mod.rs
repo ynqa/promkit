@@ -73,3 +73,30 @@ pub trait PrettyRender {
     /// Render the row as a pretty-printed string with the specified indentation level.
     fn render_pretty(&self, indent: usize) -> String;
 }
+
+/// Common row navigation and visibility operations for structured views.
+pub trait RowOperation {
+    /// Row element type handled by the operation target.
+    type Row;
+
+    /// Move the cursor one row upward from `current`.
+    fn up(&self, current: usize) -> usize;
+
+    /// Move the cursor to the first visible row.
+    fn head(&self) -> usize;
+
+    /// Move the cursor one row downward from `current`.
+    fn down(&self, current: usize) -> usize;
+
+    /// Move the cursor to the last visible row.
+    fn tail(&self) -> usize;
+
+    /// Toggle collapse/expand state at `current` and return the next cursor position.
+    fn toggle(&mut self, current: usize) -> usize;
+
+    /// Set collapsed visibility for all container rows.
+    fn set_rows_visibility(&mut self, collapsed: bool);
+
+    /// Extract up to `n` visible rows starting from `current`.
+    fn extract(&self, current: usize, n: usize) -> Vec<Self::Row>;
+}

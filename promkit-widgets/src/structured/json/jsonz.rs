@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 
-pub use crate::structured::{ContainerNode, ContainerType, PrettyRender};
+pub use crate::structured::{ContainerNode, ContainerType, PrettyRender, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JsonNode {
@@ -85,17 +85,9 @@ impl PrettyRender for [Row] {
     }
 }
 
-pub trait RowOperation {
-    fn up(&self, current: usize) -> usize;
-    fn head(&self) -> usize;
-    fn down(&self, current: usize) -> usize;
-    fn tail(&self) -> usize;
-    fn toggle(&mut self, current: usize) -> usize;
-    fn set_rows_visibility(&mut self, collapsed: bool);
-    fn extract(&self, current: usize, n: usize) -> Vec<Row>;
-}
-
 impl RowOperation for Vec<Row> {
+    type Row = Row;
+
     fn up(&self, current: usize) -> usize {
         if current == 0 {
             return 0;
