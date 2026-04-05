@@ -3,7 +3,7 @@ use serde_json::Deserializer;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_basic_jsonl() {
+fn test_basic_multi_documents() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {
@@ -131,7 +131,7 @@ fn test_basic_jsonl() {
 }
 
 #[test]
-fn test_mixed_jsonl() {
+fn test_mixed_multi_documents() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {

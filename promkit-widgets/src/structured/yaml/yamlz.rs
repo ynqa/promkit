@@ -21,28 +21,34 @@ pub struct Row {
     pub is_sequence_item: bool,
 }
 
-impl Row {
-    fn container_node(&self) -> Option<&ContainerNode> {
-        Self::container_node_from(&self.node)
-    }
+/// YAML tags can wrap container nodes (`Tagged(Container(...))`).
+/// This helper centralizes "unwrap/rewrap while preserving tag" behavior.
+struct TagAwareContainer;
 
-    fn container_node_from(node: &YamlNode) -> Option<&ContainerNode> {
+impl TagAwareContainer {
+    fn get(node: &YamlNode) -> Option<&ContainerNode> {
         match node {
             YamlNode::Container(container) => Some(container),
-            YamlNode::Tagged { node, .. } => Self::container_node_from(node),
+            YamlNode::Tagged { node, .. } => Self::get(node),
             _ => None,
         }
     }
 
-    fn with_container_node(node: &YamlNode, new_container: ContainerNode) -> Option<YamlNode> {
+    fn replace(node: &YamlNode, new_container: ContainerNode) -> Option<YamlNode> {
         match node {
             YamlNode::Container(_) => Some(YamlNode::Container(new_container)),
             YamlNode::Tagged { tag, node } => Some(YamlNode::Tagged {
                 tag: tag.clone(),
-                node: Box::new(Self::with_container_node(node, new_container)?),
+                node: Box::new(Self::replace(node, new_container)?),
             }),
             _ => None,
         }
+    }
+}
+
+impl Row {
+    fn container_node(&self) -> Option<&ContainerNode> {
+        TagAwareContainer::get(&self.node)
     }
 
     fn is_close_container(&self) -> bool {
@@ -94,11 +100,7 @@ impl RowOperation for Vec<Row> {
             next += 1;
         }
 
-        if next >= self.len() {
-            current
-        } else {
-            next
-        }
+        if next >= self.len() { current } else { next }
     }
 
     fn tail(&self) -> usize {
@@ -121,7 +123,7 @@ impl RowOperation for Vec<Row> {
             }) => {
                 let new_collapsed = !collapsed;
 
-                self[current].node = Row::with_container_node(
+                self[current].node = TagAwareContainer::replace(
                     &self[current].node,
                     ContainerNode::Open {
                         typ: typ.clone(),
@@ -131,7 +133,7 @@ impl RowOperation for Vec<Row> {
                 )
                 .expect("container open node must be present");
 
-                self[close_index].node = Row::with_container_node(
+                self[close_index].node = TagAwareContainer::replace(
                     &self[close_index].node,
                     ContainerNode::Close {
                         typ,
@@ -150,7 +152,7 @@ impl RowOperation for Vec<Row> {
             }) => {
                 let new_collapsed = !collapsed;
 
-                self[current].node = Row::with_container_node(
+                self[current].node = TagAwareContainer::replace(
                     &self[current].node,
                     ContainerNode::Close {
                         typ: typ.clone(),
@@ -160,7 +162,7 @@ impl RowOperation for Vec<Row> {
                 )
                 .expect("container close node must be present");
 
-                self[open_index].node = Row::with_container_node(
+                self[open_index].node = TagAwareContainer::replace(
                     &self[open_index].node,
                     ContainerNode::Open {
                         typ,
@@ -183,7 +185,7 @@ impl RowOperation for Vec<Row> {
                 Some(ContainerNode::Open {
                     typ, close_index, ..
                 }) => {
-                    row.node = Row::with_container_node(
+                    row.node = TagAwareContainer::replace(
                         &row.node,
                         ContainerNode::Open {
                             typ,
@@ -196,7 +198,7 @@ impl RowOperation for Vec<Row> {
                 Some(ContainerNode::Close {
                     typ, open_index, ..
                 }) => {
-                    row.node = Row::with_container_node(
+                    row.node = TagAwareContainer::replace(
                         &row.node,
                         ContainerNode::Close {
                             typ,
