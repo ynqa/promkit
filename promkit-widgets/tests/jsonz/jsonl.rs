@@ -31,11 +31,11 @@ fn test_basic_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 3,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -59,11 +59,11 @@ fn test_basic_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 
@@ -72,11 +72,11 @@ fn test_basic_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 7,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -100,30 +100,30 @@ fn test_basic_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 4,
-            },
+            }),
         }
     );
 
     rows.toggle(0);
     assert_eq!(
         rows[0].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 3,
-        }
+        })
     );
     assert_eq!(
         rows[3].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 0,
-        }
+        })
     );
 
     assert_eq!(rows.up(4), 0);
@@ -165,11 +165,11 @@ fn test_mixed_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -177,11 +177,11 @@ fn test_mixed_jsonl() {
         Row {
             depth: 1,
             k: Some("array".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 5,
-            },
+            }),
         }
     );
 
@@ -202,11 +202,11 @@ fn test_mixed_jsonl() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 14,
-            },
+            }),
         }
     );
 
@@ -215,11 +215,11 @@ fn test_mixed_jsonl() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
 
@@ -230,11 +230,11 @@ fn test_mixed_jsonl() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -250,21 +250,21 @@ fn test_mixed_jsonl() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: array_start + 1,
-            },
+            }),
         }
     );
 
     rows.toggle(array_start);
     assert_eq!(
         rows[array_start].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
             close_index: 14,
-        }
+        })
     );
 }

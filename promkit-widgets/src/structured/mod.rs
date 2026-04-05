@@ -47,6 +47,24 @@ impl ContainerType {
     }
 }
 
+/// Structured row node for container representation.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ContainerNode {
+    Empty {
+        typ: ContainerType,
+    },
+    Open {
+        typ: ContainerType,
+        collapsed: bool,
+        close_index: usize,
+    },
+    Close {
+        typ: ContainerType,
+        collapsed: bool,
+        open_index: usize,
+    },
+}
+
 pub trait PrettyRender {
     /// Render the row as a pretty-printed string with the specified indentation level.
     fn render_pretty(&self, indent: usize) -> String;

@@ -26,111 +26,111 @@ fn test_on_open() {
     assert_eq!(index, 1);
     assert_eq!(
         rows[1].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 3
-        }
+        })
     );
     assert_eq!(
         rows[3].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 1
-        }
+        })
     );
 
     let index = rows.toggle(4);
     assert_eq!(index, 4);
     assert_eq!(
         rows[4].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
             close_index: 8
-        }
+        })
     );
     assert_eq!(
         rows[8].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: true,
             open_index: 4
-        }
+        })
     );
 
     let index = rows.toggle(0);
     assert_eq!(index, 0);
     assert_eq!(
         rows[0].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 9
-        }
+        })
     );
     assert_eq!(
         rows[9].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 0
-        }
+        })
     );
 
     rows.toggle(0);
     assert_eq!(
         rows[0].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
             close_index: 9
-        }
+        })
     );
     assert_eq!(
         rows[9].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: false,
             open_index: 0
-        }
+        })
     );
 
     rows.toggle(4);
     assert_eq!(
         rows[4].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: false,
             close_index: 8
-        }
+        })
     );
     assert_eq!(
         rows[8].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: false,
             open_index: 4
-        }
+        })
     );
 
     rows.toggle(1);
     assert_eq!(
         rows[1].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
             close_index: 3
-        }
+        })
     );
     assert_eq!(
         rows[3].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: false,
             open_index: 1
-        }
+        })
     );
 }
 
@@ -158,56 +158,56 @@ fn test_on_close() {
     assert_eq!(index, 1);
     assert_eq!(
         rows[1].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 3
-        }
+        })
     );
     assert_eq!(
         rows[3].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 1
-        }
+        })
     );
 
     let index = rows.toggle(8);
     assert_eq!(index, 4);
     assert_eq!(
         rows[4].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
             close_index: 8
-        }
+        })
     );
     assert_eq!(
         rows[8].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Array,
             collapsed: true,
             open_index: 4
-        }
+        })
     );
 
     let index = rows.toggle(9);
     assert_eq!(index, 0);
     assert_eq!(
         rows[0].v,
-        Value::Open {
+        Value::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 9
-        }
+        })
     );
     assert_eq!(
         rows[9].v,
-        Value::Close {
+        Value::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 0
-        }
+        })
     );
 }

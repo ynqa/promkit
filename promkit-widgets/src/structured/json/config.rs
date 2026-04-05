@@ -4,7 +4,7 @@ use promkit_core::{
 };
 
 use super::jsonz::{Row, Value};
-use crate::structured::ContainerType;
+use crate::structured::{ContainerNode, ContainerType};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
@@ -149,46 +149,59 @@ impl Config {
                             .apply_style(self.string_value_style),
                     );
                 }
-                Value::Empty { typ } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    parts.push(StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style));
-                }
-                Value::Open { typ, collapsed, .. } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    if *collapsed {
+                Value::Container(node) => match node {
+                    ContainerNode::Empty { typ } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
                         parts.push(
-                            StyledGraphemes::from(typ.collapsed_preview())
-                                .apply_style(bracket_style),
+                            StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style),
                         );
-                    } else {
-                        parts
-                            .push(StyledGraphemes::from(typ.open_str()).apply_style(bracket_style));
                     }
-                }
-                Value::Close { typ, .. } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    // We don't need to check collapsed here because:
-                    // 1. If the corresponding Open is collapsed, this Close will be skipped during `extract_rows`
-                    // 2. If the Open is not collapsed, we want to show the closing bracket
-                    parts.push(StyledGraphemes::from(typ.close_str()).apply_style(bracket_style));
-                }
+                    ContainerNode::Open { typ, collapsed, .. } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
+                        if *collapsed {
+                            parts.push(
+                                StyledGraphemes::from(typ.collapsed_preview())
+                                    .apply_style(bracket_style),
+                            );
+                        } else {
+                            parts.push(
+                                StyledGraphemes::from(typ.open_str()).apply_style(bracket_style),
+                            );
+                        }
+                    }
+                    ContainerNode::Close { typ, .. } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
+                        // We don't need to check collapsed here because:
+                        // 1. If the corresponding Open is collapsed, this Close will be skipped during `extract_rows`
+                        // 2. If the Open is not collapsed, we want to show the closing bracket
+                        parts.push(
+                            StyledGraphemes::from(typ.close_str()).apply_style(bracket_style),
+                        );
+                    }
+                },
             }
 
             if i + 1 < rows.len() {
-                if let Value::Close { .. } = rows[i + 1].v {
-                } else if let Value::Open {
-                    collapsed: false, ..
-                } = rows[i].v
-                {
+                if matches!(
+                    &rows[i + 1].v,
+                    Value::Container(ContainerNode::Close { .. })
+                ) {
+                } else if matches!(
+                    &rows[i].v,
+                    Value::Container(ContainerNode::Open {
+                        collapsed: false,
+                        ..
+                    })
+                ) {
                 } else {
                     parts.push(StyledGraphemes::from(","));
                 }

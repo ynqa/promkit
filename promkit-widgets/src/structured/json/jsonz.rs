@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 
-pub use crate::structured::{ContainerType, PrettyRender};
+pub use crate::structured::{ContainerNode, ContainerType, PrettyRender};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -8,19 +8,7 @@ pub enum Value {
     Boolean(bool),
     Number(serde_json::Number),
     String(String),
-    Empty {
-        typ: ContainerType,
-    },
-    Open {
-        typ: ContainerType,
-        collapsed: bool,
-        close_index: usize,
-    },
-    Close {
-        typ: ContainerType,
-        collapsed: bool,
-        open_index: usize,
-    },
+    Container(ContainerNode),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -36,7 +24,7 @@ impl PrettyRender for [Row] {
         let mut first_in_container = true;
 
         for (i, row) in self.iter().enumerate() {
-            if !matches!(row.v, Value::Close { .. }) {
+            if !matches!(&row.v, Value::Container(ContainerNode::Close { .. })) {
                 if !result.is_empty() {
                     result.push('\n');
                 }
@@ -58,30 +46,35 @@ impl PrettyRender for [Row] {
                     result.push_str(&s.replace('\n', "\\n"));
                     result.push('"');
                 }
-                Value::Empty { typ } => {
-                    result.push_str(typ.empty_str());
-                }
-                Value::Open { typ, .. } => {
-                    result.push_str(typ.open_str());
-                }
-                Value::Close { typ, .. } => {
-                    if !first_in_container {
-                        result.push('\n');
-                        result.push_str(&" ".repeat(indent * row.depth));
+                Value::Container(node) => match node {
+                    ContainerNode::Empty { typ } => {
+                        result.push_str(typ.empty_str());
                     }
-                    result.push_str(typ.close_str());
-                }
+                    ContainerNode::Open { typ, .. } => {
+                        result.push_str(typ.open_str());
+                    }
+                    ContainerNode::Close { typ, .. } => {
+                        if !first_in_container {
+                            result.push('\n');
+                            result.push_str(&" ".repeat(indent * row.depth));
+                        }
+                        result.push_str(typ.close_str());
+                    }
+                },
             }
 
             if i + 1 < self.len() {
-                if let Value::Close { .. } = self[i + 1].v {
-                } else if let Value::Open { .. } = row.v {
+                if matches!(
+                    &self[i + 1].v,
+                    Value::Container(ContainerNode::Close { .. })
+                ) {
+                } else if matches!(&row.v, Value::Container(ContainerNode::Open { .. })) {
                 } else {
                     result.push(',');
                 }
             }
 
-            if let Value::Open { .. } = row.v {
+            if matches!(&row.v, Value::Container(ContainerNode::Open { .. })) {
                 first_in_container = true;
             } else {
                 first_in_container = false;
@@ -110,11 +103,11 @@ impl RowOperation for Vec<Row> {
 
         let prev = current - 1;
         match &self[prev].v {
-            Value::Close {
+            Value::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
                 ..
-            } if *collapsed => *open_index,
+            }) if *collapsed => *open_index,
             _ => prev,
         }
     }
@@ -130,11 +123,11 @@ impl RowOperation for Vec<Row> {
 
         let next = current + 1;
         match &self[current].v {
-            Value::Open {
+            Value::Container(ContainerNode::Open {
                 collapsed,
                 close_index,
                 ..
-            } if *collapsed => {
+            }) if *collapsed => {
                 let next_pos = close_index + 1;
                 if next_pos >= self.len() {
                     current
@@ -153,11 +146,11 @@ impl RowOperation for Vec<Row> {
 
         let mut last = self.len() - 1;
         match &self[last].v {
-            Value::Close {
+            Value::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
                 ..
-            } if *collapsed => {
+            }) if *collapsed => {
                 last = *open_index;
                 last
             }
@@ -167,49 +160,49 @@ impl RowOperation for Vec<Row> {
 
     fn toggle(&mut self, current: usize) -> usize {
         match &self[current].v {
-            Value::Open {
+            Value::Container(ContainerNode::Open {
                 typ,
                 collapsed,
                 close_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
                 let close_idx = *close_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = Value::Open {
+                self[current].v = Value::Container(ContainerNode::Open {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     close_index: close_idx,
-                };
+                });
 
-                self[close_idx].v = Value::Close {
+                self[close_idx].v = Value::Container(ContainerNode::Close {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     open_index: current,
-                };
+                });
 
                 current
             }
-            Value::Close {
+            Value::Container(ContainerNode::Close {
                 typ,
                 collapsed,
                 open_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
                 let open_idx = *open_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = Value::Close {
+                self[current].v = Value::Container(ContainerNode::Close {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     open_index: open_idx,
-                };
+                });
 
-                self[open_idx].v = Value::Open {
+                self[open_idx].v = Value::Container(ContainerNode::Open {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     close_index: current,
-                };
+                });
 
                 if new_collapsed { open_idx } else { current }
             }
@@ -219,24 +212,24 @@ impl RowOperation for Vec<Row> {
 
     fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
-            if let Value::Open {
+            if let Value::Container(ContainerNode::Open {
                 typ, close_index, ..
-            } = &row.v
+            }) = &row.v
             {
-                row.v = Value::Open {
+                row.v = Value::Container(ContainerNode::Open {
                     typ: typ.clone(),
                     collapsed,
                     close_index: *close_index,
-                };
-            } else if let Value::Close {
+                });
+            } else if let Value::Container(ContainerNode::Close {
                 typ, open_index, ..
-            } = &row.v
+            }) = &row.v
             {
-                row.v = Value::Close {
+                row.v = Value::Container(ContainerNode::Close {
                     typ: typ.clone(),
                     collapsed,
                     open_index: *open_index,
-                };
+                });
             }
         });
     }
@@ -251,11 +244,11 @@ impl RowOperation for Vec<Row> {
             remaining -= 1;
 
             match &self[i].v {
-                Value::Open {
+                Value::Container(ContainerNode::Open {
                     collapsed: true,
                     close_index,
                     ..
-                } => {
+                }) => {
                     i = *close_index + 1;
                 }
                 _ => {
@@ -312,9 +305,9 @@ fn process_value(
                 rows.push(Row {
                     depth,
                     k: key,
-                    v: Value::Empty {
+                    v: Value::Container(ContainerNode::Empty {
                         typ: ContainerType::Array,
-                    },
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -324,11 +317,11 @@ fn process_value(
             rows.push(Row {
                 depth,
                 k: key,
-                v: Value::Open {
+                v: Value::Container(ContainerNode::Open {
                     typ: ContainerType::Array,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
             for value in arr {
@@ -339,18 +332,18 @@ fn process_value(
             rows.push(Row {
                 depth,
                 k: None,
-                v: Value::Close {
+                v: Value::Container(ContainerNode::Close {
                     typ: ContainerType::Array,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].v = Value::Open {
+            rows[open_index].v = Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }
@@ -359,9 +352,9 @@ fn process_value(
                 rows.push(Row {
                     depth,
                     k: key,
-                    v: Value::Empty {
+                    v: Value::Container(ContainerNode::Empty {
                         typ: ContainerType::Object,
-                    },
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -371,11 +364,11 @@ fn process_value(
             rows.push(Row {
                 depth,
                 k: key,
-                v: Value::Open {
+                v: Value::Container(ContainerNode::Open {
                     typ: ContainerType::Object,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
             for (key, value) in obj {
@@ -386,18 +379,18 @@ fn process_value(
             rows.push(Row {
                 depth,
                 k: None,
-                v: Value::Close {
+                v: Value::Container(ContainerNode::Close {
                     typ: ContainerType::Object,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].v = Value::Open {
+            rows[open_index].v = Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }

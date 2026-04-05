@@ -24,9 +24,9 @@ fn test_empty_containers() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Empty {
+            v: Value::Container(ContainerNode::Empty {
                 typ: ContainerType::Object
-            },
+            }),
         }
     );
 
@@ -35,9 +35,9 @@ fn test_empty_containers() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Empty {
+            v: Value::Container(ContainerNode::Empty {
                 typ: ContainerType::Array
-            },
+            }),
         }
     );
 }
@@ -64,11 +64,11 @@ fn test_nested_object() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
 
@@ -77,11 +77,11 @@ fn test_nested_object() {
         Row {
             depth: 1,
             k: Some("a".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 5,
-            },
+            }),
         }
     );
 
@@ -90,11 +90,11 @@ fn test_nested_object() {
         Row {
             depth: 2,
             k: Some("b".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
 
@@ -112,11 +112,11 @@ fn test_nested_object() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -125,11 +125,11 @@ fn test_nested_object() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -138,11 +138,11 @@ fn test_nested_object() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }
@@ -171,11 +171,11 @@ fn test_nested_array() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 8,
-            },
+            }),
         }
     );
 
@@ -184,11 +184,11 @@ fn test_nested_array() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 7,
-            },
+            }),
         }
     );
 
@@ -197,11 +197,11 @@ fn test_nested_array() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
 
@@ -221,11 +221,11 @@ fn test_nested_array() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -234,11 +234,11 @@ fn test_nested_array() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -247,11 +247,11 @@ fn test_nested_array() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }
@@ -286,11 +286,11 @@ fn test_mixed_containers() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 14,
-            },
+            }),
         }
     );
 
@@ -299,11 +299,11 @@ fn test_mixed_containers() {
         Row {
             depth: 1,
             k: Some("array".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
 
@@ -312,11 +312,11 @@ fn test_mixed_containers() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
 
@@ -334,11 +334,11 @@ fn test_mixed_containers() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -347,11 +347,11 @@ fn test_mixed_containers() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 9,
-            },
+            }),
         }
     );
 
@@ -371,11 +371,11 @@ fn test_mixed_containers() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 5,
-            },
+            }),
         }
     );
 
@@ -384,11 +384,11 @@ fn test_mixed_containers() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -397,11 +397,11 @@ fn test_mixed_containers() {
         Row {
             depth: 1,
             k: Some("object".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 13,
-            },
+            }),
         }
     );
 
@@ -419,11 +419,11 @@ fn test_mixed_containers() {
         Row {
             depth: 1,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 11,
-            },
+            }),
         }
     );
 
@@ -432,11 +432,11 @@ fn test_mixed_containers() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }

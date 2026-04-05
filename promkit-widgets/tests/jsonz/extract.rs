@@ -24,11 +24,11 @@ fn test_basic_extract() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -90,11 +90,11 @@ fn test_extract_with_collapsed_open() {
         Row {
             depth: 1,
             k: Some("object".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: true,
                 close_index: 4,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -110,11 +110,11 @@ fn test_extract_with_collapsed_open() {
         Row {
             depth: 0,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }
@@ -146,11 +146,11 @@ fn test_extract_nested_structure() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
     assert_eq!(
@@ -166,11 +166,11 @@ fn test_extract_nested_structure() {
         Row {
             depth: 2,
             k: None,
-            v: Value::Close {
+            v: Value::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 }
@@ -257,11 +257,11 @@ fn test_extract_complex_nested_collapsed() {
         Row {
             depth: 2,
             k: Some("arr1".to_string()),
-            v: Value::Open {
+            v: Value::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
     assert_eq!(

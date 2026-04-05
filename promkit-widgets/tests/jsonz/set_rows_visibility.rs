@@ -35,7 +35,8 @@ fn test() {
     rows.set_rows_visibility(true);
     for row in &rows {
         match &row.v {
-            Value::Open { collapsed, .. } | Value::Close { collapsed, .. } => {
+            Value::Container(ContainerNode::Open { collapsed, .. })
+            | Value::Container(ContainerNode::Close { collapsed, .. }) => {
                 assert!(collapsed, "Node should be collapsed");
             }
             _ => {}
@@ -45,7 +46,8 @@ fn test() {
     rows.set_rows_visibility(false);
     for row in &rows {
         match &row.v {
-            Value::Open { collapsed, .. } | Value::Close { collapsed, .. } => {
+            Value::Container(ContainerNode::Open { collapsed, .. })
+            | Value::Container(ContainerNode::Close { collapsed, .. }) => {
                 assert!(!collapsed, "Node should be expanded");
             }
             _ => {}
