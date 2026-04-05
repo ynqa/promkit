@@ -113,7 +113,7 @@ impl Default for Config {
 
 impl Config {
     /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
-    pub fn format_for_terminal_display(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+    pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
 
@@ -240,7 +240,7 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    mod format_for_terminal_display {
+    mod render_terminal_rows {
         use super::*;
 
         use crate::structured::json::jsonz::create_rows;
@@ -258,7 +258,7 @@ mod tests {
                 overflow_mode: OverflowMode::Truncate,
                 ..Default::default()
             }
-            .format_for_terminal_display(&rows, width);
+            .render_terminal_rows(&rows, width);
 
             assert_eq!(lines.len(), rows.len());
             assert!(lines.iter().all(|line| line.widths() <= width as usize));
@@ -282,7 +282,7 @@ mod tests {
                 overflow_mode: OverflowMode::Wrap,
                 ..Default::default()
             }
-            .format_for_terminal_display(&rows, width);
+            .render_terminal_rows(&rows, width);
 
             assert!(lines.len() > rows.len());
             assert!(lines.iter().all(|line| line.widths() <= width as usize));

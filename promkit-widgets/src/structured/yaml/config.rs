@@ -124,6 +124,39 @@ impl Default for Config {
 }
 
 impl Config {
+    fn node_as_container_open(node: &YamlNode) -> Option<(&ContainerType, bool)> {
+        match node {
+            YamlNode::Container(ContainerNode::Open { typ, collapsed, .. }) => {
+                Some((typ, *collapsed))
+            }
+            YamlNode::Tagged { node, .. } => Self::node_as_container_open(node),
+            _ => None,
+        }
+    }
+
+    fn should_show_document_marker(row: &Row, has_multiple_documents: bool) -> bool {
+        if !has_multiple_documents {
+            return false;
+        }
+
+        if row.key.is_some() || row.is_sequence_item || row.depth != 0 {
+            return false;
+        }
+
+        matches!(Self::node_as_container_open(&row.node), Some((_, false)))
+    }
+
+    fn count_root_documents(rows: &[Row]) -> usize {
+        rows.iter()
+            .filter(|row| {
+                row.key.is_none()
+                    && !row.is_sequence_item
+                    && row.depth == 0
+                    && matches!(Self::node_as_container_open(&row.node), Some((_, false)))
+            })
+            .count()
+    }
+
     fn is_plain_yaml_string(s: &str) -> bool {
         if s.is_empty() || s.trim() != s {
             return false;
@@ -168,8 +201,16 @@ impl Config {
         StyledGraphemes::from(typ.collapsed_preview()).apply_style(style)
     }
 
-    fn render_value(&self, row: &Row) -> Option<StyledGraphemes> {
-        match &row.node {
+    fn render_node(&self, row: &Row, node: &YamlNode) -> Option<StyledGraphemes> {
+        match node {
+            YamlNode::Tagged { tag, node } => {
+                let tag_part =
+                    StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style);
+                match self.render_node(row, node) {
+                    Some(value) => Some(vec![tag_part, value].into_iter().collect()),
+                    None => Some(tag_part),
+                }
+            }
             YamlNode::Null => Some(StyledGraphemes::from("null").apply_style(self.null_style)),
             YamlNode::Boolean(b) => {
                 Some(StyledGraphemes::from(b.to_string()).apply_style(self.boolean_style))
@@ -189,26 +230,29 @@ impl Config {
                 } => Some(self.render_collapsed_marker(typ)),
                 ContainerNode::Open {
                     collapsed: false, ..
-                } => {
-                    if row.key.is_none() && !row.is_sequence_item && row.depth == 0 {
-                        Some(StyledGraphemes::from("---"))
-                    } else {
-                        None
-                    }
-                }
+                } => None,
                 ContainerNode::Close { .. } => None,
             },
         }
     }
 
+    fn render_value(&self, row: &Row) -> Option<StyledGraphemes> {
+        self.render_node(row, &row.node)
+    }
+
     /// Format YAML rows into terminal lines with styling and width constraints.
-    pub fn format_for_terminal_display(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+    pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
+        let has_multiple_documents = Self::count_root_documents(rows) > 1;
 
         for (i, row) in rows.iter().enumerate() {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts: Vec<StyledGraphemes> = Vec::new();
+
+            if Self::should_show_document_marker(row, has_multiple_documents) {
+                parts.push(StyledGraphemes::from("---"));
+            }
 
             if row.is_sequence_item {
                 parts.push(StyledGraphemes::from("- "));
@@ -218,10 +262,6 @@ impl Config {
                 parts
                     .push(StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style));
                 parts.push(StyledGraphemes::from(": "));
-            }
-
-            if let Some(tag) = &row.tag {
-                parts.push(StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style));
             }
 
             if let Some(value) = self.render_value(row) {

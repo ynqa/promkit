@@ -24,7 +24,7 @@ impl Widget for State {
         };
 
         let rows = self.document.extract_rows_from_current(height);
-        let formatted_rows = self.config.format_for_terminal_display(&rows, width);
+        let formatted_rows = self.config.render_terminal_rows(&rows, width);
 
         StyledGraphemes::from_lines(formatted_rows)
     }

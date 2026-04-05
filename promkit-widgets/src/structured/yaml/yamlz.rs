@@ -4,6 +4,7 @@ pub use crate::structured::{ContainerNode, ContainerType, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum YamlNode {
+    Tagged { tag: String, node: Box<YamlNode> },
     Null,
     Boolean(bool),
     Number(serde_yaml::Number),
@@ -17,12 +18,34 @@ pub struct Row {
     pub key: Option<String>,
     pub node: YamlNode,
     pub is_sequence_item: bool,
-    pub tag: Option<String>,
 }
 
 impl Row {
+    fn container_node(&self) -> Option<&ContainerNode> {
+        Self::container_node_from(&self.node)
+    }
+
+    fn container_node_from(node: &YamlNode) -> Option<&ContainerNode> {
+        match node {
+            YamlNode::Container(container) => Some(container),
+            YamlNode::Tagged { node, .. } => Self::container_node_from(node),
+            _ => None,
+        }
+    }
+
+    fn with_container_node(node: &YamlNode, new_container: ContainerNode) -> Option<YamlNode> {
+        match node {
+            YamlNode::Container(_) => Some(YamlNode::Container(new_container)),
+            YamlNode::Tagged { tag, node } => Some(YamlNode::Tagged {
+                tag: tag.clone(),
+                node: Box::new(Self::with_container_node(node, new_container)?),
+            }),
+            _ => None,
+        }
+    }
+
     fn is_close_container(&self) -> bool {
-        matches!(self.node, YamlNode::Container(ContainerNode::Close { .. }))
+        matches!(self.container_node(), Some(ContainerNode::Close { .. }))
     }
 }
 
@@ -57,8 +80,8 @@ impl RowOperation for Vec<Row> {
             return current;
         }
 
-        let mut next = match &self[current].node {
-            YamlNode::Container(ContainerNode::Open {
+        let mut next = match self[current].container_node() {
+            Some(ContainerNode::Open {
                 collapsed: true,
                 close_index,
                 ..
@@ -84,52 +107,65 @@ impl RowOperation for Vec<Row> {
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        match &self[current].node {
-            YamlNode::Container(ContainerNode::Open {
+        let container = self[current].container_node().cloned();
+        match container {
+            Some(ContainerNode::Open {
                 typ,
                 collapsed,
                 close_index,
             }) => {
                 let new_collapsed = !collapsed;
-                let close_idx = *close_index;
-                let typ_clone = typ.clone();
 
-                self[current].node = YamlNode::Container(ContainerNode::Open {
-                    typ: typ_clone.clone(),
-                    collapsed: new_collapsed,
-                    close_index: close_idx,
-                });
+                self[current].node = Row::with_container_node(
+                    &self[current].node,
+                    ContainerNode::Open {
+                        typ: typ.clone(),
+                        collapsed: new_collapsed,
+                        close_index,
+                    },
+                )
+                .expect("container open node must be present");
 
-                self[close_idx].node = YamlNode::Container(ContainerNode::Close {
-                    typ: typ_clone,
-                    collapsed: new_collapsed,
-                    open_index: current,
-                });
+                self[close_index].node = Row::with_container_node(
+                    &self[close_index].node,
+                    ContainerNode::Close {
+                        typ,
+                        collapsed: new_collapsed,
+                        open_index: current,
+                    },
+                )
+                .expect("container close node must be present");
 
                 current
             }
-            YamlNode::Container(ContainerNode::Close {
+            Some(ContainerNode::Close {
                 typ,
                 collapsed,
                 open_index,
             }) => {
                 let new_collapsed = !collapsed;
-                let open_idx = *open_index;
-                let typ_clone = typ.clone();
 
-                self[current].node = YamlNode::Container(ContainerNode::Close {
-                    typ: typ_clone.clone(),
-                    collapsed: new_collapsed,
-                    open_index: open_idx,
-                });
+                self[current].node = Row::with_container_node(
+                    &self[current].node,
+                    ContainerNode::Close {
+                        typ: typ.clone(),
+                        collapsed: new_collapsed,
+                        open_index,
+                    },
+                )
+                .expect("container close node must be present");
 
-                self[open_idx].node = YamlNode::Container(ContainerNode::Open {
-                    typ: typ_clone,
-                    collapsed: new_collapsed,
-                    close_index: current,
-                });
+                self[open_index].node = Row::with_container_node(
+                    &self[open_index].node,
+                    ContainerNode::Open {
+                        typ,
+                        collapsed: new_collapsed,
+                        close_index: current,
+                    },
+                )
+                .expect("container open node must be present");
 
-                open_idx
+                open_index
             }
             _ => current,
         }
@@ -137,24 +173,35 @@ impl RowOperation for Vec<Row> {
 
     fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
-            if let YamlNode::Container(ContainerNode::Open {
-                typ, close_index, ..
-            }) = &row.node
-            {
-                row.node = YamlNode::Container(ContainerNode::Open {
-                    typ: typ.clone(),
-                    collapsed,
-                    close_index: *close_index,
-                });
-            } else if let YamlNode::Container(ContainerNode::Close {
-                typ, open_index, ..
-            }) = &row.node
-            {
-                row.node = YamlNode::Container(ContainerNode::Close {
-                    typ: typ.clone(),
-                    collapsed,
-                    open_index: *open_index,
-                });
+            let container = row.container_node().cloned();
+            match container {
+                Some(ContainerNode::Open {
+                    typ, close_index, ..
+                }) => {
+                    row.node = Row::with_container_node(
+                        &row.node,
+                        ContainerNode::Open {
+                            typ,
+                            collapsed,
+                            close_index,
+                        },
+                    )
+                    .expect("container open node must be present");
+                }
+                Some(ContainerNode::Close {
+                    typ, open_index, ..
+                }) => {
+                    row.node = Row::with_container_node(
+                        &row.node,
+                        ContainerNode::Close {
+                            typ,
+                            collapsed,
+                            open_index,
+                        },
+                    )
+                    .expect("container close node must be present");
+                }
+                _ => {}
             }
         });
     }
@@ -175,8 +222,8 @@ impl RowOperation for Vec<Row> {
             }
 
             result.push(row.clone());
-            match &row.node {
-                YamlNode::Container(ContainerNode::Open {
+            match row.container_node() {
+                Some(ContainerNode::Open {
                     collapsed: true,
                     close_index,
                     ..
@@ -214,23 +261,21 @@ fn process_value(
     depth: usize,
     key: Option<String>,
     is_sequence_item: bool,
-    tag: Option<String>,
 ) -> usize {
     match value {
-        serde_yaml::Value::Tagged(tagged) => process_value(
-            &tagged.value,
-            rows,
-            depth,
-            key,
-            is_sequence_item,
-            Some(tagged.tag.to_string()),
-        ),
+        serde_yaml::Value::Tagged(tagged) => {
+            let index = process_value(&tagged.value, rows, depth, key, is_sequence_item);
+            rows[index].node = YamlNode::Tagged {
+                tag: tagged.tag.to_string(),
+                node: Box::new(rows[index].node.clone()),
+            };
+            index
+        }
         serde_yaml::Value::Null => {
             rows.push(Row {
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::Null,
             });
             rows.len() - 1
@@ -240,7 +285,6 @@ fn process_value(
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::Boolean(*b),
             });
             rows.len() - 1
@@ -250,7 +294,6 @@ fn process_value(
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::Number(n.clone()),
             });
             rows.len() - 1
@@ -260,7 +303,6 @@ fn process_value(
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::String(s.clone()),
             });
             rows.len() - 1
@@ -271,7 +313,6 @@ fn process_value(
                     depth,
                     key,
                     is_sequence_item,
-                    tag,
                     node: YamlNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Array,
                     }),
@@ -284,7 +325,6 @@ fn process_value(
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::Container(ContainerNode::Open {
                     typ: ContainerType::Array,
                     collapsed: false,
@@ -293,7 +333,7 @@ fn process_value(
             });
 
             for item in seq {
-                process_value(item, rows, depth + 1, None, true, None);
+                process_value(item, rows, depth + 1, None, true);
             }
 
             let close_index = rows.len();
@@ -301,7 +341,6 @@ fn process_value(
                 depth,
                 key: None,
                 is_sequence_item: false,
-                tag: None,
                 node: YamlNode::Container(ContainerNode::Close {
                     typ: ContainerType::Array,
                     collapsed: false,
@@ -323,7 +362,6 @@ fn process_value(
                     depth,
                     key,
                     is_sequence_item,
-                    tag,
                     node: YamlNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Object,
                     }),
@@ -336,7 +374,6 @@ fn process_value(
                 depth,
                 key,
                 is_sequence_item,
-                tag,
                 node: YamlNode::Container(ContainerNode::Open {
                     typ: ContainerType::Object,
                     collapsed: false,
@@ -346,7 +383,7 @@ fn process_value(
 
             for (mapping_key, map_value) in map {
                 let key = normalize_mapping_key_for_display(mapping_key);
-                process_value(map_value, rows, depth + 1, key, false, None);
+                process_value(map_value, rows, depth + 1, key, false);
             }
 
             let close_index = rows.len();
@@ -354,7 +391,6 @@ fn process_value(
                 depth,
                 key: None,
                 is_sequence_item: false,
-                tag: None,
                 node: YamlNode::Container(ContainerNode::Close {
                     typ: ContainerType::Object,
                     collapsed: false,
@@ -376,7 +412,7 @@ fn process_value(
 pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_yaml::Value>>(iter: T) -> Vec<Row> {
     let mut rows = Vec::new();
     for value in iter {
-        process_value(value, &mut rows, 0, None, false, None);
+        process_value(value, &mut rows, 0, None, false);
     }
     rows
 }
