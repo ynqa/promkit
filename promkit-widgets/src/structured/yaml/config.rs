@@ -124,37 +124,8 @@ impl Default for Config {
 }
 
 impl Config {
-    fn node_as_container_open(node: &YamlNode) -> Option<(&ContainerType, bool)> {
-        match node {
-            YamlNode::Container(ContainerNode::Open { typ, collapsed, .. }) => {
-                Some((typ, *collapsed))
-            }
-            YamlNode::Tagged { node, .. } => Self::node_as_container_open(node),
-            _ => None,
-        }
-    }
-
-    fn should_show_document_marker(row: &Row, has_multiple_documents: bool) -> bool {
-        if !has_multiple_documents {
-            return false;
-        }
-
-        if row.key.is_some() || row.is_sequence_item || row.depth != 0 {
-            return false;
-        }
-
-        matches!(Self::node_as_container_open(&row.node), Some((_, false)))
-    }
-
-    fn count_root_documents(rows: &[Row]) -> usize {
-        rows.iter()
-            .filter(|row| {
-                row.key.is_none()
-                    && !row.is_sequence_item
-                    && row.depth == 0
-                    && matches!(Self::node_as_container_open(&row.node), Some((_, false)))
-            })
-            .count()
+    fn is_document_separator(row: &Row) -> bool {
+        matches!(row.node, YamlNode::DocumentSeparator)
     }
 
     fn is_plain_yaml_string(s: &str) -> bool {
@@ -221,6 +192,7 @@ impl Config {
             YamlNode::String(s) => Some(
                 StyledGraphemes::from(Self::render_yaml_string(s)).apply_style(self.string_style),
             ),
+            YamlNode::DocumentSeparator => Some(StyledGraphemes::from("---")),
             YamlNode::Container(node) => match node {
                 ContainerNode::Empty { typ } => Some(self.render_collection_marker(typ)),
                 ContainerNode::Open {
@@ -244,28 +216,28 @@ impl Config {
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
-        let has_multiple_documents = Self::count_root_documents(rows) > 1;
 
         for (i, row) in rows.iter().enumerate() {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts: Vec<StyledGraphemes> = Vec::new();
 
-            if Self::should_show_document_marker(row, has_multiple_documents) {
+            if Self::is_document_separator(row) {
                 parts.push(StyledGraphemes::from("---"));
-            }
+            } else {
+                if row.is_sequence_item {
+                    parts.push(StyledGraphemes::from("- "));
+                }
 
-            if row.is_sequence_item {
-                parts.push(StyledGraphemes::from("- "));
-            }
+                if let Some(key) = &row.key {
+                    parts.push(
+                        StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style),
+                    );
+                    parts.push(StyledGraphemes::from(": "));
+                }
 
-            if let Some(key) = &row.key {
-                parts
-                    .push(StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style));
-                parts.push(StyledGraphemes::from(": "));
-            }
-
-            if let Some(value) = self.render_value(row) {
-                parts.push(value);
+                if let Some(value) = self.render_value(row) {
+                    parts.push(value);
+                }
             }
 
             let mut content: StyledGraphemes = parts.into_iter().collect();

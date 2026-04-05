@@ -5,6 +5,7 @@ pub use crate::structured::{ContainerNode, ContainerType, RowOperation};
 #[derive(Clone, Debug, PartialEq)]
 pub enum YamlNode {
     Tagged { tag: String, node: Box<YamlNode> },
+    DocumentSeparator,
     Null,
     Boolean(bool),
     Number(serde_yaml::Number),
@@ -93,7 +94,11 @@ impl RowOperation for Vec<Row> {
             next += 1;
         }
 
-        if next >= self.len() { current } else { next }
+        if next >= self.len() {
+            current
+        } else {
+            next
+        }
     }
 
     fn tail(&self) -> usize {
@@ -411,7 +416,15 @@ fn process_value(
 
 pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_yaml::Value>>(iter: T) -> Vec<Row> {
     let mut rows = Vec::new();
-    for value in iter {
+    for (index, value) in iter.into_iter().enumerate() {
+        if index > 0 {
+            rows.push(Row {
+                depth: 0,
+                key: None,
+                node: YamlNode::DocumentSeparator,
+                is_sequence_item: false,
+            });
+        }
         process_value(value, &mut rows, 0, None, false);
     }
     rows
