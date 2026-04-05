@@ -121,14 +121,14 @@ impl Config {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts = Vec::new();
 
-            if let Some(key) = &row.k {
+            if let Some(key) = &row.key {
                 parts.push(
                     StyledGraphemes::from(format!("\"{}\"", key)).apply_style(self.key_style),
                 );
                 parts.push(StyledGraphemes::from(": "));
             }
 
-            match &row.v {
+            match &row.node {
                 JsonNode::Null => {
                     parts.push(StyledGraphemes::from("null").apply_style(self.null_value_style));
                 }
@@ -192,11 +192,11 @@ impl Config {
 
             if i + 1 < rows.len() {
                 if matches!(
-                    &rows[i + 1].v,
+                    &rows[i + 1].node,
                     JsonNode::Container(ContainerNode::Close { .. })
                 ) {
                 } else if matches!(
-                    &rows[i].v,
+                    &rows[i].node,
                     JsonNode::Container(ContainerNode::Open {
                         collapsed: false,
                         ..

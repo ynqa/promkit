@@ -15,9 +15,9 @@ pub enum YamlNode {
 pub struct Row {
     pub depth: usize,
     pub key: Option<String>,
+    pub node: YamlNode,
     pub is_sequence_item: bool,
     pub tag: Option<String>,
-    pub node: YamlNode,
 }
 
 impl Row {

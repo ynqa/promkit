@@ -14,8 +14,8 @@ pub enum JsonNode {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Row {
     pub depth: usize,
-    pub k: Option<String>,
-    pub v: JsonNode,
+    pub key: Option<String>,
+    pub node: JsonNode,
 }
 
 impl PrettyRender for [Row] {
@@ -24,20 +24,20 @@ impl PrettyRender for [Row] {
         let mut first_in_container = true;
 
         for (i, row) in self.iter().enumerate() {
-            if !matches!(&row.v, JsonNode::Container(ContainerNode::Close { .. })) {
+            if !matches!(&row.node, JsonNode::Container(ContainerNode::Close { .. })) {
                 if !result.is_empty() {
                     result.push('\n');
                 }
                 result.push_str(&" ".repeat(indent * row.depth));
             }
 
-            if let Some(key) = &row.k {
+            if let Some(key) = &row.key {
                 result.push('"');
                 result.push_str(key);
                 result.push_str("\": ");
             }
 
-            match &row.v {
+            match &row.node {
                 JsonNode::Null => result.push_str("null"),
                 JsonNode::Boolean(b) => result.push_str(&b.to_string()),
                 JsonNode::Number(n) => result.push_str(&n.to_string()),
@@ -65,16 +65,16 @@ impl PrettyRender for [Row] {
 
             if i + 1 < self.len() {
                 if matches!(
-                    &self[i + 1].v,
+                    &self[i + 1].node,
                     JsonNode::Container(ContainerNode::Close { .. })
                 ) {
-                } else if matches!(&row.v, JsonNode::Container(ContainerNode::Open { .. })) {
+                } else if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
                 } else {
                     result.push(',');
                 }
             }
 
-            if matches!(&row.v, JsonNode::Container(ContainerNode::Open { .. })) {
+            if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
                 first_in_container = true;
             } else {
                 first_in_container = false;
@@ -94,7 +94,7 @@ impl RowOperation for Vec<Row> {
         }
 
         let prev = current - 1;
-        match &self[prev].v {
+        match &self[prev].node {
             JsonNode::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
@@ -114,7 +114,7 @@ impl RowOperation for Vec<Row> {
         }
 
         let next = current + 1;
-        match &self[current].v {
+        match &self[current].node {
             JsonNode::Container(ContainerNode::Open {
                 collapsed,
                 close_index,
@@ -137,7 +137,7 @@ impl RowOperation for Vec<Row> {
         }
 
         let mut last = self.len() - 1;
-        match &self[last].v {
+        match &self[last].node {
             JsonNode::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
@@ -151,7 +151,7 @@ impl RowOperation for Vec<Row> {
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        match &self[current].v {
+        match &self[current].node {
             JsonNode::Container(ContainerNode::Open {
                 typ,
                 collapsed,
@@ -161,13 +161,13 @@ impl RowOperation for Vec<Row> {
                 let close_idx = *close_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = JsonNode::Container(ContainerNode::Open {
+                self[current].node = JsonNode::Container(ContainerNode::Open {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     close_index: close_idx,
                 });
 
-                self[close_idx].v = JsonNode::Container(ContainerNode::Close {
+                self[close_idx].node = JsonNode::Container(ContainerNode::Close {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     open_index: current,
@@ -184,13 +184,13 @@ impl RowOperation for Vec<Row> {
                 let open_idx = *open_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = JsonNode::Container(ContainerNode::Close {
+                self[current].node = JsonNode::Container(ContainerNode::Close {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     open_index: open_idx,
                 });
 
-                self[open_idx].v = JsonNode::Container(ContainerNode::Open {
+                self[open_idx].node = JsonNode::Container(ContainerNode::Open {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     close_index: current,
@@ -206,18 +206,18 @@ impl RowOperation for Vec<Row> {
         self.par_iter_mut().for_each(|row| {
             if let JsonNode::Container(ContainerNode::Open {
                 typ, close_index, ..
-            }) = &row.v
+            }) = &row.node
             {
-                row.v = JsonNode::Container(ContainerNode::Open {
+                row.node = JsonNode::Container(ContainerNode::Open {
                     typ: typ.clone(),
                     collapsed,
                     close_index: *close_index,
                 });
             } else if let JsonNode::Container(ContainerNode::Close {
                 typ, open_index, ..
-            }) = &row.v
+            }) = &row.node
             {
-                row.v = JsonNode::Container(ContainerNode::Close {
+                row.node = JsonNode::Container(ContainerNode::Close {
                     typ: typ.clone(),
                     collapsed,
                     open_index: *open_index,
@@ -235,7 +235,7 @@ impl RowOperation for Vec<Row> {
             result.push(self[i].clone());
             remaining -= 1;
 
-            match &self[i].v {
+            match &self[i].node {
                 JsonNode::Container(ContainerNode::Open {
                     collapsed: true,
                     close_index,
@@ -263,32 +263,32 @@ fn process_value(
         serde_json::Value::Null => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::Null,
+                key: key,
+                node: JsonNode::Null,
             });
             rows.len() - 1
         }
         serde_json::Value::Bool(b) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::Boolean(*b),
+                key: key,
+                node: JsonNode::Boolean(*b),
             });
             rows.len() - 1
         }
         serde_json::Value::Number(n) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::Number(n.clone()),
+                key: key,
+                node: JsonNode::Number(n.clone()),
             });
             rows.len() - 1
         }
         serde_json::Value::String(s) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::String(s.clone()),
+                key: key,
+                node: JsonNode::String(s.clone()),
             });
             rows.len() - 1
         }
@@ -296,8 +296,8 @@ fn process_value(
             if arr.is_empty() {
                 rows.push(Row {
                     depth,
-                    k: key,
-                    v: JsonNode::Container(ContainerNode::Empty {
+                    key: key,
+                    node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Array,
                     }),
                 });
@@ -308,8 +308,8 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::Container(ContainerNode::Open {
+                key: key,
+                node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Array,
                     collapsed: false,
                     close_index: 0,
@@ -323,15 +323,15 @@ fn process_value(
             let close_index = rows.len();
             rows.push(Row {
                 depth,
-                k: None,
-                v: JsonNode::Container(ContainerNode::Close {
+                key: None,
+                node: JsonNode::Container(ContainerNode::Close {
                     typ: ContainerType::Array,
                     collapsed: false,
                     open_index,
                 }),
             });
 
-            rows[open_index].v = JsonNode::Container(ContainerNode::Open {
+            rows[open_index].node = JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
@@ -343,8 +343,8 @@ fn process_value(
             if obj.is_empty() {
                 rows.push(Row {
                     depth,
-                    k: key,
-                    v: JsonNode::Container(ContainerNode::Empty {
+                    key: key,
+                    node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Object,
                     }),
                 });
@@ -355,8 +355,8 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                k: key,
-                v: JsonNode::Container(ContainerNode::Open {
+                key: key,
+                node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Object,
                     collapsed: false,
                     close_index: 0,
@@ -370,15 +370,15 @@ fn process_value(
             let close_index = rows.len();
             rows.push(Row {
                 depth,
-                k: None,
-                v: JsonNode::Container(ContainerNode::Close {
+                key: None,
+                node: JsonNode::Container(ContainerNode::Close {
                     typ: ContainerType::Object,
                     collapsed: false,
                     open_index,
                 }),
             });
 
-            rows[open_index].v = JsonNode::Container(ContainerNode::Open {
+            rows[open_index].node = JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
