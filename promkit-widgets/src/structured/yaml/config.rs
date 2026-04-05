@@ -124,10 +124,6 @@ impl Default for Config {
 }
 
 impl Config {
-    fn is_document_separator(row: &Row) -> bool {
-        matches!(row.node, YamlNode::DocumentSeparator)
-    }
-
     fn is_plain_yaml_string(s: &str) -> bool {
         if s.is_empty() || s.trim() != s {
             return false;
@@ -150,10 +146,6 @@ impl Config {
                     .replace('\n', "\\n")
             )
         }
-    }
-
-    fn render_key(key: &str) -> String {
-        Self::render_yaml_string(key)
     }
 
     fn render_collection_marker(&self, typ: &ContainerType) -> StyledGraphemes {
@@ -208,10 +200,6 @@ impl Config {
         }
     }
 
-    fn render_value(&self, row: &Row) -> Option<StyledGraphemes> {
-        self.render_node(row, &row.node)
-    }
-
     /// Format YAML rows into terminal lines with styling and width constraints.
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
@@ -221,7 +209,7 @@ impl Config {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts: Vec<StyledGraphemes> = Vec::new();
 
-            if Self::is_document_separator(row) {
+            if matches!(row.node, YamlNode::DocumentSeparator) {
                 parts.push(StyledGraphemes::from("---"));
             } else {
                 if row.is_sequence_item {
@@ -230,12 +218,13 @@ impl Config {
 
                 if let Some(key) = &row.key {
                     parts.push(
-                        StyledGraphemes::from(Self::render_key(key)).apply_style(self.key_style),
+                        StyledGraphemes::from(Self::render_yaml_string(key))
+                            .apply_style(self.key_style),
                     );
                     parts.push(StyledGraphemes::from(": "));
                 }
 
-                if let Some(value) = self.render_value(row) {
+                if let Some(value) = self.render_node(row, &row.node) {
                     parts.push(value);
                 }
             }

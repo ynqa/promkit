@@ -46,16 +46,6 @@ impl TagAwareContainer {
     }
 }
 
-impl Row {
-    fn container_node(&self) -> Option<&ContainerNode> {
-        TagAwareContainer::get(&self.node)
-    }
-
-    fn is_close_container(&self) -> bool {
-        matches!(self.container_node(), Some(ContainerNode::Close { .. }))
-    }
-}
-
 impl RowOperation for Vec<Row> {
     type Row = Row;
 
@@ -65,11 +55,19 @@ impl RowOperation for Vec<Row> {
         }
 
         let mut prev = current - 1;
-        while prev > 0 && self[prev].is_close_container() {
+        while prev > 0
+            && matches!(
+                TagAwareContainer::get(&self[prev].node),
+                Some(ContainerNode::Close { .. })
+            )
+        {
             prev -= 1;
         }
 
-        if self[prev].is_close_container() {
+        if matches!(
+            TagAwareContainer::get(&self[prev].node),
+            Some(ContainerNode::Close { .. })
+        ) {
             current
         } else {
             prev
@@ -78,7 +76,12 @@ impl RowOperation for Vec<Row> {
 
     fn head(&self) -> usize {
         self.iter()
-            .position(|row| !row.is_close_container())
+            .position(|row| {
+                !matches!(
+                    TagAwareContainer::get(&row.node),
+                    Some(ContainerNode::Close { .. })
+                )
+            })
             .unwrap_or(0)
     }
 
@@ -87,7 +90,7 @@ impl RowOperation for Vec<Row> {
             return current;
         }
 
-        let mut next = match self[current].container_node() {
+        let mut next = match TagAwareContainer::get(&self[current].node) {
             Some(ContainerNode::Open {
                 collapsed: true,
                 close_index,
@@ -96,7 +99,12 @@ impl RowOperation for Vec<Row> {
             _ => current + 1,
         };
 
-        while next < self.len() && self[next].is_close_container() {
+        while next < self.len()
+            && matches!(
+                TagAwareContainer::get(&self[next].node),
+                Some(ContainerNode::Close { .. })
+            )
+        {
             next += 1;
         }
 
@@ -109,12 +117,17 @@ impl RowOperation for Vec<Row> {
         }
 
         self.iter()
-            .rposition(|row| !row.is_close_container())
+            .rposition(|row| {
+                !matches!(
+                    TagAwareContainer::get(&row.node),
+                    Some(ContainerNode::Close { .. })
+                )
+            })
             .unwrap_or(0)
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        let container = self[current].container_node().cloned();
+        let container = TagAwareContainer::get(&self[current].node).cloned();
         match container {
             Some(ContainerNode::Open {
                 typ,
@@ -180,7 +193,7 @@ impl RowOperation for Vec<Row> {
 
     fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
-            let container = row.container_node().cloned();
+            let container = TagAwareContainer::get(&row.node).cloned();
             match container {
                 Some(ContainerNode::Open {
                     typ, close_index, ..
@@ -217,19 +230,27 @@ impl RowOperation for Vec<Row> {
         let mut result = Vec::new();
         let mut i = current;
 
-        while i < self.len() && self[i].is_close_container() {
+        while i < self.len()
+            && matches!(
+                TagAwareContainer::get(&self[i].node),
+                Some(ContainerNode::Close { .. })
+            )
+        {
             i += 1;
         }
 
         while i < self.len() && result.len() < n {
             let row = &self[i];
-            if row.is_close_container() {
+            if matches!(
+                TagAwareContainer::get(&row.node),
+                Some(ContainerNode::Close { .. })
+            ) {
                 i += 1;
                 continue;
             }
 
             result.push(row.clone());
-            match row.container_node() {
+            match TagAwareContainer::get(&row.node) {
                 Some(ContainerNode::Open {
                     collapsed: true,
                     close_index,
