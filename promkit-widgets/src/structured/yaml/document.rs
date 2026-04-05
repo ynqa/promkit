@@ -35,7 +35,7 @@ impl Document {
 
     /// Sets the visibility of all rows.
     pub fn set_nodes_visibility(&mut self, collapsed: bool) {
-        self.rows.set_nodes_visibility(collapsed);
+        self.rows.set_rows_visibility(collapsed);
         self.position = 0;
     }
 

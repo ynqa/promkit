@@ -1,24 +1,6 @@
-#[derive(Clone, Debug, PartialEq)]
-pub enum CollectionKind {
-    Mapping,
-    Sequence,
-}
+use rayon::prelude::*;
 
-impl CollectionKind {
-    pub fn empty_str(&self) -> &'static str {
-        match self {
-            CollectionKind::Mapping => "{}",
-            CollectionKind::Sequence => "[]",
-        }
-    }
-
-    pub fn collapsed_preview(&self) -> &'static str {
-        match self {
-            CollectionKind::Mapping => "{...}",
-            CollectionKind::Sequence => "[...]",
-        }
-    }
-}
+pub use crate::structured::{ContainerNode, ContainerType, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum YamlNode {
@@ -26,19 +8,7 @@ pub enum YamlNode {
     Boolean(bool),
     Number(serde_yaml::Number),
     String(String),
-    Empty {
-        kind: CollectionKind,
-    },
-    Start {
-        kind: CollectionKind,
-        collapsed: bool,
-        close_index: usize,
-    },
-    End {
-        kind: CollectionKind,
-        collapsed: bool,
-        open_index: usize,
-    },
+    Container(ContainerNode),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,36 +21,35 @@ pub struct Row {
 }
 
 impl Row {
-    fn is_end(&self) -> bool {
-        matches!(self.node, YamlNode::End { .. })
+    fn is_close_container(&self) -> bool {
+        matches!(self.node, YamlNode::Container(ContainerNode::Close { .. }))
     }
 }
 
-pub trait RowOperation {
-    fn up(&self, current: usize) -> usize;
-    fn head(&self) -> usize;
-    fn down(&self, current: usize) -> usize;
-    fn tail(&self) -> usize;
-    fn toggle(&mut self, current: usize) -> usize;
-    fn set_nodes_visibility(&mut self, collapsed: bool);
-    fn extract(&self, current: usize, n: usize) -> Vec<Row>;
-}
-
 impl RowOperation for Vec<Row> {
+    type Row = Row;
+
     fn up(&self, current: usize) -> usize {
         if self.is_empty() || current == 0 {
             return 0;
         }
 
         let mut prev = current - 1;
-        while prev > 0 && self[prev].is_end() {
+        while prev > 0 && self[prev].is_close_container() {
             prev -= 1;
         }
-        if self[prev].is_end() { current } else { prev }
+
+        if self[prev].is_close_container() {
+            current
+        } else {
+            prev
+        }
     }
 
     fn head(&self) -> usize {
-        self.iter().position(|r| !r.is_end()).unwrap_or(0)
+        self.iter()
+            .position(|row| !row.is_close_container())
+            .unwrap_or(0)
     }
 
     fn down(&self, current: usize) -> usize {
@@ -89,15 +58,15 @@ impl RowOperation for Vec<Row> {
         }
 
         let mut next = match &self[current].node {
-            YamlNode::Start {
+            YamlNode::Container(ContainerNode::Open {
                 collapsed: true,
                 close_index,
                 ..
-            } => close_index + 1,
+            }) => close_index + 1,
             _ => current + 1,
         };
 
-        while next < self.len() && self[next].is_end() {
+        while next < self.len() && self[next].is_close_container() {
             next += 1;
         }
 
@@ -108,83 +77,110 @@ impl RowOperation for Vec<Row> {
         if self.is_empty() {
             return 0;
         }
-        self.iter().rposition(|r| !r.is_end()).unwrap_or(0)
+
+        self.iter()
+            .rposition(|row| !row.is_close_container())
+            .unwrap_or(0)
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        match self[current].node.clone() {
-            YamlNode::Start {
-                kind,
+        match &self[current].node {
+            YamlNode::Container(ContainerNode::Open {
+                typ,
                 collapsed,
                 close_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
-                self[current].node = YamlNode::Start {
-                    kind: kind.clone(),
+                let close_idx = *close_index;
+                let typ_clone = typ.clone();
+
+                self[current].node = YamlNode::Container(ContainerNode::Open {
+                    typ: typ_clone.clone(),
                     collapsed: new_collapsed,
-                    close_index,
-                };
-                self[close_index].node = YamlNode::End {
-                    kind,
+                    close_index: close_idx,
+                });
+
+                self[close_idx].node = YamlNode::Container(ContainerNode::Close {
+                    typ: typ_clone,
                     collapsed: new_collapsed,
                     open_index: current,
-                };
+                });
+
                 current
             }
-            YamlNode::End {
-                kind,
+            YamlNode::Container(ContainerNode::Close {
+                typ,
                 collapsed,
                 open_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
-                self[current].node = YamlNode::End {
-                    kind: kind.clone(),
+                let open_idx = *open_index;
+                let typ_clone = typ.clone();
+
+                self[current].node = YamlNode::Container(ContainerNode::Close {
+                    typ: typ_clone.clone(),
                     collapsed: new_collapsed,
-                    open_index,
-                };
-                self[open_index].node = YamlNode::Start {
-                    kind,
+                    open_index: open_idx,
+                });
+
+                self[open_idx].node = YamlNode::Container(ContainerNode::Open {
+                    typ: typ_clone,
                     collapsed: new_collapsed,
                     close_index: current,
-                };
-                open_index
+                });
+
+                open_idx
             }
             _ => current,
         }
     }
 
-    fn set_nodes_visibility(&mut self, collapsed: bool) {
-        for row in self {
-            match &mut row.node {
-                YamlNode::Start { collapsed: c, .. } | YamlNode::End { collapsed: c, .. } => {
-                    *c = collapsed;
-                }
-                _ => {}
+    fn set_rows_visibility(&mut self, collapsed: bool) {
+        self.par_iter_mut().for_each(|row| {
+            if let YamlNode::Container(ContainerNode::Open {
+                typ, close_index, ..
+            }) = &row.node
+            {
+                row.node = YamlNode::Container(ContainerNode::Open {
+                    typ: typ.clone(),
+                    collapsed,
+                    close_index: *close_index,
+                });
+            } else if let YamlNode::Container(ContainerNode::Close {
+                typ, open_index, ..
+            }) = &row.node
+            {
+                row.node = YamlNode::Container(ContainerNode::Close {
+                    typ: typ.clone(),
+                    collapsed,
+                    open_index: *open_index,
+                });
             }
-        }
+        });
     }
 
     fn extract(&self, current: usize, n: usize) -> Vec<Row> {
         let mut result = Vec::new();
         let mut i = current;
-        while i < self.len() && self[i].is_end() {
+
+        while i < self.len() && self[i].is_close_container() {
             i += 1;
         }
 
         while i < self.len() && result.len() < n {
             let row = &self[i];
-            if row.is_end() {
+            if row.is_close_container() {
                 i += 1;
                 continue;
             }
 
             result.push(row.clone());
             match &row.node {
-                YamlNode::Start {
+                YamlNode::Container(ContainerNode::Open {
                     collapsed: true,
                     close_index,
                     ..
-                } => i = close_index + 1,
+                }) => i = close_index + 1,
                 _ => i += 1,
             }
         }
@@ -193,8 +189,8 @@ impl RowOperation for Vec<Row> {
     }
 }
 
-fn normalize_key_for_display(key: &serde_yaml::Value) -> Option<String> {
-    match key {
+fn normalize_mapping_key_for_display(mapping_key: &serde_yaml::Value) -> Option<String> {
+    match mapping_key {
         serde_yaml::Value::String(s) => Some(s.clone()),
         serde_yaml::Value::Number(n) => Some(n.to_string()),
         serde_yaml::Value::Bool(b) => Some(b.to_string()),
@@ -276,9 +272,9 @@ fn process_value(
                     key,
                     is_sequence_item,
                     tag,
-                    node: YamlNode::Empty {
-                        kind: CollectionKind::Sequence,
-                    },
+                    node: YamlNode::Container(ContainerNode::Empty {
+                        typ: ContainerType::Array,
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -289,11 +285,11 @@ fn process_value(
                 key,
                 is_sequence_item,
                 tag,
-                node: YamlNode::Start {
-                    kind: CollectionKind::Sequence,
+                node: YamlNode::Container(ContainerNode::Open {
+                    typ: ContainerType::Array,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
             for item in seq {
@@ -306,18 +302,18 @@ fn process_value(
                 key: None,
                 is_sequence_item: false,
                 tag: None,
-                node: YamlNode::End {
-                    kind: CollectionKind::Sequence,
+                node: YamlNode::Container(ContainerNode::Close {
+                    typ: ContainerType::Array,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].node = YamlNode::Start {
-                kind: CollectionKind::Sequence,
+            rows[open_index].node = YamlNode::Container(ContainerNode::Open {
+                typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }
@@ -328,9 +324,9 @@ fn process_value(
                     key,
                     is_sequence_item,
                     tag,
-                    node: YamlNode::Empty {
-                        kind: CollectionKind::Mapping,
-                    },
+                    node: YamlNode::Container(ContainerNode::Empty {
+                        typ: ContainerType::Object,
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -341,15 +337,15 @@ fn process_value(
                 key,
                 is_sequence_item,
                 tag,
-                node: YamlNode::Start {
-                    kind: CollectionKind::Mapping,
+                node: YamlNode::Container(ContainerNode::Open {
+                    typ: ContainerType::Object,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
-            for (map_key, map_value) in map {
-                let key = normalize_key_for_display(map_key);
+            for (mapping_key, map_value) in map {
+                let key = normalize_mapping_key_for_display(mapping_key);
                 process_value(map_value, rows, depth + 1, key, false, None);
             }
 
@@ -359,18 +355,18 @@ fn process_value(
                 key: None,
                 is_sequence_item: false,
                 tag: None,
-                node: YamlNode::End {
-                    kind: CollectionKind::Mapping,
+                node: YamlNode::Container(ContainerNode::Close {
+                    typ: ContainerType::Object,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].node = YamlNode::Start {
-                kind: CollectionKind::Mapping,
+            rows[open_index].node = YamlNode::Container(ContainerNode::Open {
+                typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }

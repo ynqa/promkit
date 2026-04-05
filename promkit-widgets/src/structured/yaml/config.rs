@@ -3,7 +3,7 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use crate::structured::yaml::yamlz::{CollectionKind, Row, YamlNode};
+use crate::structured::yaml::yamlz::{ContainerNode, ContainerType, Row, YamlNode};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering YAML data.
@@ -152,20 +152,20 @@ impl Config {
         Self::render_yaml_string(key)
     }
 
-    fn render_collection_marker(&self, kind: &CollectionKind) -> StyledGraphemes {
-        let style = match kind {
-            CollectionKind::Mapping => self.map_style,
-            CollectionKind::Sequence => self.sequence_style,
+    fn render_collection_marker(&self, typ: &ContainerType) -> StyledGraphemes {
+        let style = match typ {
+            ContainerType::Object => self.map_style,
+            ContainerType::Array => self.sequence_style,
         };
-        StyledGraphemes::from(kind.empty_str()).apply_style(style)
+        StyledGraphemes::from(typ.empty_str()).apply_style(style)
     }
 
-    fn render_collapsed_marker(&self, kind: &CollectionKind) -> StyledGraphemes {
-        let style = match kind {
-            CollectionKind::Mapping => self.map_style,
-            CollectionKind::Sequence => self.sequence_style,
+    fn render_collapsed_marker(&self, typ: &ContainerType) -> StyledGraphemes {
+        let style = match typ {
+            ContainerType::Object => self.map_style,
+            ContainerType::Array => self.sequence_style,
         };
-        StyledGraphemes::from(kind.collapsed_preview()).apply_style(style)
+        StyledGraphemes::from(typ.collapsed_preview()).apply_style(style)
     }
 
     fn render_value(&self, row: &Row) -> Option<StyledGraphemes> {
@@ -180,22 +180,24 @@ impl Config {
             YamlNode::String(s) => Some(
                 StyledGraphemes::from(Self::render_yaml_string(s)).apply_style(self.string_style),
             ),
-            YamlNode::Empty { kind } => Some(self.render_collection_marker(kind)),
-            YamlNode::Start {
-                kind,
-                collapsed: true,
-                ..
-            } => Some(self.render_collapsed_marker(kind)),
-            YamlNode::Start {
-                collapsed: false, ..
-            } => {
-                if row.key.is_none() && !row.is_sequence_item && row.depth == 0 {
-                    Some(StyledGraphemes::from("---"))
-                } else {
-                    None
+            YamlNode::Container(node) => match node {
+                ContainerNode::Empty { typ } => Some(self.render_collection_marker(typ)),
+                ContainerNode::Open {
+                    typ,
+                    collapsed: true,
+                    ..
+                } => Some(self.render_collapsed_marker(typ)),
+                ContainerNode::Open {
+                    collapsed: false, ..
+                } => {
+                    if row.key.is_none() && !row.is_sequence_item && row.depth == 0 {
+                        Some(StyledGraphemes::from("---"))
+                    } else {
+                        None
+                    }
                 }
-            }
-            YamlNode::End { .. } => None,
+                ContainerNode::Close { .. } => None,
+            },
         }
     }
 
