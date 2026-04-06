@@ -53,7 +53,7 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.5.0" }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.6.0" }
 radix_trie = { workspace = true }
 scopeguard = { workspace = true }
 tokio = { workspace = true }
