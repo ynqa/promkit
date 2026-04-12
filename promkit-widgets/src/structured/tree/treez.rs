@@ -1,5 +1,7 @@
 use std::{fs, path};
 
+use crate::structured::RowOperation;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Row {
     pub depth: usize,
@@ -7,18 +9,6 @@ pub struct Row {
     pub path: Vec<String>,
     pub has_children: bool,
     pub collapsed: bool,
-}
-
-pub trait RowOperation {
-    type Row;
-
-    fn up(&self, current: usize) -> usize;
-    fn head(&self) -> usize;
-    fn down(&self, current: usize) -> usize;
-    fn tail(&self) -> usize;
-    fn toggle(&mut self, current: usize) -> usize;
-    fn set_rows_visibility(&mut self, collapsed: bool);
-    fn extract(&self, current: usize, n: usize) -> Vec<Self::Row>;
 }
 
 fn collect_rows_with<T, E, FId, FChildren>(

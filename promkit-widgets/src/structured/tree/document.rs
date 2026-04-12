@@ -1,4 +1,6 @@
-use super::{Row, treez::RowOperation};
+use crate::structured::RowOperation;
+
+use super::Row;
 
 /// Represents a navigable tree document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
