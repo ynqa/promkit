@@ -15,7 +15,7 @@ impl Document {
     }
 
     pub fn from_path(path: &std::path::Path) -> anyhow::Result<Self> {
-        Ok(Self::new(super::treez::create_rows_from_path(path)?))
+        Ok(Self::new(super::create_rows_from_path(path)?))
     }
 }
 

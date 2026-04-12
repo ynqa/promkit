@@ -1,5 +1,3 @@
-use std::{fs, path};
-
 use crate::structured::RowOperation;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -11,20 +9,26 @@ pub struct Row {
     pub collapsed: bool,
 }
 
-fn collect_rows_with<T, E, FId, FChildren>(
+pub trait Adapter {
+    type Node;
+    type Error;
+
+    fn id_of(&self, node: &Self::Node) -> Result<String, Self::Error>;
+    fn children_of(&self, node: &Self::Node) -> Result<Vec<Self::Node>, Self::Error>;
+}
+
+fn collect_rows_with<T, E, A>(
     input: &T,
     depth: usize,
     current_path: &mut Vec<String>,
     rows: &mut Vec<Row>,
-    id_of: &FId,
-    children_of: &FChildren,
+    adapter: &A,
 ) -> Result<(), E>
 where
-    FId: Fn(&T) -> Result<String, E>,
-    FChildren: Fn(&T) -> Result<Vec<T>, E>,
+    A: Adapter<Node = T, Error = E>,
 {
-    let id = id_of(input)?;
-    let children = children_of(input)?;
+    let id = adapter.id_of(input)?;
+    let children = adapter.children_of(input)?;
     let has_children = !children.is_empty();
 
     current_path.push(id.clone());
@@ -38,7 +42,7 @@ where
 
     if has_children {
         for child in &children {
-            collect_rows_with(child, depth + 1, current_path, rows, id_of, children_of)?;
+            collect_rows_with(child, depth + 1, current_path, rows, adapter)?;
         }
     }
 
@@ -46,61 +50,17 @@ where
     Ok(())
 }
 
-pub fn create_rows<T, E, FId, FChildren>(
+pub fn create_rows<T, E, A>(
     root: &T,
-    id_of: FId,
-    children_of: FChildren,
+    adapter: &A,
 ) -> Result<Vec<Row>, E>
 where
-    FId: Fn(&T) -> Result<String, E>,
-    FChildren: Fn(&T) -> Result<Vec<T>, E>,
+    A: Adapter<Node = T, Error = E>,
 {
     let mut rows = Vec::new();
     let mut current_path = Vec::new();
-    collect_rows_with(root, 0, &mut current_path, &mut rows, &id_of, &children_of)?;
+    collect_rows_with(root, 0, &mut current_path, &mut rows, adapter)?;
     Ok(rows)
-}
-
-fn path_id(input: &path::Path) -> anyhow::Result<String> {
-    input
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(ToOwned::to_owned)
-        .or_else(|| {
-            let rendered = input.display().to_string();
-            (!rendered.is_empty()).then_some(rendered)
-        })
-        .ok_or_else(|| anyhow::anyhow!("Failed to convert path to string"))
-}
-
-pub fn create_rows_from_path(input: &path::Path) -> anyhow::Result<Vec<Row>> {
-    create_rows(
-        &input.to_path_buf(),
-        |path: &path::PathBuf| path_id(path),
-        |path| {
-            if !path.is_dir() {
-                return Ok(Vec::new());
-            }
-
-            let mut directories = Vec::new();
-            let mut files = Vec::new();
-
-            for entry in fs::read_dir(path)? {
-                let path = entry?.path();
-                if path.is_dir() {
-                    directories.push(path);
-                } else if path.is_file() {
-                    files.push(path);
-                }
-            }
-
-            directories.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
-            files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
-            directories.extend(files);
-
-            Ok(directories)
-        },
-    )
 }
 
 fn is_visible(rows: &[Row], index: usize) -> bool {
@@ -216,6 +176,21 @@ mod tests {
         children: Vec<TestNode>,
     }
 
+    struct TestAdapter;
+
+    impl Adapter for TestAdapter {
+        type Node = TestNode;
+        type Error = std::convert::Infallible;
+
+        fn id_of(&self, node: &Self::Node) -> Result<String, Self::Error> {
+            Ok(node.id.to_string())
+        }
+
+        fn children_of(&self, node: &Self::Node) -> Result<Vec<Self::Node>, Self::Error> {
+            Ok(node.children.clone())
+        }
+    }
+
     fn create_test_rows() -> Vec<Row> {
         vec![
             Row {
@@ -306,12 +281,7 @@ mod tests {
             ],
         };
 
-        let rows = create_rows(
-            &root,
-            |node| Ok::<_, std::convert::Infallible>(node.id.to_string()),
-            |node| Ok::<_, std::convert::Infallible>(node.children.clone()),
-        )
-        .unwrap();
+        let rows = create_rows(&root, &TestAdapter).unwrap();
 
         assert_eq!(
             rows,
