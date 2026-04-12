@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use promkit::{preset::tree::Tree, widgets::tree::Document, Prompt};
+use promkit::{preset::tree::Tree, widgets::structured::tree::Document, Prompt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

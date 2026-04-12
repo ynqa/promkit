@@ -12,8 +12,8 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
+        structured::tree::{self, Document, config::Config},
         text::{self, Text},
-        tree::{self, config::Config, Document},
     },
     Signal,
 };

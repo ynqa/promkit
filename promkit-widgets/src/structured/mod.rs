@@ -6,6 +6,10 @@ pub mod json;
 #[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
 pub mod yaml;
 
+#[cfg(feature = "tree")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
+pub mod tree;
+
 /// Container type of structured widget.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {

@@ -8,16 +8,9 @@ pub mod treez;
 pub use treez::Row;
 
 /// Represents the state of a tree structure within the application.
-///
-/// This state includes not only the tree itself but also various properties
-/// that affect how the tree is displayed and interacted with. These properties
-/// include symbols for folded and unfolded items, styles for active and inactive
-/// items, the number of lines available for rendering, and the indentation level
-/// for child items in the tree.
 #[derive(Clone)]
 pub struct State {
     pub document: Document,
-    /// Configuration for rendering and behavior.
     pub config: Config,
 }
 
