@@ -1,12 +1,11 @@
 use promkit_core::{Widget, grapheme::StyledGraphemes};
 
-pub mod node;
-use node::Kind;
-#[path = "tree/tree.rs"]
-mod inner;
-pub use inner::Tree;
+mod document;
+pub use document::Document;
 pub mod config;
 pub use config::Config;
+pub mod treez;
+pub use treez::Row;
 
 /// Represents the state of a tree structure within the application.
 ///
@@ -17,31 +16,18 @@ pub use config::Config;
 /// for child items in the tree.
 #[derive(Clone)]
 pub struct State {
-    pub tree: Tree,
+    pub document: Document,
     /// Configuration for rendering and behavior.
     pub config: Config,
 }
 
 impl Widget for State {
     fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
-        let symbol = |kind: &Kind| -> &str {
-            match kind {
-                Kind::Folded { .. } => &self.config.folded_symbol,
-                Kind::Unfolded { .. } => &self.config.unfolded_symbol,
-            }
-        };
-
-        let indent = |kind: &Kind| -> usize {
-            match kind {
-                Kind::Folded { path, .. } | Kind::Unfolded { path, .. } => {
-                    path.len() * self.config.indent
-                }
-            }
-        };
-
-        let id = |kind: &Kind| -> String {
-            match kind {
-                Kind::Folded { id, .. } | Kind::Unfolded { id, .. } => id.clone(),
+        let symbol = |row: &Row| -> &str {
+            if row.has_children && !row.collapsed {
+                &self.config.unfolded_symbol
+            } else {
+                &self.config.folded_symbol
             }
         };
 
@@ -50,29 +36,30 @@ impl Widget for State {
             None => height as usize,
         };
 
-        let kinds = self.tree.kinds();
-        let lines = kinds
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i >= self.tree.position() && *i < self.tree.position() + height)
-            .map(|(i, kind)| {
-                if i == self.tree.position() {
-                    StyledGraphemes::from_str(
-                        format!("{}{}{}", symbol(kind), " ".repeat(indent(kind)), id(kind),),
-                        self.config.active_item_style,
-                    )
-                } else {
-                    StyledGraphemes::from_str(
-                        format!(
-                            "{}{}{}",
-                            " ".repeat(StyledGraphemes::from(symbol(kind)).widths()),
-                            " ".repeat(indent(kind)),
-                            id(kind),
-                        ),
-                        self.config.inactive_item_style,
-                    )
-                }
-            });
+        let rows = self.document.extract_rows_from_current(height);
+        let lines = rows.iter().enumerate().map(|(offset, row)| {
+            if offset == 0 {
+                StyledGraphemes::from_str(
+                    format!(
+                        "{}{}{}",
+                        symbol(row),
+                        " ".repeat(row.depth * self.config.indent),
+                        row.id,
+                    ),
+                    self.config.active_item_style,
+                )
+            } else {
+                StyledGraphemes::from_str(
+                    format!(
+                        "{}{}{}",
+                        " ".repeat(StyledGraphemes::from(symbol(row)).widths()),
+                        " ".repeat(row.depth * self.config.indent),
+                        row.id,
+                    ),
+                    self.config.inactive_item_style,
+                )
+            }
+        });
 
         StyledGraphemes::from_lines(lines)
     }
