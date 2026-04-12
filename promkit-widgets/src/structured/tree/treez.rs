@@ -1,19 +1,30 @@
 use crate::structured::RowOperation;
 
+/// A single visible-or-collapsible row in a tree view.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Row {
+    /// Depth from the root node. Used for indentation when rendering.
     pub depth: usize,
+    /// Display label of the current node.
     pub id: String,
+    /// Breadcrumb-like labels from the root to this node.
     pub path: Vec<String>,
+    /// Whether this row has child nodes.
     pub has_children: bool,
+    /// Whether the children of this row are currently collapsed.
     pub collapsed: bool,
 }
 
+/// Adapts an arbitrary tree-shaped data source into rows.
 pub trait Adapter {
+    /// Input node type used by the adapted tree source.
     type Node;
+    /// Error returned while reading node metadata or children.
     type Error;
 
+    /// Returns the display label for the given node.
     fn id_of(&self, node: &Self::Node) -> Result<String, Self::Error>;
+    /// Returns the direct children of the given node.
     fn children_of(&self, node: &Self::Node) -> Result<Vec<Self::Node>, Self::Error>;
 }
 
@@ -50,6 +61,10 @@ where
     Ok(())
 }
 
+/// Creates tree rows from an arbitrary tree source via an [`Adapter`].
+///
+/// Parent rows are emitted before their descendants, and rows with children
+/// start in the collapsed state by default.
 pub fn create_rows<T, E, A>(
     root: &T,
     adapter: &A,
