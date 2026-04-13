@@ -359,6 +359,38 @@ impl StyledGraphemes {
 
         rows
     }
+
+    /// Truncates graphemes to fit the given width and appends the given ellipsis.
+    pub fn truncated_line_with_ellipsis(
+        &self,
+        width: usize,
+        ellipsis: &StyledGraphemes,
+    ) -> StyledGraphemes {
+        if self.widths() <= width {
+            return self.clone();
+        }
+
+        if width == 0 {
+            return StyledGraphemes::default();
+        }
+
+        let ellipsis_width = ellipsis.widths();
+        if width <= ellipsis_width {
+            return ellipsis.clone();
+        }
+
+        let mut truncated = StyledGraphemes::default();
+        let mut current_width = 0;
+        for g in self.iter() {
+            if current_width + g.width() + ellipsis_width > width {
+                break;
+            }
+            truncated.push_back(g.clone());
+            current_width += g.width();
+        }
+
+        vec![truncated, ellipsis.clone()].into_iter().collect()
+    }
 }
 
 pub struct StyledGraphemesDisplay<'a> {
@@ -664,6 +696,42 @@ mod test {
             assert_eq!(rows.len(), 2);
             assert_eq!("ab", rows[0].to_string());
             assert_eq!("", rows[1].to_string());
+        }
+    }
+
+    mod truncated_line_with_ellipsis {
+        use super::*;
+
+        #[test]
+        fn test_no_truncate() {
+            let input = StyledGraphemes::from("abc");
+            let ellipsis = StyledGraphemes::from("…");
+            let output = input.truncated_line_with_ellipsis(10, &ellipsis);
+            assert_eq!("abc", output.to_string());
+        }
+
+        #[test]
+        fn test_width_zero() {
+            let input = StyledGraphemes::from("abc");
+            let ellipsis = StyledGraphemes::from("…");
+            let output = input.truncated_line_with_ellipsis(0, &ellipsis);
+            assert_eq!("", output.to_string());
+        }
+
+        #[test]
+        fn test_ellipsis_only() {
+            let input = StyledGraphemes::from("abc");
+            let ellipsis = StyledGraphemes::from("…");
+            let output = input.truncated_line_with_ellipsis(1, &ellipsis);
+            assert_eq!("…", output.to_string());
+        }
+
+        #[test]
+        fn test_truncate() {
+            let input = StyledGraphemes::from("abcdef");
+            let ellipsis = StyledGraphemes::from("…");
+            let output = input.truncated_line_with_ellipsis(4, &ellipsis);
+            assert_eq!("abc…", output.to_string());
         }
     }
 }

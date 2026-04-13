@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde_json::Deserializer;
 
-use promkit_widgets::jsonstream::jsonz::*;
+use promkit_widgets::json::jsonz::*;
 
 #[test]
 fn test_empty_containers() {
@@ -23,10 +23,10 @@ fn test_empty_containers() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Empty {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Empty {
                 typ: ContainerType::Object
-            },
+            }),
         }
     );
 
@@ -34,10 +34,10 @@ fn test_empty_containers() {
         rows[1],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Empty {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Empty {
                 typ: ContainerType::Array
-            },
+            }),
         }
     );
 }
@@ -63,12 +63,12 @@ fn test_nested_object() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
 
@@ -76,12 +76,12 @@ fn test_nested_object() {
         rows[1],
         Row {
             depth: 1,
-            k: Some("a".to_string()),
-            v: Value::Open {
+            key: Some("a".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 5,
-            },
+            }),
         }
     );
 
@@ -89,12 +89,12 @@ fn test_nested_object() {
         rows[2],
         Row {
             depth: 2,
-            k: Some("b".to_string()),
-            v: Value::Open {
+            key: Some("b".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
 
@@ -102,8 +102,8 @@ fn test_nested_object() {
         rows[3],
         Row {
             depth: 3,
-            k: Some("c".to_string()),
-            v: Value::String("value".to_string()),
+            key: Some("c".to_string()),
+            node: JsonNode::String("value".to_string()),
         }
     );
 
@@ -111,12 +111,12 @@ fn test_nested_object() {
         rows[4],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -124,12 +124,12 @@ fn test_nested_object() {
         rows[5],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -137,12 +137,12 @@ fn test_nested_object() {
         rows[6],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }
@@ -170,12 +170,12 @@ fn test_nested_array() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 8,
-            },
+            }),
         }
     );
 
@@ -183,12 +183,12 @@ fn test_nested_array() {
         rows[1],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 7,
-            },
+            }),
         }
     );
 
@@ -196,12 +196,12 @@ fn test_nested_array() {
         rows[2],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
 
@@ -210,8 +210,8 @@ fn test_nested_array() {
             rows[3 + i],
             Row {
                 depth: 3,
-                k: None,
-                v: Value::Number(serde_json::Number::from(*num)),
+                key: None,
+                node: JsonNode::Number(serde_json::Number::from(*num)),
             }
         );
     }
@@ -220,12 +220,12 @@ fn test_nested_array() {
         rows[6],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -233,12 +233,12 @@ fn test_nested_array() {
         rows[7],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -246,12 +246,12 @@ fn test_nested_array() {
         rows[8],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }
@@ -285,12 +285,12 @@ fn test_mixed_containers() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 14,
-            },
+            }),
         }
     );
 
@@ -298,12 +298,12 @@ fn test_mixed_containers() {
         rows[1],
         Row {
             depth: 1,
-            k: Some("array".to_string()),
-            v: Value::Open {
+            key: Some("array".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
 
@@ -311,12 +311,12 @@ fn test_mixed_containers() {
         rows[2],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
-            },
+            }),
         }
     );
 
@@ -324,8 +324,8 @@ fn test_mixed_containers() {
         rows[3],
         Row {
             depth: 3,
-            k: Some("key".to_string()),
-            v: Value::String("value".to_string()),
+            key: Some("key".to_string()),
+            node: JsonNode::String("value".to_string()),
         }
     );
 
@@ -333,12 +333,12 @@ fn test_mixed_containers() {
         rows[4],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 2,
-            },
+            }),
         }
     );
 
@@ -346,12 +346,12 @@ fn test_mixed_containers() {
         rows[5],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 9,
-            },
+            }),
         }
     );
 
@@ -360,8 +360,8 @@ fn test_mixed_containers() {
             rows[6 + i],
             Row {
                 depth: 3,
-                k: None,
-                v: Value::Number(serde_json::Number::from(*num)),
+                key: None,
+                node: JsonNode::Number(serde_json::Number::from(*num)),
             }
         );
     }
@@ -370,12 +370,12 @@ fn test_mixed_containers() {
         rows[9],
         Row {
             depth: 2,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 5,
-            },
+            }),
         }
     );
 
@@ -383,12 +383,12 @@ fn test_mixed_containers() {
         rows[10],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Array,
                 collapsed: false,
                 open_index: 1,
-            },
+            }),
         }
     );
 
@@ -396,12 +396,12 @@ fn test_mixed_containers() {
         rows[11],
         Row {
             depth: 1,
-            k: Some("object".to_string()),
-            v: Value::Open {
+            key: Some("object".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 13,
-            },
+            }),
         }
     );
 
@@ -409,8 +409,8 @@ fn test_mixed_containers() {
         rows[12],
         Row {
             depth: 2,
-            k: Some("nested".to_string()),
-            v: Value::Boolean(true),
+            key: Some("nested".to_string()),
+            node: JsonNode::Boolean(true),
         }
     );
 
@@ -418,12 +418,12 @@ fn test_mixed_containers() {
         rows[13],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 11,
-            },
+            }),
         }
     );
 
@@ -431,12 +431,12 @@ fn test_mixed_containers() {
         rows[14],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 }

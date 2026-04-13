@@ -19,6 +19,7 @@ all = [
     "confirm",
     "form",
     "json",
+    "yaml",
     "listbox",
     "password",
     "query-selector",
@@ -30,7 +31,8 @@ all = [
 checkbox = ["promkit-widgets/checkbox", "promkit-widgets/text"]
 confirm = ["readline"]
 form = ["promkit-widgets/texteditor"]
-json = ["promkit-widgets/jsonstream", "promkit-widgets/text"]
+json = ["promkit-widgets/json", "promkit-widgets/text"]
+yaml = ["promkit-widgets/yaml", "promkit-widgets/text"]
 listbox = ["promkit-widgets/listbox", "promkit-widgets/text"]
 password = ["readline"]
 query-selector = [
@@ -51,7 +53,7 @@ tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.5.0" }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.6.0" }
 radix_trie = { workspace = true }
 scopeguard = { workspace = true }
 tokio = { workspace = true }

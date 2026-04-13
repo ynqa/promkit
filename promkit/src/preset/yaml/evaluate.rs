@@ -3,20 +3,20 @@ use crate::{
         Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
         MouseEventKind,
     },
-    preset::json::Json,
+    preset::yaml::Yaml,
     Signal,
 };
 
-/// Default key bindings for JSON navigation and manipulation.
+/// Default key bindings for YAML navigation and manipulation.
 ///
 /// | Key                    | Action
-/// | :--------------------- | :-------------------------------------------
-/// | <kbd>Enter</kbd>       | Exit the JSON viewer
+/// | :--------------------- | :-------------------------------------------|
+/// | <kbd>Enter</kbd>       | Exit the YAML viewer
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the cursor up to the previous node
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
-pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
+pub async fn default(event: &Event, ctx: &mut Yaml) -> anyhow::Result<Signal> {
     match event {
         // Render for refreshing prompt on resize.
         Event::Resize(width, height) => {
@@ -50,7 +50,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.json.document.up();
+            ctx.yaml.document.up();
         }
 
         Event::Key(KeyEvent {
@@ -65,7 +65,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.json.document.down();
+            ctx.yaml.document.down();
         }
 
         // Fold/Unfold
@@ -75,7 +75,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.json.document.toggle();
+            ctx.yaml.document.toggle();
         }
 
         _ => (),

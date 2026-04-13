@@ -1,4 +1,4 @@
-//! Enables parsing and interaction with JSON data.
+//! Enables parsing and interaction with YAML data.
 
 use crate::{
     core::{
@@ -12,46 +12,46 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        json::{
+        text::{self, Text},
+        yaml::{
             self,
             config::{Config, OverflowMode},
             Document,
         },
-        text::{self, Text},
     },
     Signal,
 };
 
 pub mod evaluate;
 
-/// Represents the indices of various components in the JSON preset.
+/// Represents the indices of various components in the YAML preset.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
-    Json = 1,
+    Yaml = 1,
 }
 
-/// Represents a JSON preset for rendering JSON data and titles with customizable styles.
-pub struct Json {
+/// Represents a YAML preset for rendering YAML data and titles with customizable styles.
+pub struct Yaml {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator: Evaluator<Self>,
     /// State for the title text.
     pub title: text::State,
-    /// State for the JSON data, including formatting and rendering options.
-    pub json: json::State,
+    /// State for the YAML data, including formatting and rendering options.
+    pub yaml: yaml::State,
 }
 
 #[async_trait::async_trait]
-impl crate::Prompt for Json {
+impl crate::Prompt for Yaml {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
                     (Index::Title, self.title.create_graphemes(size.0, size.1)),
-                    (Index::Json, self.json.create_graphemes(size.0, size.1)),
+                    (Index::Yaml, self.yaml.create_graphemes(size.0, size.1)),
                 ],
                 true,
             )
@@ -74,8 +74,8 @@ impl crate::Prompt for Json {
     }
 }
 
-impl Json {
-    /// Creates a new JSON preset with the provided JSON document.
+impl Yaml {
+    /// Creates a new YAML preset with the provided YAML document.
     pub fn new(document: Document) -> Self {
         Self {
             renderer: None,
@@ -90,14 +90,14 @@ impl Json {
                 },
                 ..Default::default()
             },
-            json: json::State {
+            yaml: yaml::State {
                 document,
                 config: Config {
-                    curly_brackets_style: ContentStyle {
+                    map_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     },
-                    square_brackets_style: ContentStyle {
+                    sequence_style: ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     },
@@ -105,13 +105,17 @@ impl Json {
                         foreground_color: Some(Color::DarkBlue),
                         ..Default::default()
                     },
-                    string_value_style: ContentStyle {
+                    tag_style: ContentStyle {
+                        foreground_color: Some(Color::DarkYellow),
+                        ..Default::default()
+                    },
+                    string_style: ContentStyle {
                         foreground_color: Some(Color::DarkGreen),
                         ..Default::default()
                     },
-                    number_value_style: ContentStyle::default(),
-                    boolean_value_style: ContentStyle::default(),
-                    null_value_style: ContentStyle {
+                    number_style: ContentStyle::default(),
+                    boolean_style: ContentStyle::default(),
+                    null_style: ContentStyle {
                         foreground_color: Some(Color::DarkGrey),
                         ..Default::default()
                     },
@@ -125,7 +129,7 @@ impl Json {
         }
     }
 
-    /// Sets the title text for the JSON preset.
+    /// Sets the title text for the YAML preset.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title.text = Text::from(text);
         self
@@ -137,37 +141,37 @@ impl Json {
         self
     }
 
-    /// Sets the number of lines to be used for rendering the JSON data.
-    pub fn json_lines(mut self, lines: usize) -> Self {
-        self.json.config.lines = Some(lines);
+    /// Sets the number of lines to be used for rendering the YAML data.
+    pub fn yaml_lines(mut self, lines: usize) -> Self {
+        self.yaml.config.lines = Some(lines);
         self
     }
 
-    /// Sets the indentation level for rendering the JSON data.
+    /// Sets the indentation level for rendering the YAML data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.json.config.indent = indent;
+        self.yaml.config.indent = indent;
         self
     }
 
-    /// Sets the overflow mode for rendering JSON values that exceed the available width.
+    /// Sets the overflow mode for rendering YAML values that exceed the available width.
     pub fn overflow_mode(mut self, mode: OverflowMode) -> Self {
-        self.json.config.overflow_mode = mode;
+        self.yaml.config.overflow_mode = mode;
         self
     }
 
     /// Sets the attribute for active (currently selected) items.
     pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json.config.active_item_attribute = attr;
+        self.yaml.config.active_item_attribute = attr;
         self
     }
 
     /// Sets the attribute for inactive (not currently selected) items.
     pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
-        self.json.config.inactive_item_attribute = attr;
+        self.yaml.config.inactive_item_attribute = attr;
         self
     }
 
-    /// Sets the evaluator function for handling events in the JSON preset.
+    /// Sets the evaluator function for handling events in the YAML preset.
     pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
         self.evaluator = evaluator;
         self
@@ -180,7 +184,7 @@ impl Json {
                 renderer
                     .update([
                         (Index::Title, self.title.create_graphemes(width, height)),
-                        (Index::Json, self.json.create_graphemes(width, height)),
+                        (Index::Yaml, self.yaml.create_graphemes(width, height)),
                     ])
                     .render()
                     .await
