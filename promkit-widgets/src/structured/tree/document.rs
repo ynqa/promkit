@@ -1,6 +1,6 @@
 use crate::structured::RowOperation;
 
-use super::Row;
+use super::{Row, path::PathAdapter, treez::Adapter};
 
 /// Represents a navigable tree document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
@@ -15,7 +15,7 @@ impl Document {
     }
 
     pub fn from_path(path: &std::path::Path) -> anyhow::Result<Self> {
-        Ok(Self::new(super::create_rows_from_path(path)?))
+        Ok(Self::new(PathAdapter.create_rows(&path.to_path_buf())?))
     }
 }
 

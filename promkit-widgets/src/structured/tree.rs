@@ -5,7 +5,6 @@ pub use document::Document;
 pub mod config;
 pub use config::Config;
 pub mod path;
-pub use path::create_rows_from_path;
 pub mod treez;
 pub use treez::Row;
 

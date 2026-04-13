@@ -26,6 +26,17 @@ pub trait Adapter {
     fn id_of(&self, node: &Self::Node) -> Result<String, Self::Error>;
     /// Returns the direct children of the given node.
     fn children_of(&self, node: &Self::Node) -> Result<Vec<Self::Node>, Self::Error>;
+
+    /// Creates tree rows from the given root node.
+    ///
+    /// Parent rows are emitted before their descendants, and rows with children
+    /// start in the collapsed state by default.
+    fn create_rows(&self, root: &Self::Node) -> Result<Vec<Row>, Self::Error> {
+        let mut rows = Vec::new();
+        let mut current_path = Vec::new();
+        collect_rows_with(root, 0, &mut current_path, &mut rows, self)?;
+        Ok(rows)
+    }
 }
 
 fn collect_rows_with<T, E, A>(
@@ -36,7 +47,7 @@ fn collect_rows_with<T, E, A>(
     adapter: &A,
 ) -> Result<(), E>
 where
-    A: Adapter<Node = T, Error = E>,
+    A: Adapter<Node = T, Error = E> + ?Sized,
 {
     let id = adapter.id_of(input)?;
     let children = adapter.children_of(input)?;
@@ -59,20 +70,6 @@ where
 
     current_path.pop();
     Ok(())
-}
-
-/// Creates tree rows from an arbitrary tree source via an [`Adapter`].
-///
-/// Parent rows are emitted before their descendants, and rows with children
-/// start in the collapsed state by default.
-pub fn create_rows<T, E, A>(root: &T, adapter: &A) -> Result<Vec<Row>, E>
-where
-    A: Adapter<Node = T, Error = E>,
-{
-    let mut rows = Vec::new();
-    let mut current_path = Vec::new();
-    collect_rows_with(root, 0, &mut current_path, &mut rows, adapter)?;
-    Ok(rows)
 }
 
 fn is_visible(rows: &[Row], index: usize) -> bool {
@@ -293,7 +290,7 @@ mod tests {
             ],
         };
 
-        let rows = create_rows(&root, &TestAdapter).unwrap();
+        let rows = TestAdapter.create_rows(&root).unwrap();
 
         assert_eq!(
             rows,

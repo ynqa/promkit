@@ -1,9 +1,6 @@
 use std::{fs, path};
 
-use super::{
-    Row,
-    treez::{Adapter, create_rows},
-};
+use super::treez::Adapter;
 
 pub struct PathAdapter;
 
@@ -45,8 +42,4 @@ impl Adapter for PathAdapter {
 
         Ok(directories)
     }
-}
-
-pub fn create_rows_from_path(input: &path::Path) -> anyhow::Result<Vec<Row>> {
-    create_rows(&input.to_path_buf(), &PathAdapter)
 }
