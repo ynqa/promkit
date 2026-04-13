@@ -44,7 +44,7 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.tree.tree.backward();
+            ctx.tree.document.up();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollUp,
@@ -52,7 +52,7 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.tree.tree.backward();
+            ctx.tree.document.up();
         }
 
         Event::Key(KeyEvent {
@@ -61,7 +61,7 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.tree.tree.forward();
+            ctx.tree.document.down();
         }
         Event::Mouse(MouseEvent {
             kind: MouseEventKind::ScrollDown,
@@ -69,7 +69,7 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             row: _,
             modifiers: KeyModifiers::NONE,
         }) => {
-            ctx.tree.tree.forward();
+            ctx.tree.document.down();
         }
 
         // Fold/Unfold
@@ -79,7 +79,7 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.tree.tree.toggle();
+            ctx.tree.document.toggle();
         }
 
         _ => (),

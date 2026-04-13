@@ -12,8 +12,8 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
+        structured::tree::{self, config::Config, Document},
         text::{self, Text},
-        tree::{self, config::Config, node::Node},
     },
     Signal,
 };
@@ -67,13 +67,13 @@ impl crate::Prompt for Tree {
     type Return = Vec<String>;
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
-        Ok(self.tree.tree.get())
+        Ok(self.tree.document.get())
     }
 }
 
 impl Tree {
-    /// Creates a new `Tree` instance with the specified root node.
-    pub fn new(root: Node) -> Self {
+    /// Creates a new `Tree` instance with the specified tree document.
+    pub fn new(document: Document) -> Self {
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
@@ -88,7 +88,7 @@ impl Tree {
                 ..Default::default()
             },
             tree: tree::State {
-                tree: tree::Tree::new(root),
+                document,
                 config: Config {
                     folded_symbol: String::from("▶︎ "),
                     unfolded_symbol: String::from("▼ "),

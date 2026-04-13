@@ -8,7 +8,7 @@ pub mod cursor;
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
 
-#[cfg(any(feature = "json", feature = "yaml"))]
+#[cfg(any(feature = "json", feature = "yaml", feature = "tree"))]
 pub mod structured;
 
 #[cfg(feature = "json")]
@@ -40,10 +40,6 @@ pub mod status;
 #[cfg(feature = "texteditor")]
 #[cfg_attr(docsrs, doc(cfg(feature = "texteditor")))]
 pub mod text_editor;
-
-#[cfg(feature = "tree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
-pub mod tree;
 
 #[cfg(feature = "spinner")]
 #[cfg_attr(docsrs, doc(cfg(feature = "spinner")))]
