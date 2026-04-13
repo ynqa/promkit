@@ -12,7 +12,7 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        structured::tree::{self, Document, config::Config},
+        structured::tree::{self, config::Config, Document},
         text::{self, Text},
     },
     Signal,

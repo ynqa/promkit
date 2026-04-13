@@ -65,10 +65,7 @@ where
 ///
 /// Parent rows are emitted before their descendants, and rows with children
 /// start in the collapsed state by default.
-pub fn create_rows<T, E, A>(
-    root: &T,
-    adapter: &A,
-) -> Result<Vec<Row>, E>
+pub fn create_rows<T, E, A>(root: &T, adapter: &A) -> Result<Vec<Row>, E>
 where
     A: Adapter<Node = T, Error = E>,
 {

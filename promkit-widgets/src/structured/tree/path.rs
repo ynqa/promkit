@@ -1,6 +1,9 @@
 use std::{fs, path};
 
-use super::{Row, treez::{Adapter, create_rows}};
+use super::{
+    Row,
+    treez::{Adapter, create_rows},
+};
 
 pub struct PathAdapter;
 
