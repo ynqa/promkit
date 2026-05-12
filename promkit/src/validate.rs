@@ -1,6 +1,3 @@
-pub type Validator<T> = fn(&T) -> bool;
-pub type ErrorMessageGenerator<T> = fn(&T) -> String;
-
 /// A generic structure for validating inputs of any type.
 ///
 /// This structure allows for the definition of custom validation logic
@@ -11,33 +8,36 @@ pub struct ValidatorManager<T: ?Sized> {
     /// A function that takes a reference
     /// to an input of type `T` and returns a boolean
     /// indicating whether the input passes the validation.
-    validator: Validator<T>,
+    validator: Box<dyn Fn(&T) -> bool + Send + Sync>,
     /// A function that takes a reference
     /// to an input of type `T` and returns a `String`
     /// that describes the validation error.
-    error_message_generator: ErrorMessageGenerator<T>,
+    error_message_generator: Box<dyn Fn(&T) -> String + Send + Sync>,
 }
 
 impl<T: ?Sized> ValidatorManager<T> {
-    /// Constructs a new `Validator` instance
+    /// Constructs a new `ValidatorManager` instance
     /// with the specified validator and error message generator functions.
     ///
     /// # Arguments
     ///
-    /// * `validator` - A function that takes a reference
+    /// * `validator` - A function or closure that takes a reference
     ///   to an input of type `T` and returns a boolean
     ///   indicating whether the input passes the validation.
-    /// * `error_message_generator` - A function that takes a reference
+    /// * `error_message_generator` - A function or closure that takes a reference
     ///   to an input of type `T` and returns a `String`
     ///   that describes the validation error.
     ///
     /// # Returns
     ///
-    /// Returns a new instance of `Validator<T>`.
-    pub fn new(validator: Validator<T>, error_message_generator: ErrorMessageGenerator<T>) -> Self {
+    /// Returns a new instance of `ValidatorManager<T>`.
+    pub fn new(
+        validator: impl Fn(&T) -> bool + Send + Sync + 'static,
+        error_message_generator: impl Fn(&T) -> String + Send + Sync + 'static,
+    ) -> Self {
         Self {
-            validator,
-            error_message_generator,
+            validator: Box::new(validator),
+            error_message_generator: Box::new(error_message_generator),
         }
     }
 
@@ -70,5 +70,50 @@ impl<T: ?Sized> ValidatorManager<T> {
     /// Returns a `String` that describes the validation error.
     pub fn generate_error_message(&self, input: &T) -> String {
         (self.error_message_generator)(input)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn function_pointer_validator() {
+        let vm = ValidatorManager::new(
+            |text: &str| text.len() > 3,
+            |text: &str| format!("Too short: {}", text.len()),
+        );
+        assert!(vm.validate("hello"));
+        assert!(!vm.validate("hi"));
+        assert_eq!(vm.generate_error_message("hi"), "Too short: 2");
+    }
+
+    #[test]
+    fn closure_captures_owned_data() {
+        let forbidden: Vec<String> = vec!["admin".into(), "root".into()];
+        let vm = ValidatorManager::new(
+            move |text: &str| !forbidden.contains(&text.to_string()),
+            |text: &str| format!("'{}' is not allowed", text),
+        );
+        assert!(!vm.validate("admin"));
+        assert!(vm.validate("user"));
+    }
+
+    #[test]
+    fn closure_captures_shared_state() {
+        let counter = Arc::new(Mutex::new(0u32));
+        let counter_clone = Arc::clone(&counter);
+        let vm = ValidatorManager::new(
+            move |_text: &str| {
+                let mut c = counter_clone.lock().unwrap();
+                *c += 1;
+                true
+            },
+            |_text: &str| String::new(),
+        );
+        vm.validate("a");
+        vm.validate("b");
+        assert_eq!(*counter.lock().unwrap(), 2);
     }
 }
