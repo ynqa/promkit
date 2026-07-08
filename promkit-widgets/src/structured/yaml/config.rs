@@ -204,8 +204,12 @@ impl Config {
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
+        let mut i = 0;
 
-        for (i, row) in rows.iter().enumerate() {
+        while i < rows.len() {
+            let source_index = i;
+            let row = &rows[i];
+
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts: Vec<StyledGraphemes> = Vec::new();
 
@@ -227,10 +231,38 @@ impl Config {
                 if let Some(value) = self.render_node(row, &row.node) {
                     parts.push(value);
                 }
+
+                if matches!(
+                    row.node,
+                    YamlNode::Container(ContainerNode::Open {
+                        typ: ContainerType::Object,
+                        collapsed: false,
+                        ..
+                    })
+                ) && row.is_sequence_item
+                {
+                    if let Some(next_row) = rows.get(i + 1) {
+                        if next_row.depth == row.depth + 1 && !next_row.is_sequence_item {
+                            if let Some(key) = &next_row.key {
+                                parts.push(
+                                    StyledGraphemes::from(Self::render_yaml_string(key))
+                                        .apply_style(self.key_style),
+                                );
+                                parts.push(StyledGraphemes::from(": "));
+
+                                if let Some(value) = self.render_node(next_row, &next_row.node) {
+                                    parts.push(value);
+                                }
+
+                                i += 1;
+                            }
+                        }
+                    }
+                }
             }
 
             let mut content: StyledGraphemes = parts.into_iter().collect();
-            content = content.apply_attribute(if i == 0 {
+            content = content.apply_attribute(if source_index == 0 {
                 self.active_item_attribute
             } else {
                 self.inactive_item_attribute
@@ -247,6 +279,8 @@ impl Config {
                     formatted.extend(line.wrapped_lines(width));
                 }
             }
+
+            i += 1;
         }
 
         formatted
@@ -303,10 +337,7 @@ mod tests {
 
             assert_eq!(
                 lines,
-                vec![
-                    "  - name: alice".to_string(),
-                    "    age: 20".to_string(),
-                ]
+                vec!["  - name: alice".to_string(), "    age: 20".to_string(),]
             );
         }
     }
