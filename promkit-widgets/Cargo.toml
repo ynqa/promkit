@@ -1,6 +1,6 @@
 [package]
 name = "promkit-widgets"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Widgets for promkit"
@@ -10,9 +10,10 @@ readme = "README.md"
 
 [features]
 default = []
-all = ["checkbox", "jsonstream", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
+all = ["checkbox", "json", "yaml", "listbox", "serde", "spinner", "status", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
-jsonstream = ["dep:serde_json", "dep:rayon"]
+json = ["dep:serde_json", "dep:rayon"]
+yaml = ["dep:serde_yaml", "dep:rayon"]
 listbox = []
 serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
@@ -23,16 +24,17 @@ tree = []
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.3.0" }
+promkit-core = { path = "../promkit-core", version = "=0.4.0" }
 
 # Optional dependencies
 rayon = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+serde_yaml = { workspace = true, optional = true }
 termcfg = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
-# Enable `jsonstream` feature when `jsonz` testing
-promkit-widgets = { path = ".", features = ["jsonstream"] }
+# Enable `json` feature when `jsonz` testing
+promkit-widgets = { path = ".", features = ["json", "yaml"] }
 toml = "0.9.8"

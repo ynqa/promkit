@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use promkit_widgets::jsonstream::jsonz::*;
+use promkit_widgets::json::jsonz::*;
 
 #[test]
 fn test_collapsed_containers() {

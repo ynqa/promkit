@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.12.1"
+promkit = "0.13.0"
 ```
 
 ## Features
@@ -36,6 +36,7 @@ promkit = "0.12.1"
   - [Checkbox](#checkbox) - Multiple selection checkbox interface
   - [Tree](#tree) - Tree display for hierarchical data like file systems
   - [JSON](#json) - Parse and interactively display JSON data
+  - [YAML](#yaml) - Parse and interactively display YAML data
   - [Text](#text) - Static text display
 
 ## Concept
@@ -186,6 +187,20 @@ cargo run --bin json ${PATH_TO_JSON_FILE}
 [Code](./examples/json/src/json.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/json.gif" width="50%" height="auto">
+
+### YAML
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin yaml ${PATH_TO_YAML_FILE}
+```
+</details>
+
+[Code](./examples/yaml/src/yaml.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/yaml.gif" width="50%" height="auto">
 
 ### Text
 

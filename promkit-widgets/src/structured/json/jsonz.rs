@@ -1,92 +1,105 @@
 use rayon::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum ContainerType {
-    Object,
-    Array,
-}
-
-impl ContainerType {
-    pub fn open_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{",
-            ContainerType::Array => "[",
-        }
-    }
-
-    pub fn close_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "}",
-            ContainerType::Array => "]",
-        }
-    }
-
-    pub fn empty_str(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{}",
-            ContainerType::Array => "[]",
-        }
-    }
-
-    pub fn collapsed_preview(&self) -> &'static str {
-        match self {
-            ContainerType::Object => "{…}",
-            ContainerType::Array => "[…]",
-        }
-    }
-}
+pub use crate::structured::{ContainerNode, ContainerType, PrettyRender, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Value {
+pub enum JsonNode {
     Null,
     Boolean(bool),
     Number(serde_json::Number),
     String(String),
-    Empty {
-        typ: ContainerType,
-    },
-    Open {
-        typ: ContainerType,
-        collapsed: bool,
-        close_index: usize,
-    },
-    Close {
-        typ: ContainerType,
-        collapsed: bool,
-        open_index: usize,
-    },
+    Container(ContainerNode),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Row {
     pub depth: usize,
-    pub k: Option<String>,
-    pub v: Value,
+    pub key: Option<String>,
+    pub node: JsonNode,
 }
 
-pub trait RowOperation {
-    fn up(&self, current: usize) -> usize;
-    fn head(&self) -> usize;
-    fn down(&self, current: usize) -> usize;
-    fn tail(&self) -> usize;
-    fn toggle(&mut self, current: usize) -> usize;
-    fn set_rows_visibility(&mut self, collapsed: bool);
-    fn extract(&self, current: usize, n: usize) -> Vec<Row>;
+impl PrettyRender for [Row] {
+    fn render_pretty(&self, indent: usize) -> String {
+        let mut result = String::new();
+        let mut first_in_container = true;
+
+        for (i, row) in self.iter().enumerate() {
+            if !matches!(&row.node, JsonNode::Container(ContainerNode::Close { .. })) {
+                if !result.is_empty() {
+                    result.push('\n');
+                }
+                result.push_str(&" ".repeat(indent * row.depth));
+            }
+
+            if let Some(key) = &row.key {
+                result.push('"');
+                result.push_str(key);
+                result.push_str("\": ");
+            }
+
+            match &row.node {
+                JsonNode::Null => result.push_str("null"),
+                JsonNode::Boolean(b) => result.push_str(&b.to_string()),
+                JsonNode::Number(n) => result.push_str(&n.to_string()),
+                JsonNode::String(s) => {
+                    result.push('"');
+                    result.push_str(&s.replace('\n', "\\n"));
+                    result.push('"');
+                }
+                JsonNode::Container(node) => match node {
+                    ContainerNode::Empty { typ } => {
+                        result.push_str(typ.empty_str());
+                    }
+                    ContainerNode::Open { typ, .. } => {
+                        result.push_str(typ.open_str());
+                    }
+                    ContainerNode::Close { typ, .. } => {
+                        if !first_in_container {
+                            result.push('\n');
+                            result.push_str(&" ".repeat(indent * row.depth));
+                        }
+                        result.push_str(typ.close_str());
+                    }
+                },
+            }
+
+            if i + 1 < self.len() {
+                if matches!(
+                    &self[i + 1].node,
+                    JsonNode::Container(ContainerNode::Close { .. })
+                ) {
+                } else if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
+                } else {
+                    result.push(',');
+                }
+            }
+
+            if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
+                first_in_container = true;
+            } else {
+                first_in_container = false;
+            }
+        }
+
+        result
+    }
 }
 
 impl RowOperation for Vec<Row> {
+    type Row = Row;
+
     fn up(&self, current: usize) -> usize {
         if current == 0 {
             return 0;
         }
 
         let prev = current - 1;
-        match &self[prev].v {
-            Value::Close {
+        match &self[prev].node {
+            JsonNode::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
                 ..
-            } if *collapsed => *open_index,
+            }) if *collapsed => *open_index,
             _ => prev,
         }
     }
@@ -101,12 +114,12 @@ impl RowOperation for Vec<Row> {
         }
 
         let next = current + 1;
-        match &self[current].v {
-            Value::Open {
+        match &self[current].node {
+            JsonNode::Container(ContainerNode::Open {
                 collapsed,
                 close_index,
                 ..
-            } if *collapsed => {
+            }) if *collapsed => {
                 let next_pos = close_index + 1;
                 if next_pos >= self.len() {
                     current
@@ -124,12 +137,12 @@ impl RowOperation for Vec<Row> {
         }
 
         let mut last = self.len() - 1;
-        match &self[last].v {
-            Value::Close {
+        match &self[last].node {
+            JsonNode::Container(ContainerNode::Close {
                 collapsed,
                 open_index,
                 ..
-            } if *collapsed => {
+            }) if *collapsed => {
                 last = *open_index;
                 last
             }
@@ -138,50 +151,50 @@ impl RowOperation for Vec<Row> {
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        match &self[current].v {
-            Value::Open {
+        match &self[current].node {
+            JsonNode::Container(ContainerNode::Open {
                 typ,
                 collapsed,
                 close_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
                 let close_idx = *close_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = Value::Open {
+                self[current].node = JsonNode::Container(ContainerNode::Open {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     close_index: close_idx,
-                };
+                });
 
-                self[close_idx].v = Value::Close {
+                self[close_idx].node = JsonNode::Container(ContainerNode::Close {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     open_index: current,
-                };
+                });
 
                 current
             }
-            Value::Close {
+            JsonNode::Container(ContainerNode::Close {
                 typ,
                 collapsed,
                 open_index,
-            } => {
+            }) => {
                 let new_collapsed = !collapsed;
                 let open_idx = *open_index;
                 let typ_clone = typ.clone();
 
-                self[current].v = Value::Close {
+                self[current].node = JsonNode::Container(ContainerNode::Close {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     open_index: open_idx,
-                };
+                });
 
-                self[open_idx].v = Value::Open {
+                self[open_idx].node = JsonNode::Container(ContainerNode::Open {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     close_index: current,
-                };
+                });
 
                 if new_collapsed { open_idx } else { current }
             }
@@ -191,24 +204,24 @@ impl RowOperation for Vec<Row> {
 
     fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
-            if let Value::Open {
+            if let JsonNode::Container(ContainerNode::Open {
                 typ, close_index, ..
-            } = &row.v
+            }) = &row.node
             {
-                row.v = Value::Open {
+                row.node = JsonNode::Container(ContainerNode::Open {
                     typ: typ.clone(),
                     collapsed,
                     close_index: *close_index,
-                };
-            } else if let Value::Close {
+                });
+            } else if let JsonNode::Container(ContainerNode::Close {
                 typ, open_index, ..
-            } = &row.v
+            }) = &row.node
             {
-                row.v = Value::Close {
+                row.node = JsonNode::Container(ContainerNode::Close {
                     typ: typ.clone(),
                     collapsed,
                     open_index: *open_index,
-                };
+                });
             }
         });
     }
@@ -222,12 +235,12 @@ impl RowOperation for Vec<Row> {
             result.push(self[i].clone());
             remaining -= 1;
 
-            match &self[i].v {
-                Value::Open {
+            match &self[i].node {
+                JsonNode::Container(ContainerNode::Open {
                     collapsed: true,
                     close_index,
                     ..
-                } => {
+                }) => {
                     i = *close_index + 1;
                 }
                 _ => {
@@ -250,32 +263,32 @@ fn process_value(
         serde_json::Value::Null => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::Null,
+                key: key,
+                node: JsonNode::Null,
             });
             rows.len() - 1
         }
         serde_json::Value::Bool(b) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::Boolean(*b),
+                key: key,
+                node: JsonNode::Boolean(*b),
             });
             rows.len() - 1
         }
         serde_json::Value::Number(n) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::Number(n.clone()),
+                key: key,
+                node: JsonNode::Number(n.clone()),
             });
             rows.len() - 1
         }
         serde_json::Value::String(s) => {
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::String(s.clone()),
+                key: key,
+                node: JsonNode::String(s.clone()),
             });
             rows.len() - 1
         }
@@ -283,10 +296,10 @@ fn process_value(
             if arr.is_empty() {
                 rows.push(Row {
                     depth,
-                    k: key,
-                    v: Value::Empty {
+                    key: key,
+                    node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Array,
-                    },
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -295,12 +308,12 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::Open {
+                key: key,
+                node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Array,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
             for value in arr {
@@ -310,19 +323,19 @@ fn process_value(
             let close_index = rows.len();
             rows.push(Row {
                 depth,
-                k: None,
-                v: Value::Close {
+                key: None,
+                node: JsonNode::Container(ContainerNode::Close {
                     typ: ContainerType::Array,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].v = Value::Open {
+            rows[open_index].node = JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }
@@ -330,10 +343,10 @@ fn process_value(
             if obj.is_empty() {
                 rows.push(Row {
                     depth,
-                    k: key,
-                    v: Value::Empty {
+                    key: key,
+                    node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Object,
-                    },
+                    }),
                 });
                 return rows.len() - 1;
             }
@@ -342,12 +355,12 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                k: key,
-                v: Value::Open {
+                key: key,
+                node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Object,
                     collapsed: false,
                     close_index: 0,
-                },
+                }),
             });
 
             for (key, value) in obj {
@@ -357,19 +370,19 @@ fn process_value(
             let close_index = rows.len();
             rows.push(Row {
                 depth,
-                k: None,
-                v: Value::Close {
+                key: None,
+                node: JsonNode::Container(ContainerNode::Close {
                     typ: ContainerType::Object,
                     collapsed: false,
                     open_index,
-                },
+                }),
             });
 
-            rows[open_index].v = Value::Open {
+            rows[open_index].node = JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
-            };
+            });
 
             open_index
         }

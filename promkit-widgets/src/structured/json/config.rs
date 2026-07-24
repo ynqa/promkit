@@ -3,7 +3,8 @@ use promkit_core::{
     grapheme::StyledGraphemes,
 };
 
-use super::jsonz::{ContainerType, Row, Value};
+use super::jsonz::{JsonNode, Row};
+use crate::structured::{ContainerNode, ContainerType};
 
 /// Defines the behavior for handling lines that
 /// exceed the available width in the terminal when rendering JSON data.
@@ -111,58 +112,8 @@ impl Default for Config {
 }
 
 impl Config {
-    fn truncate_line_with_ellipsis(line: StyledGraphemes, width: usize) -> StyledGraphemes {
-        if line.widths() <= width {
-            return line;
-        }
-
-        if width == 0 {
-            return StyledGraphemes::default();
-        }
-
-        let ellipsis: StyledGraphemes = StyledGraphemes::from("…");
-        let ellipsis_width = ellipsis.widths();
-        if width <= ellipsis_width {
-            return ellipsis;
-        }
-
-        let mut truncated = StyledGraphemes::default();
-        let mut current_width = 0;
-        for g in line.iter() {
-            if current_width + g.width() + ellipsis_width > width {
-                break;
-            }
-            truncated.push_back(g.clone());
-            current_width += g.width();
-        }
-
-        vec![truncated, ellipsis].into_iter().collect()
-    }
-
-    fn wrap_line(line: StyledGraphemes, width: usize) -> Vec<StyledGraphemes> {
-        let mut wrapped = vec![StyledGraphemes::default()];
-        let mut current_width = 0;
-
-        for g in line.iter() {
-            if g.width() > width {
-                continue;
-            }
-            if current_width + g.width() > width {
-                wrapped.push(StyledGraphemes::default());
-                current_width = 0;
-            }
-            wrapped
-                .last_mut()
-                .expect("wrapped always contains at least one row")
-                .push_back(g.clone());
-            current_width += g.width();
-        }
-
-        wrapped
-    }
-
     /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
-    pub fn format_for_terminal_display(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+    pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
         let width = width as usize;
 
@@ -170,74 +121,87 @@ impl Config {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
             let mut parts = Vec::new();
 
-            if let Some(key) = &row.k {
+            if let Some(key) = &row.key {
                 parts.push(
                     StyledGraphemes::from(format!("\"{}\"", key)).apply_style(self.key_style),
                 );
                 parts.push(StyledGraphemes::from(": "));
             }
 
-            match &row.v {
-                Value::Null => {
+            match &row.node {
+                JsonNode::Null => {
                     parts.push(StyledGraphemes::from("null").apply_style(self.null_value_style));
                 }
-                Value::Boolean(b) => {
+                JsonNode::Boolean(b) => {
                     parts.push(
                         StyledGraphemes::from(b.to_string()).apply_style(self.boolean_value_style),
                     );
                 }
-                Value::Number(n) => {
+                JsonNode::Number(n) => {
                     parts.push(
                         StyledGraphemes::from(n.to_string()).apply_style(self.number_value_style),
                     );
                 }
-                Value::String(s) => {
+                JsonNode::String(s) => {
                     let escaped = s.replace('\n', "\\n");
                     parts.push(
                         StyledGraphemes::from(format!("\"{}\"", escaped))
                             .apply_style(self.string_value_style),
                     );
                 }
-                Value::Empty { typ } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    parts.push(StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style));
-                }
-                Value::Open { typ, collapsed, .. } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    if *collapsed {
+                JsonNode::Container(node) => match node {
+                    ContainerNode::Empty { typ } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
                         parts.push(
-                            StyledGraphemes::from(typ.collapsed_preview())
-                                .apply_style(bracket_style),
+                            StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style),
                         );
-                    } else {
-                        parts
-                            .push(StyledGraphemes::from(typ.open_str()).apply_style(bracket_style));
                     }
-                }
-                Value::Close { typ, .. } => {
-                    let bracket_style = match typ {
-                        ContainerType::Object => self.curly_brackets_style,
-                        ContainerType::Array => self.square_brackets_style,
-                    };
-                    // We don't need to check collapsed here because:
-                    // 1. If the corresponding Open is collapsed, this Close will be skipped during `extract_rows`
-                    // 2. If the Open is not collapsed, we want to show the closing bracket
-                    parts.push(StyledGraphemes::from(typ.close_str()).apply_style(bracket_style));
-                }
+                    ContainerNode::Open { typ, collapsed, .. } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
+                        if *collapsed {
+                            parts.push(
+                                StyledGraphemes::from(typ.collapsed_preview())
+                                    .apply_style(bracket_style),
+                            );
+                        } else {
+                            parts.push(
+                                StyledGraphemes::from(typ.open_str()).apply_style(bracket_style),
+                            );
+                        }
+                    }
+                    ContainerNode::Close { typ, .. } => {
+                        let bracket_style = match typ {
+                            ContainerType::Object => self.curly_brackets_style,
+                            ContainerType::Array => self.square_brackets_style,
+                        };
+                        // We don't need to check collapsed here because:
+                        // 1. If the corresponding Open is collapsed, this Close will be skipped during `extract_rows`
+                        // 2. If the Open is not collapsed, we want to show the closing bracket
+                        parts.push(
+                            StyledGraphemes::from(typ.close_str()).apply_style(bracket_style),
+                        );
+                    }
+                },
             }
 
             if i + 1 < rows.len() {
-                if let Value::Close { .. } = rows[i + 1].v {
-                } else if let Value::Open {
-                    collapsed: false, ..
-                } = rows[i].v
-                {
+                if matches!(
+                    &rows[i + 1].node,
+                    JsonNode::Container(ContainerNode::Close { .. })
+                ) {
+                } else if matches!(
+                    &rows[i].node,
+                    JsonNode::Container(ContainerNode::Open {
+                        collapsed: false,
+                        ..
+                    })
+                ) {
                 } else {
                     parts.push(StyledGraphemes::from(","));
                 }
@@ -258,92 +222,16 @@ impl Config {
 
             match self.overflow_mode {
                 OverflowMode::Truncate => {
-                    line = Self::truncate_line_with_ellipsis(line, width);
+                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
                     formatted.push(line);
                 }
                 OverflowMode::Wrap => {
-                    formatted.extend(Self::wrap_line(line, width));
+                    formatted.extend(line.wrapped_lines(width));
                 }
             }
         }
 
         formatted
-    }
-
-    /// Formats a slice of Rows to a raw JSON string, ignoring collapsed and truncated states
-    pub fn format_raw_json(&self, rows: &[Row]) -> String {
-        let mut result = String::new();
-        let mut first_in_container = true;
-
-        for (i, row) in rows.iter().enumerate() {
-            // Add indentation
-            if !matches!(row.v, Value::Close { .. }) {
-                if !result.is_empty() {
-                    result.push('\n');
-                }
-                result.push_str(&" ".repeat(self.indent * row.depth));
-            }
-
-            // Add key if present
-            if let Some(key) = &row.k {
-                result.push('"');
-                result.push_str(key);
-                result.push_str("\": ");
-            }
-
-            // Add value
-            match &row.v {
-                Value::Null => result.push_str("null"),
-                Value::Boolean(b) => result.push_str(&b.to_string()),
-                Value::Number(n) => result.push_str(&n.to_string()),
-                Value::String(s) => {
-                    result.push('"');
-                    result.push_str(&s.replace('\n', "\\n"));
-                    result.push('"');
-                }
-                Value::Empty { typ } => {
-                    result.push_str(match typ {
-                        ContainerType::Object => "{}",
-                        ContainerType::Array => "[]",
-                    });
-                }
-                Value::Open { typ, .. } => {
-                    result.push(match typ {
-                        ContainerType::Object => '{',
-                        ContainerType::Array => '[',
-                    });
-                }
-                Value::Close { typ, .. } => {
-                    if !first_in_container {
-                        result.push('\n');
-                        result.push_str(&" ".repeat(self.indent * row.depth));
-                    }
-                    result.push(match typ {
-                        ContainerType::Object => '}',
-                        ContainerType::Array => ']',
-                    });
-                }
-            }
-
-            // Add comma if needed
-            if i + 1 < rows.len() {
-                if let Value::Close { .. } = rows[i + 1].v {
-                    // Don't add comma before closing bracket
-                } else if let Value::Open { .. } = rows[i].v {
-                    // Don't add comma after opening bracket
-                } else {
-                    result.push(',');
-                }
-            }
-
-            if let Value::Open { .. } = row.v {
-                first_in_container = true;
-            } else {
-                first_in_container = false;
-            }
-        }
-
-        result
     }
 }
 
@@ -352,60 +240,10 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    mod format_raw_json {
-        use std::str::FromStr;
-
+    mod render_terminal_rows {
         use super::*;
 
-        use crate::jsonstream::jsonz::create_rows;
-
-        #[test]
-        fn test() {
-            let expected = r#"
-{
-    "array": [
-        {
-            "key": "value"
-        },
-        [
-            1,
-            2,
-            3
-        ],
-        {
-            "nested": true
-        }
-    ],
-    "object": {
-        "array": [
-            1,
-            2,
-            3
-        ],
-        "nested": {
-            "value": "test"
-        }
-    }
-}"#
-            .trim();
-
-            assert_eq!(
-                Config {
-                    indent: 4,
-                    ..Default::default()
-                }
-                .format_raw_json(&create_rows([
-                    &serde_json::Value::from_str(&expected).unwrap()
-                ])),
-                expected,
-            );
-        }
-    }
-
-    mod format_for_terminal_display {
-        use super::*;
-
-        use crate::jsonstream::jsonz::create_rows;
+        use crate::structured::json::jsonz::create_rows;
 
         #[test]
         fn test_ellipsis_mode_truncates_with_ellipsis() {
@@ -420,7 +258,7 @@ mod tests {
                 overflow_mode: OverflowMode::Truncate,
                 ..Default::default()
             }
-            .format_for_terminal_display(&rows, width);
+            .render_terminal_rows(&rows, width);
 
             assert_eq!(lines.len(), rows.len());
             assert!(lines.iter().all(|line| line.widths() <= width as usize));
@@ -444,7 +282,7 @@ mod tests {
                 overflow_mode: OverflowMode::Wrap,
                 ..Default::default()
             }
-            .format_for_terminal_display(&rows, width);
+            .render_terminal_rows(&rows, width);
 
             assert!(lines.len() > rows.len());
             assert!(lines.iter().all(|line| line.widths() <= width as usize));
@@ -486,19 +324,19 @@ mod tests {
         #[test]
         fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
-indent = 4
-lines = 7
-curly_brackets_style = "attr=bold"
-square_brackets_style = "attr=bold"
-key_style = "fg=cyan"
-string_value_style = "fg=green"
-number_value_style = "fg=yellow"
-boolean_value_style = "fg=magenta"
-null_value_style = "fg=grey"
-active_item_attribute = "underlined"
-inactive_item_attribute = "dim"
-overflow_mode = "Wrap"
-"#;
+                indent = 4
+                lines = 7
+                curly_brackets_style = "attr=bold"
+                square_brackets_style = "attr=bold"
+                key_style = "fg=cyan"
+                string_value_style = "fg=green"
+                number_value_style = "fg=yellow"
+                boolean_value_style = "fg=magenta"
+                null_value_style = "fg=grey"
+                active_item_attribute = "underlined"
+                inactive_item_attribute = "dim"
+                overflow_mode = "Wrap"
+            "#;
 
             let formatter: Config = toml::from_str(input).unwrap();
 

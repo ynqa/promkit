@@ -2,7 +2,7 @@ use std::{collections::HashSet, str::FromStr};
 
 use serde_json::Deserializer;
 
-use promkit_widgets::jsonstream::jsonz::*;
+use promkit_widgets::json::jsonz::*;
 
 #[test]
 fn test_get_all_paths() {

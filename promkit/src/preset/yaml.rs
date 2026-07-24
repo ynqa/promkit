@@ -1,4 +1,4 @@
-//! Supports creating and interacting with a tree structure for hierarchical data.
+//! Enables parsing and interaction with YAML data.
 
 use crate::{
     core::{
@@ -12,43 +12,46 @@ use crate::{
     },
     preset::Evaluator,
     widgets::{
-        structured::tree::{self, config::Config, Document},
         text::{self, Text},
+        yaml::{
+            self,
+            config::{Config, OverflowMode},
+            Document,
+        },
     },
     Signal,
 };
 
 pub mod evaluate;
 
-/// Represents the indices of various components in the tree preset.
+/// Represents the indices of various components in the YAML preset.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
-    Tree = 1,
+    Yaml = 1,
 }
 
-/// Represents a tree component for creating
-/// and managing a hierarchical list of options.
-pub struct Tree {
+/// Represents a YAML preset for rendering YAML data and titles with customizable styles.
+pub struct Yaml {
     /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
     /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator: Evaluator<Self>,
-    /// State for the title displayed above the tree.
+    /// State for the title text.
     pub title: text::State,
-    /// State for the tree itself.
-    pub tree: tree::State,
+    /// State for the YAML data, including formatting and rendering options.
+    pub yaml: yaml::State,
 }
 
 #[async_trait::async_trait]
-impl crate::Prompt for Tree {
+impl crate::Prompt for Yaml {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
                     (Index::Title, self.title.create_graphemes(size.0, size.1)),
-                    (Index::Tree, self.tree.create_graphemes(size.0, size.1)),
+                    (Index::Yaml, self.yaml.create_graphemes(size.0, size.1)),
                 ],
                 true,
             )
@@ -64,15 +67,15 @@ impl crate::Prompt for Tree {
         ret
     }
 
-    type Return = Vec<String>;
+    type Return = ();
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
-        Ok(self.tree.document.get())
+        Ok(())
     }
 }
 
-impl Tree {
-    /// Creates a new `Tree` instance with the specified tree document.
+impl Yaml {
+    /// Creates a new YAML preset with the provided YAML document.
     pub fn new(document: Document) -> Self {
         Self {
             renderer: None,
@@ -87,24 +90,46 @@ impl Tree {
                 },
                 ..Default::default()
             },
-            tree: tree::State {
+            yaml: yaml::State {
                 document,
                 config: Config {
-                    folded_symbol: String::from("▶︎ "),
-                    unfolded_symbol: String::from("▼ "),
-                    active_item_style: ContentStyle {
-                        foreground_color: Some(Color::DarkCyan),
+                    map_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
                     },
-                    inactive_item_style: ContentStyle::default(),
+                    sequence_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    },
+                    key_style: ContentStyle {
+                        foreground_color: Some(Color::DarkBlue),
+                        ..Default::default()
+                    },
+                    tag_style: ContentStyle {
+                        foreground_color: Some(Color::DarkYellow),
+                        ..Default::default()
+                    },
+                    string_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    number_style: ContentStyle::default(),
+                    boolean_style: ContentStyle::default(),
+                    null_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        ..Default::default()
+                    },
+                    active_item_attribute: Attribute::Undercurled,
+                    inactive_item_attribute: Attribute::Dim,
                     indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
                     lines: Default::default(),
                 },
             },
         }
     }
 
-    /// Sets the title text displayed above the tree.
+    /// Sets the title text for the YAML preset.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title.text = Text::from(text);
         self
@@ -116,43 +141,37 @@ impl Tree {
         self
     }
 
-    /// Sets the symbol used to indicate a folded (collapsed) node.
-    pub fn folded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.config.folded_symbol = symbol.as_ref().to_string();
+    /// Sets the number of lines to be used for rendering the YAML data.
+    pub fn yaml_lines(mut self, lines: usize) -> Self {
+        self.yaml.config.lines = Some(lines);
         self
     }
 
-    /// Sets the symbol used to indicate an unfolded (expanded) node.
-    pub fn unfolded_symbol<T: AsRef<str>>(mut self, symbol: T) -> Self {
-        self.tree.config.unfolded_symbol = symbol.as_ref().to_string();
-        self
-    }
-
-    /// Sets the style for active (currently selected) items.
-    pub fn active_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.config.active_item_style = style;
-        self
-    }
-
-    /// Sets the style for inactive (not currently selected) items.
-    pub fn inactive_item_style(mut self, style: ContentStyle) -> Self {
-        self.tree.config.inactive_item_style = style;
-        self
-    }
-
-    /// Sets the number of lines to be used for displaying the tree.
-    pub fn tree_lines(mut self, lines: usize) -> Self {
-        self.tree.config.lines = Some(lines);
-        self
-    }
-
-    /// Sets the indentation level for rendering the tree data.
+    /// Sets the indentation level for rendering the YAML data.
     pub fn indent(mut self, indent: usize) -> Self {
-        self.tree.config.indent = indent;
+        self.yaml.config.indent = indent;
         self
     }
 
-    /// Sets the evaluator function for processing events in the tree.
+    /// Sets the overflow mode for rendering YAML values that exceed the available width.
+    pub fn overflow_mode(mut self, mode: OverflowMode) -> Self {
+        self.yaml.config.overflow_mode = mode;
+        self
+    }
+
+    /// Sets the attribute for active (currently selected) items.
+    pub fn active_item_attribute(mut self, attr: Attribute) -> Self {
+        self.yaml.config.active_item_attribute = attr;
+        self
+    }
+
+    /// Sets the attribute for inactive (not currently selected) items.
+    pub fn inactive_item_attribute(mut self, attr: Attribute) -> Self {
+        self.yaml.config.inactive_item_attribute = attr;
+        self
+    }
+
+    /// Sets the evaluator function for handling events in the YAML preset.
     pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
         self.evaluator = evaluator;
         self
@@ -165,7 +184,7 @@ impl Tree {
                 renderer
                     .update([
                         (Index::Title, self.title.create_graphemes(width, height)),
-                        (Index::Tree, self.tree.create_graphemes(width, height)),
+                        (Index::Yaml, self.yaml.create_graphemes(width, height)),
                     ])
                     .render()
                     .await

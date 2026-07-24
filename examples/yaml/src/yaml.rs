@@ -7,23 +7,24 @@ use std::{
 use clap::Parser;
 use promkit::{
     core::crossterm::{event, execute, terminal},
-    preset::json::Json,
+    preset::yaml::Yaml,
     widgets::{
-        json::{config::OverflowMode, Document},
-        serde_json::{self, Deserializer, Value},
+        serde_yaml::{Deserializer, Value},
+        yaml::{config::OverflowMode, Document},
     },
     Prompt,
 };
+use serde::Deserialize;
 
-/// Interactive JSON viewer powered by promkit.
+/// Interactive YAML viewer powered by promkit.
 #[derive(Debug, Parser)]
-#[command(name = "json", version)]
+#[command(name = "yaml", version)]
 struct Args {
-    /// Optional path to a JSON file. Reads from stdin when omitted or when "-" is specified.
+    /// Optional path to a YAML file. Reads from stdin when omitted or when "-" is specified.
     input: Option<PathBuf>,
 }
 
-/// Read JSON input from a file or stdin based on the provided arguments.
+/// Read YAML input from a file or stdin based on the provided arguments.
 fn parse_input(args: &Args) -> anyhow::Result<String> {
     let mut input = String::new();
 
@@ -42,12 +43,11 @@ fn parse_input(args: &Args) -> anyhow::Result<String> {
     Ok(input)
 }
 
-/// Parse a JSON string into a vector of serde_json::Value,
-/// allowing for multiple JSON objects in the input.
-fn parse_json_values(input: &str) -> anyhow::Result<Vec<Value>> {
-    let deserializer: serde_json::StreamDeserializer<'_, serde_json::de::StrRead<'_>, Value> =
-        Deserializer::from_str(input).into_iter::<Value>();
-    deserializer
+/// Parse a YAML string into a vector of serde_yaml::Value,
+/// allowing for multiple YAML documents in the input.
+fn parse_yaml_values(input: &str) -> anyhow::Result<Vec<Value>> {
+    Deserializer::from_str(input)
+        .map(Value::deserialize)
         .collect::<Result<Vec<_>, _>>()
         .map_err(anyhow::Error::from)
 }
@@ -69,7 +69,7 @@ impl Drop for TerminalGuard {
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let input = parse_input(&args)?;
-    let values = parse_json_values(&input)?;
+    let values = parse_yaml_values(&input)?;
 
     execute!(
         io::stdout(),
@@ -79,8 +79,8 @@ async fn main() -> anyhow::Result<()> {
     let _terminal_guard = TerminalGuard;
 
     let document = Document::new(values.iter());
-    Json::new(document)
-        .title("JSON Viewer")
+    Yaml::new(document)
+        .title("YAML Viewer")
         .overflow_mode(OverflowMode::Wrap)
         .run()
         .await

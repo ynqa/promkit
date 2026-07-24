@@ -4,9 +4,15 @@ mod jsonz {
     mod extract;
     mod get_all_paths;
     mod head;
-    mod jsonl;
+    mod multi_documents;
+    mod render_pretty;
     mod set_rows_visibility;
     mod tail;
     mod toggle;
     mod up;
+}
+
+mod yamlz {
+    mod extract;
+    mod multi_documents;
 }

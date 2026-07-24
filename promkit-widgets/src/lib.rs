@@ -8,12 +8,22 @@ pub mod cursor;
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
 
-#[cfg(feature = "jsonstream")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsonstream")))]
-pub mod jsonstream;
-#[cfg(feature = "jsonstream")]
-#[cfg_attr(docsrs, doc(cfg(feature = "jsonstream")))]
+#[cfg(any(feature = "json", feature = "yaml", feature = "tree"))]
+pub mod structured;
+
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
 pub use serde_json;
+#[cfg(feature = "json")]
+#[cfg_attr(docsrs, doc(cfg(feature = "json")))]
+pub use structured::json;
+
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
+pub use serde_yaml;
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
+pub use structured::yaml;
 
 #[cfg(feature = "listbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
@@ -30,10 +40,6 @@ pub mod status;
 #[cfg(feature = "texteditor")]
 #[cfg_attr(docsrs, doc(cfg(feature = "texteditor")))]
 pub mod text_editor;
-
-#[cfg(feature = "tree")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
-pub mod tree;
 
 #[cfg(feature = "spinner")]
 #[cfg_attr(docsrs, doc(cfg(feature = "spinner")))]

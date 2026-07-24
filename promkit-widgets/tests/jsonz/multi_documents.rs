@@ -1,9 +1,9 @@
 use serde_json::Deserializer;
 
-use promkit_widgets::jsonstream::jsonz::*;
+use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_basic_jsonl() {
+fn test_basic_multi_documents() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {
@@ -30,40 +30,40 @@ fn test_basic_jsonl() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 3,
-            },
+            }),
         }
     );
     assert_eq!(
         rows[1],
         Row {
             depth: 1,
-            k: Some("name".to_string()),
-            v: Value::String("Alice".to_string()),
+            key: Some("name".to_string()),
+            node: JsonNode::String("Alice".to_string()),
         }
     );
     assert_eq!(
         rows[2],
         Row {
             depth: 1,
-            k: Some("age".to_string()),
-            v: Value::Number(serde_json::Number::from(30)),
+            key: Some("age".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(30)),
         }
     );
     assert_eq!(
         rows[3],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 0,
-            },
+            }),
         }
     );
 
@@ -71,59 +71,59 @@ fn test_basic_jsonl() {
         rows[4],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 7,
-            },
+            }),
         }
     );
     assert_eq!(
         rows[5],
         Row {
             depth: 1,
-            k: Some("name".to_string()),
-            v: Value::String("Bob".to_string()),
+            key: Some("name".to_string()),
+            node: JsonNode::String("Bob".to_string()),
         }
     );
     assert_eq!(
         rows[6],
         Row {
             depth: 1,
-            k: Some("age".to_string()),
-            v: Value::Number(serde_json::Number::from(25)),
+            key: Some("age".to_string()),
+            node: JsonNode::Number(serde_json::Number::from(25)),
         }
     );
     assert_eq!(
         rows[7],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: 4,
-            },
+            }),
         }
     );
 
     rows.toggle(0);
     assert_eq!(
-        rows[0].v,
-        Value::Open {
+        rows[0].node,
+        JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 3,
-        }
+        })
     );
     assert_eq!(
-        rows[3].v,
-        Value::Close {
+        rows[3].node,
+        JsonNode::Container(ContainerNode::Close {
             typ: ContainerType::Object,
             collapsed: true,
             open_index: 0,
-        }
+        })
     );
 
     assert_eq!(rows.up(4), 0);
@@ -131,7 +131,7 @@ fn test_basic_jsonl() {
 }
 
 #[test]
-fn test_mixed_jsonl() {
+fn test_mixed_multi_documents() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {
@@ -164,24 +164,24 @@ fn test_mixed_jsonl() {
         rows[0],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
-            },
+            }),
         }
     );
     assert_eq!(
         rows[1],
         Row {
             depth: 1,
-            k: Some("array".to_string()),
-            v: Value::Open {
+            key: Some("array".to_string()),
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 5,
-            },
+            }),
         }
     );
 
@@ -190,8 +190,8 @@ fn test_mixed_jsonl() {
             rows[2 + i],
             Row {
                 depth: 2,
-                k: None,
-                v: Value::Number(serde_json::Number::from(*num)),
+                key: None,
+                node: JsonNode::Number(serde_json::Number::from(*num)),
             }
         );
     }
@@ -201,12 +201,12 @@ fn test_mixed_jsonl() {
         rows[array_start],
         Row {
             depth: 0,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 14,
-            },
+            }),
         }
     );
 
@@ -214,12 +214,12 @@ fn test_mixed_jsonl() {
         rows[array_start + 1],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
 
@@ -229,42 +229,42 @@ fn test_mixed_jsonl() {
         extracted[0],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Open {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
-            },
+            }),
         }
     );
     assert_eq!(
         extracted[1],
         Row {
             depth: 2,
-            k: Some("nested".to_string()),
-            v: Value::Boolean(true),
+            key: Some("nested".to_string()),
+            node: JsonNode::Boolean(true),
         }
     );
     assert_eq!(
         extracted[2],
         Row {
             depth: 1,
-            k: None,
-            v: Value::Close {
+            key: None,
+            node: JsonNode::Container(ContainerNode::Close {
                 typ: ContainerType::Object,
                 collapsed: false,
                 open_index: array_start + 1,
-            },
+            }),
         }
     );
 
     rows.toggle(array_start);
     assert_eq!(
-        rows[array_start].v,
-        Value::Open {
+        rows[array_start].node,
+        JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
             close_index: 14,
-        }
+        })
     );
 }
