@@ -46,6 +46,31 @@ impl TagAwareContainer {
     }
 }
 
+fn renders_as_sequence_mapping_line(row: &Row, next_row: &Row) -> bool {
+    matches!(
+        row.node,
+        YamlNode::Container(ContainerNode::Open {
+            typ: ContainerType::Object,
+            collapsed: false,
+            ..
+        })
+    ) && row.is_sequence_item
+        && next_row.depth == row.depth + 1
+        && !next_row.is_sequence_item
+        && next_row.key.is_some()
+}
+
+fn next_index_after(rows: &[Row], index: usize) -> usize {
+    match TagAwareContainer::get(&rows[index].node) {
+        Some(ContainerNode::Open {
+            collapsed: true,
+            close_index,
+            ..
+        }) => close_index + 1,
+        _ => index + 1,
+    }
+}
+
 impl RowOperation for Vec<Row> {
     type Row = Row;
 
@@ -229,6 +254,7 @@ impl RowOperation for Vec<Row> {
     fn extract(&self, current: usize, n: usize) -> Vec<Row> {
         let mut result = Vec::new();
         let mut i = current;
+        let mut rendered_rows = 0;
 
         while i < self.len()
             && matches!(
@@ -239,7 +265,7 @@ impl RowOperation for Vec<Row> {
             i += 1;
         }
 
-        while i < self.len() && result.len() < n {
+        while i < self.len() && rendered_rows < n {
             let row = &self[i];
             if matches!(
                 TagAwareContainer::get(&row.node),
@@ -250,14 +276,20 @@ impl RowOperation for Vec<Row> {
             }
 
             result.push(row.clone());
-            match TagAwareContainer::get(&row.node) {
-                Some(ContainerNode::Open {
-                    collapsed: true,
-                    close_index,
-                    ..
-                }) => i = close_index + 1,
-                _ => i += 1,
+
+            let next_index = next_index_after(self, i);
+            // The renderer combines these two source rows into one YAML line.
+            // Include both while counting them as one requested visible row.
+            if let Some(next_row) = self.get(next_index)
+                && renders_as_sequence_mapping_line(row, next_row)
+            {
+                result.push(next_row.clone());
+                i = next_index_after(self, next_index);
+            } else {
+                i = next_index;
             }
+
+            rendered_rows += 1;
         }
 
         result
