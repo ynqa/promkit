@@ -65,6 +65,32 @@ fn sequence_mapping_line_start(rows: &[Row], index: usize) -> Option<usize> {
     renders_as_sequence_mapping_line(&rows[previous], &rows[index]).then_some(previous)
 }
 
+fn is_invisible_root_container(row: &Row) -> bool {
+    row.depth == 0
+        && row.key.is_none()
+        && !row.is_sequence_item
+        && matches!(
+            row.node,
+            YamlNode::Container(ContainerNode::Open {
+                collapsed: false,
+                ..
+            })
+        )
+}
+
+fn invisible_root_line_start(rows: &[Row], index: usize) -> Option<usize> {
+    let previous = index.checked_sub(1)?;
+    (is_invisible_root_container(&rows[previous])
+        && matches!(
+            rows[previous].node,
+            YamlNode::Container(ContainerNode::Open {
+                typ: ContainerType::Object,
+                ..
+            })
+        ))
+    .then_some(previous)
+}
+
 fn next_index_after(rows: &[Row], index: usize) -> usize {
     match TagAwareContainer::get(&rows[index].node) {
         Some(ContainerNode::Open {
@@ -100,17 +126,27 @@ impl RowOperation for Vec<Row> {
                 _ => {}
             }
 
+            if is_invisible_root_container(&self[prev]) {
+                if prev == 0 {
+                    return current;
+                }
+                prev -= 1;
+                continue;
+            }
+
             return sequence_mapping_line_start(self, prev).unwrap_or(prev);
         }
     }
 
     fn head(&self) -> usize {
         self.iter()
-            .position(|row| {
+            .enumerate()
+            .position(|(index, row)| {
                 !matches!(
                     TagAwareContainer::get(&row.node),
                     Some(ContainerNode::Close { .. })
-                )
+                ) && !is_invisible_root_container(row)
+                    && sequence_mapping_line_start(self, index).is_none()
             })
             .unwrap_or(0)
     }
@@ -128,6 +164,11 @@ impl RowOperation for Vec<Row> {
                 Some(ContainerNode::Close { .. })
             ) {
                 next += 1;
+                continue;
+            }
+
+            if is_invisible_root_container(&self[next]) {
+                next = next_index_after(self, next);
                 continue;
             }
 
@@ -161,6 +202,7 @@ impl RowOperation for Vec<Row> {
 
     fn toggle(&mut self, current: usize) -> usize {
         let current = sequence_mapping_line_start(self, current).unwrap_or(current);
+        let current = invisible_root_line_start(self, current).unwrap_or(current);
         let container = TagAwareContainer::get(&self[current].node).cloned();
         match container {
             Some(ContainerNode::Open {
@@ -190,7 +232,11 @@ impl RowOperation for Vec<Row> {
                 )
                 .expect("container close node must be present");
 
-                current
+                if !new_collapsed && is_invisible_root_container(&self[current]) {
+                    self.down(current)
+                } else {
+                    current
+                }
             }
             Some(ContainerNode::Close {
                 typ,
@@ -266,10 +312,10 @@ impl RowOperation for Vec<Row> {
         let mut rendered_rows = 0;
 
         while i < self.len()
-            && matches!(
+            && (matches!(
                 TagAwareContainer::get(&self[i].node),
                 Some(ContainerNode::Close { .. })
-            )
+            ) || is_invisible_root_container(&self[i]))
         {
             i += 1;
         }
@@ -281,6 +327,10 @@ impl RowOperation for Vec<Row> {
                 Some(ContainerNode::Close { .. })
             ) {
                 i += 1;
+                continue;
+            }
+            if is_invisible_root_container(row) {
+                i = next_index_after(self, i);
                 continue;
             }
 

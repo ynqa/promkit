@@ -365,7 +365,6 @@ mod tests {
             assert_eq!(
                 lines,
                 vec![
-                    String::new(),
                     "name: alice".to_string(),
                     "address: ".to_string(),
                     "  city: Tokyo".to_string(),

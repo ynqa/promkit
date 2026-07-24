@@ -9,10 +9,9 @@ pub struct Document {
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
-        Self {
-            rows: yamlz::create_rows(iter),
-            position: 0,
-        }
+        let rows = yamlz::create_rows(iter);
+        let position = rows.head();
+        Self { rows, position }
     }
 }
 
@@ -36,7 +35,7 @@ impl Document {
     /// Sets the visibility of all rows.
     pub fn set_nodes_visibility(&mut self, collapsed: bool) {
         self.rows.set_rows_visibility(collapsed);
-        self.position = 0;
+        self.position = self.rows.head();
     }
 
     /// Moves the cursor backward through rows.
