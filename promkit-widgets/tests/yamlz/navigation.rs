@@ -59,3 +59,33 @@ fn toggle_collapses_and_expands_a_combined_sequence_mapping_line() {
         .collect::<Vec<_>>();
     assert_eq!(expanded, vec!["- name: alice", "  age: 20"]);
 }
+
+#[test]
+fn toggle_from_a_merged_mapping_key_targets_its_sequence_item() {
+    let mut rows = sequence_mapping_rows();
+
+    assert_eq!(rows.toggle(2), 1);
+
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&rows.extract(1, 1), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["- {…}"]);
+}
+
+#[test]
+fn tail_does_not_stop_on_a_merged_mapping_key() {
+    let input = serde_yaml::from_str::<serde_yaml::Value>(
+        r#"
+- name: alice
+"#,
+    )
+    .unwrap();
+    let rows = create_rows([&input]);
+
+    assert_eq!(rows.tail(), 1);
+}

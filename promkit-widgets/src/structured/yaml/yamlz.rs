@@ -60,6 +60,11 @@ fn renders_as_sequence_mapping_line(row: &Row, next_row: &Row) -> bool {
         && next_row.key.is_some()
 }
 
+fn sequence_mapping_line_start(rows: &[Row], index: usize) -> Option<usize> {
+    let previous = index.checked_sub(1)?;
+    renders_as_sequence_mapping_line(&rows[previous], &rows[index]).then_some(previous)
+}
+
 fn next_index_after(rows: &[Row], index: usize) -> usize {
     match TagAwareContainer::get(&rows[index].node) {
         Some(ContainerNode::Open {
@@ -80,22 +85,22 @@ impl RowOperation for Vec<Row> {
         }
 
         let mut prev = current - 1;
-        while prev > 0
-            && matches!(
-                TagAwareContainer::get(&self[prev].node),
-                Some(ContainerNode::Close { .. })
-            )
-        {
-            prev -= 1;
-        }
+        loop {
+            match TagAwareContainer::get(&self[prev].node) {
+                Some(ContainerNode::Close {
+                    collapsed: true,
+                    open_index,
+                    ..
+                }) => prev = *open_index,
+                Some(ContainerNode::Close { .. }) if prev > 0 => {
+                    prev -= 1;
+                    continue;
+                }
+                Some(ContainerNode::Close { .. }) => return current,
+                _ => {}
+            }
 
-        if matches!(
-            TagAwareContainer::get(&self[prev].node),
-            Some(ContainerNode::Close { .. })
-        ) {
-            current
-        } else {
-            prev
+            return sequence_mapping_line_start(self, prev).unwrap_or(prev);
         }
     }
 
@@ -115,25 +120,28 @@ impl RowOperation for Vec<Row> {
             return current;
         }
 
-        let mut next = match TagAwareContainer::get(&self[current].node) {
-            Some(ContainerNode::Open {
-                collapsed: true,
-                close_index,
-                ..
-            }) => close_index + 1,
-            _ => current + 1,
-        };
+        let mut next = next_index_after(self, current);
 
-        while next < self.len()
-            && matches!(
+        while next < self.len() {
+            if matches!(
                 TagAwareContainer::get(&self[next].node),
                 Some(ContainerNode::Close { .. })
-            )
-        {
-            next += 1;
+            ) {
+                next += 1;
+                continue;
+            }
+
+            // The first mapping key is rendered on its sequence item's line,
+            // so it is not an independent cursor stop.
+            if sequence_mapping_line_start(self, next).is_some() {
+                next = next_index_after(self, next);
+                continue;
+            }
+
+            return next;
         }
 
-        if next >= self.len() { current } else { next }
+        current
     }
 
     fn tail(&self) -> usize {
@@ -141,17 +149,18 @@ impl RowOperation for Vec<Row> {
             return 0;
         }
 
-        self.iter()
-            .rposition(|row| {
-                !matches!(
-                    TagAwareContainer::get(&row.node),
-                    Some(ContainerNode::Close { .. })
-                )
-            })
-            .unwrap_or(0)
+        let mut current = self.head();
+        loop {
+            let next = self.down(current);
+            if next == current {
+                return current;
+            }
+            current = next;
+        }
     }
 
     fn toggle(&mut self, current: usize) -> usize {
+        let current = sequence_mapping_line_start(self, current).unwrap_or(current);
         let container = TagAwareContainer::get(&self[current].node).cloned();
         match container {
             Some(ContainerNode::Open {
