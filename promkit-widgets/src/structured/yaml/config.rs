@@ -210,7 +210,12 @@ impl Config {
             let source_index = i;
             let row = &rows[i];
 
-            let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
+            // Collection roots occupy depth 0 as an operation row, so their
+            // children start at depth 1 internally. YAML does not render the
+            // root collection itself; remove that structural depth from the
+            // displayed indentation.
+            let display_depth = row.depth.saturating_sub(1);
+            let indent = StyledGraphemes::from(" ".repeat(self.indent * display_depth));
             let mut parts: Vec<StyledGraphemes> = Vec::new();
 
             if matches!(row.node, YamlNode::DocumentSeparator) {
@@ -337,7 +342,34 @@ mod tests {
 
             assert_eq!(
                 lines,
-                vec!["  - name: alice".to_string(), "    age: 20".to_string(),]
+                vec!["- name: alice".to_string(), "  age: 20".to_string(),]
+            );
+        }
+
+        #[test]
+        fn does_not_indent_the_first_root_mapping_key() {
+            let value = serde_yaml::from_str("name: alice\naddress:\n  city: Tokyo\n").unwrap();
+            let document = crate::structured::yaml::Document::new([&value]);
+            let rows = document.extract_rows_from_current(usize::MAX);
+
+            let lines = Config {
+                indent: 2,
+                overflow_mode: OverflowMode::Truncate,
+                ..Default::default()
+            }
+            .render_terminal_rows(&rows, 80)
+            .into_iter()
+            .map(|line| line.to_string())
+            .collect::<Vec<_>>();
+
+            assert_eq!(
+                lines,
+                vec![
+                    String::new(),
+                    "name: alice".to_string(),
+                    "address: ".to_string(),
+                    "  city: Tokyo".to_string(),
+                ]
             );
         }
     }
