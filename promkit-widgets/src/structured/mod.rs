@@ -18,7 +18,7 @@ pub enum ContainerType {
 }
 
 impl ContainerType {
-    /// Oprening string of the container.
+    /// Opening string of the container.
     pub fn open_str(&self) -> &'static str {
         match self {
             ContainerType::Object => "{",
