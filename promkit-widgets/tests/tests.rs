@@ -13,5 +13,6 @@ mod jsonz {
 }
 
 mod yamlz {
+    mod extract;
     mod multi_documents;
 }
