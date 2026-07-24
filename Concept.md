@@ -158,12 +158,7 @@ grapheme updates directly to the shared renderer.
 ## Quality Strategy for Rendering Behavior
 
 Ensuring consistent rendering behavior across terminal environments is a key focus.
-To achieve this, promkit includes a suite of test tools:
-
-- [`termharness`](./termharness)
-- [`zsherio`](./zsherio)
-- [`zsh-render-parity`](./zsh-render-parity)
-
-These tools compare prompt behavior against zsh-oriented scenarios
-(e.g. wrapping, resize, and cursor movement), helping keep terminal behavior
-predictable while the rendering internals evolve.
+The [`readline-loop` scenarios](./examples/readline/tests/scenarios) use
+[`termharness`](https://github.com/ynqa/termharness) to verify wrapping, resizing,
+cursor movement, and viewport behavior against recorded screen expectations.
+This keeps terminal behavior predictable while the rendering internals evolve.

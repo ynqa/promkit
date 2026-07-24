@@ -6,9 +6,6 @@ members = [
   "promkit-core",
   "promkit-derive",
   "promkit-widgets",
-  "termharness",
-  "zsh-render-parity",
-  "zsherio",
 ]
 
 [workspace.dependencies]
@@ -17,7 +14,6 @@ async-trait = "0.1.89"
 crossbeam-skiplist = "0.1.3"
 crossterm = { version = "0.29.0", features = ["use-dev-tty", "event-stream", "serde"] }
 futures = "0.3.32"
-portable-pty = "0.9.0"
 radix_trie = "0.3.0"
 rayon = "1.11.0"
 scopeguard = "1.2.0"
