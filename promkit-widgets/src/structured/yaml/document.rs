@@ -9,10 +9,9 @@ pub struct Document {
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
-        Self {
-            rows: yamlz::create_rows(iter),
-            position: 0,
-        }
+        let rows = yamlz::create_rows(iter);
+        let position = rows.head();
+        Self { rows, position }
     }
 }
 
@@ -27,7 +26,17 @@ impl Document {
         self.rows.extract(self.position, n)
     }
 
-    /// Toggles the visibility of a node at the cursor's current position.
+    /// Toggles the container value associated with the YAML key at the cursor.
+    ///
+    /// The displayed key determines the toggle target:
+    ///
+    /// - A mapping value collapses to `key: {…}`.
+    /// - A sequence value collapses to `key: […]`.
+    /// - A scalar value is unchanged.
+    ///
+    /// For a sequence item such as `- key: value`, the `- ` prefix is retained
+    /// and the same value-based rules apply. Containers without an associated
+    /// key are not used as fallback toggle targets.
     pub fn toggle(&mut self) {
         let index = self.rows.toggle(self.position);
         self.position = index;
@@ -36,7 +45,7 @@ impl Document {
     /// Sets the visibility of all rows.
     pub fn set_nodes_visibility(&mut self, collapsed: bool) {
         self.rows.set_rows_visibility(collapsed);
-        self.position = 0;
+        self.position = self.rows.head();
     }
 
     /// Moves the cursor backward through rows.
