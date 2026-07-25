@@ -40,6 +40,9 @@ pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal
             Ok(Signal::Continue)
         }
 
+        // Mouse movement, release, drag, and scroll do not dismiss suggestions.
+        Event::Mouse(_) => Ok(Signal::Continue),
+
         _ => match ctx.focus {
             // Handle the readline input events.
             Focus::Readline => readline(event, ctx).await,
@@ -64,23 +67,39 @@ fn click(column: u16, row: u16, ctx: &mut Readline) {
                 ctx.readline.hit_at(position.content_position())
             {
                 ctx.readline.texteditor.move_to(index);
-                ctx.suggestions.listbox = Listbox::from(Vec::<String>::new());
-                ctx.focus = Focus::Readline;
             }
         }
         Index::Suggestion => {
             if let Some(ListboxHit::Select { index }) =
                 ctx.suggestions.hit_at(position.content_position())
             {
-                ctx.suggestions.listbox.move_to(index);
-                ctx.readline
-                    .texteditor
-                    .replace(&ctx.suggestions.listbox.get().to_string());
-                ctx.focus = Focus::Suggestion;
+                select_suggestion(index, ctx);
             }
         }
         Index::Title | Index::ErrorMessage => {}
     }
+}
+
+fn select_suggestion(index: usize, ctx: &mut Readline) {
+    if ctx.suggestions.listbox.move_to(index) {
+        ctx.focus = Focus::Suggestion;
+    }
+}
+
+fn apply_suggestion(ctx: &mut Readline) {
+    if ctx.suggestions.listbox.selected().is_none() {
+        dismiss_suggestions(ctx);
+        return;
+    }
+
+    let suggestion = ctx.suggestions.listbox.get().to_string();
+    ctx.readline.texteditor.replace(&suggestion);
+    dismiss_suggestions(ctx);
+}
+
+fn dismiss_suggestions(ctx: &mut Readline) {
+    ctx.suggestions.listbox = Listbox::default();
+    ctx.focus = Focus::Readline;
 }
 
 /// Default key bindings for the text editor.
@@ -97,12 +116,12 @@ fn click(column: u16, row: u16, ctx: &mut Readline) {
 /// | <kbd>↓</kbd>           | Recall the next entry from history
 /// | <kbd>Backspace</kbd>   | Delete the character before the cursor
 /// | <kbd>Ctrl + U</kbd>    | Delete all characters in the current line
-/// | <kbd>Tab</kbd>         | Autocomplete the current input based on available suggestions
+/// | <kbd>Tab</kbd>         | Show suggestions for the current input
 /// | <kbd>Alt + B</kbd>     | Move the cursor to the previous nearest character within set (default: whitespace)
 /// | <kbd>Alt + F</kbd>     | Move the cursor to the next nearest character within set (default: whitespace)
 /// | <kbd>Ctrl + W</kbd>    | Erase to the previous nearest character within set (default: whitespace)
 /// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
-/// | Left click             | Move the cursor or select the clicked suggestion
+/// | Left click             | Move the cursor or highlight the clicked suggestion
 pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
         // Return the input text when the validation passes.
@@ -151,12 +170,13 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
                 let text = ctx.readline.texteditor.text_without_cursor().to_string();
                 if let Some(candidates) = suggest.prefix_search(text) {
                     ctx.suggestions.listbox = Listbox::from(candidates);
-                    ctx.readline
-                        .texteditor
-                        .replace(&ctx.suggestions.listbox.get().to_string());
 
-                    // Enter suggestion mode.
-                    ctx.focus = Focus::Suggestion;
+                    if ctx.suggestions.listbox.is_empty() {
+                        dismiss_suggestions(ctx);
+                    } else {
+                        // Enter suggestion mode without changing the current input.
+                        ctx.focus = Focus::Suggestion;
+                    }
                 }
             }
         }
@@ -297,6 +317,16 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
 
 pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
+        // Apply the highlighted suggestion.
+        Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        }) => {
+            apply_suggestion(ctx);
+        }
+
         // Move cursor in the suggestion list.
         Event::Key(KeyEvent {
             code: KeyCode::Tab,
@@ -311,9 +341,6 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             state: KeyEventState::NONE,
         }) => {
             ctx.suggestions.listbox.forward();
-            ctx.readline
-                .texteditor
-                .replace(&ctx.suggestions.listbox.get().to_string());
         }
 
         Event::Key(KeyEvent {
@@ -323,17 +350,170 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             state: KeyEventState::NONE,
         }) => {
             ctx.suggestions.listbox.backward();
-            ctx.readline
-                .texteditor
-                .replace(&ctx.suggestions.listbox.get().to_string());
         }
 
-        // Switch back to the readline input.
+        // Keep suggestions visible until applying one or changing the input.
         _ => {
-            ctx.suggestions.listbox = Listbox::from(Vec::<String>::new());
+            let before = ctx.readline.texteditor.text_without_cursor();
+            let signal = readline(event, ctx).await?;
+            let after = ctx.readline.texteditor.text_without_cursor();
 
-            ctx.focus = Focus::Readline;
+            if before != after {
+                dismiss_suggestions(ctx);
+            }
+            return Ok(signal);
         }
     }
     Ok(Signal::Continue)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::suggest::Suggest;
+
+    fn key(code: KeyCode) -> Event {
+        Event::Key(KeyEvent {
+            code,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        })
+    }
+
+    fn mouse(kind: MouseEventKind) -> Event {
+        Event::Mouse(MouseEvent {
+            kind,
+            column: 0,
+            row: 0,
+            modifiers: KeyModifiers::NONE,
+        })
+    }
+
+    fn context_with_suggestions() -> Readline {
+        let mut ctx = Readline::default();
+        ctx.readline.texteditor.replace("app");
+        ctx.suggestions.listbox = Listbox::from(["apple", "applet"]);
+        ctx.focus = Focus::Suggestion;
+        ctx
+    }
+
+    #[tokio::test]
+    async fn tab_opens_suggestions_without_applying_one() {
+        let mut ctx = Readline::default().enable_suggest(Suggest::from_iter(["apple", "applet"]));
+        ctx.readline.texteditor.replace("app");
+
+        readline(&key(KeyCode::Tab), &mut ctx).await.unwrap();
+
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+        assert!(!ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Suggestion));
+    }
+
+    #[tokio::test]
+    async fn keyboard_navigation_only_changes_the_highlight() {
+        let mut ctx = context_with_suggestions();
+
+        suggestion(&key(KeyCode::Down), &mut ctx).await.unwrap();
+
+        assert_eq!(ctx.suggestions.listbox.selected(), Some(1));
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+
+        suggestion(&key(KeyCode::Up), &mut ctx).await.unwrap();
+
+        assert_eq!(ctx.suggestions.listbox.selected(), Some(0));
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+    }
+
+    #[tokio::test]
+    async fn enter_applies_the_highlighted_suggestion() {
+        let mut ctx = context_with_suggestions();
+        ctx.suggestions.listbox.move_to(1);
+
+        let signal = suggestion(&key(KeyCode::Enter), &mut ctx).await.unwrap();
+
+        assert!(matches!(signal, Signal::Continue));
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "applet"
+        );
+        assert!(ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Readline));
+    }
+
+    #[test]
+    fn repeated_clicks_only_change_the_highlight() {
+        let mut ctx = context_with_suggestions();
+
+        select_suggestion(1, &mut ctx);
+        select_suggestion(1, &mut ctx);
+
+        assert_eq!(ctx.suggestions.listbox.selected(), Some(1));
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+        assert!(!ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Suggestion));
+    }
+
+    #[tokio::test]
+    async fn mouse_events_keep_suggestions_visible() {
+        let mut ctx = context_with_suggestions();
+
+        for event in [
+            mouse(MouseEventKind::Up(MouseButton::Left)),
+            mouse(MouseEventKind::Moved),
+            mouse(MouseEventKind::ScrollDown),
+        ] {
+            default(&event, &mut ctx).await.unwrap();
+        }
+
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+        assert!(!ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Suggestion));
+    }
+
+    #[tokio::test]
+    async fn cursor_movement_keeps_suggestions_visible() {
+        let mut ctx = context_with_suggestions();
+
+        suggestion(&key(KeyCode::Left), &mut ctx).await.unwrap();
+
+        assert_eq!(ctx.readline.texteditor.position(), 2);
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "app"
+        );
+        assert!(!ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Suggestion));
+    }
+
+    #[tokio::test]
+    async fn changing_the_input_dismisses_suggestions() {
+        let mut ctx = context_with_suggestions();
+
+        suggestion(&key(KeyCode::Char('x')), &mut ctx)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            ctx.readline.texteditor.text_without_cursor().to_string(),
+            "appx"
+        );
+        assert!(ctx.suggestions.listbox.is_empty());
+        assert!(matches!(ctx.focus, Focus::Readline));
+    }
 }
