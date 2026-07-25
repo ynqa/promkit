@@ -1,7 +1,7 @@
 //! Benchmarks large structured documents through the public widget API.
 //!
-//! Fixtures default to `../large.json` and `../large.yaml` from the workspace
-//! root. Override them with `PROMKIT_LARGE_JSON` and `PROMKIT_LARGE_YAML`.
+//! Fixtures default to `benches/structured.json` and `benches/structured.yaml`.
+//! Override them with `PROMKIT_STRUCTURED_JSON` and `PROMKIT_STRUCTURED_YAML`.
 
 use std::{
     env, fs,
@@ -19,10 +19,10 @@ const VIEWPORT_WIDTH: u16 = 120;
 const VIEWPORT_HEIGHT: u16 = 40;
 
 fn structured(c: &mut Criterion) {
-    if let Some(path) = fixture_path("PROMKIT_LARGE_JSON", "large.json") {
+    if let Some(path) = fixture_path("PROMKIT_STRUCTURED_JSON", "structured.json") {
         benchmark_json(c, &path);
     }
-    if let Some(path) = fixture_path("PROMKIT_LARGE_YAML", "large.yaml") {
+    if let Some(path) = fixture_path("PROMKIT_STRUCTURED_YAML", "structured.yaml") {
         benchmark_yaml(c, &path);
     }
 }
@@ -164,7 +164,7 @@ fn fixture_path(environment_variable: &str, filename: &str) -> Option<PathBuf> {
         .map(PathBuf::from)
         .unwrap_or_else(|| {
             Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("..")
+                .join("benches")
                 .join(filename)
         });
 
