@@ -2,7 +2,6 @@
 
 use crate::{
     core::crossterm::style::ContentStyle,
-    validate::{ErrorMessageGenerator, Validator},
     Prompt,
 };
 
@@ -55,11 +54,12 @@ impl Password {
         self
     }
 
-    /// Configures a validator for the password input with a function to validate the input and another to configure the error message.
+    /// Configures a validator for the password input with a function or closure to
+    /// validate the input and another to generate the error message.
     pub fn validator(
         mut self,
-        validator: Validator<str>,
-        error_message_generator: ErrorMessageGenerator<str>,
+        validator: impl Fn(&str) -> bool + Send + Sync + 'static,
+        error_message_generator: impl Fn(&str) -> String + Send + Sync + 'static,
     ) -> Self {
         self = Password(self.0.validator(validator, error_message_generator));
         self

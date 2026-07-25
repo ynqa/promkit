@@ -14,7 +14,7 @@ use crate::{
     },
     preset::Evaluator,
     suggest::Suggest,
-    validate::{ErrorMessageGenerator, Validator, ValidatorManager},
+    validate::ValidatorManager,
     widgets::{
         listbox::{self, Listbox},
         text::{self, Text},
@@ -261,11 +261,15 @@ impl Readline {
         self
     }
 
-    /// Configures a validator for the input with a function to validate the input and another to configure the error message.
+    /// Configures a validator for the input with a function or closure to validate
+    /// the input and another to generate the error message.
+    ///
+    /// Closures can capture external variables, enabling validation against
+    /// runtime state (e.g., checking if a filename already exists).
     pub fn validator(
         mut self,
-        validator: Validator<str>,
-        error_message_generator: ErrorMessageGenerator<str>,
+        validator: impl Fn(&str) -> bool + Send + Sync + 'static,
+        error_message_generator: impl Fn(&str) -> String + Send + Sync + 'static,
     ) -> Self {
         self.validator = Some(ValidatorManager::new(validator, error_message_generator));
         self
