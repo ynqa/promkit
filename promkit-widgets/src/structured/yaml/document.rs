@@ -26,7 +26,17 @@ impl Document {
         self.rows.extract(self.position, n)
     }
 
-    /// Toggles the visibility of a node at the cursor's current position.
+    /// Toggles the container value associated with the YAML key at the cursor.
+    ///
+    /// The displayed key determines the toggle target:
+    ///
+    /// - A mapping value collapses to `key: {…}`.
+    /// - A sequence value collapses to `key: […]`.
+    /// - A scalar value is unchanged.
+    ///
+    /// For a sequence item such as `- key: value`, the `- ` prefix is retained
+    /// and the same value-based rules apply. Containers without an associated
+    /// key are not used as fallback toggle targets.
     pub fn toggle(&mut self) {
         let index = self.rows.toggle(self.position);
         self.position = index;
