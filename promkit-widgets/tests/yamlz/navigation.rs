@@ -36,32 +36,24 @@ fn up_skips_a_mapping_key_merged_into_its_sequence_item() {
 }
 
 #[test]
-fn toggle_collapses_and_expands_a_combined_sequence_mapping_line() {
+fn toggle_on_a_scalar_sequence_item_key_is_a_no_op() {
     let mut rows = sequence_mapping_rows();
     let config = Config {
         overflow_mode: OverflowMode::Truncate,
         ..Default::default()
     };
 
-    rows.toggle(1);
-    let collapsed = config
+    assert_eq!(rows.toggle(1), 1);
+    let rendered = config
         .render_terminal_rows(&rows.extract(1, 2), 80)
         .into_iter()
         .map(|line| line.to_string())
         .collect::<Vec<_>>();
-    assert_eq!(collapsed, vec!["- {…}", "- tail"]);
-
-    rows.toggle(1);
-    let expanded = config
-        .render_terminal_rows(&rows.extract(1, 2), 80)
-        .into_iter()
-        .map(|line| line.to_string())
-        .collect::<Vec<_>>();
-    assert_eq!(expanded, vec!["- name: alice", "  age: 20"]);
+    assert_eq!(rendered, vec!["- name: alice", "  age: 20"]);
 }
 
 #[test]
-fn toggle_from_a_merged_mapping_key_targets_its_sequence_item() {
+fn toggle_from_a_merged_scalar_key_is_a_no_op() {
     let mut rows = sequence_mapping_rows();
 
     assert_eq!(rows.toggle(2), 1);
@@ -74,7 +66,7 @@ fn toggle_from_a_merged_mapping_key_targets_its_sequence_item() {
     .into_iter()
     .map(|line| line.to_string())
     .collect::<Vec<_>>();
-    assert_eq!(rendered, vec!["- {…}"]);
+    assert_eq!(rendered, vec!["- name: alice"]);
 }
 
 #[test]
@@ -120,7 +112,7 @@ fn a_collapsed_root_container_remains_navigable() {
 }
 
 #[test]
-fn toggle_on_the_first_root_mapping_key_collapses_and_restores_the_root() {
+fn toggle_on_the_first_root_scalar_key_is_a_no_op() {
     let input = serde_yaml::from_str::<serde_yaml::Value>("apiVersion: v1\nkind: Pod\n").unwrap();
     let mut document = Document::new([&input]);
     let config = Config {
@@ -129,20 +121,34 @@ fn toggle_on_the_first_root_mapping_key_collapses_and_restores_the_root() {
     };
 
     document.toggle();
-    let collapsed = config
+    let rendered = config
         .render_terminal_rows(&document.extract_rows_from_current(1), 80)
         .into_iter()
         .map(|line| line.to_string())
         .collect::<Vec<_>>();
-    assert_eq!(collapsed, vec!["{…}"]);
+    assert_eq!(rendered, vec!["apiVersion: v1"]);
+}
 
+#[test]
+fn toggle_on_a_nested_scalar_key_is_a_no_op() {
+    let input =
+        serde_yaml::from_str::<serde_yaml::Value>("metadata:\n  name: example\nkind: Pod\n")
+            .unwrap();
+    let mut document = Document::new([&input]);
+    let config = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    };
+
+    assert!(document.down());
     document.toggle();
-    let expanded = config
+
+    let rendered = config
         .render_terminal_rows(&document.extract_rows_from_current(1), 80)
         .into_iter()
         .map(|line| line.to_string())
         .collect::<Vec<_>>();
-    assert_eq!(expanded, vec!["apiVersion: v1"]);
+    assert_eq!(rendered, vec!["  name: example"]);
 }
 
 #[test]
@@ -163,6 +169,17 @@ fn toggle_on_the_first_root_mapping_key_preserves_the_key() {
     .map(|line| line.to_string())
     .collect::<Vec<_>>();
     assert_eq!(rendered, vec!["metadata: {…}"]);
+
+    document.toggle();
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(2), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["metadata: ", "  name: example"]);
 }
 
 #[test]
@@ -182,6 +199,17 @@ fn toggle_on_the_first_root_sequence_key_preserves_the_key() {
     .map(|line| line.to_string())
     .collect::<Vec<_>>();
     assert_eq!(rendered, vec!["command: […]"]);
+
+    document.toggle();
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(2), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["command: ", "  - etcd"]);
 }
 
 #[test]
@@ -203,6 +231,17 @@ fn toggle_on_a_sequence_item_mapping_key_preserves_the_key() {
     .map(|line| line.to_string())
     .collect::<Vec<_>>();
     assert_eq!(rendered, vec!["- metadata: {…}"]);
+
+    document.toggle();
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(2), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["- metadata: ", "    name: example"]);
 }
 
 #[test]
@@ -223,4 +262,15 @@ fn toggle_on_a_sequence_item_sequence_key_preserves_the_key() {
     .map(|line| line.to_string())
     .collect::<Vec<_>>();
     assert_eq!(rendered, vec!["- command: […]"]);
+
+    document.toggle();
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(2), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["- command: ", "    - etcd"]);
 }
