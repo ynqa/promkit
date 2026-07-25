@@ -195,6 +195,27 @@ mod tests {
     }
 
     #[test]
+    fn collapsed_root_containers_use_the_first_visible_line_number() {
+        for (source, expected) in [
+            ("first: one\nsecond: two\n", "1 {…}"),
+            ("- first\n- second\n", "1 […]"),
+        ] {
+            let value = serde_yaml::from_str(source).unwrap();
+            let mut state = State {
+                document: Document::new([&value]),
+                config: Config {
+                    show_line_numbers: true,
+                    ..Default::default()
+                },
+            };
+
+            state.document.set_nodes_visibility(true);
+
+            assert_eq!(state.create_graphemes().graphemes.to_string(), expected);
+        }
+    }
+
+    #[test]
     fn viewport_projection_uses_stable_line_numbers_from_cursor() {
         let value = serde_yaml::from_str("first: one\nsecond: two\nthird: three\n").unwrap();
         let mut state = State {

@@ -77,10 +77,13 @@ impl Document {
 
         let mut line_numbers = Vec::new();
         for _ in 0..n {
-            line_numbers.push(
-                self.line_numbers[index]
-                    .expect("every rendered YAML row must have a stable line number"),
-            );
+            let stable_line_number = self.line_numbers[index].unwrap_or_else(|| {
+                self.line_numbers[index + 1..]
+                    .iter()
+                    .find_map(|number| *number)
+                    .expect("a collapsed YAML root must have a numbered visible descendant")
+            });
+            line_numbers.push(stable_line_number);
             let next = self.rows.down(index);
             if next == index {
                 break;
