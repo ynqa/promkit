@@ -144,3 +144,83 @@ fn toggle_on_the_first_root_mapping_key_collapses_and_restores_the_root() {
         .collect::<Vec<_>>();
     assert_eq!(expanded, vec!["apiVersion: v1"]);
 }
+
+#[test]
+fn toggle_on_the_first_root_mapping_key_preserves_the_key() {
+    let input =
+        serde_yaml::from_str::<serde_yaml::Value>("metadata:\n  name: example\nkind: Pod\n")
+            .unwrap();
+    let mut document = Document::new([&input]);
+
+    document.toggle();
+
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(1), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["metadata: {…}"]);
+}
+
+#[test]
+fn toggle_on_the_first_root_sequence_key_preserves_the_key() {
+    let input =
+        serde_yaml::from_str::<serde_yaml::Value>("command:\n  - etcd\nkind: Pod\n").unwrap();
+    let mut document = Document::new([&input]);
+
+    document.toggle();
+
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(1), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["command: […]"]);
+}
+
+#[test]
+fn toggle_on_a_sequence_item_mapping_key_preserves_the_key() {
+    let input = serde_yaml::from_str::<serde_yaml::Value>(
+        "- metadata:\n    name: example\n  enabled: true\n",
+    )
+    .unwrap();
+    let mut document = Document::new([&input]);
+
+    document.toggle();
+
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(1), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["- metadata: {…}"]);
+}
+
+#[test]
+fn toggle_on_a_sequence_item_sequence_key_preserves_the_key() {
+    let input =
+        serde_yaml::from_str::<serde_yaml::Value>("- command:\n    - etcd\n  enabled: true\n")
+            .unwrap();
+    let mut document = Document::new([&input]);
+
+    document.toggle();
+
+    let rendered = Config {
+        overflow_mode: OverflowMode::Truncate,
+        ..Default::default()
+    }
+    .render_terminal_rows(&document.extract_rows_from_current(1), 80)
+    .into_iter()
+    .map(|line| line.to_string())
+    .collect::<Vec<_>>();
+    assert_eq!(rendered, vec!["- command: […]"]);
+}
