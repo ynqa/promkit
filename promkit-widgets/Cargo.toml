@@ -35,6 +35,12 @@ termcfg = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
+criterion = "0.8.2"
 # Enable `json` feature when `jsonz` testing
 promkit-widgets = { path = ".", features = ["json", "yaml"] }
+serde = { workspace = true }
 toml = "0.9.8"
+
+[[bench]]
+name = "structured"
+harness = false
