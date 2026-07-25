@@ -65,6 +65,17 @@ fn sequence_mapping_line_start(rows: &[Row], index: usize) -> Option<usize> {
     renders_as_sequence_mapping_line(&rows[previous], &rows[index]).then_some(previous)
 }
 
+fn sequence_mapping_inline_container(rows: &[Row], index: usize) -> Option<usize> {
+    let next = index + 1;
+    let next_row = rows.get(next)?;
+    (renders_as_sequence_mapping_line(&rows[index], next_row)
+        && matches!(
+            TagAwareContainer::get(&next_row.node),
+            Some(ContainerNode::Open { .. })
+        ))
+    .then_some(next)
+}
+
 fn is_invisible_root_container(row: &Row) -> bool {
     row.depth == 0
         && row.key.is_none()
@@ -201,9 +212,18 @@ impl RowOperation for Vec<Row> {
     }
 
     fn toggle(&mut self, current: usize) -> usize {
-        let current = sequence_mapping_line_start(self, current).unwrap_or(current);
-        let current = invisible_root_line_start(self, current).unwrap_or(current);
-        let container = TagAwareContainer::get(&self[current].node).cloned();
+        let cursor = sequence_mapping_line_start(self, current).unwrap_or(current);
+        let inline_target = sequence_mapping_inline_container(self, cursor);
+        let target = inline_target
+            .or_else(|| {
+                TagAwareContainer::get(&self[cursor].node)
+                    .is_some()
+                    .then_some(cursor)
+            })
+            .or_else(|| invisible_root_line_start(self, cursor))
+            .unwrap_or(cursor);
+        let container = TagAwareContainer::get(&self[target].node).cloned();
+
         match container {
             Some(ContainerNode::Open {
                 typ,
@@ -212,8 +232,8 @@ impl RowOperation for Vec<Row> {
             }) => {
                 let new_collapsed = !collapsed;
 
-                self[current].node = TagAwareContainer::replace(
-                    &self[current].node,
+                self[target].node = TagAwareContainer::replace(
+                    &self[target].node,
                     ContainerNode::Open {
                         typ: typ.clone(),
                         collapsed: new_collapsed,
@@ -227,15 +247,17 @@ impl RowOperation for Vec<Row> {
                     ContainerNode::Close {
                         typ,
                         collapsed: new_collapsed,
-                        open_index: current,
+                        open_index: target,
                     },
                 )
                 .expect("container close node must be present");
 
-                if !new_collapsed && is_invisible_root_container(&self[current]) {
-                    self.down(current)
+                if inline_target.is_some() {
+                    cursor
+                } else if !new_collapsed && is_invisible_root_container(&self[target]) {
+                    self.down(target)
                 } else {
-                    current
+                    target
                 }
             }
             Some(ContainerNode::Close {
@@ -245,8 +267,8 @@ impl RowOperation for Vec<Row> {
             }) => {
                 let new_collapsed = !collapsed;
 
-                self[current].node = TagAwareContainer::replace(
-                    &self[current].node,
+                self[target].node = TagAwareContainer::replace(
+                    &self[target].node,
                     ContainerNode::Close {
                         typ: typ.clone(),
                         collapsed: new_collapsed,
@@ -260,14 +282,14 @@ impl RowOperation for Vec<Row> {
                     ContainerNode::Open {
                         typ,
                         collapsed: new_collapsed,
-                        close_index: current,
+                        close_index: target,
                     },
                 )
                 .expect("container open node must be present");
 
                 open_index
             }
-            _ => current,
+            _ => cursor,
         }
     }
 
