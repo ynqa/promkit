@@ -220,6 +220,3 @@ cargo run --bin text
 ## License
 
 [MIT License](./LICENSE)
-
-## Stargazers over time
-[![Stargazers over time](https://starchart.cc/ynqa/promkit.svg?variant=adaptive)](https://starchart.cc/ynqa/promkit)
