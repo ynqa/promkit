@@ -410,6 +410,26 @@ mod tests {
     }
 
     #[test]
+    fn wrap_preserves_a_grapheme_wider_than_the_terminal() {
+        let created = CreatedGraphemes {
+            graphemes: StyledGraphemes::from("界"),
+            cursor: Some(ContentPosition { row: 0, column: 0 }),
+            ..Default::default()
+        };
+
+        let rows = layout_content(&created, 1);
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].content_row, 0);
+        assert_eq!(rows[0].content_column, 0);
+        assert_eq!(rows[0].graphemes.to_string(), "…");
+        assert_eq!(
+            visual_position(&rows, created.cursor.unwrap()),
+            Some(VisualPosition { row: 0, column: 0 })
+        );
+    }
+
+    #[test]
     fn truncate_keeps_one_visual_row_per_logical_row() {
         let created = CreatedGraphemes {
             graphemes: StyledGraphemes::from("abcdefghij\nsecond"),
