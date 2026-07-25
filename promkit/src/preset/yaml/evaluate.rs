@@ -96,7 +96,7 @@ pub async fn default(event: &Event, ctx: &mut Yaml) -> anyhow::Result<Signal> {
                 .filter(|position| position.index == Index::Yaml)
             {
                 if let Some(YamlHit::Toggle { row_index }) =
-                    ctx.yaml.hit_at(position.content_position())
+                    ctx.yaml.hit_at_viewport(position.content_position())
                 {
                     ctx.yaml.document.toggle_at(row_index);
                 }

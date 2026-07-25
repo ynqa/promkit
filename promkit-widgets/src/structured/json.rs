@@ -29,7 +29,26 @@ impl Widget for State {
     fn create_graphemes(&self) -> CreatedGraphemes {
         let rows = self.document.visible_rows();
         let active_row = self.document.visible_position();
-        let formatted_rows = self.config.render_content_rows(&rows, active_row);
+        self.create_graphemes_from_rows(&rows, active_row)
+    }
+
+    fn create_graphemes_in_viewport(&self, _width: u16, height: u16) -> CreatedGraphemes {
+        let height = self
+            .config
+            .lines
+            .map_or(height as usize, |lines| lines.min(height as usize));
+        let rows = self.document.extract_rows_from_current(height);
+        self.create_graphemes_from_rows(&rows, 0)
+    }
+}
+
+impl State {
+    fn create_graphemes_from_rows(
+        &self,
+        rows: &[jsonz::Row],
+        active_row: usize,
+    ) -> CreatedGraphemes {
+        let formatted_rows = self.config.render_content_rows(rows, active_row);
 
         CreatedGraphemes {
             graphemes: StyledGraphemes::from_lines(formatted_rows),
@@ -46,9 +65,7 @@ impl Widget for State {
             }),
         }
     }
-}
 
-impl State {
     /// Formats the raw JSON data into a pretty-printed string with indentation.
     pub fn render_pretty_json(&self) -> String {
         self.document.rows().render_pretty(self.config.indent)
@@ -63,10 +80,70 @@ impl State {
             .row_index_at_visible_position(position.row)
             .map(|row_index| JsonHit::Toggle { row_index })
     }
+
+    /// Interprets a content position in a viewport projection as a semantic target.
+    pub fn hit_at_viewport(&self, position: ContentPosition) -> Option<JsonHit> {
+        self.document
+            .row_index_at_visible_offset_from_current(position.row)
+            .map(|row_index| JsonHit::Toggle { row_index })
+    }
 }
 
 /// Semantic targets exposed by the JSON widget.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum JsonHit {
     Toggle { row_index: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn viewport_projection_is_bounded_and_resolves_hits_from_cursor() {
+        let value = serde_json::json!({
+            "first": "one",
+            "second": {
+                "nested": "two"
+            },
+            "third": "three"
+        });
+        let mut state = State {
+            document: Document::new([&value]),
+            config: Config::default(),
+        };
+
+        state.document.down();
+        let projected = state.create_graphemes_in_viewport(80, 2);
+        let rendered = projected.graphemes.to_string();
+
+        assert!(rendered.contains("\"first\": \"one\""));
+        assert!(rendered.contains("\"second\": {"));
+        assert!(!rendered.contains("\"nested\": \"two\""));
+        assert!(!rendered.contains("\"third\": \"three\""));
+        assert_eq!(projected.cursor.unwrap().row, 0);
+
+        let JsonHit::Toggle { row_index } = state
+            .hit_at_viewport(ContentPosition { row: 1, column: 4 })
+            .unwrap();
+        state.document.toggle_at(row_index);
+
+        let collapsed = state.create_graphemes_in_viewport(80, 2);
+        assert!(collapsed.graphemes.to_string().contains("\"second\": {…}"));
+    }
+
+    #[test]
+    fn configured_line_limit_bounds_viewport_projection() {
+        let value = serde_json::json!({"first": 1, "second": 2});
+        let state = State {
+            document: Document::new([&value]),
+            config: Config {
+                lines: Some(1),
+                ..Config::default()
+            },
+        };
+
+        let projected = state.create_graphemes_in_viewport(80, 20);
+        assert_eq!(projected.graphemes.logical_lines().len(), 1);
+    }
 }

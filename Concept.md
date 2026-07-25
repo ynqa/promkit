@@ -16,6 +16,9 @@ promkit is organized around three responsibilities with clear boundaries:
    - Each widget state implements [`Widget`](./promkit-core/src/lib.rs).
    - `Widget::create_graphemes()` returns `CreatedGraphemes`: width-independent
      styled content, layout hints, and an optional logical cursor position.
+   - Large widgets can override `create_graphemes_in_viewport(width, height)` to
+     project only content that can be displayed. Presets that use this path
+     obtain the current terminal size before updating the renderer.
    - Widget states focus on state and projection only.
 
 > [!IMPORTANT]

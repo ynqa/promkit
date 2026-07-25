@@ -45,11 +45,15 @@ pub struct Json {
 #[async_trait::async_trait]
 impl crate::Prompt for Json {
     async fn initialize(&mut self) -> anyhow::Result<()> {
+        let (width, height) = crate::core::crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
                     (Index::Title, self.title.create_graphemes()),
-                    (Index::Json, self.json.create_graphemes()),
+                    (
+                        Index::Json,
+                        self.json.create_graphemes_in_viewport(width, height),
+                    ),
                 ],
                 true,
             )
@@ -174,10 +178,14 @@ impl Json {
     async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
+                let (width, height) = crate::core::crossterm::terminal::size()?;
                 renderer
                     .update([
                         (Index::Title, self.title.create_graphemes()),
-                        (Index::Json, self.json.create_graphemes()),
+                        (
+                            Index::Json,
+                            self.json.create_graphemes_in_viewport(width, height),
+                        ),
                     ])
                     .render()
                     .await
