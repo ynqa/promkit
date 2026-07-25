@@ -56,3 +56,109 @@ impl Widget for State {
         }
     }
 }
+
+impl State {
+    /// Interprets a text-editor content position as a cursor target.
+    ///
+    /// The prefix occupies content columns but is not editable, so clicking it
+    /// resolves to the start of the input. Columns inside wide characters resolve
+    /// to that character, and columns beyond the rendered input resolve to the
+    /// trailing cursor position. Masked input is measured using the mask that is
+    /// actually displayed.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<TextEditorHit> {
+        if position.row != 0 {
+            return None;
+        }
+
+        let prefix_width = StyledGraphemes::from(&self.config.prefix).widths();
+        let input_column = position.column.saturating_sub(prefix_width);
+        let rendered = match self.config.mask {
+            Some(mask) => self.texteditor.masking(mask),
+            None => self.texteditor.text(),
+        };
+
+        let mut start = 0;
+        let index = rendered
+            .iter()
+            .enumerate()
+            .find_map(|(index, grapheme)| {
+                let end = start + grapheme.width();
+                let contains = input_column < end;
+                start = end;
+                contains.then_some(index)
+            })
+            .unwrap_or_else(|| rendered.len().saturating_sub(1));
+
+        Some(TextEditorHit::Cursor { index })
+    }
+}
+
+/// Semantic targets exposed by the text-editor widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextEditorHit {
+    Cursor { index: usize },
+}
+
+#[cfg(test)]
+mod state_tests {
+    use super::*;
+
+    fn state(text: &str, prefix: &str) -> State {
+        State {
+            texteditor: TextEditor::new(text),
+            config: Config {
+                prefix: prefix.into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn resolves_prefix_input_and_trailing_columns() {
+        let state = state("abc", ">> ");
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 1 }),
+            Some(TextEditorHit::Cursor { index: 0 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 4 }),
+            Some(TextEditorHit::Cursor { index: 1 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 80 }),
+            Some(TextEditorHit::Cursor { index: 3 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 1, column: 0 }), None);
+    }
+
+    #[test]
+    fn resolves_columns_inside_wide_characters() {
+        let state = state("界a", "");
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 0 }),
+            Some(TextEditorHit::Cursor { index: 0 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 1 }),
+            Some(TextEditorHit::Cursor { index: 0 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 2 }),
+            Some(TextEditorHit::Cursor { index: 1 })
+        );
+    }
+
+    #[test]
+    fn uses_the_rendered_mask_width() {
+        let mut state = state("界a", "");
+        state.config.mask = Some('*');
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 1 }),
+            Some(TextEditorHit::Cursor { index: 1 })
+        );
+    }
+}

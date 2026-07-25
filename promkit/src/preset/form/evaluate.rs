@@ -1,8 +1,15 @@
 use promkit_widgets::text_editor;
 
 use crate::{
-    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
+    },
     preset::form::Form,
+    widgets::text_editor::TextEditorHit,
     Signal,
 };
 
@@ -158,6 +165,34 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             ctx.readlines.forward();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer.as_ref().and_then(|renderer| {
+                renderer.hit_test(ScreenPosition {
+                    row: *row,
+                    column: *column,
+                })
+            }) {
+                let field_index = position.index;
+                if let Some(TextEditorHit::Cursor { index }) = ctx
+                    .readlines
+                    .contents()
+                    .get(field_index)
+                    .and_then(|state| state.hit_at(position.content_position()))
+                {
+                    ctx.readlines.move_to(field_index);
+                    ctx.readlines.contents_mut()[field_index]
+                        .texteditor
+                        .move_to(index);
+                }
+            }
         }
 
         // Input char.

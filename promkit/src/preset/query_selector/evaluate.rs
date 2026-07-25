@@ -1,7 +1,16 @@
 use crate::{
-    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-    preset::query_selector::QuerySelector,
-    widgets::text_editor,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
+    },
+    preset::query_selector::{Index, QuerySelector},
+    widgets::{
+        listbox::ListboxHit,
+        text_editor::{self, TextEditorHit},
+    },
     Signal,
 };
 
@@ -82,6 +91,39 @@ pub async fn default(event: &Event, ctx: &mut QuerySelector) -> anyhow::Result<S
             state: KeyEventState::NONE,
         }) => {
             ctx.list.listbox.forward();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer.as_ref().and_then(|renderer| {
+                renderer.hit_test(ScreenPosition {
+                    row: *row,
+                    column: *column,
+                })
+            }) {
+                match position.index {
+                    Index::Readline => {
+                        if let Some(TextEditorHit::Cursor { index }) =
+                            ctx.readline.hit_at(position.content_position())
+                        {
+                            ctx.readline.texteditor.move_to(index);
+                        }
+                    }
+                    Index::List => {
+                        if let Some(ListboxHit::Select { index }) =
+                            ctx.list.hit_at(position.content_position())
+                        {
+                            ctx.list.listbox.move_to(index);
+                        }
+                    }
+                    Index::Title => {}
+                }
+            }
         }
 
         // Input char.

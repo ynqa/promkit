@@ -1,11 +1,21 @@
-use promkit_widgets::{listbox::Listbox, text::Text, text_editor};
+use promkit_widgets::{
+    listbox::{Listbox, ListboxHit},
+    text::Text,
+    text_editor::{self, TextEditorHit},
+};
 
 use crate::{
-    core::crossterm::{
-        event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
-        style::ContentStyle,
+    core::{
+        crossterm::{
+            event::{
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
+            },
+            style::ContentStyle,
+        },
+        ScreenPosition,
     },
-    preset::readline::{Focus, Readline},
+    preset::readline::{Focus, Index, Readline},
     Signal,
 };
 
@@ -20,12 +30,56 @@ pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal
             state: KeyEventState::NONE,
         }) => Err(anyhow::anyhow!("ctrl+c")),
 
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            click(*column, *row, ctx);
+            Ok(Signal::Continue)
+        }
+
         _ => match ctx.focus {
             // Handle the readline input events.
             Focus::Readline => readline(event, ctx).await,
             // Handle the suggestion input events.
             Focus::Suggestion => suggestion(event, ctx).await,
         },
+    }
+}
+
+fn click(column: u16, row: u16, ctx: &mut Readline) {
+    let renderer = ctx.renderer.clone();
+    let Some(position) = renderer
+        .as_ref()
+        .and_then(|renderer| renderer.hit_test(ScreenPosition { row, column }))
+    else {
+        return;
+    };
+
+    match position.index {
+        Index::Readline => {
+            if let Some(TextEditorHit::Cursor { index }) =
+                ctx.readline.hit_at(position.content_position())
+            {
+                ctx.readline.texteditor.move_to(index);
+                ctx.suggestions.listbox = Listbox::from(Vec::<String>::new());
+                ctx.focus = Focus::Readline;
+            }
+        }
+        Index::Suggestion => {
+            if let Some(ListboxHit::Select { index }) =
+                ctx.suggestions.hit_at(position.content_position())
+            {
+                ctx.suggestions.listbox.move_to(index);
+                ctx.readline
+                    .texteditor
+                    .replace(&ctx.suggestions.listbox.get().to_string());
+                ctx.focus = Focus::Suggestion;
+            }
+        }
+        Index::Title | Index::ErrorMessage => {}
     }
 }
 
@@ -48,6 +102,7 @@ pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal
 /// | <kbd>Alt + F</kbd>     | Move the cursor to the next nearest character within set (default: whitespace)
 /// | <kbd>Ctrl + W</kbd>    | Erase to the previous nearest character within set (default: whitespace)
 /// | <kbd>Alt + D</kbd>     | Erase to the next nearest character within set (default: whitespace)
+/// | Left click             | Move the cursor or select the clicked suggestion
 pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     match event {
         // Return the input text when the validation passes.
