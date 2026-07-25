@@ -335,7 +335,25 @@ fn wrap_line(content_row: usize, line: StyledGraphemes, width: usize) -> Vec<Vis
     for grapheme in line.iter() {
         let grapheme_width = grapheme.width();
         if grapheme_width > width {
+            if !row.is_empty() {
+                rows.push(VisualRow {
+                    content_row,
+                    content_column: row_column,
+                    graphemes: row,
+                });
+                row = StyledGraphemes::default();
+                row_width = 0;
+            }
+
+            // Keep the replacement on its own visual row: it occupies one screen
+            // cell while the original grapheme still advances by its logical width.
+            rows.push(VisualRow {
+                content_row,
+                content_column,
+                graphemes: StyledGraphemes::from("…"),
+            });
             content_column = content_column.saturating_add(grapheme_width);
+            row_column = content_column;
             continue;
         }
 
@@ -426,6 +444,27 @@ mod tests {
         assert_eq!(
             visual_position(&rows, created.cursor.unwrap()),
             Some(VisualPosition { row: 0, column: 0 })
+        );
+    }
+
+    #[test]
+    fn wrap_preserves_columns_after_a_grapheme_wider_than_the_terminal() {
+        let created = CreatedGraphemes {
+            graphemes: StyledGraphemes::from("界a"),
+            cursor: Some(ContentPosition { row: 0, column: 2 }),
+            ..Default::default()
+        };
+
+        let rows = layout_content(&created, 1);
+
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].content_column, 0);
+        assert_eq!(rows[0].graphemes.to_string(), "…");
+        assert_eq!(rows[1].content_column, 2);
+        assert_eq!(rows[1].graphemes.to_string(), "a");
+        assert_eq!(
+            visual_position(&rows, created.cursor.unwrap()),
+            Some(VisualPosition { row: 1, column: 0 })
         );
     }
 
