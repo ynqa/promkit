@@ -12,14 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Moved readline rendering regression coverage to `.th` scenarios powered by the external `termharness` crate
-
-### Removed
-
-- Removed the internal `termharness`, `zsherio`, and `zsh-render-parity` workspace crates
-
 ## [0.13.0] - 2026-07-24
 
 ### Added
