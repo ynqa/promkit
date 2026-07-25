@@ -3,7 +3,6 @@
 use crate::{
     core::{
         crossterm::{
-            self,
             event::Event,
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -21,7 +20,7 @@ use crate::{
 pub mod evaluate;
 
 /// Represents the indices of various components in the tree preset.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
     Tree = 1,
@@ -43,12 +42,11 @@ pub struct Tree {
 #[async_trait::async_trait]
 impl crate::Prompt for Tree {
     async fn initialize(&mut self) -> anyhow::Result<()> {
-        let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
-                    (Index::Tree, self.tree.create_graphemes(size.0, size.1)),
+                    (Index::Title, self.title.create_graphemes()),
+                    (Index::Tree, self.tree.create_graphemes()),
                 ],
                 true,
             )
@@ -59,8 +57,7 @@ impl crate::Prompt for Tree {
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = (self.evaluator)(event, self).await;
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
         ret
     }
 
@@ -159,13 +156,13 @@ impl Tree {
     }
 
     /// Render the prompt with the specified width and height.
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_graphemes(width, height)),
-                        (Index::Tree, self.tree.create_graphemes(width, height)),
+                        (Index::Title, self.title.create_graphemes()),
+                        (Index::Tree, self.tree.create_graphemes()),
                     ])
                     .render()
                     .await

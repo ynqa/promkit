@@ -2,7 +2,7 @@
 
 use crate::{
     core::{
-        crossterm::{self, event::Event, style::ContentStyle},
+        crossterm::{event::Event, style::ContentStyle},
         render::{Renderer, SharedRenderer},
         Widget,
     },
@@ -14,7 +14,7 @@ use crate::{
 pub mod evaluate;
 
 /// Represents the indices of various components in the text preset.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Text = 0,
 }
@@ -32,21 +32,16 @@ pub struct Text {
 #[async_trait::async_trait]
 impl crate::Prompt for Text {
     async fn initialize(&mut self) -> anyhow::Result<()> {
-        let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
-            Renderer::try_new_with_graphemes(
-                [(Index::Text, self.text.create_graphemes(size.0, size.1))],
-                true,
-            )
-            .await?,
+            Renderer::try_new_with_graphemes([(Index::Text, self.text.create_graphemes())], true)
+                .await?,
         ));
         Ok(())
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = (self.evaluator)(event, self).await;
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
         ret
     }
 
@@ -83,11 +78,11 @@ impl Text {
     }
 
     /// Render the prompt with the specified width and height.
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
-                    .update([(Index::Text, self.text.create_graphemes(width, height))])
+                    .update([(Index::Text, self.text.create_graphemes())])
                     .render()
                     .await
             }

@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 #[path = "text/text.rs"]
 mod inner;
@@ -29,26 +31,25 @@ impl State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
+    fn create_graphemes(&self) -> CreatedGraphemes {
+        let lines = self.text.items().iter().map(|item| {
+            if let Some(style) = &self.config.style {
+                item.clone().apply_style(*style)
+            } else {
+                item.clone()
+            }
+        });
 
-        let lines = self
-            .text
-            .items()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
-            .map(|(_, item)| {
-                if let Some(style) = &self.config.style {
-                    item.clone().apply_style(*style)
-                } else {
-                    item.clone()
-                }
-            });
-
-        StyledGraphemes::from_lines(lines)
+        CreatedGraphemes {
+            graphemes: StyledGraphemes::from_lines(lines),
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: (!self.text.items().is_empty()).then_some(ContentPosition {
+                row: self.text.position(),
+                column: 0,
+            }),
+        }
     }
 }

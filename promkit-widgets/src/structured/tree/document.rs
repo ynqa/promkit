@@ -38,6 +38,16 @@ impl Document {
         self.rows.extract(self.position, n)
     }
 
+    /// Returns all currently visible rows from the beginning of the document.
+    pub fn visible_rows(&self) -> Vec<Row> {
+        self.rows.extract(self.rows.head(), usize::MAX)
+    }
+
+    /// Returns the selected row's index in the visible row sequence.
+    pub fn visible_position(&self) -> usize {
+        visible_position(&self.rows, self.position)
+    }
+
     /// Toggles the visibility of a node at the cursor's current position.
     pub fn toggle(&mut self) {
         let index = self.rows.toggle(self.position);
@@ -77,4 +87,20 @@ impl Document {
         self.position = self.rows.tail();
         true
     }
+}
+
+fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
+    let mut position = rows.head();
+    let mut visible = 0;
+
+    while position != target {
+        let next = rows.down(position);
+        if next == position {
+            break;
+        }
+        position = next;
+        visible += 1;
+    }
+
+    visible
 }

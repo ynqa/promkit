@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 #[path = "listbox/listbox.rs"]
 mod inner;
@@ -18,44 +20,41 @@ pub struct State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
-
-        let lines = self
-            .listbox
-            .items()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
-            .map(|(i, item)| {
-                if i == self.listbox.position() {
-                    let init = StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(&self.config.cursor),
-                        item,
-                    ]);
-                    if let Some(style) = &self.config.active_item_style {
-                        init.apply_style(*style)
-                    } else {
-                        init
-                    }
+    fn create_graphemes(&self) -> CreatedGraphemes {
+        let lines = self.listbox.items().iter().enumerate().map(|(i, item)| {
+            if i == self.listbox.position() {
+                let init =
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.config.cursor), item]);
+                if let Some(style) = &self.config.active_item_style {
+                    init.apply_style(*style)
                 } else {
-                    let init = StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
-                        ),
-                        item,
-                    ]);
-                    if let Some(style) = &self.config.inactive_item_style {
-                        init.apply_style(*style)
-                    } else {
-                        init
-                    }
+                    init
                 }
-            });
+            } else {
+                let init = StyledGraphemes::from_iter([
+                    &StyledGraphemes::from(
+                        " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
+                    ),
+                    item,
+                ]);
+                if let Some(style) = &self.config.inactive_item_style {
+                    init.apply_style(*style)
+                } else {
+                    init
+                }
+            }
+        });
 
-        StyledGraphemes::from_lines(lines)
+        CreatedGraphemes {
+            graphemes: StyledGraphemes::from_lines(lines),
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: (!self.listbox.is_empty()).then_some(ContentPosition {
+                row: self.listbox.position(),
+                column: 0,
+            }),
+        }
     }
 }

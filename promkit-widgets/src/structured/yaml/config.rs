@@ -164,12 +164,12 @@ impl Config {
         StyledGraphemes::from(typ.collapsed_preview()).apply_style(style)
     }
 
-    fn render_node(&self, row: &Row, node: &YamlNode) -> Option<StyledGraphemes> {
+    fn render_node(&self, node: &YamlNode) -> Option<StyledGraphemes> {
         match node {
             YamlNode::Tagged { tag, node } => {
                 let tag_part =
                     StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style);
-                match self.render_node(row, node) {
+                match self.render_node(node) {
                     Some(value) => Some(vec![tag_part, value].into_iter().collect()),
                     None => Some(tag_part),
                 }
@@ -202,12 +202,25 @@ impl Config {
 
     /// Format YAML rows into terminal lines with styling and width constraints.
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, 0, Some(width as usize))
+    }
+
+    /// Formats width-independent rows for the core renderer.
+    pub fn render_content_rows(&self, rows: &[Row], active_row: usize) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, active_row, None)
+    }
+
+    fn render_rows(
+        &self,
+        rows: &[Row],
+        active_row: usize,
+        width: Option<usize>,
+    ) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
-        let width = width as usize;
         let mut i = 0;
+        let mut rendered_row = 0;
 
         while i < rows.len() {
-            let source_index = i;
             let row = &rows[i];
 
             // Collection roots occupy depth 0 as an operation row, so their
@@ -233,7 +246,7 @@ impl Config {
                     parts.push(StyledGraphemes::from(": "));
                 }
 
-                if let Some(value) = self.render_node(row, &row.node) {
+                if let Some(value) = self.render_node(&row.node) {
                     parts.push(value);
                 }
 
@@ -245,29 +258,27 @@ impl Config {
                         ..
                     })
                 ) && row.is_sequence_item
+                    && let Some(next_row) = rows.get(i + 1)
+                    && next_row.depth == row.depth + 1
+                    && !next_row.is_sequence_item
+                    && let Some(key) = &next_row.key
                 {
-                    if let Some(next_row) = rows.get(i + 1) {
-                        if next_row.depth == row.depth + 1 && !next_row.is_sequence_item {
-                            if let Some(key) = &next_row.key {
-                                parts.push(
-                                    StyledGraphemes::from(Self::render_yaml_string(key))
-                                        .apply_style(self.key_style),
-                                );
-                                parts.push(StyledGraphemes::from(": "));
+                    parts.push(
+                        StyledGraphemes::from(Self::render_yaml_string(key))
+                            .apply_style(self.key_style),
+                    );
+                    parts.push(StyledGraphemes::from(": "));
 
-                                if let Some(value) = self.render_node(next_row, &next_row.node) {
-                                    parts.push(value);
-                                }
-
-                                i += 1;
-                            }
-                        }
+                    if let Some(value) = self.render_node(&next_row.node) {
+                        parts.push(value);
                     }
+
+                    i += 1;
                 }
             }
 
             let mut content: StyledGraphemes = parts.into_iter().collect();
-            content = content.apply_attribute(if source_index == 0 {
+            content = content.apply_attribute(if rendered_row == active_row {
                 self.active_item_attribute
             } else {
                 self.inactive_item_attribute
@@ -275,17 +286,23 @@ impl Config {
 
             let mut line: StyledGraphemes = vec![indent, content].into_iter().collect();
 
-            match self.overflow_mode {
-                OverflowMode::Truncate => {
-                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
-                    formatted.push(line);
+            if let Some(width) = width {
+                match self.overflow_mode {
+                    OverflowMode::Truncate => {
+                        line =
+                            line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
+                        formatted.push(line);
+                    }
+                    OverflowMode::Wrap => {
+                        formatted.extend(line.wrapped_lines(width));
+                    }
                 }
-                OverflowMode::Wrap => {
-                    formatted.extend(line.wrapped_lines(width));
-                }
+            } else {
+                formatted.push(line);
             }
 
             i += 1;
+            rendered_row += 1;
         }
 
         formatted

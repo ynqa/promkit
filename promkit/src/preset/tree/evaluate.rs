@@ -18,11 +18,6 @@ use crate::{
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
 pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,

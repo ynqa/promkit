@@ -17,11 +17,6 @@ use crate::{
 /// | <kbd>↓</kbd>           | Move the selection down
 pub async fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,

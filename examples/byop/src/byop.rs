@@ -17,10 +17,7 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use promkit::{
     anyhow, async_trait,
-    core::{
-        crossterm::{self, style::Color},
-        grapheme::StyledGraphemes,
-    },
+    core::{crossterm::style::Color, grapheme::StyledGraphemes},
     widgets::{
         core::{
             crossterm::{
@@ -172,8 +169,7 @@ impl Prompt for Byop {
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = self.evaluate_internal(event).await;
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
         ret
     }
 
@@ -194,8 +190,6 @@ impl Prompt for Byop {
 
 impl Byop {
     async fn try_default() -> anyhow::Result<Self> {
-        let size = crossterm::terminal::size()?;
-
         let readline = text_editor::State {
             config: text_editor::config::Config {
                 prefix: String::from("❯❯ "),
@@ -215,7 +209,7 @@ impl Byop {
 
         let renderer = SharedRenderer::new(
             Renderer::try_new_with_graphemes(
-                [(Index::Readline, readline.create_graphemes(size.0, size.1))],
+                [(Index::Readline, readline.create_graphemes())],
                 true,
             )
             .await?,
@@ -271,11 +265,6 @@ impl Byop {
 
     async fn evaluate_internal(&mut self, event: &Event) -> anyhow::Result<Signal> {
         match event {
-            // Render for refreshing prompt on resize.
-            Event::Resize(width, height) => {
-                self.render(*width, *height).await?;
-            }
-
             // Handle Enter key based on task state
             Event::Key(KeyEvent {
                 code: KeyCode::Enter,
@@ -411,12 +400,9 @@ impl Byop {
         Ok(Signal::Continue)
     }
 
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         self.renderer
-            .update([(
-                Index::Readline,
-                self.readline.create_graphemes(width, height),
-            )])
+            .update([(Index::Readline, self.readline.create_graphemes())])
             .render()
             .await
     }

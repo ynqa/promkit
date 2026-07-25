@@ -12,34 +12,21 @@ use crate::{
 pub async fn default(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signal> {
     // Handle the common events for both readline and suggestion modes.
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => return Err(anyhow::anyhow!("ctrl+c")),
+        }) => Err(anyhow::anyhow!("ctrl+c")),
 
-        _ => {
-            match ctx.focus {
-                Focus::Readline => {
-                    // Handle the readline input events.
-                    return readline(event, ctx).await;
-                }
-                Focus::Suggestion => {
-                    // Handle the suggestion input events.
-                    return suggestion(event, ctx).await;
-                }
-            }
-        }
+        _ => match ctx.focus {
+            // Handle the readline input events.
+            Focus::Readline => readline(event, ctx).await,
+            // Handle the suggestion input events.
+            Focus::Suggestion => suggestion(event, ctx).await,
+        },
     }
-
-    Ok(Signal::Continue)
 }
 
 /// Default key bindings for the text editor.

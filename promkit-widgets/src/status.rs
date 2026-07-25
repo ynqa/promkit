@@ -1,7 +1,6 @@
 use promkit_core::{
-    Widget,
+    CreatedGraphemes, Widget,
     crossterm::style::{Color, ContentStyle},
-    grapheme::StyledGraphemes,
 };
 
 use crate::text::{State as TextState, Text};
@@ -56,7 +55,7 @@ impl State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
-        self.text.create_graphemes(width, height)
+    fn create_graphemes(&self) -> CreatedGraphemes {
+        self.text.create_graphemes()
     }
 }

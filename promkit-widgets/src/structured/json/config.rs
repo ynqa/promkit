@@ -112,10 +112,23 @@ impl Default for Config {
 }
 
 impl Config {
-    /// Formats a Vec<Row> into Vec<StyledGraphemes> with appropriate styling and width limits
+    /// Formats a `Vec<Row>` into `Vec<StyledGraphemes>` with styling and width limits.
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, 0, Some(width as usize))
+    }
+
+    /// Formats width-independent rows for the core renderer.
+    pub fn render_content_rows(&self, rows: &[Row], active_row: usize) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, active_row, None)
+    }
+
+    fn render_rows(
+        &self,
+        rows: &[Row],
+        active_row: usize,
+        width: Option<usize>,
+    ) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
-        let width = width as usize;
 
         for (i, row) in rows.iter().enumerate() {
             let indent = StyledGraphemes::from(" ".repeat(self.indent * row.depth));
@@ -191,18 +204,18 @@ impl Config {
             }
 
             if i + 1 < rows.len() {
-                if matches!(
+                let next_is_close = matches!(
                     &rows[i + 1].node,
                     JsonNode::Container(ContainerNode::Close { .. })
-                ) {
-                } else if matches!(
+                );
+                let current_is_open = matches!(
                     &rows[i].node,
                     JsonNode::Container(ContainerNode::Open {
                         collapsed: false,
                         ..
                     })
-                ) {
-                } else {
+                );
+                if !next_is_close && !current_is_open {
                     parts.push(StyledGraphemes::from(","));
                 }
             }
@@ -212,7 +225,7 @@ impl Config {
             // Note that `extract_rows_from_current`
             // returns rows starting from the current position,
             // so the first row should always be highlighted as active
-            content = content.apply_attribute(if i == 0 {
+            content = content.apply_attribute(if i == active_row {
                 self.active_item_attribute
             } else {
                 self.inactive_item_attribute
@@ -220,14 +233,19 @@ impl Config {
 
             let mut line: StyledGraphemes = vec![indent, content].into_iter().collect();
 
-            match self.overflow_mode {
-                OverflowMode::Truncate => {
-                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
-                    formatted.push(line);
+            if let Some(width) = width {
+                match self.overflow_mode {
+                    OverflowMode::Truncate => {
+                        line =
+                            line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
+                        formatted.push(line);
+                    }
+                    OverflowMode::Wrap => {
+                        formatted.extend(line.wrapped_lines(width));
+                    }
                 }
-                OverflowMode::Wrap => {
-                    formatted.extend(line.wrapped_lines(width));
-                }
+            } else {
+                formatted.push(line);
             }
         }
 

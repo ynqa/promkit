@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 mod history;
 pub use history::History;
@@ -20,11 +22,7 @@ pub struct State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, width: u16, height: u16) -> StyledGraphemes {
-        if width == 0 {
-            return StyledGraphemes::default();
-        }
-
+    fn create_graphemes(&self) -> CreatedGraphemes {
         let mut buf = StyledGraphemes::default();
 
         let mut styled_prefix =
@@ -37,6 +35,7 @@ impl Widget for State {
             Some(mask) => self.texteditor.masking(mask),
             None => self.texteditor.text(),
         };
+        let cursor_column = prefix_width + text.widths_to(self.texteditor.position());
 
         let mut styled = text
             .apply_style(self.config.inactive_char_style)
@@ -44,23 +43,16 @@ impl Widget for State {
 
         buf.append(&mut styled);
 
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
-
-        let rows = buf.wrapped_lines(width as usize);
-        if rows.is_empty() || height == 0 {
-            return StyledGraphemes::default();
+        CreatedGraphemes {
+            graphemes: buf,
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: Some(ContentPosition {
+                row: 0,
+                column: cursor_column,
+            }),
         }
-
-        let lines = rows.len().min(height);
-        let mut start = (prefix_width + self.texteditor.position()) / width as usize;
-        let end = start + lines;
-        if end > rows.len() {
-            start = rows.len().saturating_sub(lines);
-        }
-
-        StyledGraphemes::from_lines(rows.into_iter().skip(start).take(lines))
     }
 }

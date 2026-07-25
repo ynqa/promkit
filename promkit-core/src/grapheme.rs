@@ -45,6 +45,10 @@ impl StyledGrapheme {
         self.width
     }
 
+    pub fn character(&self) -> char {
+        self.ch
+    }
+
     pub fn apply_style(&mut self, style: ContentStyle) {
         self.style = style;
     }
@@ -151,6 +155,43 @@ impl StyledGraphemes {
     /// Calculates the total display width of all `Grapheme` instances in the collection.
     pub fn widths(&self) -> usize {
         self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
+    /// Calculates the display width before the given grapheme index.
+    pub fn widths_to(&self, index: usize) -> usize {
+        self.0
+            .iter()
+            .take(index)
+            .map(|grapheme| grapheme.width)
+            .sum()
+    }
+
+    /// Splits content at explicit newlines without applying terminal wrapping.
+    pub fn logical_lines(&self) -> Vec<StyledGraphemes> {
+        if self.is_empty() {
+            return Vec::new();
+        }
+
+        let mut lines = Vec::new();
+        let mut line = StyledGraphemes::default();
+        let mut last_was_newline = false;
+
+        for styled in self.iter() {
+            if styled.ch == '\n' {
+                lines.push(line);
+                line = StyledGraphemes::default();
+                last_was_newline = true;
+            } else {
+                line.push_back(styled.clone());
+                last_was_newline = false;
+            }
+        }
+
+        if !line.is_empty() || last_was_newline {
+            lines.push(line);
+        }
+
+        lines
     }
 
     /// Returns a displayable format of the styled graphemes.

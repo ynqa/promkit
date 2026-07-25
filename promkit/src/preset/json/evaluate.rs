@@ -1,9 +1,13 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
     },
-    preset::json::Json,
+    preset::json::{Index, Json},
+    widgets::json::JsonHit,
     Signal,
 };
 
@@ -16,13 +20,9 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the cursor up to the previous node
 /// | <kbd>↓</kbd>           | Move the cursor down to the next node
 /// | <kbd>Space</kbd>       | Toggle fold/unfold on the current node
+/// | Left click             | Toggle fold/unfold on the clicked node
 pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -76,6 +76,31 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             ctx.json.document.toggle();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer
+                .as_ref()
+                .and_then(|renderer| {
+                    renderer.hit_test(ScreenPosition {
+                        row: *row,
+                        column: *column,
+                    })
+                })
+                .filter(|position| position.index == Index::Json)
+            {
+                if let Some(JsonHit::Toggle { row_index }) =
+                    ctx.json.hit_at(position.content_position())
+                {
+                    ctx.json.document.toggle_at(row_index);
+                }
+            }
         }
 
         _ => (),

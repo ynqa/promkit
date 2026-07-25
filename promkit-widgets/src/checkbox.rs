@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 #[path = "checkbox/checkbox.rs"]
 mod inner;
@@ -22,7 +24,7 @@ pub struct State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
+    fn create_graphemes(&self) -> CreatedGraphemes {
         let f = |idx: usize| -> StyledGraphemes {
             if self.checkbox.picked_indexes().contains(&idx) {
                 StyledGraphemes::from(format!("{} ", self.config.active_mark))
@@ -31,39 +33,36 @@ impl Widget for State {
             }
         };
 
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
+        let lines = self.checkbox.items().iter().enumerate().map(|(i, item)| {
+            if i == self.checkbox.position() {
+                StyledGraphemes::from_iter([
+                    &StyledGraphemes::from(&self.config.cursor),
+                    &f(i),
+                    item,
+                ])
+                .apply_style(self.config.active_item_style)
+            } else {
+                StyledGraphemes::from_iter([
+                    &StyledGraphemes::from(
+                        " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
+                    ),
+                    &f(i),
+                    item,
+                ])
+                .apply_style(self.config.inactive_item_style)
+            }
+        });
 
-        let lines = self
-            .checkbox
-            .items()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| {
-                *i >= self.checkbox.position() && *i < self.checkbox.position() + height
-            })
-            .map(|(i, item)| {
-                if i == self.checkbox.position() {
-                    StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(&self.config.cursor),
-                        &f(i),
-                        item,
-                    ])
-                    .apply_style(self.config.active_item_style)
-                } else {
-                    StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
-                        ),
-                        &f(i),
-                        item,
-                    ])
-                    .apply_style(self.config.inactive_item_style)
-                }
-            });
-
-        StyledGraphemes::from_lines(lines)
+        CreatedGraphemes {
+            graphemes: StyledGraphemes::from_lines(lines),
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: (!self.checkbox.items().is_empty()).then_some(ContentPosition {
+                row: self.checkbox.position(),
+                column: 0,
+            }),
+        }
     }
 }

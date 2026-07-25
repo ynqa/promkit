@@ -5,7 +5,6 @@ use std::collections::HashSet;
 use crate::{
     core::{
         crossterm::{
-            self,
             event::Event,
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -26,7 +25,7 @@ use crate::{
 pub mod evaluate;
 
 /// Represents the indices of various components in the readline preset.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
     Readline = 1,
@@ -138,23 +137,13 @@ impl Default for Readline {
 #[async_trait::async_trait]
 impl crate::Prompt for Readline {
     async fn initialize(&mut self) -> anyhow::Result<()> {
-        let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
-                    (
-                        Index::Readline,
-                        self.readline.create_graphemes(size.0, size.1),
-                    ),
-                    (
-                        Index::Suggestion,
-                        self.suggestions.create_graphemes(size.0, size.1),
-                    ),
-                    (
-                        Index::ErrorMessage,
-                        self.error_message.create_graphemes(size.0, size.1),
-                    ),
+                    (Index::Title, self.title.create_graphemes()),
+                    (Index::Readline, self.readline.create_graphemes()),
+                    (Index::Suggestion, self.suggestions.create_graphemes()),
+                    (Index::ErrorMessage, self.error_message.create_graphemes()),
                 ],
                 true,
             )
@@ -165,8 +154,7 @@ impl crate::Prompt for Readline {
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
         let ret = (self.evaluator)(event, self).await;
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
         ret
     }
 
@@ -272,24 +260,15 @@ impl Readline {
     }
 
     /// Render the prompt with the specified width and height.
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_graphemes(width, height)),
-                        (
-                            Index::Readline,
-                            self.readline.create_graphemes(width, height),
-                        ),
-                        (
-                            Index::Suggestion,
-                            self.suggestions.create_graphemes(width, height),
-                        ),
-                        (
-                            Index::ErrorMessage,
-                            self.error_message.create_graphemes(width, height),
-                        ),
+                        (Index::Title, self.title.create_graphemes()),
+                        (Index::Readline, self.readline.create_graphemes()),
+                        (Index::Suggestion, self.suggestions.create_graphemes()),
+                        (Index::ErrorMessage, self.error_message.create_graphemes()),
                     ])
                     .render()
                     .await
