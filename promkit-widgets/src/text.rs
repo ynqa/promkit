@@ -46,10 +46,13 @@ impl Widget for State {
                 max_height: self.config.lines,
                 ..Default::default()
             },
-            cursor: (!self.text.items().is_empty()).then_some(ContentPosition {
-                row: self.text.position(),
-                column: 0,
-            }),
+            cursor: self
+                .text
+                .current_line()
+                .map(|current_line| ContentPosition {
+                    row: current_line,
+                    column: 0,
+                }),
         }
     }
 }

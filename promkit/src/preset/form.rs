@@ -10,7 +10,7 @@ use crate::{
         Widget,
     },
     preset::Evaluator,
-    widgets::{cursor::Cursor, text_editor},
+    widgets::text_editor,
     Signal,
 };
 
@@ -33,7 +33,9 @@ pub struct Form {
     /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator: Evaluator<Self>,
     /// State for the multiple text editor components.
-    pub readlines: Cursor<Vec<text_editor::State>>,
+    pub readlines: Vec<text_editor::State>,
+    /// Index of the focused text editor, or `None` when the form is empty.
+    active: Option<usize>,
     /// Default styles applied to text editors.
     pub focus_styles: Vec<Style>,
     /// Styles applied to text editors when they are unselected.
@@ -49,7 +51,6 @@ impl crate::Prompt for Form {
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 self.readlines
-                    .contents()
                     .iter()
                     .enumerate()
                     .map(|(i, state)| (i, state.create_graphemes())),
@@ -75,7 +76,6 @@ impl crate::Prompt for Form {
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         Ok(self
             .readlines
-            .contents()
             .iter()
             .map(|state| state.texteditor.text_without_cursor().to_string())
             .collect())
@@ -121,9 +121,47 @@ impl Form {
         Self {
             renderer: None,
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
-            readlines: Cursor::new(readlines, 0, false),
+            active: (!readlines.is_empty()).then_some(0),
+            readlines,
             focus_styles,
             unfocus_styles,
+        }
+    }
+
+    /// Returns the focused text editor index, or `None` when the form is empty.
+    pub fn active(&self) -> Option<usize> {
+        self.active
+            .filter(|position| *position < self.readlines.len())
+    }
+
+    /// Moves focus to the previous text editor, if possible.
+    pub fn focus_previous(&mut self) -> bool {
+        let Some(position) = self.active().filter(|position| *position > 0) else {
+            return false;
+        };
+        self.active = Some(position - 1);
+        true
+    }
+
+    /// Moves focus to the next text editor, if possible.
+    pub fn focus_next(&mut self) -> bool {
+        let Some(position) = self
+            .active()
+            .filter(|position| position.saturating_add(1) < self.readlines.len())
+        else {
+            return false;
+        };
+        self.active = Some(position + 1);
+        true
+    }
+
+    /// Moves focus to a text editor by index.
+    pub fn focus(&mut self, position: usize) -> bool {
+        if position < self.readlines.len() {
+            self.active = Some(position);
+            true
+        } else {
+            false
         }
     }
 
@@ -134,7 +172,6 @@ impl Form {
                 renderer
                     .update(
                         self.readlines
-                            .contents()
                             .iter()
                             .enumerate()
                             .map(|(i, state)| (i, state.create_graphemes())),
@@ -148,13 +185,12 @@ impl Form {
 
     /// Updates the styles of text editor states based on their active or inactive status.
     fn overwrite_styles(&mut self) {
-        let current_position = self.readlines.position();
+        let current_position = self.active();
         self.readlines
-            .contents_mut()
             .iter_mut()
             .enumerate()
             .for_each(|(i, state)| {
-                if i == current_position {
+                if Some(i) == current_position {
                     state.config.prefix_style = self.focus_styles[i].prefix_style;
                     state.config.inactive_char_style = self.focus_styles[i].inactive_char_style;
                     state.config.active_char_style = self.focus_styles[i].active_char_style;
@@ -164,5 +200,36 @@ impl Form {
                     state.config.active_char_style = self.unfocus_styles[i].active_char_style;
                 }
             });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Form;
+    use crate::widgets::text_editor;
+
+    #[test]
+    fn empty_form_has_no_active_field() {
+        let mut form = Form::new(Vec::<text_editor::State>::new());
+
+        assert_eq!(form.active(), None);
+        assert!(!form.focus_previous());
+        assert!(!form.focus_next());
+        assert!(!form.focus(0));
+    }
+
+    #[test]
+    fn focus_navigation_stops_at_form_boundaries() {
+        let mut form = Form::new([text_editor::State::default(), text_editor::State::default()]);
+
+        assert_eq!(form.active(), Some(0));
+        assert!(!form.focus_previous());
+        assert!(form.focus_next());
+        assert_eq!(form.active(), Some(1));
+        assert!(!form.focus_next());
+        assert!(!form.focus(2));
+        assert_eq!(form.active(), Some(1));
+        assert!(form.focus(0));
+        assert_eq!(form.active(), Some(0));
     }
 }

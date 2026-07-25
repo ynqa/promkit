@@ -22,7 +22,7 @@ pub struct State {
 impl Widget for State {
     fn create_graphemes(&self) -> CreatedGraphemes {
         let lines = self.listbox.items().iter().enumerate().map(|(i, item)| {
-            if i == self.listbox.position() {
+            if Some(i) == self.listbox.selected() {
                 let init =
                     StyledGraphemes::from_iter([&StyledGraphemes::from(&self.config.cursor), item]);
                 if let Some(style) = &self.config.active_item_style {
@@ -51,8 +51,8 @@ impl Widget for State {
                 max_height: self.config.lines,
                 ..Default::default()
             },
-            cursor: (!self.listbox.is_empty()).then_some(ContentPosition {
-                row: self.listbox.position(),
+            cursor: self.listbox.selected().map(|selected| ContentPosition {
+                row: selected,
                 column: 0,
             }),
         }

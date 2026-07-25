@@ -2,8 +2,6 @@
 
 pub use promkit_core as core;
 
-pub mod cursor;
-
 #[cfg(feature = "checkbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;

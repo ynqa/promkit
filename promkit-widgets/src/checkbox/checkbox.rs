@@ -91,10 +91,14 @@ impl Checkbox {
 
     /// Toggles the selection state of the item at the current cursor position within the listbox.
     pub fn toggle(&mut self) {
-        if self.picked.contains(&self.listbox.position()) {
-            self.picked.remove(&self.listbox.position());
+        let Some(position) = self.listbox.selected() else {
+            return;
+        };
+
+        if self.picked.contains(&position) {
+            self.picked.remove(&position);
         } else {
-            self.picked.insert(self.listbox.position());
+            self.picked.insert(position);
         }
     }
 
@@ -136,6 +140,14 @@ impl Checkbox {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn toggling_an_empty_checkbox_is_a_no_op() {
+        let mut checkbox = Checkbox::from_displayable(Vec::<String>::new());
+        checkbox.toggle();
+
+        assert!(checkbox.picked_indexes().is_empty());
+    }
 
     mod new_with_checked {
         use super::*;
