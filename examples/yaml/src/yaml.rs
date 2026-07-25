@@ -81,6 +81,7 @@ async fn main() -> anyhow::Result<()> {
     let document = Document::new(values.iter());
     Yaml::new(document)
         .title("YAML Viewer")
+        .show_line_numbers(true)
         .overflow_mode(OverflowMode::Wrap)
         .run()
         .await

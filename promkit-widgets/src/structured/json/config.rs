@@ -90,6 +90,8 @@ pub struct Config {
     pub overflow_mode: OverflowMode,
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
+    /// Whether to display stable one-based line numbers to the left of the content.
+    pub show_line_numbers: bool,
 }
 
 impl Default for Config {
@@ -107,6 +109,7 @@ impl Default for Config {
             indent: Default::default(),
             overflow_mode: OverflowMode::default(),
             lines: Default::default(),
+            show_line_numbers: false,
         }
     }
 }
@@ -329,6 +332,7 @@ mod tests {
             obj.remove("inactive_item_attribute");
             obj.remove("overflow_mode");
             obj.remove("lines");
+            obj.remove("show_line_numbers");
 
             let formatter: Config = serde_json::from_value(value).unwrap();
 
@@ -337,6 +341,7 @@ mod tests {
             assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
             assert_eq!(formatter.overflow_mode, OverflowMode::Truncate);
             assert_eq!(formatter.lines, None);
+            assert!(!formatter.show_line_numbers);
         }
 
         #[test]
@@ -344,6 +349,7 @@ mod tests {
             let input = r#"
                 indent = 4
                 lines = 7
+                show_line_numbers = true
                 curly_brackets_style = "attr=bold"
                 square_brackets_style = "attr=bold"
                 key_style = "fg=cyan"
@@ -360,6 +366,7 @@ mod tests {
 
             assert_eq!(formatter.indent, 4);
             assert_eq!(formatter.lines, Some(7));
+            assert!(formatter.show_line_numbers);
             assert_eq!(
                 formatter.curly_brackets_style.attributes,
                 Attributes::from(Attribute::Bold),

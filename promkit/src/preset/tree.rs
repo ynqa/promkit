@@ -96,6 +96,7 @@ impl Tree {
                     inactive_item_style: ContentStyle::default(),
                     indent: 2,
                     lines: Default::default(),
+                    show_line_numbers: false,
                 },
             },
         }
@@ -140,6 +141,12 @@ impl Tree {
     /// Sets the number of lines to be used for displaying the tree.
     pub fn tree_lines(mut self, lines: usize) -> Self {
         self.tree.config.lines = Some(lines);
+        self
+    }
+
+    /// Sets whether stable one-based line numbers are displayed for tree rows.
+    pub fn show_line_numbers(mut self, show: bool) -> Self {
+        self.tree.config.show_line_numbers = show;
         self
     }
 

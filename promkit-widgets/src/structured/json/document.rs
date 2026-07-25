@@ -32,6 +32,38 @@ impl Document {
         self.rows.extract(self.rows.head(), usize::MAX)
     }
 
+    /// Returns stable one-based line numbers for the currently visible rows.
+    pub(super) fn visible_line_numbers(&self) -> Vec<usize> {
+        self.line_numbers_from(self.rows.head(), usize::MAX)
+    }
+
+    /// Returns stable one-based line numbers for rows projected from the cursor.
+    pub(super) fn line_numbers_from_current(&self, n: usize) -> Vec<usize> {
+        self.line_numbers_from(self.position, n)
+    }
+
+    /// Returns the number of rows in the fully expanded document.
+    pub(super) fn line_count(&self) -> usize {
+        self.rows.len()
+    }
+
+    fn line_numbers_from(&self, mut index: usize, n: usize) -> Vec<usize> {
+        if self.rows.is_empty() || n == 0 {
+            return Vec::new();
+        }
+
+        let mut line_numbers = Vec::new();
+        for _ in 0..n {
+            line_numbers.push(index + 1);
+            let next = self.rows.down(index);
+            if next == index {
+                break;
+            }
+            index = next;
+        }
+        line_numbers
+    }
+
     /// Returns the selected row's index in the visible row sequence.
     pub fn visible_position(&self) -> usize {
         visible_position(&self.rows, self.position)

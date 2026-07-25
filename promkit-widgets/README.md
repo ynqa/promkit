@@ -62,3 +62,15 @@ cargo bench -p promkit-widgets --bench structured --features json,yaml
 
 This benchmark exercises the `promkit-widgets` projection layer. It does not
 measure `promkit-core::Renderer`, terminal layout, or terminal I/O.
+
+## Structured line numbers
+
+The `json`, `yaml`, and `tree` widgets can display stable, one-based line
+numbers by enabling `show_line_numbers` in their `Config`. Numbers refer to the
+fully expanded structure, so collapsing a node leaves gaps for its hidden rows.
+
+The corresponding `promkit` presets expose `.show_line_numbers(bool)`:
+
+```rust
+let preset = Json::new(document).show_line_numbers(true);
+```

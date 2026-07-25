@@ -8,6 +8,7 @@ async fn main() -> anyhow::Result<()> {
     let document = Document::from_path(&root)?;
     let ret = Tree::new(document)
         .title("Select a directory or file")
+        .show_line_numbers(true)
         .tree_lines(10)
         .run()
         .await?;

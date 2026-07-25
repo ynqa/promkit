@@ -101,6 +101,8 @@ pub struct Config {
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
+    /// Whether to display stable one-based line numbers to the left of the content.
+    pub show_line_numbers: bool,
 }
 
 impl Default for Config {
@@ -119,6 +121,7 @@ impl Default for Config {
             indent: 2,
             overflow_mode: OverflowMode::default(),
             lines: None,
+            show_line_numbers: false,
         }
     }
 }

@@ -10,6 +10,30 @@ pub mod yaml;
 #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
 pub mod tree;
 
+use promkit_core::grapheme::StyledGraphemes;
+
+fn with_line_numbers(
+    lines: Vec<StyledGraphemes>,
+    line_numbers: Vec<usize>,
+    line_count: usize,
+) -> Vec<StyledGraphemes> {
+    debug_assert_eq!(lines.len(), line_numbers.len());
+    let width = line_count.max(1).to_string().len();
+
+    line_numbers
+        .into_iter()
+        .zip(lines)
+        .map(|(line_number, line)| {
+            [
+                StyledGraphemes::from(format!("{line_number:>width$} ")),
+                line,
+            ]
+            .into_iter()
+            .collect()
+        })
+        .collect()
+}
+
 /// Container type of structured widget.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {

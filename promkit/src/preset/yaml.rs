@@ -125,6 +125,7 @@ impl Yaml {
                     indent: 2,
                     overflow_mode: OverflowMode::Truncate,
                     lines: Default::default(),
+                    show_line_numbers: false,
                 },
             },
         }
@@ -145,6 +146,12 @@ impl Yaml {
     /// Sets the number of lines to be used for rendering the YAML data.
     pub fn yaml_lines(mut self, lines: usize) -> Self {
         self.yaml.config.lines = Some(lines);
+        self
+    }
+
+    /// Sets whether stable one-based line numbers are displayed for YAML rows.
+    pub fn show_line_numbers(mut self, show: bool) -> Self {
+        self.yaml.config.show_line_numbers = show;
         self
     }
 

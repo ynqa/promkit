@@ -81,6 +81,7 @@ async fn main() -> anyhow::Result<()> {
     let document = Document::new(values.iter());
     Json::new(document)
         .title("JSON Viewer")
+        .show_line_numbers(true)
         .overflow_mode(OverflowMode::Wrap)
         .run()
         .await
