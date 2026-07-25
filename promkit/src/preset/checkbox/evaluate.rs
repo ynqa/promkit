@@ -1,9 +1,13 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
     },
-    preset::checkbox::Checkbox,
+    preset::checkbox::{Checkbox, Index},
+    widgets::checkbox::CheckboxHit,
     Signal,
 };
 
@@ -16,6 +20,7 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle the checkbox state for the current item
+/// | Left click             | Move to and toggle the clicked item
 pub async fn default(event: &Event, ctx: &mut Checkbox) -> anyhow::Result<Signal> {
     match event {
         // Quit
@@ -73,6 +78,31 @@ pub async fn default(event: &Event, ctx: &mut Checkbox) -> anyhow::Result<Signal
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => ctx.checkbox.checkbox.toggle(),
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer
+                .as_ref()
+                .and_then(|renderer| {
+                    renderer.hit_test(ScreenPosition {
+                        row: *row,
+                        column: *column,
+                    })
+                })
+                .filter(|position| position.index == Index::Checkbox)
+            {
+                if let Some(CheckboxHit::Toggle { index }) =
+                    ctx.checkbox.hit_at(position.content_position())
+                {
+                    ctx.checkbox.checkbox.toggle_at(index);
+                }
+            }
+        }
 
         _ => (),
     }

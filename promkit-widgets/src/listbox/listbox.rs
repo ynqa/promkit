@@ -82,6 +82,11 @@ impl Listbox {
         self.0.forward()
     }
 
+    /// Moves the cursor to an item by index.
+    pub fn move_to(&mut self, position: usize) -> bool {
+        self.0.move_to(position)
+    }
+
     /// Moves the cursor to the head (beginning) of the listbox.
     pub fn move_to_head(&mut self) {
         self.0.move_to_head()

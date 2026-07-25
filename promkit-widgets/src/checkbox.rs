@@ -66,3 +66,43 @@ impl Widget for State {
         }
     }
 }
+
+impl State {
+    /// Interprets a checkbox content position as a toggleable item.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the item index.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<CheckboxHit> {
+        self.checkbox
+            .items()
+            .get(position.row)
+            .map(|_| CheckboxHit::Toggle {
+                index: position.row,
+            })
+    }
+}
+
+/// Semantic targets exposed by the checkbox widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CheckboxHit {
+    Toggle { index: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_item_rows_for_hits() {
+        let state = State {
+            checkbox: Checkbox::from_displayable(["first", "second"]),
+            config: Config::default(),
+        };
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 20 }),
+            Some(CheckboxHit::Toggle { index: 1 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+}

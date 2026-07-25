@@ -53,3 +53,43 @@ impl Widget for State {
         }
     }
 }
+
+impl State {
+    /// Interprets a text content position as a selectable line.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the line index.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<TextHit> {
+        self.text
+            .items()
+            .get(position.row)
+            .map(|_| TextHit::Select {
+                index: position.row,
+            })
+    }
+}
+
+/// Semantic targets exposed by the text widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextHit {
+    Select { index: usize },
+}
+
+#[cfg(test)]
+mod state_tests {
+    use super::*;
+
+    #[test]
+    fn resolves_line_rows_for_hits() {
+        let state = State {
+            text: Text::from("first\nsecond"),
+            config: Config::default(),
+        };
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 20 }),
+            Some(TextHit::Select { index: 1 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+}

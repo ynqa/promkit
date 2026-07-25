@@ -58,3 +58,43 @@ impl Widget for State {
         }
     }
 }
+
+impl State {
+    /// Interprets a listbox content position as a selectable item.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the item index.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<ListboxHit> {
+        self.listbox
+            .items()
+            .get(position.row)
+            .map(|_| ListboxHit::Select {
+                index: position.row,
+            })
+    }
+}
+
+/// Semantic targets exposed by the listbox widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ListboxHit {
+    Select { index: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_item_rows_for_hits() {
+        let state = State {
+            listbox: Listbox::from(["first", "second"]),
+            config: Config::default(),
+        };
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 20 }),
+            Some(ListboxHit::Select { index: 1 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+}

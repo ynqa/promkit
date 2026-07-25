@@ -1,9 +1,13 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
     },
-    preset::listbox::Listbox,
+    preset::listbox::{Index, Listbox},
+    widgets::listbox::ListboxHit,
     Signal,
 };
 
@@ -15,6 +19,7 @@ use crate::{
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
+/// | Left click             | Move the selection to the clicked item
 pub async fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal> {
     match event {
         // Quit
@@ -60,6 +65,31 @@ pub async fn default(event: &Event, ctx: &mut Listbox) -> anyhow::Result<Signal>
             modifiers: KeyModifiers::NONE,
         }) => {
             ctx.listbox.listbox.forward();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer
+                .as_ref()
+                .and_then(|renderer| {
+                    renderer.hit_test(ScreenPosition {
+                        row: *row,
+                        column: *column,
+                    })
+                })
+                .filter(|position| position.index == Index::Listbox)
+            {
+                if let Some(ListboxHit::Select { index }) =
+                    ctx.listbox.hit_at(position.content_position())
+                {
+                    ctx.listbox.listbox.move_to(index);
+                }
+            }
         }
 
         _ => (),

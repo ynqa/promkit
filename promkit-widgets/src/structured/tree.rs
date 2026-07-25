@@ -66,3 +66,55 @@ impl Widget for State {
         }
     }
 }
+
+impl State {
+    /// Interprets a tree content position as a semantic operation target.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the underlying document row.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<TreeHit> {
+        self.document
+            .row_index_at_visible_position(position.row)
+            .map(|row_index| TreeHit::Toggle { row_index })
+    }
+}
+
+/// Semantic targets exposed by the tree widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TreeHit {
+    Toggle { row_index: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_visible_rows_for_hits() {
+        let state = State {
+            document: Document::new(vec![
+                Row {
+                    id: "root".into(),
+                    path: vec!["root".into()],
+                    depth: 0,
+                    has_children: true,
+                    collapsed: false,
+                },
+                Row {
+                    id: "child".into(),
+                    path: vec!["root".into(), "child".into()],
+                    depth: 1,
+                    has_children: false,
+                    collapsed: false,
+                },
+            ]),
+            config: Config::default(),
+        };
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 20 }),
+            Some(TreeHit::Toggle { row_index: 1 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+}

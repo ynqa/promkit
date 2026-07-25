@@ -54,6 +54,18 @@ impl Document {
         self.position = index;
     }
 
+    /// Toggles the row identified by its underlying document index.
+    pub fn toggle_at(&mut self, row_index: usize) {
+        if row_index < self.rows.len() {
+            self.position = self.rows.toggle(row_index);
+        }
+    }
+
+    /// Resolves a visible row number to its underlying document index.
+    pub fn row_index_at_visible_position(&self, visible_position: usize) -> Option<usize> {
+        row_index_at_visible_position(&self.rows, visible_position)
+    }
+
     /// Sets the visibility of all rows.
     pub fn set_nodes_visibility(&mut self, collapsed: bool) {
         self.rows.set_rows_visibility(collapsed);
@@ -103,4 +115,20 @@ fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
     }
 
     visible
+}
+
+fn row_index_at_visible_position(rows: &Vec<Row>, target: usize) -> Option<usize> {
+    if rows.is_empty() {
+        return None;
+    }
+
+    let mut position = rows.head();
+    for _ in 0..target {
+        let next = rows.down(position);
+        if next == position {
+            return None;
+        }
+        position = next;
+    }
+    Some(position)
 }
