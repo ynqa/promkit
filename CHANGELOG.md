@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Moved readline rendering regression coverage to `.thdsl` scenarios powered by the external `termharness` crate
+- Moved readline rendering regression coverage to `.th` scenarios powered by the external `termharness` crate
 
 ### Removed
 
