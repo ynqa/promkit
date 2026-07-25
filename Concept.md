@@ -14,9 +14,8 @@ promkit is organized around three responsibilities with clear boundaries:
 
 2. **State management and UI materialization (`promkit-widgets` + `promkit-core`)**
    - Each widget state implements [`Widget`](./promkit-core/src/lib.rs).
-   - `Widget::create_graphemes(width, height)` returns
-     [`StyledGraphemes`](./promkit-core/src/grapheme.rs), which is the render-ready
-     text unit including style and line breaks.
+   - `Widget::create_graphemes()` returns `CreatedGraphemes`: width-independent
+     styled content, layout hints, and an optional logical cursor position.
    - Widget states focus on state and projection only.
 
 > [!IMPORTANT]
@@ -25,11 +24,16 @@ promkit is organized around three responsibilities with clear boundaries:
 > which avoids key-binding conflicts when multiple widgets are combined.
 
 3. **Rendering (`promkit-core`)**
-   - [`Renderer<K>`](./promkit-core/src/render.rs) stores ordered grapheme chunks in
-     `SkipMap<K, StyledGraphemes>`.
+   - [`Renderer<K>`](./promkit-core/src/render.rs) stores ordered
+     `CreatedGraphemes` chunks.
    - `update` / `remove` modify chunks by index key.
+   - `render` wraps or truncates content, assigns vertical viewports, scrolls
+     viewports to include logical cursors, and saves a keyed layout snapshot.
+   - The layout snapshot supports screen-to-widget hit testing and the inverse
+     widget-to-screen position mapping.
    - `render` delegates drawing to [`Terminal`](./promkit-core/src/terminal.rs).
-   - `Terminal::draw` performs wrapping, clearing, printing, and scrolling.
+   - `Terminal::draw_rows` performs clearing, printing, and terminal scrolling
+     after layout is complete.
 
 This keeps responsibilities explicit:
 - prompt = control flow

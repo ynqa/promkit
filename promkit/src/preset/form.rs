@@ -3,7 +3,6 @@
 use crate::{
     core::{
         crossterm::{
-            self,
             event::Event,
             style::{Attribute, Attributes, ContentStyle},
         },
@@ -47,14 +46,13 @@ impl crate::Prompt for Form {
         // Update styles based on the current position.
         self.overwrite_styles();
 
-        let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 self.readlines
                     .contents()
                     .iter()
                     .enumerate()
-                    .map(|(i, state)| (i, state.create_graphemes(size.0, size.1))),
+                    .map(|(i, state)| (i, state.create_graphemes())),
                 true,
             )
             .await?,
@@ -68,8 +66,7 @@ impl crate::Prompt for Form {
         // Update the styles based on the current position.
         self.overwrite_styles();
 
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
         ret
     }
 
@@ -131,7 +128,7 @@ impl Form {
     }
 
     /// Render the prompt with the specified width and height.
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
@@ -140,7 +137,7 @@ impl Form {
                             .contents()
                             .iter()
                             .enumerate()
-                            .map(|(i, state)| (i, state.create_graphemes(width, height))),
+                            .map(|(i, state)| (i, state.create_graphemes())),
                     )
                     .render()
                     .await

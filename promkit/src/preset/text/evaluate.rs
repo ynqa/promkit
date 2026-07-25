@@ -1,9 +1,13 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
     },
-    preset::text::Text,
+    preset::text::{Index, Text},
+    widgets::text::TextHit,
     Signal,
 };
 
@@ -15,13 +19,9 @@ use crate::{
 /// | <kbd>Ctrl + C</kbd>    | Interrupt the current operation
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
+/// | Left click             | Move the selection to the clicked line
 pub async fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -65,6 +65,31 @@ pub async fn default(event: &Event, ctx: &mut Text) -> anyhow::Result<Signal> {
             modifiers: KeyModifiers::NONE,
         }) => {
             ctx.text.text.forward();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer
+                .as_ref()
+                .and_then(|renderer| {
+                    renderer.hit_test(ScreenPosition {
+                        row: *row,
+                        column: *column,
+                    })
+                })
+                .filter(|position| position.index == Index::Text)
+            {
+                if let Some(TextHit::Select { index }) =
+                    ctx.text.hit_at(position.content_position())
+                {
+                    ctx.text.text.move_to(index);
+                }
+            }
         }
 
         _ => (),

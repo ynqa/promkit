@@ -5,7 +5,6 @@ use std::fmt::Display;
 use crate::{
     core::{
         crossterm::{
-            self,
             event::Event,
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -24,7 +23,7 @@ use crate::{
 pub mod evaluate;
 
 /// Represents the indices of various components in the query selector preset.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
     Readline = 1,
@@ -59,16 +58,12 @@ pub struct QuerySelector {
 #[async_trait::async_trait]
 impl crate::Prompt for QuerySelector {
     async fn initialize(&mut self) -> anyhow::Result<()> {
-        let size = crossterm::terminal::size()?;
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
                 [
-                    (Index::Title, self.title.create_graphemes(size.0, size.1)),
-                    (
-                        Index::Readline,
-                        self.readline.create_graphemes(size.0, size.1),
-                    ),
-                    (Index::List, self.list.create_graphemes(size.0, size.1)),
+                    (Index::Title, self.title.create_graphemes()),
+                    (Index::Readline, self.readline.create_graphemes()),
+                    (Index::List, self.list.create_graphemes()),
                 ],
                 true,
             )
@@ -100,8 +95,7 @@ impl crate::Prompt for QuerySelector {
         }
 
         // Update the renderer with the new state of the components.
-        let size = crossterm::terminal::size()?;
-        self.render(size.0, size.1).await?;
+        self.render().await?;
 
         ret
     }
@@ -259,17 +253,14 @@ impl QuerySelector {
     }
 
     /// Render the prompt with the specified width and height.
-    async fn render(&mut self, width: u16, height: u16) -> anyhow::Result<()> {
+    async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {
                 renderer
                     .update([
-                        (Index::Title, self.title.create_graphemes(width, height)),
-                        (
-                            Index::Readline,
-                            self.readline.create_graphemes(width, height),
-                        ),
-                        (Index::List, self.list.create_graphemes(width, height)),
+                        (Index::Title, self.title.create_graphemes()),
+                        (Index::Readline, self.readline.create_graphemes()),
+                        (Index::List, self.list.create_graphemes()),
                     ])
                     .render()
                     .await

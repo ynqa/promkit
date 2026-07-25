@@ -98,6 +98,18 @@ impl Checkbox {
         }
     }
 
+    /// Moves to an item by index and toggles its selection state.
+    ///
+    /// Returns `false` without changing the checkbox when the index is out of
+    /// bounds.
+    pub fn toggle_at(&mut self, index: usize) -> bool {
+        if !self.listbox.move_to(index) {
+            return false;
+        }
+        self.toggle();
+        true
+    }
+
     /// Moves the cursor backward in the listbox, if possible.
     /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
     pub fn backward(&mut self) -> bool {

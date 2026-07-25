@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 #[path = "text/text.rs"]
 mod inner;
@@ -29,26 +31,65 @@ impl State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
+    fn create_graphemes(&self) -> CreatedGraphemes {
+        let lines = self.text.items().iter().map(|item| {
+            if let Some(style) = &self.config.style {
+                item.clone().apply_style(*style)
+            } else {
+                item.clone()
+            }
+        });
+
+        CreatedGraphemes {
+            graphemes: StyledGraphemes::from_lines(lines),
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: (!self.text.items().is_empty()).then_some(ContentPosition {
+                row: self.text.position(),
+                column: 0,
+            }),
+        }
+    }
+}
+
+impl State {
+    /// Interprets a text content position as a selectable line.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the line index.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<TextHit> {
+        self.text
+            .items()
+            .get(position.row)
+            .map(|_| TextHit::Select {
+                index: position.row,
+            })
+    }
+}
+
+/// Semantic targets exposed by the text widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextHit {
+    Select { index: usize },
+}
+
+#[cfg(test)]
+mod state_tests {
+    use super::*;
+
+    #[test]
+    fn resolves_line_rows_for_hits() {
+        let state = State {
+            text: Text::from("first\nsecond"),
+            config: Config::default(),
         };
 
-        let lines = self
-            .text
-            .items()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i >= self.text.position() && *i < self.text.position() + height)
-            .map(|(_, item)| {
-                if let Some(style) = &self.config.style {
-                    item.clone().apply_style(*style)
-                } else {
-                    item.clone()
-                }
-            });
-
-        StyledGraphemes::from_lines(lines)
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 20 }),
+            Some(TextHit::Select { index: 1 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
     }
 }

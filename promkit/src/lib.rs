@@ -25,7 +25,7 @@ use core::crossterm::{
 
 /// Singleton for EventStream. If a new EventStream is created for each Prompt::run,
 /// it causes the error "The cursor position could not be read within a normal duration".
-/// See https://github.com/crossterm-rs/crossterm/issues/963#issuecomment-2571259264 for more details.
+/// See <https://github.com/crossterm-rs/crossterm/issues/963#issuecomment-2571259264> for details.
 pub static EVENT_STREAM: LazyLock<Mutex<EventStream>> =
     LazyLock::new(|| Mutex::new(EventStream::new()));
 
@@ -94,6 +94,11 @@ pub trait Prompt {
     /// to handle events until a quit signal is received.
     /// After exiting the loop, it produces and returns the result.
     ///
+    /// Raw mode and mouse capture are enabled for the duration of the prompt.
+    /// Resize events are not redrawn immediately because terminals already reflow
+    /// their current screen; the next input-triggered render observes the new size
+    /// and refreshes content, viewports, and hit-test layout.
+    ///
     /// # Returns
     ///
     /// Returns a `Result` containing the produced result or an error.
@@ -109,16 +114,16 @@ pub trait Prompt {
         };
 
         enable_raw_mode()?;
-        execute!(io::stdout(), cursor::Hide)?;
+        execute!(io::stdout(), cursor::Hide, event::EnableMouseCapture,)?;
 
         self.initialize().await?;
 
         while let Some(event) = EVENT_STREAM.lock().await.next().await {
             match event {
                 Ok(event) => {
-                    // NOTE: For zsh_pretend/tests/resize_roundtrip_wrap_reflow.rs, skipping
-                    // resize events here
-                    // keeps output closer to zsh than evaluating resize as a normal input event.
+                    // Terminals reflow the existing screen on resize. Redrawing here
+                    // changes the prompt origin and causes an extra vertical shift.
+                    // The renderer observes the new size on the next input event.
                     if event.is_resize() {
                         continue;
                     }

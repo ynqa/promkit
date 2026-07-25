@@ -62,6 +62,11 @@ impl Text {
     pub fn forward(&mut self) -> bool {
         self.0.forward()
     }
+
+    /// Moves the cursor to a line by index.
+    pub fn move_to(&mut self, position: usize) -> bool {
+        self.0.move_to(position)
+    }
 }
 
 #[cfg(test)]

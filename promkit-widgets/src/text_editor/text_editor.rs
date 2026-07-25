@@ -200,6 +200,11 @@ impl TextEditor {
         self.0.move_to_tail()
     }
 
+    /// Moves the cursor to a character by index.
+    pub fn move_to(&mut self, position: usize) -> bool {
+        self.0.move_to(position)
+    }
+
     pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
         self.0.shift(backward, forward)
     }

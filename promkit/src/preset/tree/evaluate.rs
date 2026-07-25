@@ -1,9 +1,13 @@
 use crate::{
-    core::crossterm::event::{
-        Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
-        MouseEventKind,
+    core::{
+        crossterm::event::{
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
+        },
+        ScreenPosition,
     },
-    preset::tree::Tree,
+    preset::tree::{Index, Tree},
+    widgets::structured::tree::TreeHit,
     Signal,
 };
 
@@ -16,13 +20,9 @@ use crate::{
 /// | <kbd>↑</kbd>           | Move the selection up
 /// | <kbd>↓</kbd>           | Move the selection down
 /// | <kbd>Space</kbd>       | Toggle fold/unfold at the current node
+/// | Left click             | Move to and toggle the clicked node
 pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
     match event {
-        // Render for refreshing prompt on resize.
-        Event::Resize(width, height) => {
-            ctx.render(*width, *height).await?;
-        }
-
         // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
@@ -80,6 +80,31 @@ pub async fn default(event: &Event, ctx: &mut Tree) -> anyhow::Result<Signal> {
             state: KeyEventState::NONE,
         }) => {
             ctx.tree.document.toggle();
+        }
+
+        Event::Mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }) => {
+            let renderer = ctx.renderer.clone();
+            if let Some(position) = renderer
+                .as_ref()
+                .and_then(|renderer| {
+                    renderer.hit_test(ScreenPosition {
+                        row: *row,
+                        column: *column,
+                    })
+                })
+                .filter(|position| position.index == Index::Tree)
+            {
+                if let Some(TreeHit::Toggle { row_index }) =
+                    ctx.tree.hit_at(position.content_position())
+                {
+                    ctx.tree.document.toggle_at(row_index);
+                }
+            }
         }
 
         _ => (),
