@@ -65,15 +65,19 @@ fn sequence_mapping_line_start(rows: &[Row], index: usize) -> Option<usize> {
     renders_as_sequence_mapping_line(&rows[previous], &rows[index]).then_some(previous)
 }
 
-fn sequence_mapping_inline_container(rows: &[Row], index: usize) -> Option<usize> {
+fn sequence_mapping_inline_row(rows: &[Row], index: usize) -> Option<usize> {
     let next = index + 1;
     let next_row = rows.get(next)?;
-    (renders_as_sequence_mapping_line(&rows[index], next_row)
-        && matches!(
-            TagAwareContainer::get(&next_row.node),
-            Some(ContainerNode::Open { .. })
-        ))
-    .then_some(next)
+    renders_as_sequence_mapping_line(&rows[index], next_row).then_some(next)
+}
+
+fn sequence_mapping_inline_container(rows: &[Row], index: usize) -> Option<usize> {
+    let inline = sequence_mapping_inline_row(rows, index)?;
+    matches!(
+        TagAwareContainer::get(&rows[inline].node),
+        Some(ContainerNode::Open { .. })
+    )
+    .then_some(inline)
 }
 
 fn is_invisible_root_container(row: &Row) -> bool {
@@ -87,19 +91,6 @@ fn is_invisible_root_container(row: &Row) -> bool {
                 ..
             })
         )
-}
-
-fn invisible_root_line_start(rows: &[Row], index: usize) -> Option<usize> {
-    let previous = index.checked_sub(1)?;
-    (is_invisible_root_container(&rows[previous])
-        && matches!(
-            rows[previous].node,
-            YamlNode::Container(ContainerNode::Open {
-                typ: ContainerType::Object,
-                ..
-            })
-        ))
-    .then_some(previous)
 }
 
 fn next_index_after(rows: &[Row], index: usize) -> usize {
@@ -213,15 +204,17 @@ impl RowOperation for Vec<Row> {
 
     fn toggle(&mut self, current: usize) -> usize {
         let cursor = sequence_mapping_line_start(self, current).unwrap_or(current);
+        let inline_row = sequence_mapping_inline_row(self, cursor);
         let inline_target = sequence_mapping_inline_container(self, cursor);
-        let target = inline_target
-            .or_else(|| {
-                TagAwareContainer::get(&self[cursor].node)
-                    .is_some()
-                    .then_some(cursor)
-            })
-            .or_else(|| invisible_root_line_start(self, cursor))
-            .unwrap_or(cursor);
+        let target = match inline_row {
+            Some(_) => inline_target,
+            None => TagAwareContainer::get(&self[cursor].node)
+                .is_some()
+                .then_some(cursor),
+        };
+        let Some(target) = target else {
+            return cursor;
+        };
         let container = TagAwareContainer::get(&self[target].node).cloned();
 
         match container {
