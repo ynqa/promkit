@@ -158,7 +158,7 @@ grapheme updates directly to the shared renderer.
 ## Quality Strategy for Rendering Behavior
 
 Ensuring consistent rendering behavior across terminal environments is a key focus.
-The [`readline-loop` scenarios](./tests/readline/tests/scenarios) use
+The [readline terminal scenarios](./tests/readline/tests/scenarios) use
 [`termharness`](https://github.com/ynqa/termharness) to verify wrapping, resizing,
 cursor movement, and viewport behavior against recorded screen expectations.
 This keeps terminal behavior predictable while the rendering internals evolve.

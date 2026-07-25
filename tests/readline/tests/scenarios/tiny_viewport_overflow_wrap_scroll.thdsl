@@ -1,5 +1,5 @@
 Scenario "tiny_viewport_overflow_wrap_scroll"
-Command "CARGO_BIN_EXE_readline-loop"
+Command "CARGO_BIN_EXE_readline-fixture"
 Terminal rows 4 cols 12
 Cursor row 4 col 1
 

@@ -1,5 +1,5 @@
 Scenario "resize_roundtrip_wrap_reflow"
-Command "CARGO_BIN_EXE_readline-loop"
+Command "CARGO_BIN_EXE_readline-fixture"
 Terminal rows 10 cols 40
 Cursor row 10 col 1
 

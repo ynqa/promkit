@@ -13,5 +13,5 @@ tokio = { workspace = true }
 termharness = { git = "https://github.com/ynqa/termharness", rev = "be7b7e90ddea629c85a0d3a2035acd383a55672a" }
 
 [[bin]]
-name = "readline-loop"
-path = "src/readline_loop.rs"
+name = "readline-fixture"
+path = "src/readline_fixture.rs"
