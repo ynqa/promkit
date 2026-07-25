@@ -9,13 +9,6 @@ anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = ["readline"] }
 tokio = { workspace = true }
 
-[dev-dependencies]
-termharness = { git = "https://github.com/ynqa/termharness", rev = "be7b7e90ddea629c85a0d3a2035acd383a55672a" }
-
 [[bin]]
 name = "readline"
 path = "src/readline.rs"
-
-[[bin]]
-name = "readline-loop"
-path = "src/readline_loop.rs"

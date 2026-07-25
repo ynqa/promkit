@@ -14,9 +14,7 @@ fn prompt_initial_render_at_mid_screen() -> Result<()> {
 
 #[test]
 fn resize_roundtrip_wrap_reflow() -> Result<()> {
-    run(include_str!(
-        "scenarios/resize_roundtrip_wrap_reflow.thdsl"
-    ))
+    run(include_str!("scenarios/resize_roundtrip_wrap_reflow.thdsl"))
 }
 
 #[test]

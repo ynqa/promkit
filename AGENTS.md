@@ -27,7 +27,7 @@ built on top of [crossterm](https://github.com/crossterm-rs/crossterm).
 - `promkit-core/`: rendering primitives and terminal drawing
 - `promkit-widgets/`: reusable widget states
 - `promkit-derive/`: proc macros
-- `examples/readline/tests/scenarios/`: terminal rendering regression scenarios
+- `tests/readline/`: readline terminal rendering regression test crate and scenarios
 - `examples/`: runnable examples
 
 ## Architectural Rules

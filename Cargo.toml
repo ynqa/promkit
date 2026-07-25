@@ -6,6 +6,7 @@ members = [
   "promkit-core",
   "promkit-derive",
   "promkit-widgets",
+  "tests/*",
 ]
 
 [workspace.dependencies]
