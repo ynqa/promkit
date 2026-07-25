@@ -1,10 +1,9 @@
 //! Width-independent widget output and the coordinate types used during layout.
 //!
-//! Widgets project state into their complete styled content without receiving a
-//! terminal size or viewport. Alongside that content they return a [`WidgetLayout`]
-//! hint and, when applicable, a logical [`ContentPosition`] for the cursor.
-//! [`crate::render::Renderer`] owns terminal-dependent wrapping, truncation,
-//! vertical viewport allocation, and scrolling.
+//! Widgets project state into styled content. Alongside that content they return
+//! a [`WidgetLayout`] hint and, when applicable, a logical [`ContentPosition`]
+//! for the cursor. [`crate::render::Renderer`] owns terminal-dependent wrapping,
+//! truncation, vertical viewport allocation, and scrolling.
 //!
 //! Positions deliberately have three coordinate spaces:
 //!
@@ -82,9 +81,9 @@ pub struct WidgetLayout {
 
 /// Width-independent content and metadata created by a widget.
 ///
-/// `graphemes` contains the widget's complete content, not only its visible
-/// window. This lets the renderer preserve a viewport while a cursor moves inside
-/// it and scroll only when the cursor crosses an edge.
+/// `graphemes` normally contains the widget's complete content. Widgets with
+/// large backing stores may return a bounded projection from
+/// [`Widget::create_graphemes_in_viewport`].
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CreatedGraphemes {
     pub graphemes: StyledGraphemes,
@@ -143,12 +142,19 @@ pub enum ViewportChange {
     Scrolled,
 }
 
-/// Projects widget state into complete, width-independent styled content.
-///
-/// Implementations must not inspect the terminal size or apply viewport
-/// clipping. Terminal-dependent work belongs to [`crate::render::Renderer`].
+/// Projects widget state into width-independent styled content.
 pub trait Widget {
+    /// Creates the widget's complete content.
     fn create_graphemes(&self) -> CreatedGraphemes;
+
+    /// Creates content bounded by a terminal viewport.
+    ///
+    /// The default implementation returns the complete content. Large widgets
+    /// can override this method to avoid projecting rows that cannot be shown.
+    /// Wrapping and truncation remain the renderer's responsibility.
+    fn create_graphemes_in_viewport(&self, _width: u16, _height: u16) -> CreatedGraphemes {
+        self.create_graphemes()
+    }
 }
 
 #[cfg(test)]

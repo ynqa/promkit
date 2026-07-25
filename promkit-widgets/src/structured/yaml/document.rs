@@ -61,7 +61,12 @@ impl Document {
 
     /// Resolves a rendered visible row number to its underlying document index.
     pub fn row_index_at_visible_position(&self, visible_position: usize) -> Option<usize> {
-        row_index_at_visible_position(&self.rows, visible_position)
+        row_index_at_visible_position(&self.rows, self.rows.head(), visible_position)
+    }
+
+    /// Resolves a rendered visible row offset from the current cursor to its document index.
+    pub fn row_index_at_visible_offset_from_current(&self, visible_offset: usize) -> Option<usize> {
+        row_index_at_visible_position(&self.rows, self.position, visible_offset)
     }
 
     /// Sets the visibility of all rows.
@@ -115,12 +120,12 @@ fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
     visible
 }
 
-fn row_index_at_visible_position(rows: &Vec<Row>, target: usize) -> Option<usize> {
+fn row_index_at_visible_position(rows: &Vec<Row>, start: usize, target: usize) -> Option<usize> {
     if rows.is_empty() {
         return None;
     }
 
-    let mut position = rows.head();
+    let mut position = start;
     for _ in 0..target {
         let next = rows.down(position);
         if next == position {

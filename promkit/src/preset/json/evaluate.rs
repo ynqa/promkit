@@ -96,7 +96,7 @@ pub async fn default(event: &Event, ctx: &mut Json) -> anyhow::Result<Signal> {
                 .filter(|position| position.index == Index::Json)
             {
                 if let Some(JsonHit::Toggle { row_index }) =
-                    ctx.json.hit_at(position.content_position())
+                    ctx.json.hit_at_viewport(position.content_position())
                 {
                     ctx.json.document.toggle_at(row_index);
                 }
