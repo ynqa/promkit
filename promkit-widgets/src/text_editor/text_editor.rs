@@ -2,8 +2,6 @@ use std::collections::HashSet;
 
 use promkit_core::grapheme::{StyledGrapheme, StyledGraphemes};
 
-use crate::cursor::Cursor;
-
 /// Edit mode.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Default)]
@@ -17,18 +15,19 @@ pub enum Mode {
 
 /// A text editor that supports basic editing operations
 /// such as insert, delete, and overwrite.
-/// It utilizes a cursor to navigate and manipulate the text.
 #[derive(Clone)]
-pub struct TextEditor(Cursor<StyledGraphemes>);
+pub struct TextEditor {
+    text: StyledGraphemes,
+    position: usize,
+}
 
 impl Default for TextEditor {
     fn default() -> Self {
-        Self(Cursor::new(
-            // Set cursor
-            StyledGraphemes::from(" "),
-            0,
-            false,
-        ))
+        Self {
+            // Keep a trailing grapheme as the visible cursor.
+            text: StyledGraphemes::from(" "),
+            position: 0,
+        }
     }
 }
 
@@ -36,13 +35,14 @@ impl TextEditor {
     pub fn new<S: AsRef<str>>(s: S) -> Self {
         let mut buf = s.as_ref().to_owned();
         buf.push(' ');
-        let pos = buf.len() - 1;
-        Self(Cursor::new(StyledGraphemes::from(buf), pos, false))
+        let text = StyledGraphemes::from(buf);
+        let position = text.len() - 1;
+        Self { text, position }
     }
 
     /// Returns the current text including the cursor.
     pub fn text(&self) -> StyledGraphemes {
-        self.0.contents().clone()
+        self.text.clone()
     }
 
     /// Returns the text without the cursor.
@@ -54,7 +54,7 @@ impl TextEditor {
 
     /// Returns the current position of the cursor within the text.
     pub fn position(&self) -> usize {
-        self.0.position()
+        self.position
     }
 
     /// Masks all characters except the cursor with the specified mask character.
@@ -69,16 +69,13 @@ impl TextEditor {
 
     /// Replaces the current text with new text and positions the cursor at the end.
     pub fn replace(&mut self, new: &str) {
-        let mut buf = new.to_owned();
-        buf.push(' ');
-        let pos = buf.len() - 1;
-        *self = Self(Cursor::new(StyledGraphemes::from(buf), pos, false));
+        *self = Self::new(new);
     }
 
     /// Inserts a character at the current cursor position.
     pub fn insert(&mut self, ch: char) {
         let pos = self.position();
-        self.0.contents_mut().insert(pos, StyledGrapheme::from(ch));
+        self.text.insert(pos, StyledGrapheme::from(ch));
         self.forward();
     }
 
@@ -90,13 +87,11 @@ impl TextEditor {
 
     /// Overwrites the character at the current cursor position with the specified character.
     pub fn overwrite(&mut self, ch: char) {
-        if self.0.is_tail() {
+        if self.position == self.text.len() - 1 {
             self.insert(ch)
         } else {
             let pos = self.position();
-            self.0
-                .contents_mut()
-                .replace_range(pos..pos + 1, ch.to_string());
+            self.text.replace_range(pos..pos + 1, ch.to_string());
             self.forward();
         }
     }
@@ -109,10 +104,10 @@ impl TextEditor {
 
     /// Erases the character before the cursor position.
     pub fn erase(&mut self) {
-        if !self.0.is_head() {
+        if self.position > 0 {
             self.backward();
             let pos = self.position();
-            self.0.contents_mut().drain(pos..pos + 1);
+            self.text.drain(pos..pos + 1);
         }
     }
 
@@ -126,10 +121,10 @@ impl TextEditor {
     fn erase_to_position(&mut self, pos: usize) {
         let current_pos = self.position();
         if pos > current_pos {
-            self.0.contents_mut().drain(current_pos..pos);
+            self.text.drain(current_pos..pos);
         } else {
-            self.0.contents_mut().drain(pos..current_pos);
-            self.0.move_to(pos);
+            self.text.drain(pos..current_pos);
+            self.move_to(pos);
         }
     }
 
@@ -156,7 +151,7 @@ impl TextEditor {
     /// Moves the cursor to the nearest previous character in `word_break_chars`.
     pub fn move_to_previous_nearest(&mut self, word_break_chars: &HashSet<char>) {
         let pos = self.find_previous_nearest_index(word_break_chars);
-        self.0.move_to(pos);
+        self.move_to(pos);
     }
 
     /// Finds the nearest next index of any character in `word_break_chars` from the cursor position.
@@ -169,13 +164,13 @@ impl TextEditor {
             .filter(|&(i, _)| i > current_position)
             .find(|&(_, c)| word_break_chars.contains(c))
             .map(|(i, _)| {
-                if i < self.0.contents().len() - 1 {
+                if i < self.text.len() - 1 {
                     i + 1
                 } else {
-                    self.0.contents().len() - 1
+                    self.text.len() - 1
                 }
             })
-            .unwrap_or(self.0.contents().len() - 1)
+            .unwrap_or(self.text.len() - 1)
     }
 
     /// Erases the text from the current cursor position to the nearest next character in `word_break_chars`.
@@ -187,36 +182,49 @@ impl TextEditor {
     /// Moves the cursor to the nearest next character in `word_break_chars`.
     pub fn move_to_next_nearest(&mut self, word_break_chars: &HashSet<char>) {
         let pos = self.find_next_nearest_index(word_break_chars);
-        self.0.move_to(pos);
+        self.move_to(pos);
     }
 
     /// Moves the cursor to the beginning of the text.
     pub fn move_to_head(&mut self) {
-        self.0.move_to_head()
+        self.position = 0;
     }
 
     /// Moves the cursor to the end of the text.
     pub fn move_to_tail(&mut self) {
-        self.0.move_to_tail()
+        self.position = self.text.len() - 1;
     }
 
     /// Moves the cursor to a character by index.
     pub fn move_to(&mut self, position: usize) -> bool {
-        self.0.move_to(position)
+        if position < self.text.len() {
+            self.position = position;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn shift(&mut self, backward: usize, forward: usize) -> bool {
-        self.0.shift(backward, forward)
+        let Some(position) = self
+            .position
+            .checked_sub(backward)
+            .and_then(|position| position.checked_add(forward))
+        else {
+            return false;
+        };
+
+        self.move_to(position)
     }
 
     /// Moves the cursor one position backward, if possible.
     pub fn backward(&mut self) -> bool {
-        self.0.backward()
+        self.shift(1, 0)
     }
 
     /// Moves the cursor one position forward, if possible.
     pub fn forward(&mut self) -> bool {
-        self.0.forward()
+        self.shift(0, 1)
     }
 }
 
@@ -225,7 +233,39 @@ mod test {
     use super::*;
 
     fn new_with_position(s: String, p: usize) -> TextEditor {
-        TextEditor(Cursor::new(StyledGraphemes::from(s), p, false))
+        let text = StyledGraphemes::from(s);
+        TextEditor {
+            position: p.min(text.len().saturating_sub(1)),
+            text,
+        }
+    }
+
+    mod position {
+        use super::*;
+
+        #[test]
+        fn starts_at_the_trailing_cursor() {
+            let texteditor = TextEditor::new("abc");
+
+            assert_eq!(texteditor.position(), 3);
+        }
+
+        #[test]
+        fn direct_and_relative_moves_preserve_position_on_failure() {
+            let mut texteditor = TextEditor::new("abc");
+
+            assert!(texteditor.move_to(1));
+            assert_eq!(texteditor.position(), 1);
+            assert!(!texteditor.move_to(4));
+            assert_eq!(texteditor.position(), 1);
+
+            assert!(texteditor.shift(0, 2));
+            assert_eq!(texteditor.position(), 3);
+            assert!(!texteditor.shift(0, 1));
+            assert_eq!(texteditor.position(), 3);
+            assert!(!texteditor.shift(4, 0));
+            assert_eq!(texteditor.position(), 3);
+        }
     }
 
     mod masking {
@@ -298,7 +338,7 @@ mod test {
         fn test() {
             let mut txt = new_with_position(String::from("koko momo jojo "), 11); // indicate `o`.
             assert_eq!(10, txt.find_previous_nearest_index(&HashSet::from([' '])));
-            txt.0.move_to(10);
+            txt.move_to(10);
             assert_eq!(5, txt.find_previous_nearest_index(&HashSet::from([' '])));
         }
 
@@ -318,7 +358,7 @@ mod test {
         fn test() {
             let mut txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
             assert_eq!(10, txt.find_next_nearest_index(&HashSet::from([' '])));
-            txt.0.move_to(10);
+            txt.move_to(10);
             assert_eq!(14, txt.find_next_nearest_index(&HashSet::from([' '])));
         }
 

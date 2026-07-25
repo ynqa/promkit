@@ -15,10 +15,7 @@ use crate::{
 
 /// Default event handler for the `Form` prompt.
 pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
-    let current_position = ctx.readlines.position();
-
     match event {
-        // Quit
         Event::Key(KeyEvent {
             code: KeyCode::Enter,
             modifiers: KeyModifiers::NONE,
@@ -31,7 +28,14 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => return Err(anyhow::anyhow!("ctrl+c")),
+        _ => {}
+    }
 
+    let Some(current_position) = ctx.active() else {
+        return Ok(Signal::Continue);
+    };
+
+    match event {
         // Move cursor.
         Event::Key(KeyEvent {
             code: KeyCode::Left,
@@ -39,9 +43,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.readlines.contents_mut()[current_position]
-                .texteditor
-                .backward();
+            ctx.readlines[current_position].texteditor.backward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Right,
@@ -49,26 +51,20 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.readlines.contents_mut()[current_position]
-                .texteditor
-                .forward();
+            ctx.readlines[current_position].texteditor.forward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Char('a'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.readlines.contents_mut()[current_position]
-            .texteditor
-            .move_to_head(),
+        }) => ctx.readlines[current_position].texteditor.move_to_head(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('e'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.readlines.contents_mut()[current_position]
-            .texteditor
-            .move_to_tail(),
+        }) => ctx.readlines[current_position].texteditor.move_to_tail(),
 
         // Move cursor to the nearest character.
         Event::Key(KeyEvent {
@@ -77,11 +73,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = ctx.readlines.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines[current_position]
                 .config
                 .word_break_chars
                 .clone();
-            ctx.readlines.contents_mut()[current_position]
+            ctx.readlines[current_position]
                 .texteditor
                 .move_to_previous_nearest(&word_break_chars)
         }
@@ -92,11 +88,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = ctx.readlines.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines[current_position]
                 .config
                 .word_break_chars
                 .clone();
-            ctx.readlines.contents_mut()[current_position]
+            ctx.readlines[current_position]
                 .texteditor
                 .move_to_next_nearest(&word_break_chars)
         }
@@ -107,17 +103,13 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.readlines.contents_mut()[current_position]
-            .texteditor
-            .erase(),
+        }) => ctx.readlines[current_position].texteditor.erase(),
         Event::Key(KeyEvent {
             code: KeyCode::Char('u'),
             modifiers: KeyModifiers::CONTROL,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.readlines.contents_mut()[current_position]
-            .texteditor
-            .erase_all(),
+        }) => ctx.readlines[current_position].texteditor.erase_all(),
 
         // Erase to the nearest character.
         Event::Key(KeyEvent {
@@ -126,11 +118,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = ctx.readlines.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines[current_position]
                 .config
                 .word_break_chars
                 .clone();
-            ctx.readlines.contents_mut()[current_position]
+            ctx.readlines[current_position]
                 .texteditor
                 .erase_to_previous_nearest(&word_break_chars)
         }
@@ -141,11 +133,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            let word_break_chars = ctx.readlines.contents_mut()[current_position]
+            let word_break_chars = ctx.readlines[current_position]
                 .config
                 .word_break_chars
                 .clone();
-            ctx.readlines.contents_mut()[current_position]
+            ctx.readlines[current_position]
                 .texteditor
                 .erase_to_next_nearest(&word_break_chars)
         }
@@ -156,7 +148,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.readlines.backward();
+            ctx.focus_previous();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Down,
@@ -164,7 +156,7 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.readlines.forward();
+            ctx.focus_next();
         }
 
         Event::Mouse(MouseEvent {
@@ -183,14 +175,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
                 let field_index = position.index;
                 if let Some(TextEditorHit::Cursor { index }) = ctx
                     .readlines
-                    .contents()
                     .get(field_index)
                     .and_then(|state| state.hit_at(position.content_position()))
                 {
-                    ctx.readlines.move_to(field_index);
-                    ctx.readlines.contents_mut()[field_index]
-                        .texteditor
-                        .move_to(index);
+                    ctx.focus(field_index);
+                    ctx.readlines[field_index].texteditor.move_to(index);
                 }
             }
         }
@@ -207,16 +196,11 @@ pub async fn default(event: &Event, ctx: &mut Form) -> anyhow::Result<Signal> {
             modifiers: KeyModifiers::SHIFT,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => match ctx.readlines.contents_mut()[current_position]
-            .config
-            .edit_mode
-        {
-            text_editor::Mode::Insert => ctx.readlines.contents_mut()[current_position]
-                .texteditor
-                .insert(*ch),
-            text_editor::Mode::Overwrite => ctx.readlines.contents_mut()[current_position]
-                .texteditor
-                .overwrite(*ch),
+        }) => match ctx.readlines[current_position].config.edit_mode {
+            text_editor::Mode::Insert => ctx.readlines[current_position].texteditor.insert(*ch),
+            text_editor::Mode::Overwrite => {
+                ctx.readlines[current_position].texteditor.overwrite(*ch)
+            }
         },
 
         _ => (),
