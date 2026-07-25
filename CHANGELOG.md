@@ -12,6 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-24
+
+### Added
+
+- Added a YAML prompt preset and structured YAML widget with multi-document, tag, navigation, and collapse/expand support
+- Added a status widget with `Severity`-based styling
+- Added pretty rendering for structured JSON and ellipsis-aware line truncation in `promkit-core`
+
+### Changed
+
+- Migrated the JSON and Tree widgets to a shared row-based structured document model for navigation, visibility, and extraction
+- Updated `promkit-core` to `v0.4.0` and `promkit-widgets` to `v0.6.0`
+
+### Fixed
+
+- Fixed YAML root indentation, sequence-mapping layout, and visible-row extraction
+- Made empty Text and Listbox states contain no placeholder rows
+
 ## [0.12.0] - 2026-03-15
 
 ### Added
@@ -109,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For versions prior to 0.10.0, please refer to the git history or GitHub releases.
 
-[Unreleased]: https://github.com/ynqa/promkit/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/ynqa/promkit/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/ynqa/promkit/releases/tag/v0.13.0
 [0.12.0]: https://github.com/ynqa/promkit/releases/tag/v0.12.0
 [0.11.0]: https://github.com/ynqa/promkit/releases/tag/v0.11.0
 [0.10.0]: https://github.com/ynqa/promkit/releases/tag/v0.10.0

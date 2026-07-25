@@ -1,0 +1,21 @@
+Scenario "tiny_viewport_overflow_wrap_scroll"
+Command "CARGO_BIN_EXE_readline-fixture"
+Terminal rows 4 cols 12
+Cursor row 4 col 1
+
+Step "spawn"
+Settle 300ms
+Expect:
+  r00 |············|
+  r01 |············|
+  r02 |············|
+  r03 |❯❯··········|
+
+Step "type long text"
+Input "this input should overflow a tiny terminal viewport and keep wrapping"
+Settle 100ms
+Expect:
+  r00 |·terminal·vi|
+  r01 |ewport·and·k|
+  r02 |eep·wrapping|
+  r03 |············|

@@ -1,6 +1,6 @@
 [package]
-name = "readline"
-version = "0.1.0"
+name = "readline-tests"
+version = "0.0.0"
 edition = "2021"
 publish = false
 
@@ -9,6 +9,9 @@ anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = ["readline"] }
 tokio = { workspace = true }
 
+[dev-dependencies]
+termharness = "0.1.0"
+
 [[bin]]
-name = "readline"
-path = "src/readline.rs"
+name = "readline-fixture"
+path = "src/readline_fixture.rs"
