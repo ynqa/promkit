@@ -4,7 +4,7 @@ Terminal rows 10 cols 60
 Cursor row 10 col 1
 
 Step "spawn after preceding output"
-WaitScreenLinePrefix "❯❯" timeout 1000ms
+WaitScreenLineStartsWith "❯❯" timeout 1000ms
 Settle 0ms
 Expect timeout 0ms:
   r00 |····························································|
@@ -20,7 +20,7 @@ Expect timeout 0ms:
 
 Step "resize rapidly while input is rendering"
 Input "Terminal prompts should remain stable when the window shrinks and expands again"
-WaitOutput "Terminal" timeout 1000ms
+WaitPtyOutputContains "Terminal" timeout 1000ms
 Resize rows 10 cols 59
 Resize rows 10 cols 58
 Resize rows 10 cols 57
