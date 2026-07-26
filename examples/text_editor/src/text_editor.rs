@@ -16,7 +16,7 @@ enum Completion {
 async fn main() -> anyhow::Result<()> {
     loop {
         let mut editor = TextEditor::default()
-            .title("Bracket REPL (type \"exit\" to quit)")
+            .title("Bracket REPL (blank line: submit block, \"exit\": quit)")
             .prefix("❯❯❯ ")
             .continuation_prefix("... ")
             .indenter(delimiter_indent)
@@ -41,7 +41,8 @@ async fn main() -> anyhow::Result<()> {
 /// A deliberately small completion policy for this example.
 ///
 /// Only `{}`, and `[]` are syntax. Strings, comments, and escapes are not
-/// interpreted; a language REPL should replace this with its parser or VM.
+/// interpreted. Balanced bracket input is submitted by an empty continuation
+/// line; a language REPL should replace this with its parser or VM.
 fn completion(text: &str) -> Completion {
     if text.trim().is_empty() {
         return Completion::Empty;
@@ -52,6 +53,15 @@ fn completion(text: &str) -> Completion {
         Ok(_) => Completion::Incomplete,
         Err(()) => Completion::Invalid,
     }
+}
+
+fn requires_blank_continuation_line(text: &str) -> bool {
+    text.chars().any(|character| matches!(character, '{' | '['))
+}
+
+fn ends_with_blank_line(text: &str) -> bool {
+    text.rsplit_once('\n')
+        .is_some_and(|(_, line)| line.trim().is_empty())
 }
 
 fn delimiter_stack(characters: impl IntoIterator<Item = char>) -> Result<Vec<char>, ()> {
@@ -89,6 +99,11 @@ async fn evaluate_delimiters(event: &Event, context: &mut TextEditor) -> anyhow:
     ) {
         let text = context.editor.texteditor.text_without_cursor().to_string();
         return match completion(&text) {
+            Completion::Complete
+                if requires_blank_continuation_line(&text) && !ends_with_blank_line(&text) =>
+            {
+                evaluate::default(event, context).await
+            }
             Completion::Complete | Completion::Invalid => evaluate::submit(context),
             Completion::Empty | Completion::Incomplete => evaluate::default(event, context).await,
         };
