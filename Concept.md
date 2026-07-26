@@ -29,6 +29,9 @@ promkit is organized around three responsibilities with clear boundaries:
 3. **Rendering (`promkit-core`)**
    - [`Renderer<K>`](./promkit-core/src/render.rs) stores ordered
      `CreatedGraphemes` chunks.
+   - [`RendererLayout<K>`](./promkit-core/src/render/layout.rs) performs
+     terminal-size-dependent wrapping, pane allocation, cursor scrolling, and
+     viewport clipping without terminal I/O.
    - `update` / `remove` modify chunks by index key.
    - `render` wraps or truncates content, assigns vertical viewports, scrolls
      viewports to include logical cursors, and saves a keyed layout snapshot.
