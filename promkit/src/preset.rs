@@ -52,3 +52,35 @@ pub type Evaluator<T> =
         event: &'a Event,
         ctx: &'a mut T,
     ) -> Pin<Box<dyn Future<Output = Result<Signal, anyhow::Error>> + Send + 'a>>;
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "json")]
+    #[test]
+    fn json_exposes_line_numbers() {
+        let value = crate::widgets::serde_json::json!({"first": 1});
+        let document = crate::widgets::json::Document::new([&value]);
+        let preset = super::json::Json::new(document).show_line_numbers(true);
+
+        assert!(preset.json.config.show_line_numbers);
+    }
+
+    #[cfg(feature = "tree")]
+    #[test]
+    fn tree_exposes_line_numbers() {
+        let document = crate::widgets::structured::tree::Document::new(Vec::new());
+        let preset = super::tree::Tree::new(document).show_line_numbers(true);
+
+        assert!(preset.tree.config.show_line_numbers);
+    }
+
+    #[cfg(feature = "yaml")]
+    #[test]
+    fn yaml_exposes_line_numbers() {
+        let value = crate::widgets::serde_yaml::from_str("first: one").unwrap();
+        let document = crate::widgets::yaml::Document::new([&value]);
+        let preset = super::yaml::Yaml::new(document).show_line_numbers(true);
+
+        assert!(preset.yaml.config.show_line_numbers);
+    }
+}

@@ -43,6 +43,30 @@ impl Document {
         self.rows.extract(self.rows.head(), usize::MAX)
     }
 
+    /// Returns stable one-based line numbers for the currently visible rows.
+    pub(super) fn visible_line_numbers(&self) -> Vec<usize> {
+        if self.rows.is_empty() {
+            return Vec::new();
+        }
+
+        let mut line_numbers = Vec::new();
+        let mut index = self.rows.head();
+        loop {
+            line_numbers.push(index + 1);
+            let next = self.rows.down(index);
+            if next == index {
+                break;
+            }
+            index = next;
+        }
+        line_numbers
+    }
+
+    /// Returns the number of rows in the fully expanded tree.
+    pub(super) fn line_count(&self) -> usize {
+        self.rows.len()
+    }
+
     /// Returns the selected row's index in the visible row sequence.
     pub fn visible_position(&self) -> usize {
         visible_position(&self.rows, self.position)

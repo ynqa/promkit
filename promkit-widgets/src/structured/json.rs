@@ -29,7 +29,11 @@ impl Widget for State {
     fn create_graphemes(&self) -> CreatedGraphemes {
         let rows = self.document.visible_rows();
         let active_row = self.document.visible_position();
-        self.create_graphemes_from_rows(&rows, active_row)
+        let line_numbers = self
+            .config
+            .show_line_numbers
+            .then(|| self.document.visible_line_numbers());
+        self.create_graphemes_from_rows(&rows, active_row, line_numbers)
     }
 
     fn create_graphemes_in_viewport(&self, _width: u16, height: u16) -> CreatedGraphemes {
@@ -38,7 +42,11 @@ impl Widget for State {
             .lines
             .map_or(height as usize, |lines| lines.min(height as usize));
         let rows = self.document.extract_rows_from_current(height);
-        self.create_graphemes_from_rows(&rows, 0)
+        let line_numbers = self
+            .config
+            .show_line_numbers
+            .then(|| self.document.line_numbers_from_current(height));
+        self.create_graphemes_from_rows(&rows, 0, line_numbers)
     }
 }
 
@@ -47,8 +55,13 @@ impl State {
         &self,
         rows: &[jsonz::Row],
         active_row: usize,
+        line_numbers: Option<Vec<usize>>,
     ) -> CreatedGraphemes {
-        let formatted_rows = self.config.render_content_rows(rows, active_row);
+        let mut formatted_rows = self.config.render_content_rows(rows, active_row);
+        if let Some(line_numbers) = line_numbers {
+            formatted_rows =
+                super::with_line_numbers(formatted_rows, line_numbers, self.document.line_count());
+        }
 
         CreatedGraphemes {
             graphemes: StyledGraphemes::from_lines(formatted_rows),
@@ -145,5 +158,60 @@ mod tests {
 
         let projected = state.create_graphemes_in_viewport(80, 20);
         assert_eq!(projected.graphemes.logical_lines().len(), 1);
+    }
+
+    #[test]
+    fn preserves_expanded_line_numbers_after_toggle() {
+        let value = serde_json::json!({
+            "first": {
+                "nested": 1
+            },
+            "last": 2
+        });
+        let mut state = State {
+            document: Document::new([&value]),
+            config: Config {
+                indent: 2,
+                show_line_numbers: true,
+                ..Default::default()
+            },
+        };
+
+        assert_eq!(
+            state.document.visible_line_numbers(),
+            vec![1, 2, 3, 4, 5, 6]
+        );
+
+        state.document.down();
+        state.document.toggle();
+
+        assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 5, 6]);
+        assert_eq!(
+            state.create_graphemes().graphemes.to_string(),
+            "1 {\n2   \"first\": {…},\n5   \"last\": 2\n6 }"
+        );
+    }
+
+    #[test]
+    fn viewport_projection_uses_stable_line_numbers_from_cursor() {
+        let value = serde_json::json!({"first": 1, "second": 2, "third": 3});
+        let mut state = State {
+            document: Document::new([&value]),
+            config: Config {
+                show_line_numbers: true,
+                ..Default::default()
+            },
+        };
+
+        state.document.down();
+        state.document.down();
+
+        assert_eq!(
+            state
+                .create_graphemes_in_viewport(80, 2)
+                .graphemes
+                .to_string(),
+            "3 \"second\": 2,\n4 \"third\": 3"
+        );
     }
 }

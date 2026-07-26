@@ -5,13 +5,37 @@ use crate::structured::yaml::yamlz::{self, Row, RowOperation};
 pub struct Document {
     rows: Vec<Row>,
     position: usize,
+    line_numbers: Vec<Option<usize>>,
+    line_count: usize,
 }
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
         let rows = yamlz::create_rows(iter);
         let position = rows.head();
-        Self { rows, position }
+        let mut line_numbers = vec![None; rows.len()];
+        let mut line_count = 0;
+
+        if !rows.is_empty() {
+            let mut index = position;
+            loop {
+                line_count += 1;
+                line_numbers[index] = Some(line_count);
+
+                let next = rows.down(index);
+                if next == index {
+                    break;
+                }
+                index = next;
+            }
+        }
+
+        Self {
+            rows,
+            position,
+            line_numbers,
+            line_count,
+        }
     }
 }
 
@@ -29,6 +53,44 @@ impl Document {
     /// Returns all currently visible rows from the beginning of the document.
     pub fn visible_rows(&self) -> Vec<Row> {
         self.rows.extract(self.rows.head(), usize::MAX)
+    }
+
+    /// Returns stable one-based line numbers for the currently rendered rows.
+    pub(super) fn visible_line_numbers(&self) -> Vec<usize> {
+        self.line_numbers_from(self.rows.head(), usize::MAX)
+    }
+
+    /// Returns stable one-based line numbers for rows projected from the cursor.
+    pub(super) fn line_numbers_from_current(&self, n: usize) -> Vec<usize> {
+        self.line_numbers_from(self.position, n)
+    }
+
+    /// Returns the number of rows in the fully expanded YAML rendering.
+    pub(super) fn line_count(&self) -> usize {
+        self.line_count
+    }
+
+    fn line_numbers_from(&self, mut index: usize, n: usize) -> Vec<usize> {
+        if self.rows.is_empty() || n == 0 {
+            return Vec::new();
+        }
+
+        let mut line_numbers = Vec::new();
+        for _ in 0..n {
+            let stable_line_number = self.line_numbers[index].unwrap_or_else(|| {
+                self.line_numbers[index + 1..]
+                    .iter()
+                    .find_map(|number| *number)
+                    .expect("a collapsed YAML root must have a numbered visible descendant")
+            });
+            line_numbers.push(stable_line_number);
+            let next = self.rows.down(index);
+            if next == index {
+                break;
+            }
+            index = next;
+        }
+        line_numbers
     }
 
     /// Returns the selected row's index in the rendered visible row sequence.

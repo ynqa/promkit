@@ -29,29 +29,40 @@ impl Widget for State {
 
         let rows = self.document.visible_rows();
         let active_row = self.document.visible_position();
-        let lines = rows.iter().enumerate().map(|(offset, row)| {
-            if offset == active_row {
-                StyledGraphemes::from_str(
-                    format!(
-                        "{}{}{}",
-                        symbol(row),
-                        " ".repeat(row.depth * self.config.indent),
-                        row.id,
-                    ),
-                    self.config.active_item_style,
-                )
-            } else {
-                StyledGraphemes::from_str(
-                    format!(
-                        "{}{}{}",
-                        " ".repeat(StyledGraphemes::from(symbol(row)).widths()),
-                        " ".repeat(row.depth * self.config.indent),
-                        row.id,
-                    ),
-                    self.config.inactive_item_style,
-                )
-            }
-        });
+        let mut lines = rows
+            .iter()
+            .enumerate()
+            .map(|(offset, row)| {
+                if offset == active_row {
+                    StyledGraphemes::from_str(
+                        format!(
+                            "{}{}{}",
+                            symbol(row),
+                            " ".repeat(row.depth * self.config.indent),
+                            row.id,
+                        ),
+                        self.config.active_item_style,
+                    )
+                } else {
+                    StyledGraphemes::from_str(
+                        format!(
+                            "{}{}{}",
+                            " ".repeat(StyledGraphemes::from(symbol(row)).widths()),
+                            " ".repeat(row.depth * self.config.indent),
+                            row.id,
+                        ),
+                        self.config.inactive_item_style,
+                    )
+                }
+            })
+            .collect::<Vec<_>>();
+        if self.config.show_line_numbers {
+            lines = super::with_line_numbers(
+                lines,
+                self.document.visible_line_numbers(),
+                self.document.line_count(),
+            );
+        }
 
         CreatedGraphemes {
             graphemes: StyledGraphemes::from_lines(lines),
@@ -116,5 +127,48 @@ mod tests {
             Some(TreeHit::Toggle { row_index: 1 })
         );
         assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+
+    #[test]
+    fn preserves_expanded_line_numbers_after_toggle() {
+        let mut state = State {
+            document: Document::new(vec![
+                Row {
+                    id: "root".into(),
+                    path: vec!["root".into()],
+                    depth: 0,
+                    has_children: true,
+                    collapsed: false,
+                },
+                Row {
+                    id: "child".into(),
+                    path: vec!["root".into(), "child".into()],
+                    depth: 1,
+                    has_children: false,
+                    collapsed: false,
+                },
+                Row {
+                    id: "sibling".into(),
+                    path: vec!["sibling".into()],
+                    depth: 0,
+                    has_children: false,
+                    collapsed: false,
+                },
+            ]),
+            config: Config {
+                show_line_numbers: true,
+                ..Default::default()
+            },
+        };
+
+        assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 3]);
+
+        state.document.toggle();
+
+        assert_eq!(state.document.visible_line_numbers(), vec![1, 3]);
+        let rendered = state.create_graphemes().graphemes.to_string();
+        assert!(rendered.starts_with("1 "));
+        assert!(rendered.contains("\n3 "));
+        assert!(!rendered.contains("\n2 "));
     }
 }

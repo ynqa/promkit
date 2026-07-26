@@ -121,6 +121,7 @@ impl Json {
                     indent: 2,
                     overflow_mode: OverflowMode::Truncate,
                     lines: Default::default(),
+                    show_line_numbers: false,
                 },
             },
         }
@@ -141,6 +142,12 @@ impl Json {
     /// Sets the number of lines to be used for rendering the JSON data.
     pub fn json_lines(mut self, lines: usize) -> Self {
         self.json.config.lines = Some(lines);
+        self
+    }
+
+    /// Sets whether stable one-based line numbers are displayed for JSON rows.
+    pub fn show_line_numbers(mut self, show: bool) -> Self {
+        self.json.config.show_line_numbers = show;
         self
     }
 
