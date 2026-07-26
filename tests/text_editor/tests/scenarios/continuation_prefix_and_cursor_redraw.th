@@ -1,0 +1,39 @@
+Scenario "continuation_prefix_and_cursor_redraw"
+Command "CARGO_BIN_EXE_text-editor-fixture"
+Terminal rows 6 cols 20
+Cursor row 6 col 1
+
+Step "spawn"
+Settle 300ms
+Expect:
+  r00 |····················|
+  r01 |····················|
+  r02 |····················|
+  r03 |····················|
+  r04 |····················|
+  r05 |❯❯❯·················|
+
+Step "insert a continuation row"
+Input "first"
+Input enter
+Input "second"
+Settle 100ms
+Expect:
+  r00 |····················|
+  r01 |····················|
+  r02 |····················|
+  r03 |····················|
+  r04 |❯❯❯·first···········|
+  r05 |...·second··········|
+
+Step "move to the previous row and redraw"
+Input up
+Input "!"
+Settle 100ms
+Expect:
+  r00 |····················|
+  r01 |····················|
+  r02 |····················|
+  r03 |····················|
+  r04 |❯❯❯·first!··········|
+  r05 |...·second··········|
