@@ -1,13 +1,158 @@
-use promkit::{preset::text_editor::TextEditor, Prompt};
+use promkit::{
+    core::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers},
+    preset::text_editor::{evaluate, IndentContext, TextEditor},
+    Prompt, Signal,
+};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Completion {
+    Empty,
+    Incomplete,
+    Complete,
+    Invalid,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let text = TextEditor::default()
-        .title("Enter text (Ctrl+D to submit)")
-        .lines(8)
-        .run()
-        .await?;
+    loop {
+        let mut editor = TextEditor::default()
+            .title("Bracket REPL (type \"exit\" to quit)")
+            .prefix("❯❯❯ ")
+            .continuation_prefix("... ")
+            .indenter(delimiter_indent)
+            .validator(
+                |text| completion(text) == Completion::Complete,
+                |_| "input is empty or contains unclosed/mismatched delimiters".to_string(),
+            )
+            .evaluator(|event, context| Box::pin(evaluate_delimiters(event, context)))
+            .lines(8);
 
-    println!("result:\n{text}");
+        let text = editor.run().await?;
+        if text.trim() == "exit" {
+            break;
+        }
+
+        println!("result:\n{text}");
+    }
+
     Ok(())
+}
+
+/// A deliberately small completion policy for this example.
+///
+/// Only `{}`, and `[]` are syntax. Strings, comments, and escapes are not
+/// interpreted; a language REPL should replace this with its parser or VM.
+fn completion(text: &str) -> Completion {
+    if text.trim().is_empty() {
+        return Completion::Empty;
+    }
+
+    match delimiter_stack(text.chars()) {
+        Ok(stack) if stack.is_empty() => Completion::Complete,
+        Ok(_) => Completion::Incomplete,
+        Err(()) => Completion::Invalid,
+    }
+}
+
+fn delimiter_stack(characters: impl IntoIterator<Item = char>) -> Result<Vec<char>, ()> {
+    let mut stack = Vec::new();
+
+    for character in characters {
+        match character {
+            '{' | '[' => stack.push(character),
+            '}' if stack.pop() != Some('{') => return Err(()),
+            ']' if stack.pop() != Some('[') => return Err(()),
+            _ => {}
+        }
+    }
+
+    Ok(stack)
+}
+
+fn delimiter_indent(context: IndentContext<'_>) -> String {
+    let characters = context.text.chars().take(context.cursor);
+    let depth = delimiter_stack(characters)
+        .map(|stack| stack.len())
+        .unwrap_or_default();
+    "    ".repeat(depth)
+}
+
+async fn evaluate_delimiters(event: &Event, context: &mut TextEditor) -> anyhow::Result<Signal> {
+    if matches!(
+        event,
+        Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        })
+    ) {
+        let text = context.editor.texteditor.text_without_cursor().to_string();
+        return match completion(&text) {
+            Completion::Complete | Completion::Invalid => evaluate::submit(context),
+            Completion::Empty | Completion::Incomplete => evaluate::default(event, context).await,
+        };
+    }
+
+    evaluate::default(event, context).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use promkit::widgets::text_editor::TextPosition;
+
+    fn enter() -> Event {
+        Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        })
+    }
+
+    #[test]
+    fn completes_only_nonempty_balanced_input() {
+        assert_eq!(completion(""), Completion::Empty);
+        assert_eq!(completion("value {"), Completion::Incomplete);
+        assert_eq!(completion("value {\n    [item]\n}"), Completion::Complete);
+        assert_eq!(completion("{]"), Completion::Invalid);
+    }
+
+    #[test]
+    fn indents_to_the_open_delimiter_depth_before_the_cursor() {
+        let text = "{\n[";
+        assert_eq!(
+            delimiter_indent(IndentContext {
+                text,
+                cursor: text.chars().count(),
+                position: TextPosition { row: 1, column: 1 },
+            }),
+            "        "
+        );
+    }
+
+    #[tokio::test]
+    async fn enter_continues_unclosed_input() {
+        let mut editor = TextEditor::default().indenter(delimiter_indent);
+        editor.editor.texteditor.replace("{");
+
+        let signal = evaluate_delimiters(&enter(), &mut editor).await.unwrap();
+
+        assert!(matches!(signal, Signal::Continue));
+        assert_eq!(
+            editor.editor.texteditor.text_without_cursor().to_string(),
+            "{\n    "
+        );
+    }
+
+    #[tokio::test]
+    async fn enter_submits_closed_input() {
+        let mut editor = TextEditor::default();
+        editor.editor.texteditor.replace("{[value]}");
+
+        let signal = evaluate_delimiters(&enter(), &mut editor).await.unwrap();
+
+        assert!(matches!(signal, Signal::Quit));
+    }
 }

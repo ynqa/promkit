@@ -22,6 +22,21 @@ use crate::{
 
 pub mod evaluate;
 
+/// Context passed to a function that determines indentation after a newline.
+///
+/// All values describe the editor immediately before the newline is inserted.
+pub struct IndentContext<'a> {
+    /// Complete editor text, excluding the visual cursor.
+    pub text: &'a str,
+    /// Absolute grapheme index of the cursor.
+    pub cursor: usize,
+    /// Logical cursor position measured in rows and terminal display columns.
+    pub position: text_editor_widget::TextPosition,
+}
+
+/// Function used to determine the text inserted after a newline.
+pub type Indenter = for<'a> fn(IndentContext<'a>) -> String;
+
 /// Represents the indices of the multiline text editor components.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
@@ -47,6 +62,8 @@ pub struct TextEditor {
     pub active_char_style: ContentStyle,
     /// Optional validator applied when the buffer is submitted.
     pub validator: Option<ValidatorManager<str>>,
+    /// Optional function that determines indentation after a newline.
+    pub indenter: Option<Indenter>,
     /// Validation error displayed below the editor.
     pub error_message: text::State,
 }
@@ -90,6 +107,7 @@ impl Default for TextEditor {
             },
             active_char_style,
             validator: None,
+            indenter: None,
             error_message: text::State {
                 text: Default::default(),
                 config: text::config::Config {
@@ -157,6 +175,15 @@ impl TextEditor {
         self
     }
 
+    /// Sets the prefix displayed before every logical row after the first.
+    ///
+    /// The continuation prefix is presentation-only and is not included in the
+    /// text returned by this prompt.
+    pub fn continuation_prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
+        self.editor.config.continuation_prefix = prefix.as_ref().to_string();
+        self
+    }
+
     /// Sets the prefix style.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
         self.editor.config.prefix_style = style;
@@ -191,6 +218,15 @@ impl TextEditor {
     /// Sets the maximum number of visible editor rows.
     pub fn lines(mut self, lines: usize) -> Self {
         self.editor.config.lines = Some(lines);
+        self
+    }
+
+    /// Sets the function used to insert indentation after a newline.
+    ///
+    /// The function receives the complete text and cursor position immediately
+    /// before the newline. Its return value is inserted into the editor text.
+    pub fn indenter(mut self, indenter: Indenter) -> Self {
+        self.indenter = Some(indenter);
         self
     }
 

@@ -8,7 +8,12 @@ use super::Mode;
 #[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone, Default)]
 pub struct Config {
+    /// Prefix displayed before the first logical row.
     pub prefix: String,
+    /// Prefix displayed before every logical row after the first.
+    ///
+    /// This is presentation-only and is never added to the editor text.
+    pub continuation_prefix: String,
     pub mask: Option<char>,
     #[cfg_attr(
         feature = "serde",

@@ -12,10 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Added multiline editing support to the text editor widget and a multiline `TextEditor` prompt preset
-
 ## [0.13.0] - 2026-07-24
 
 ### Added

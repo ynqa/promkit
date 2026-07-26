@@ -28,6 +28,9 @@ impl Widget for State {
         let mut styled_prefix =
             StyledGraphemes::from_str(&self.config.prefix, self.config.prefix_style);
         let prefix_width = styled_prefix.widths();
+        let continuation_prefix =
+            StyledGraphemes::from_str(&self.config.continuation_prefix, self.config.prefix_style);
+        let continuation_prefix_width = continuation_prefix.widths();
 
         buf.append(&mut styled_prefix);
 
@@ -46,7 +49,12 @@ impl Widget for State {
                         column + grapheme.width()
                     }
                 });
-        let cursor_column = rendered_cursor_column + if cursor.row == 0 { prefix_width } else { 0 };
+        let cursor_column = rendered_cursor_column
+            + if cursor.row == 0 {
+                prefix_width
+            } else {
+                continuation_prefix_width
+            };
 
         let mut text = text.apply_style(self.config.inactive_char_style);
         let cursor_index = self.texteditor.position();
@@ -60,9 +68,16 @@ impl Widget for State {
                 promkit_core::grapheme::StyledGrapheme::from(' '),
             );
         }
-        let mut styled = text.apply_style_at(cursor_index, self.config.active_char_style);
+        let styled = text.apply_style_at(cursor_index, self.config.active_char_style);
+        let mut rendered = StyledGraphemes::default();
+        for grapheme in styled.iter() {
+            rendered.push_back(grapheme.clone());
+            if grapheme.character() == '\n' {
+                rendered.append(&mut continuation_prefix.clone());
+            }
+        }
 
-        buf.append(&mut styled);
+        buf.append(&mut rendered);
 
         CreatedGraphemes {
             graphemes: buf,
@@ -81,18 +96,19 @@ impl Widget for State {
 impl State {
     /// Interprets a text-editor content position as a cursor target.
     ///
-    /// The prefix occupies content columns but is not editable, so clicking it
-    /// resolves to the start of the input. Columns inside wide characters resolve
-    /// to that character, and columns beyond the rendered input resolve to the
-    /// trailing cursor position. Masked input is measured using the mask that is
-    /// actually displayed.
+    /// The first-row and continuation prefixes occupy content columns but are
+    /// not editable, so clicking either resolves to the start of its input row.
+    /// Columns inside wide characters resolve to that character, and columns
+    /// beyond the rendered input resolve to the trailing cursor position. Masked
+    /// input is measured using the mask that is actually displayed.
     pub fn hit_at(&self, position: ContentPosition) -> Option<TextEditorHit> {
-        let prefix_width = StyledGraphemes::from(&self.config.prefix).widths();
-        let input_column = if position.row == 0 {
-            position.column.saturating_sub(prefix_width)
+        let row_prefix = if position.row == 0 {
+            &self.config.prefix
         } else {
-            position.column
+            &self.config.continuation_prefix
         };
+        let prefix_width = StyledGraphemes::from(row_prefix).widths();
+        let input_column = position.column.saturating_sub(prefix_width);
 
         if self.config.mask.is_some() {
             let text = self.texteditor.text_without_cursor();

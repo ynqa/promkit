@@ -14,7 +14,7 @@ use crate::{
         },
         ScreenPosition,
     },
-    preset::text_editor::{Index, TextEditor},
+    preset::text_editor::{IndentContext, Index, TextEditor},
     Signal,
 };
 
@@ -72,7 +72,7 @@ pub async fn default(event: &Event, ctx: &mut TextEditor) -> anyhow::Result<Sign
             modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
-        }) => ctx.editor.texteditor.insert_newline(),
+        }) => insert_newline(ctx),
 
         Event::Key(KeyEvent {
             code: KeyCode::Left,
@@ -225,6 +225,23 @@ pub async fn default(event: &Event, ctx: &mut TextEditor) -> anyhow::Result<Sign
     }
 
     Ok(Signal::Continue)
+}
+
+fn insert_newline(ctx: &mut TextEditor) {
+    let indentation = ctx.indenter.map(|indenter| {
+        let text = ctx.editor.texteditor.text_without_cursor().to_string();
+        indenter(IndentContext {
+            text: &text,
+            cursor: ctx.editor.texteditor.position(),
+            position: ctx.editor.texteditor.logical_position(),
+        })
+    });
+
+    ctx.editor.texteditor.insert_newline();
+    if let Some(indentation) = indentation {
+        let characters = indentation.chars().collect();
+        ctx.editor.texteditor.insert_chars(&characters);
+    }
 }
 
 /// Validates and submits the current editor buffer.

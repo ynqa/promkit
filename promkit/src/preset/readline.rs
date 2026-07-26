@@ -86,6 +86,7 @@ impl Default for Readline {
                 history: Default::default(),
                 config: text_editor::config::Config {
                     prefix: String::from("❯❯ "),
+                    continuation_prefix: Default::default(),
                     mask: Default::default(),
                     prefix_style: ContentStyle {
                         foreground_color: Some(Color::DarkGreen),
