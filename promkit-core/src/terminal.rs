@@ -1,4 +1,7 @@
-use std::io::{self, Write};
+use std::{
+    borrow::Borrow,
+    io::{self, Write},
+};
 
 use crate::{
     crossterm::{cursor, style, terminal},
@@ -38,7 +41,10 @@ impl Terminal {
     }
 
     /// Draws panes that have already been wrapped and clipped by the renderer.
-    pub fn draw_rows(&mut self, panes: &[Vec<StyledGraphemes>]) -> anyhow::Result<()> {
+    pub fn draw_rows<R>(&mut self, panes: &[Vec<R>]) -> anyhow::Result<()>
+    where
+        R: Borrow<StyledGraphemes>,
+    {
         let (_, height) = terminal::size()?;
         let visible_height = height.saturating_sub(self.position.1);
         let row_count = panes.iter().map(Vec::len).sum::<usize>();
@@ -57,7 +63,7 @@ impl Terminal {
 
         for (pane_index, rows) in panes.iter().enumerate() {
             for (row_index, row) in rows.iter().enumerate() {
-                crossterm::queue!(io::stdout(), style::Print(row.styled_display()))?;
+                crossterm::queue!(io::stdout(), style::Print(row.borrow().styled_display()))?;
 
                 remaining_lines = remaining_lines.saturating_sub(1);
 

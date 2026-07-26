@@ -192,7 +192,9 @@ impl<K: Clone + Ord + Send + Sync + 'static> Renderer<K> {
             .expect("layout lock poisoned")
             .layout(contents, terminal_width, terminal_height)?;
 
-        terminal.draw_rows(prepared.panes())?;
+        let panes = prepared.panes();
+        terminal.draw_rows(&panes)?;
+        drop(panes);
 
         let origin = ScreenPosition {
             row: terminal.position.1,
