@@ -276,6 +276,7 @@ fn click(column: u16, row: u16, ctx: &mut TextEditor) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{preset::text_editor::IndentContext, widgets::text_editor::TextPosition};
 
     fn key(code: KeyCode, modifiers: KeyModifiers) -> Event {
         Event::Key(KeyEvent {
@@ -284,6 +285,13 @@ mod tests {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         })
+    }
+
+    fn lua_indent(context: IndentContext<'_>) -> String {
+        assert_eq!(context.text, "if ready then");
+        assert_eq!(context.cursor, 13);
+        assert_eq!(context.position, TextPosition { row: 0, column: 13 });
+        "    ".to_string()
     }
 
     #[tokio::test]
@@ -299,6 +307,22 @@ mod tests {
         assert_eq!(
             ctx.editor.texteditor.text_without_cursor().to_string(),
             "a\nb"
+        );
+        assert!(matches!(signal, Signal::Continue));
+    }
+
+    #[tokio::test]
+    async fn enter_inserts_content_dependent_indentation() {
+        let mut ctx = TextEditor::default().indenter(lua_indent);
+        ctx.editor.texteditor.replace("if ready then");
+
+        let signal = default(&key(KeyCode::Enter, KeyModifiers::NONE), &mut ctx)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            ctx.editor.texteditor.text_without_cursor().to_string(),
+            "if ready then\n    "
         );
         assert!(matches!(signal, Signal::Continue));
     }

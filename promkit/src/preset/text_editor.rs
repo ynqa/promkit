@@ -229,14 +229,28 @@ impl TextEditor {
 
 #[cfg(test)]
 mod tests {
-    use super::TextEditor;
+    use super::{IndentContext, TextEditor};
     use crate::Prompt;
+
+    fn lua_indent(context: IndentContext<'_>) -> String {
+        if context.text.ends_with("then") {
+            "    ".to_string()
+        } else {
+            String::new()
+        }
+    }
 
     #[test]
     fn builder_configures_the_editor() {
-        let editor = TextEditor::default().prefix("lua> ").lines(8);
+        let editor = TextEditor::default()
+            .prefix("lua> ")
+            .continuation_prefix("... ")
+            .indenter(lua_indent)
+            .lines(8);
 
         assert_eq!(editor.editor.config.prefix, "lua> ");
+        assert_eq!(editor.editor.config.continuation_prefix, "... ");
+        assert!(editor.indenter.is_some());
         assert_eq!(editor.editor.config.lines, Some(8));
     }
 

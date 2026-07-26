@@ -262,4 +262,38 @@ mod state_tests {
         assert_eq!(">> **\n** ", created.graphemes.to_string());
         assert_eq!(Some(ContentPosition { row: 1, column: 2 }), created.cursor);
     }
+
+    #[test]
+    fn renders_a_continuation_prefix_without_changing_the_editor_text() {
+        let mut state = state("first\nsecond", ">>> ");
+        state.config.continuation_prefix = "... ".into();
+
+        let created = state.create_graphemes();
+
+        assert_eq!(
+            state.texteditor.text_without_cursor().to_string(),
+            "first\nsecond"
+        );
+        assert_eq!(created.graphemes.to_string(), ">>> first\n... second ");
+        assert_eq!(created.cursor, Some(ContentPosition { row: 1, column: 10 }));
+    }
+
+    #[test]
+    fn uses_the_continuation_prefix_width_for_multiline_hits() {
+        let mut state = state("first\nsecond", ">>> ");
+        state.config.continuation_prefix = "... ".into();
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 2 }),
+            Some(TextEditorHit::Cursor { index: 6 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 5 }),
+            Some(TextEditorHit::Cursor { index: 7 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 80 }),
+            Some(TextEditorHit::Cursor { index: 12 })
+        );
+    }
 }
