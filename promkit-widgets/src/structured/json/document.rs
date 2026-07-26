@@ -1,10 +1,14 @@
+use std::cell::Cell;
+
 use super::jsonz::{self, Row, RowOperation};
+use crate::structured::{ProjectionViewport, projection_viewport};
 
 /// Represents a navigable JSON document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
 pub struct Document {
     rows: Vec<Row>,
     position: usize,
+    viewport: Cell<ProjectionViewport>,
 }
 
 impl Document {
@@ -12,6 +16,7 @@ impl Document {
         Self {
             rows: jsonz::create_rows(iter),
             position: 0,
+            viewport: Cell::default(),
         }
     }
 }
@@ -27,6 +32,14 @@ impl Document {
         self.rows.extract(self.position, n)
     }
 
+    pub(super) fn project_viewport(&self, n: usize) -> (usize, usize) {
+        projection_viewport(&self.rows, self.position, n, &self.viewport)
+    }
+
+    pub(super) fn extract_rows_from(&self, position: usize, n: usize) -> Vec<Row> {
+        self.rows.extract(position, n)
+    }
+
     /// Returns all currently visible rows from the beginning of the document.
     pub fn visible_rows(&self) -> Vec<Row> {
         self.rows.extract(self.rows.head(), usize::MAX)
@@ -37,9 +50,8 @@ impl Document {
         self.line_numbers_from(self.rows.head(), usize::MAX)
     }
 
-    /// Returns stable one-based line numbers for rows projected from the cursor.
-    pub(super) fn line_numbers_from_current(&self, n: usize) -> Vec<usize> {
-        self.line_numbers_from(self.position, n)
+    pub(super) fn line_numbers_from_viewport(&self, position: usize, n: usize) -> Vec<usize> {
+        self.line_numbers_from(position, n)
     }
 
     /// Returns the number of rows in the fully expanded document.
@@ -90,6 +102,14 @@ impl Document {
     /// Resolves a visible row offset from the current cursor to its document index.
     pub fn row_index_at_visible_offset_from_current(&self, visible_offset: usize) -> Option<usize> {
         row_index_at_visible_position(&self.rows, self.position, visible_offset)
+    }
+
+    pub(super) fn row_index_at_viewport_position(&self, visible_position: usize) -> Option<usize> {
+        let viewport = self.viewport.get();
+        viewport
+            .initialized
+            .then(|| row_index_at_visible_position(&self.rows, viewport.start, visible_position))
+            .flatten()
     }
 
     /// Sets the visibility of all rows.

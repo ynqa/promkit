@@ -41,12 +41,13 @@ impl Widget for State {
             .config
             .lines
             .map_or(height as usize, |lines| lines.min(height as usize));
-        let rows = self.document.extract_rows_from_current(height);
-        let line_numbers = self
-            .config
-            .show_line_numbers
-            .then(|| self.document.line_numbers_from_current(height));
-        self.create_graphemes_from_rows(&rows, 0, line_numbers)
+        let (viewport_start, active_row) = self.document.project_viewport(height);
+        let rows = self.document.extract_rows_from(viewport_start, height);
+        let line_numbers = self.config.show_line_numbers.then(|| {
+            self.document
+                .line_numbers_from_viewport(viewport_start, height)
+        });
+        self.create_graphemes_from_rows(&rows, active_row, line_numbers)
     }
 }
 
@@ -97,7 +98,7 @@ impl State {
     /// Interprets a content position in a viewport projection as a semantic target.
     pub fn hit_at_viewport(&self, position: ContentPosition) -> Option<JsonHit> {
         self.document
-            .row_index_at_visible_offset_from_current(position.row)
+            .row_index_at_viewport_position(position.row)
             .map(|row_index| JsonHit::Toggle { row_index })
     }
 }
@@ -113,7 +114,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn viewport_projection_is_bounded_and_resolves_hits_from_cursor() {
+    fn viewport_projection_is_bounded_and_resolves_hits() {
         let value = serde_json::json!({
             "first": "one",
             "second": {
@@ -126,6 +127,9 @@ mod tests {
             config: Config::default(),
         };
 
+        state.create_graphemes_in_viewport(80, 2);
+        state.document.down();
+        state.create_graphemes_in_viewport(80, 2);
         state.document.down();
         let projected = state.create_graphemes_in_viewport(80, 2);
         let rendered = projected.graphemes.to_string();
@@ -134,7 +138,7 @@ mod tests {
         assert!(rendered.contains("\"second\": {"));
         assert!(!rendered.contains("\"nested\": \"two\""));
         assert!(!rendered.contains("\"third\": \"three\""));
-        assert_eq!(projected.cursor.unwrap().row, 0);
+        assert_eq!(projected.cursor.unwrap().row, 1);
 
         let JsonHit::Toggle { row_index } = state
             .hit_at_viewport(ContentPosition { row: 1, column: 4 })
@@ -248,7 +252,7 @@ mod tests {
     }
 
     #[test]
-    fn viewport_projection_uses_stable_line_numbers_from_cursor() {
+    fn viewport_projection_uses_stable_line_numbers() {
         let value = serde_json::json!({"first": 1, "second": 2, "third": 3});
         let mut state = State {
             document: Document::new([&value]),
@@ -258,6 +262,8 @@ mod tests {
             },
         };
 
+        state.create_graphemes_in_viewport(80, 2);
+        state.document.down();
         state.document.down();
         state.document.down();
 
