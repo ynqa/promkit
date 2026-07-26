@@ -6,7 +6,7 @@ mod history;
 pub use history::History;
 #[path = "text_editor/text_editor.rs"]
 mod inner;
-pub use inner::{Mode, TextEditor};
+pub use inner::{Mode, TextEditor, TextPosition};
 pub mod config;
 pub use config::Config;
 
@@ -35,11 +35,32 @@ impl Widget for State {
             Some(mask) => self.texteditor.masking(mask),
             None => self.texteditor.text(),
         };
-        let cursor_column = prefix_width + text.widths_to(self.texteditor.position());
+        let cursor = self.texteditor.logical_position();
+        let rendered_cursor_column =
+            text.iter()
+                .take(self.texteditor.position())
+                .fold(0, |column, grapheme| {
+                    if grapheme.character() == '\n' {
+                        0
+                    } else {
+                        column + grapheme.width()
+                    }
+                });
+        let cursor_column = rendered_cursor_column + if cursor.row == 0 { prefix_width } else { 0 };
 
-        let mut styled = text
-            .apply_style(self.config.inactive_char_style)
-            .apply_style_at(self.texteditor.position(), self.config.active_char_style);
+        let mut text = text.apply_style(self.config.inactive_char_style);
+        let cursor_index = self.texteditor.position();
+        if text
+            .iter()
+            .nth(cursor_index)
+            .is_some_and(|grapheme| grapheme.character() == '\n')
+        {
+            text.insert(
+                cursor_index,
+                promkit_core::grapheme::StyledGrapheme::from(' '),
+            );
+        }
+        let mut styled = text.apply_style_at(cursor_index, self.config.active_char_style);
 
         buf.append(&mut styled);
 
@@ -50,7 +71,7 @@ impl Widget for State {
                 ..Default::default()
             },
             cursor: Some(ContentPosition {
-                row: 0,
+                row: cursor.row,
                 column: cursor_column,
             }),
         }
@@ -66,30 +87,37 @@ impl State {
     /// trailing cursor position. Masked input is measured using the mask that is
     /// actually displayed.
     pub fn hit_at(&self, position: ContentPosition) -> Option<TextEditorHit> {
-        if position.row != 0 {
-            return None;
-        }
-
         let prefix_width = StyledGraphemes::from(&self.config.prefix).widths();
-        let input_column = position.column.saturating_sub(prefix_width);
-        let rendered = match self.config.mask {
-            Some(mask) => self.texteditor.masking(mask),
-            None => self.texteditor.text(),
+        let input_column = if position.row == 0 {
+            position.column.saturating_sub(prefix_width)
+        } else {
+            position.column
         };
 
-        let mut start = 0;
-        let index = rendered
-            .iter()
-            .enumerate()
-            .find_map(|(index, grapheme)| {
-                let end = start + grapheme.width();
-                let contains = input_column < end;
-                start = end;
-                contains.then_some(index)
-            })
-            .unwrap_or_else(|| rendered.len().saturating_sub(1));
+        if self.config.mask.is_some() {
+            let text = self.texteditor.text_without_cursor();
+            let mut lines = text.logical_lines();
+            if lines.is_empty() {
+                lines.push(StyledGraphemes::default());
+            }
+            let line = lines.get(position.row)?;
+            let start = lines
+                .iter()
+                .take(position.row)
+                .map(|line| line.len() + 1)
+                .sum::<usize>();
 
-        Some(TextEditorHit::Cursor { index })
+            return Some(TextEditorHit::Cursor {
+                index: start + input_column.min(line.len()),
+            });
+        }
+
+        self.texteditor
+            .position_at(TextPosition {
+                row: position.row,
+                column: input_column,
+            })
+            .map(|index| TextEditorHit::Cursor { index })
     }
 }
 
@@ -170,6 +198,17 @@ mod state_tests {
 
         assert_eq!(">> ab\n界c ", created.graphemes.to_string());
         assert_eq!(Some(ContentPosition { row: 1, column: 3 }), created.cursor);
+    }
+
+    #[test]
+    fn renders_a_visible_cursor_before_a_newline() {
+        let mut state = state("ab\ncd", "");
+        assert!(state.texteditor.move_to(2));
+
+        let created = state.create_graphemes();
+
+        assert_eq!("ab \ncd ", created.graphemes.to_string());
+        assert_eq!(Some(ContentPosition { row: 0, column: 2 }), created.cursor);
     }
 
     #[test]

@@ -19,6 +19,16 @@ pub enum Mode {
 pub struct TextEditor {
     text: StyledGraphemes,
     position: usize,
+    preferred_column: Option<usize>,
+}
+
+/// A cursor position in newline-delimited text.
+///
+/// `column` is measured in terminal display cells rather than grapheme indices.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TextPosition {
+    pub row: usize,
+    pub column: usize,
 }
 
 impl Default for TextEditor {
@@ -27,6 +37,7 @@ impl Default for TextEditor {
             // Keep a trailing grapheme as the visible cursor.
             text: StyledGraphemes::from(" "),
             position: 0,
+            preferred_column: None,
         }
     }
 }
@@ -37,7 +48,11 @@ impl TextEditor {
         buf.push(' ');
         let text = StyledGraphemes::from(buf);
         let position = text.len() - 1;
-        Self { text, position }
+        Self {
+            text,
+            position,
+            preferred_column: None,
+        }
     }
 
     /// Returns the current text including the cursor.
@@ -57,13 +72,45 @@ impl TextEditor {
         self.position
     }
 
+    /// Returns the cursor position in newline-delimited text.
+    ///
+    /// The row is a logical row separated by an explicit newline. The column is
+    /// the terminal display width before the cursor on that row.
+    pub fn logical_position(&self) -> TextPosition {
+        let ranges = self.line_ranges();
+        let (row, (start, _)) = ranges
+            .iter()
+            .copied()
+            .enumerate()
+            .find(|(_, (start, end))| self.position >= *start && self.position <= *end)
+            .unwrap_or_else(|| {
+                let row = ranges.len().saturating_sub(1);
+                (row, ranges[row])
+            });
+
+        TextPosition {
+            row,
+            column: self.display_width_between(start, self.position),
+        }
+    }
+
+    /// Resolves a logical text position to an absolute grapheme cursor index.
+    ///
+    /// Columns past the end of a row resolve to that row's end. A column inside
+    /// a wide grapheme resolves to the position before that grapheme.
+    pub fn position_at(&self, position: TextPosition) -> Option<usize> {
+        let (start, end) = self.line_ranges().get(position.row).copied()?;
+        Some(self.position_for_column(start, end, position.column))
+    }
+
     /// Masks all characters except the cursor with the specified mask character.
     pub fn masking(&self, mask: char) -> StyledGraphemes {
+        let cursor = self.text.len() - 1;
         self.text()
             .chars()
             .into_iter()
             .enumerate()
-            .map(|(i, c)| StyledGrapheme::from(if i == self.text().len() - 1 { c } else { mask }))
+            .map(|(i, c)| StyledGrapheme::from(if i == cursor || c == '\n' { c } else { mask }))
             .collect::<StyledGraphemes>()
     }
 
@@ -74,9 +121,15 @@ impl TextEditor {
 
     /// Inserts a character at the current cursor position.
     pub fn insert(&mut self, ch: char) {
+        self.preferred_column = None;
         let pos = self.position();
         self.text.insert(pos, StyledGrapheme::from(ch));
         self.forward();
+    }
+
+    /// Inserts a newline at the current cursor position.
+    pub fn insert_newline(&mut self) {
+        self.insert('\n');
     }
 
     pub fn insert_chars(&mut self, vch: &Vec<char>) {
@@ -90,6 +143,7 @@ impl TextEditor {
         if self.position == self.text.len() - 1 {
             self.insert(ch)
         } else {
+            self.preferred_column = None;
             let pos = self.position();
             self.text.replace_range(pos..pos + 1, ch.to_string());
             self.forward();
@@ -105,9 +159,21 @@ impl TextEditor {
     /// Erases the character before the cursor position.
     pub fn erase(&mut self) {
         if self.position > 0 {
+            self.preferred_column = None;
             self.backward();
             let pos = self.position();
             self.text.drain(pos..pos + 1);
+        }
+    }
+
+    /// Erases the grapheme at the cursor position.
+    ///
+    /// Erasing a newline joins its surrounding logical rows. The trailing
+    /// cursor grapheme is never removed.
+    pub fn erase_forward(&mut self) {
+        if self.position < self.text.len() - 1 {
+            self.preferred_column = None;
+            self.text.drain(self.position..self.position + 1);
         }
     }
 
@@ -119,6 +185,7 @@ impl TextEditor {
     /// Erases the text from the current cursor position to the specified position,
     /// considering whether pos is greater or smaller than the current position.
     fn erase_to_position(&mut self, pos: usize) {
+        self.preferred_column = None;
         let current_pos = self.position();
         if pos > current_pos {
             self.text.drain(current_pos..pos);
@@ -188,17 +255,54 @@ impl TextEditor {
     /// Moves the cursor to the beginning of the text.
     pub fn move_to_head(&mut self) {
         self.position = 0;
+        self.preferred_column = None;
     }
 
     /// Moves the cursor to the end of the text.
     pub fn move_to_tail(&mut self) {
         self.position = self.text.len() - 1;
+        self.preferred_column = None;
+    }
+
+    /// Moves the cursor to the beginning of its current logical row.
+    pub fn move_to_line_head(&mut self) {
+        let position = self.logical_position();
+        if let Some((start, _)) = self.line_ranges().get(position.row) {
+            self.position = *start;
+            self.preferred_column = None;
+        }
+    }
+
+    /// Moves the cursor to the end of its current logical row.
+    pub fn move_to_line_tail(&mut self) {
+        let position = self.logical_position();
+        if let Some((_, end)) = self.line_ranges().get(position.row) {
+            self.position = *end;
+            self.preferred_column = None;
+        }
+    }
+
+    /// Moves the cursor to the previous logical row.
+    ///
+    /// Repeated vertical movement preserves the original display column and
+    /// clamps only while passing through shorter rows.
+    pub fn move_up(&mut self) -> bool {
+        self.move_vertical(-1)
+    }
+
+    /// Moves the cursor to the next logical row.
+    ///
+    /// Repeated vertical movement preserves the original display column and
+    /// clamps only while passing through shorter rows.
+    pub fn move_down(&mut self) -> bool {
+        self.move_vertical(1)
     }
 
     /// Moves the cursor to a character by index.
     pub fn move_to(&mut self, position: usize) -> bool {
         if position < self.text.len() {
             self.position = position;
+            self.preferred_column = None;
             true
         } else {
             false
@@ -226,6 +330,67 @@ impl TextEditor {
     pub fn forward(&mut self) -> bool {
         self.shift(0, 1)
     }
+
+    fn move_vertical(&mut self, row_delta: isize) -> bool {
+        let ranges = self.line_ranges();
+        let current = self.logical_position();
+        let Some(target_row) = current.row.checked_add_signed(row_delta) else {
+            return false;
+        };
+        let Some((start, end)) = ranges.get(target_row).copied() else {
+            return false;
+        };
+
+        let column = self.preferred_column.unwrap_or(current.column);
+        self.position = self.position_for_column(start, end, column);
+        self.preferred_column = Some(column);
+        true
+    }
+
+    fn line_ranges(&self) -> Vec<(usize, usize)> {
+        let content_end = self.text.len().saturating_sub(1);
+        let mut ranges = Vec::new();
+        let mut start = 0;
+
+        for (index, grapheme) in self.text.iter().take(content_end).enumerate() {
+            if grapheme.character() == '\n' {
+                ranges.push((start, index));
+                start = index + 1;
+            }
+        }
+
+        ranges.push((start, content_end));
+        ranges
+    }
+
+    fn display_width_between(&self, start: usize, end: usize) -> usize {
+        self.text
+            .iter()
+            .skip(start)
+            .take(end.saturating_sub(start))
+            .map(StyledGrapheme::width)
+            .sum()
+    }
+
+    fn position_for_column(&self, start: usize, end: usize, column: usize) -> usize {
+        let mut current_column = 0;
+
+        for (offset, grapheme) in self
+            .text
+            .iter()
+            .skip(start)
+            .take(end.saturating_sub(start))
+            .enumerate()
+        {
+            let next_column = current_column + grapheme.width();
+            if column < next_column {
+                return start + offset;
+            }
+            current_column = next_column;
+        }
+
+        end
+    }
 }
 
 #[cfg(test)]
@@ -237,6 +402,7 @@ mod test {
         TextEditor {
             position: p.min(text.len().saturating_sub(1)),
             text,
+            preferred_column: None,
         }
     }
 
