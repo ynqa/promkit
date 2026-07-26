@@ -2,6 +2,8 @@ use promkit::{preset::readline::Readline, suggest::Suggest, Prompt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    println!("Build completed successfully.");
+
     Readline::default()
         .title("Hi!")
         .enable_suggest(Suggest::from_iter([

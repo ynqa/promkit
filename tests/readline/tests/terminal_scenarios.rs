@@ -27,7 +27,35 @@ fn resize_roundtrip_wrap_reflow() -> Result<()> {
 fn titled_long_input_resize_roundtrip_clears_stale_rows() -> Result<()> {
     let command = CommandBuilder::new(env!("CARGO_BIN_EXE_titled-readline-fixture"));
     let mut session = Session::spawn(command, 10, 60, 0, 9)?;
-    thread::sleep(Duration::from_millis(300));
+
+    let deadline = Instant::now() + Duration::from_secs(1);
+    while !session
+        .screen_snapshot()
+        .iter()
+        .any(|row| row.starts_with("❯❯"))
+    {
+        assert!(
+            Instant::now() < deadline,
+            "fixture did not render the initial prompt"
+        );
+        thread::sleep(Duration::from_millis(1));
+    }
+
+    assert_eq!(
+        session.screen_snapshot(),
+        vec![
+            "                                                            ",
+            "                                                            ",
+            "                                                            ",
+            "                                                            ",
+            "                                                            ",
+            "                                                            ",
+            "                                                            ",
+            "Build completed successfully.                               ",
+            "Hi!                                                         ",
+            "❯❯                                                          ",
+        ]
+    );
 
     session.write_input(
         b"Terminal prompts should remain stable when the window shrinks and expands again",
@@ -67,7 +95,7 @@ fn titled_long_input_resize_roundtrip_clears_stale_rows() -> Result<()> {
             "                                                            ",
             "                                                            ",
             "                                                            ",
-            "                                                            ",
+            "Build completed successfully.                               ",
             "Hi!                                                         ",
             "❯❯ Terminal prompts should remain stable when the window shr",
             "inks and expands again                                      ",
