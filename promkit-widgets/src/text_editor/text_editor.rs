@@ -276,6 +276,13 @@ mod test {
             let txt = new_with_position(String::from("abcde "), 0);
             assert_eq!(StyledGraphemes::from("***** "), txt.masking('*'))
         }
+
+        #[test]
+        fn preserves_newlines_in_multiline_text() {
+            let txt = TextEditor::new("ab\nc");
+
+            assert_eq!(StyledGraphemes::from("**\n* "), txt.masking('*'));
+        }
     }
 
     mod erase {
@@ -427,6 +434,114 @@ mod test {
             txt.insert('d');
             assert_eq!(new.text(), txt.text());
             assert_eq!(new.position(), txt.position());
+        }
+    }
+
+    mod multiline {
+        use super::*;
+
+        #[test]
+        fn reports_logical_position_using_display_columns() {
+            let mut txt = TextEditor::new("ab\n界c");
+
+            assert_eq!(TextPosition { row: 1, column: 3 }, txt.logical_position());
+
+            assert!(txt.move_to(3)); // Before `界`.
+            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+        }
+
+        #[test]
+        fn inserts_a_newline_at_the_cursor() {
+            let mut txt = TextEditor::new("abcd");
+            assert!(txt.move_to(2));
+
+            txt.insert_newline();
+
+            assert_eq!("ab\ncd", txt.text_without_cursor().to_string());
+            assert_eq!(3, txt.position());
+            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+        }
+
+        #[test]
+        fn moves_vertically_and_preserves_the_preferred_display_column() {
+            let mut txt = TextEditor::new("abcdef\nxy\n123456");
+            assert!(txt.move_to(6)); // End of the first line.
+
+            assert!(txt.move_down());
+            assert_eq!(9, txt.position()); // End of the shorter second line.
+            assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
+
+            assert!(txt.move_down());
+            assert_eq!(16, txt.position()); // Restore column 6 on the third line.
+            assert_eq!(TextPosition { row: 2, column: 6 }, txt.logical_position());
+
+            assert!(txt.move_up());
+            assert_eq!(9, txt.position());
+            assert!(txt.move_up());
+            assert_eq!(6, txt.position());
+        }
+
+        #[test]
+        fn moves_vertically_using_wide_character_display_widths() {
+            let mut txt = TextEditor::new("界a\n123");
+            assert!(txt.move_to(1)); // Display column 2 after `界`.
+
+            assert!(txt.move_down());
+
+            assert_eq!(5, txt.position());
+            assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
+        }
+
+        #[test]
+        fn stops_vertical_movement_at_document_boundaries() {
+            let mut txt = TextEditor::new("ab\ncd");
+            txt.move_to_head();
+
+            assert!(!txt.move_up());
+            assert_eq!(0, txt.position());
+
+            assert!(txt.move_to(3));
+            assert!(txt.move_up());
+            assert_eq!(0, txt.position());
+            assert!(!txt.move_up());
+
+            txt.move_to_tail();
+            assert!(!txt.move_down());
+        }
+
+        #[test]
+        fn moves_to_the_current_line_boundaries() {
+            let mut txt = TextEditor::new("ab\ncd");
+            assert!(txt.move_to(4)); // Before `d`.
+
+            txt.move_to_line_head();
+            assert_eq!(3, txt.position());
+
+            txt.move_to_line_tail();
+            assert_eq!(5, txt.position());
+        }
+
+        #[test]
+        fn erases_a_newline_forward_and_joins_lines() {
+            let mut txt = TextEditor::new("ab\ncd");
+            assert!(txt.move_to(2)); // Before the newline.
+
+            txt.erase_forward();
+
+            assert_eq!("abcd", txt.text_without_cursor().to_string());
+            assert_eq!(2, txt.position());
+            assert_eq!(TextPosition { row: 0, column: 2 }, txt.logical_position());
+        }
+
+        #[test]
+        fn handles_empty_lines_and_a_trailing_newline() {
+            let mut txt = TextEditor::new("a\n\n");
+
+            assert_eq!(TextPosition { row: 2, column: 0 }, txt.logical_position());
+            assert!(txt.move_up());
+            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+            assert!(txt.move_up());
+            assert_eq!(TextPosition { row: 0, column: 0 }, txt.logical_position());
         }
     }
 

@@ -161,4 +161,66 @@ mod state_tests {
             Some(TextEditorHit::Cursor { index: 1 })
         );
     }
+
+    #[test]
+    fn renders_a_multiline_cursor_at_its_logical_position() {
+        let state = state("ab\n界c", ">> ");
+
+        let created = state.create_graphemes();
+
+        assert_eq!(">> ab\n界c ", created.graphemes.to_string());
+        assert_eq!(Some(ContentPosition { row: 1, column: 3 }), created.cursor);
+    }
+
+    #[test]
+    fn resolves_clicks_on_each_multiline_row() {
+        let state = state("ab\n界c", ">> ");
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 0, column: 80 }),
+            Some(TextEditorHit::Cursor { index: 2 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 0 }),
+            Some(TextEditorHit::Cursor { index: 3 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 1 }),
+            Some(TextEditorHit::Cursor { index: 3 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 2 }),
+            Some(TextEditorHit::Cursor { index: 4 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 80 }),
+            Some(TextEditorHit::Cursor { index: 5 })
+        );
+        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+    }
+
+    #[test]
+    fn resolves_clicks_on_empty_multiline_rows() {
+        let state = state("a\n\nb", "");
+
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 1, column: 0 }),
+            Some(TextEditorHit::Cursor { index: 2 })
+        );
+        assert_eq!(
+            state.hit_at(ContentPosition { row: 2, column: 0 }),
+            Some(TextEditorHit::Cursor { index: 3 })
+        );
+    }
+
+    #[test]
+    fn masking_preserves_multiline_layout_and_cursor_position() {
+        let mut state = state("ab\n界c", ">> ");
+        state.config.mask = Some('*');
+
+        let created = state.create_graphemes();
+
+        assert_eq!(">> **\n** ", created.graphemes.to_string());
+        assert_eq!(Some(ContentPosition { row: 1, column: 2 }), created.cursor);
+    }
 }
