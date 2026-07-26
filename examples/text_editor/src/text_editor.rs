@@ -100,7 +100,7 @@ async fn evaluate_delimiters(event: &Event, context: &mut TextEditor) -> anyhow:
 #[cfg(test)]
 mod tests {
     use super::*;
-    use promkit::widgets::text_editor::TextPosition;
+    use promkit::{core::Widget, widgets::text_editor::TextPosition};
 
     fn enter() -> Event {
         Event::Key(KeyEvent {
@@ -147,12 +147,46 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn enter_submits_closed_input() {
+    async fn enter_submits_complete_single_line_input() {
         let mut editor = TextEditor::default();
-        editor.editor.texteditor.replace("{[value]}");
+        editor.editor.texteditor.replace("value");
 
         let signal = evaluate_delimiters(&enter(), &mut editor).await.unwrap();
 
         assert!(matches!(signal, Signal::Quit));
+    }
+
+    async fn assert_blank_continuation_line_submits(input: &str) {
+        let mut editor = TextEditor::default()
+            .prefix("❯❯❯ ")
+            .continuation_prefix("... ")
+            .indenter(delimiter_indent);
+        editor.editor.texteditor.replace(input);
+
+        let signal = evaluate_delimiters(&enter(), &mut editor).await.unwrap();
+
+        assert!(matches!(signal, Signal::Continue));
+        assert_eq!(
+            editor.editor.texteditor.text_without_cursor().to_string(),
+            format!("{input}\n")
+        );
+        assert_eq!(
+            editor.editor.create_graphemes().graphemes.to_string(),
+            format!("❯❯❯ {}\n...  ", input.replace('\n', "\n... "))
+        );
+
+        let signal = evaluate_delimiters(&enter(), &mut editor).await.unwrap();
+
+        assert!(matches!(signal, Signal::Quit));
+    }
+
+    #[tokio::test]
+    async fn empty_continuation_line_submits_a_curly_bracket_block() {
+        assert_blank_continuation_line_submits("{\n    value\n}").await;
+    }
+
+    #[tokio::test]
+    async fn empty_continuation_line_submits_a_square_bracket_block() {
+        assert_blank_continuation_line_submits("[\n    value\n]").await;
     }
 }
