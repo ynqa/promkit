@@ -64,11 +64,11 @@ fn content_size(c: &mut Criterion) {
                     &contents,
                     |b, contents| {
                         b.iter(|| {
-                            black_box(
-                                layout
-                                    .layout(black_box(contents.clone()), 80, TERMINAL_HEIGHT)
-                                    .unwrap(),
-                            )
+                            let prepared = layout
+                                .layout(black_box(contents.clone()), 80, TERMINAL_HEIGHT)
+                                .unwrap();
+                            black_box(prepared.panes());
+                            black_box(prepared)
                         });
                     },
                 );
@@ -96,11 +96,11 @@ fn terminal_width(c: &mut Criterion) {
         let mut layout = RendererLayout::default();
         group.bench_with_input(BenchmarkId::from_parameter(width), &width, |b, &width| {
             b.iter(|| {
-                black_box(
-                    layout
-                        .layout(black_box(contents.clone()), width, TERMINAL_HEIGHT)
-                        .unwrap(),
-                )
+                let prepared = layout
+                    .layout(black_box(contents.clone()), width, TERMINAL_HEIGHT)
+                    .unwrap();
+                black_box(prepared.panes());
+                black_box(prepared)
             });
         });
     }
@@ -128,15 +128,15 @@ fn pane_count(c: &mut Criterion) {
             &contents,
             |b, contents| {
                 b.iter(|| {
-                    black_box(
-                        layout
-                            .layout(
-                                black_box(contents.clone()),
-                                80,
-                                u16::try_from(pane_count.max(TERMINAL_HEIGHT as usize)).unwrap(),
-                            )
-                            .unwrap(),
-                    )
+                    let prepared = layout
+                        .layout(
+                            black_box(contents.clone()),
+                            80,
+                            u16::try_from(pane_count.max(TERMINAL_HEIGHT as usize)).unwrap(),
+                        )
+                        .unwrap();
+                    black_box(prepared.panes());
+                    black_box(prepared)
                 });
             },
         );
@@ -167,11 +167,11 @@ fn cursor_scrolling(c: &mut Criterion) {
             });
             at_tail = !at_tail;
 
-            black_box(
-                layout
-                    .layout(black_box([(0usize, frame)]), 80, TERMINAL_HEIGHT)
-                    .unwrap(),
-            )
+            let prepared = layout
+                .layout(black_box([(0usize, frame)]), 80, TERMINAL_HEIGHT)
+                .unwrap();
+            black_box(prepared.panes());
+            black_box(prepared)
         });
     });
 
