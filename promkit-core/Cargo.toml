@@ -14,3 +14,10 @@ crossbeam-skiplist = { workspace = true }
 crossterm = { workspace = true }
 tokio = { workspace = true }
 unicode-width = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "renderer_layout"
+harness = false
