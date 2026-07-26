@@ -158,6 +158,51 @@ mod tests {
     }
 
     #[test]
+    fn viewport_projection_stays_stable_until_cursor_leaves_it() {
+        let value = serde_yaml::from_str("first: 1\nsecond: 2\nthird: 3\nfourth: 4\n").unwrap();
+        let mut state = State {
+            document: Document::new([&value]),
+            config: Config::default(),
+        };
+
+        let initial = state.create_graphemes_in_viewport(80, 3);
+        assert!(initial.graphemes.to_string().starts_with("first: 1"));
+        assert_eq!(initial.cursor.unwrap().row, 0);
+
+        state.document.down();
+        let moved_inside = state.create_graphemes_in_viewport(80, 3);
+        assert!(moved_inside.graphemes.to_string().starts_with("first: 1"));
+        assert_eq!(moved_inside.cursor.unwrap().row, 1);
+
+        state.document.down();
+        let moved_to_edge = state.create_graphemes_in_viewport(80, 3);
+        assert!(moved_to_edge.graphemes.to_string().starts_with("first: 1"));
+        assert_eq!(moved_to_edge.cursor.unwrap().row, 2);
+
+        state.document.down();
+        let moved_outside = state.create_graphemes_in_viewport(80, 3);
+        assert!(moved_outside.graphemes.to_string().starts_with("second: 2"));
+        assert_eq!(moved_outside.cursor.unwrap().row, 2);
+
+        state.document.up();
+        let moved_back_inside = state.create_graphemes_in_viewport(80, 3);
+        assert!(
+            moved_back_inside
+                .graphemes
+                .to_string()
+                .starts_with("second: 2")
+        );
+        assert_eq!(moved_back_inside.cursor.unwrap().row, 1);
+
+        state.document.up();
+        state.create_graphemes_in_viewport(80, 3);
+        state.document.up();
+        let moved_above = state.create_graphemes_in_viewport(80, 3);
+        assert!(moved_above.graphemes.to_string().starts_with("first: 1"));
+        assert_eq!(moved_above.cursor.unwrap().row, 0);
+    }
+
+    #[test]
     fn configured_line_limit_bounds_viewport_projection() {
         let value = serde_yaml::from_str("first: one\nsecond: two\n").unwrap();
         let state = State {
