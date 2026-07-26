@@ -26,6 +26,7 @@ all = [
     "readline",
     "spinner",
     "text",
+    "text-editor",
     "tree",
 ]
 checkbox = ["promkit-widgets/checkbox", "promkit-widgets/text"]
@@ -47,6 +48,7 @@ readline = [
 ]
 spinner = ["promkit-widgets/spinner"]
 text = ["promkit-widgets/text"]
+text-editor = ["promkit-widgets/text", "promkit-widgets/texteditor"]
 tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 
 [dependencies]
