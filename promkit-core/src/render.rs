@@ -15,7 +15,10 @@
 //! positions against what was actually drawn rather than against newer,
 //! not-yet-rendered content.
 
-use std::sync::{Arc, Mutex, RwLock};
+use std::{
+    sync::{Arc, Mutex, RwLock},
+    time::{Duration, Instant},
+};
 
 use crossbeam_skiplist::SkipMap;
 use tokio::sync::Mutex as AsyncMutex;
@@ -29,6 +32,9 @@ mod layout;
 use layout::LayoutSnapshot;
 pub use layout::{PreparedLayout, RendererLayout};
 
+const RESIZE_SIZE_STABILITY: Duration = Duration::from_millis(20);
+const RESIZE_SIZE_POLL: Duration = Duration::from_millis(5);
+
 /// SharedRenderer is a type alias for an Arc-wrapped Renderer, allowing for shared ownership and concurrency.
 pub type SharedRenderer<K> = Arc<Renderer<K>>;
 
@@ -38,17 +44,17 @@ pub struct Renderer<K: Clone + Ord + Send + Sync + 'static> {
     contents: SkipMap<K, CreatedGraphemes>,
     layout_engine: Mutex<RendererLayout<K>>,
     layout: RwLock<Option<LayoutSnapshot<K>>>,
+    last_terminal_size: Mutex<Option<(u16, u16)>>,
 }
 
 impl<K: Clone + Ord + Send + Sync + 'static> Renderer<K> {
     pub fn try_new() -> anyhow::Result<Self> {
         Ok(Self {
-            terminal: AsyncMutex::new(Terminal {
-                position: crate::crossterm::cursor::position()?,
-            }),
+            terminal: AsyncMutex::new(Terminal::new(crate::crossterm::cursor::position()?)),
             contents: SkipMap::new(),
             layout_engine: Mutex::new(RendererLayout::default()),
             layout: RwLock::new(None),
+            last_terminal_size: Mutex::new(None),
         })
     }
 
@@ -185,24 +191,61 @@ impl<K: Clone + Ord + Send + Sync + 'static> Renderer<K> {
             .collect::<Vec<_>>();
 
         let mut terminal = self.terminal.lock().await;
-        let (terminal_width, terminal_height) = crate::crossterm::terminal::size()?;
-        let prepared = self
-            .layout_engine
+        let mut size = crate::crossterm::terminal::size()?;
+        let previous_size = *self
+            .last_terminal_size
             .lock()
-            .expect("layout lock poisoned")
-            .layout(contents, terminal_width, terminal_height)?;
+            .expect("terminal size lock poisoned");
+        if previous_size.is_some_and(|previous| previous != size) {
+            size = wait_for_terminal_size_stability(size).await?;
+        }
 
-        let panes = prepared.panes();
-        terminal.draw_rows(&panes)?;
-        drop(panes);
+        loop {
+            let (terminal_width, terminal_height) = size;
+            let prepared = self
+                .layout_engine
+                .lock()
+                .expect("layout lock poisoned")
+                .layout(contents.iter().cloned(), terminal_width, terminal_height)?;
 
-        let origin = ScreenPosition {
-            row: terminal.position.1,
-            column: terminal.position.0,
-        };
-        *self.layout.write().expect("layout lock poisoned") = Some(prepared.into_snapshot(origin));
+            let panes = prepared.panes();
+            terminal.draw_rows_at_height(&panes, terminal_height)?;
+            drop(panes);
 
-        Ok(())
+            let current_size = crate::crossterm::terminal::size()?;
+            if current_size != size {
+                size = wait_for_terminal_size_stability(current_size).await?;
+                continue;
+            }
+
+            let origin = ScreenPosition {
+                row: terminal.position.1,
+                column: terminal.position.0,
+            };
+            *self.layout.write().expect("layout lock poisoned") =
+                Some(prepared.into_snapshot(origin));
+            *self
+                .last_terminal_size
+                .lock()
+                .expect("terminal size lock poisoned") = Some(size);
+
+            return Ok(());
+        }
+    }
+}
+
+async fn wait_for_terminal_size_stability(mut previous: (u16, u16)) -> std::io::Result<(u16, u16)> {
+    let mut stable_since = Instant::now();
+
+    loop {
+        tokio::time::sleep(RESIZE_SIZE_POLL).await;
+        let current = crate::crossterm::terminal::size()?;
+        if current != previous {
+            previous = current;
+            stable_since = Instant::now();
+        } else if stable_since.elapsed() >= RESIZE_SIZE_STABILITY {
+            return Ok(current);
+        }
     }
 }
 
@@ -214,7 +257,7 @@ mod tests {
     #[test]
     fn hit_test_and_screen_position_round_trip() {
         let renderer = Renderer {
-            terminal: AsyncMutex::new(Terminal { position: (0, 0) }),
+            terminal: AsyncMutex::new(Terminal::new((0, 0))),
             contents: SkipMap::new(),
             layout_engine: Mutex::new(RendererLayout::default()),
             layout: RwLock::new(Some(LayoutSnapshot {
@@ -246,6 +289,7 @@ mod tests {
                     ],
                 }],
             })),
+            last_terminal_size: Mutex::new(None),
         };
 
         let screen = ScreenPosition { row: 4, column: 2 };

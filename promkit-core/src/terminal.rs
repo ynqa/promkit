@@ -11,9 +11,67 @@ use crate::{
 pub struct Terminal {
     /// The current cursor position within the terminal.
     pub position: (u16, u16),
+    anchor: (u16, u16),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct DrawPlan {
+    row_count: usize,
+    clear_position: (u16, u16),
+    draw_position: (u16, u16),
+    scroll_down: u16,
+    visible_height: usize,
+    resulting_position: (u16, u16),
+}
+
+impl DrawPlan {
+    fn try_new(
+        row_count: usize,
+        terminal_height: u16,
+        anchor: (u16, u16),
+        position: (u16, u16),
+    ) -> anyhow::Result<Self> {
+        if row_count > terminal_height as usize {
+            return Err(anyhow::anyhow!("Insufficient space to display all panes"));
+        }
+
+        let last_terminal_row = terminal_height.saturating_sub(1);
+        let anchor_row = anchor.1.min(last_terminal_row);
+        let position_row = position.1.min(last_terminal_row);
+        let target_row = if row_count == 0 {
+            anchor_row
+        } else {
+            let row_count =
+                u16::try_from(row_count).expect("row count is bounded by terminal height");
+            anchor_row.min(terminal_height.saturating_sub(row_count))
+        };
+        let scroll_down = target_row.saturating_sub(position_row);
+        let draw_row = position_row.saturating_add(scroll_down);
+
+        Ok(Self {
+            row_count,
+            clear_position: (position.0, draw_row),
+            draw_position: (anchor.0, draw_row),
+            scroll_down,
+            visible_height: terminal_height.saturating_sub(draw_row) as usize,
+            resulting_position: (anchor.0, target_row),
+        })
+    }
+
+    fn scroll_up_after(self, row_index: usize) -> bool {
+        let completed_rows = row_index.saturating_add(1);
+        completed_rows < self.row_count && completed_rows >= self.visible_height.max(1)
+    }
 }
 
 impl Terminal {
+    pub fn new(position: (u16, u16)) -> Self {
+        Self {
+            position,
+            anchor: position,
+        }
+    }
+
     /// Draws content that still needs terminal-width wrapping.
     pub fn draw(&mut self, graphemes: &[StyledGraphemes]) -> anyhow::Result<()> {
         let (width, height) = terminal::size()?;
@@ -46,6 +104,17 @@ impl Terminal {
         R: Borrow<StyledGraphemes>,
     {
         let (_, height) = terminal::size()?;
+        self.draw_rows_at_height(panes, height)
+    }
+
+    pub(crate) fn draw_rows_at_height<R>(
+        &mut self,
+        panes: &[Vec<R>],
+        height: u16,
+    ) -> anyhow::Result<()>
+    where
+        R: Borrow<StyledGraphemes>,
+    {
         let mut stdout = io::stdout();
         self.draw_rows_to(&mut stdout, panes, height)
     }
@@ -60,43 +129,40 @@ impl Terminal {
         W: Write,
         R: Borrow<StyledGraphemes>,
     {
-        let visible_height = height.saturating_sub(self.position.1);
         let row_count = panes.iter().map(Vec::len).sum::<usize>();
-
-        if row_count > height as usize {
-            return Err(anyhow::anyhow!("Insufficient space to display all panes"));
-        }
+        let plan = DrawPlan::try_new(row_count, height, self.anchor, self.position)?;
 
         crossterm::queue!(
             writer,
-            cursor::MoveTo(self.position.0, self.position.1),
+            terminal::BeginSynchronizedUpdate,
+            terminal::DisableLineWrap,
+        )?;
+        if plan.scroll_down > 0 {
+            crossterm::queue!(writer, terminal::ScrollDown(plan.scroll_down))?;
+        }
+        crossterm::queue!(
+            writer,
+            cursor::MoveTo(plan.clear_position.0, plan.clear_position.1),
             terminal::Clear(terminal::ClearType::FromCursorDown),
+            cursor::MoveTo(plan.draw_position.0, plan.draw_position.1),
         )?;
 
-        let mut remaining_lines = visible_height;
+        for (row_index, row) in panes.iter().flatten().enumerate() {
+            crossterm::queue!(writer, style::Print(row.borrow().styled_display()))?;
 
-        for (pane_index, rows) in panes.iter().enumerate() {
-            for (row_index, row) in rows.iter().enumerate() {
-                crossterm::queue!(writer, style::Print(row.borrow().styled_display()))?;
-
-                remaining_lines = remaining_lines.saturating_sub(1);
-
-                // Determine if scrolling is needed:
-                // - We need to scroll if we've reached the bottom of the terminal (remaining_lines == 0)
-                // - AND we have more content to display (either more rows in current pane or more panes)
-                let is_last_pane = pane_index == panes.len() - 1;
-                let is_last_row_in_pane = row_index == rows.len() - 1;
-                let has_more_content = !(is_last_pane && is_last_row_in_pane);
-
-                if has_more_content && remaining_lines == 0 {
-                    crossterm::queue!(writer, terminal::ScrollUp(1))?;
-                    self.position.1 = self.position.1.saturating_sub(1);
-                }
-
-                crossterm::queue!(writer, cursor::MoveToNextLine(1))?;
+            if plan.scroll_up_after(row_index) {
+                crossterm::queue!(writer, terminal::ScrollUp(1))?;
             }
+
+            crossterm::queue!(writer, cursor::MoveToNextLine(1))?;
         }
+        crossterm::queue!(
+            writer,
+            terminal::EnableLineWrap,
+            terminal::EndSynchronizedUpdate
+        )?;
         writer.flush()?;
+        self.position = plan.resulting_position;
         Ok(())
     }
 }
@@ -129,7 +195,7 @@ mod tests {
 
     #[test]
     fn growing_frame_scrolls_only_after_clearing_the_previous_frame() {
-        let mut terminal = Terminal { position: (0, 7) };
+        let mut terminal = Terminal::new((0, 7));
         let mut output = Vec::new();
 
         terminal.draw_rows_to(&mut output, &rows(8), 10).unwrap();
@@ -146,7 +212,7 @@ mod tests {
 
     #[test]
     fn shrinking_frame_scrolls_preceding_output_back_down_before_redrawing() {
-        let mut terminal = Terminal { position: (0, 7) };
+        let mut terminal = Terminal::new((0, 7));
         terminal
             .draw_rows_to(&mut Vec::new(), &rows(8), 10)
             .unwrap();
@@ -160,7 +226,14 @@ mod tests {
             &output,
             terminal::Clear(terminal::ClearType::FromCursorDown),
         );
-        let draw = command_offset(&output, cursor::MoveTo(0, 7));
+        let draw = command_bytes(cursor::MoveTo(0, 7));
+        let draw = output
+            .windows(draw.len())
+            .enumerate()
+            .filter(|(_, window)| *window == draw)
+            .map(|(offset, _)| offset)
+            .nth(1)
+            .expect("expected a move from the clear position to the draw position");
 
         assert!(scroll_down < clear);
         assert!(clear < draw);
@@ -169,7 +242,7 @@ mod tests {
 
     #[test]
     fn draw_frame_controls_wrapping_inside_a_synchronized_update() {
-        let mut terminal = Terminal { position: (0, 0) };
+        let mut terminal = Terminal::new((0, 0));
         let mut output = Vec::new();
 
         terminal.draw_rows_to(&mut output, &rows(1), 10).unwrap();
@@ -186,7 +259,7 @@ mod tests {
 
     #[test]
     fn trailing_empty_panes_do_not_trigger_scrolling() {
-        let mut terminal = Terminal { position: (0, 9) };
+        let mut terminal = Terminal::new((0, 9));
         let panes: Vec<Vec<StyledGraphemes>> =
             vec![vec![StyledGraphemes::from("only row")], Vec::new()];
 
