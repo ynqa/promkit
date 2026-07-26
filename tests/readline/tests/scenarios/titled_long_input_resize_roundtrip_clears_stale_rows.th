@@ -1,0 +1,131 @@
+Scenario "titled_long_input_resize_roundtrip_clears_stale_rows"
+Command "CARGO_BIN_EXE_titled-readline-fixture"
+Terminal rows 10 cols 60
+Cursor row 10 col 1
+
+Step "spawn after preceding output"
+WaitScreenLinePrefix "❯❯" timeout 1000ms
+Settle 0ms
+Expect timeout 0ms:
+  r00 |····························································|
+  r01 |····························································|
+  r02 |····························································|
+  r03 |····························································|
+  r04 |····························································|
+  r05 |····························································|
+  r06 |····························································|
+  r07 |Build·completed·successfully.·······························|
+  r08 |Hi!·························································|
+  r09 |❯❯··························································|
+
+Step "resize rapidly while input is rendering"
+Input "Terminal prompts should remain stable when the window shrinks and expands again"
+WaitOutput "Terminal" timeout 1000ms
+Resize rows 10 cols 59
+Resize rows 10 cols 58
+Resize rows 10 cols 57
+Resize rows 10 cols 56
+Resize rows 10 cols 55
+Resize rows 10 cols 54
+Resize rows 10 cols 53
+Resize rows 10 cols 52
+Resize rows 10 cols 51
+Resize rows 10 cols 50
+Resize rows 10 cols 49
+Resize rows 10 cols 48
+Resize rows 10 cols 47
+Resize rows 10 cols 46
+Resize rows 10 cols 45
+Resize rows 10 cols 44
+Resize rows 10 cols 43
+Resize rows 10 cols 42
+Resize rows 10 cols 41
+Resize rows 10 cols 40
+Resize rows 10 cols 39
+Resize rows 10 cols 38
+Resize rows 10 cols 37
+Resize rows 10 cols 36
+Resize rows 10 cols 35
+Resize rows 10 cols 34
+Resize rows 10 cols 33
+Resize rows 10 cols 32
+Resize rows 10 cols 31
+Resize rows 10 cols 30
+Resize rows 10 cols 29
+Resize rows 10 cols 28
+Resize rows 10 cols 27
+Resize rows 10 cols 26
+Resize rows 10 cols 25
+Resize rows 10 cols 24
+Resize rows 10 cols 23
+Resize rows 10 cols 22
+Resize rows 10 cols 21
+Resize rows 10 cols 20
+Resize rows 10 cols 19
+Resize rows 10 cols 18
+Resize rows 10 cols 17
+Resize rows 10 cols 16
+Resize rows 10 cols 15
+Resize rows 10 cols 14
+Resize rows 10 cols 13
+Resize rows 10 cols 12
+Resize rows 10 cols 13
+Resize rows 10 cols 14
+Resize rows 10 cols 15
+Resize rows 10 cols 16
+Resize rows 10 cols 17
+Resize rows 10 cols 18
+Resize rows 10 cols 19
+Resize rows 10 cols 20
+Resize rows 10 cols 21
+Resize rows 10 cols 22
+Resize rows 10 cols 23
+Resize rows 10 cols 24
+Resize rows 10 cols 25
+Resize rows 10 cols 26
+Resize rows 10 cols 27
+Resize rows 10 cols 28
+Resize rows 10 cols 29
+Resize rows 10 cols 30
+Resize rows 10 cols 31
+Resize rows 10 cols 32
+Resize rows 10 cols 33
+Resize rows 10 cols 34
+Resize rows 10 cols 35
+Resize rows 10 cols 36
+Resize rows 10 cols 37
+Resize rows 10 cols 38
+Resize rows 10 cols 39
+Resize rows 10 cols 40
+Resize rows 10 cols 41
+Resize rows 10 cols 42
+Resize rows 10 cols 43
+Resize rows 10 cols 44
+Resize rows 10 cols 45
+Resize rows 10 cols 46
+Resize rows 10 cols 47
+Resize rows 10 cols 48
+Resize rows 10 cols 49
+Resize rows 10 cols 50
+Resize rows 10 cols 51
+Resize rows 10 cols 52
+Resize rows 10 cols 53
+Resize rows 10 cols 54
+Resize rows 10 cols 55
+Resize rows 10 cols 56
+Resize rows 10 cols 57
+Resize rows 10 cols 58
+Resize rows 10 cols 59
+Resize rows 10 cols 60
+Settle 300ms
+Expect timeout 0ms:
+  r00 |····························································|
+  r01 |····························································|
+  r02 |····························································|
+  r03 |····························································|
+  r04 |····························································|
+  r05 |····························································|
+  r06 |Build·completed·successfully.·······························|
+  r07 |Hi!·························································|
+  r08 |❯❯·Terminal·prompts·should·remain·stable·when·the·window·shr|
+  r09 |inks·and·expands·again······································|

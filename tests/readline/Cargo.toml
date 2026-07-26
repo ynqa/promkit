@@ -10,8 +10,7 @@ promkit = { path = "../../promkit", features = ["readline"] }
 tokio = { workspace = true }
 
 [dev-dependencies]
-portable-pty = "0.9.0"
-termharness = "0.1.0"
+termharness = "0.2.0"
 
 [[bin]]
 name = "readline-fixture"
