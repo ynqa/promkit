@@ -52,8 +52,8 @@ See [here](./Concept.md).
 
 ## Examples/Demos
 
-*promkit* provides presets so that users can try prompts immediately without
-having to build complex components for specific use cases.
+*promkit* provides presets and reusable widgets for building interactive
+terminal applications.
 
 Show you commands, code, and actual demo screens for examples
 that can be executed immediately below.
@@ -216,6 +216,41 @@ cargo run --bin text
 [Code](./examples/text/src/text.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/text.gif" width="50%" height="auto">
+
+## Advanced Examples
+
+These examples demonstrate how to compose widgets and rendering primitives for
+application-specific event loops and asynchronous workflows.
+
+### Async Task with Spinner
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin async_task
+```
+
+</details>
+
+[Code](./examples/async_task/src/async_task.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/async_task.gif" width="50%" height="auto">
+
+### Multiline REPL
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin repl
+```
+
+</details>
+
+[Code](./examples/repl/src/repl.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/repl.gif" width="50%" height="auto">
 
 ## License
 

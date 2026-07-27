@@ -142,6 +142,7 @@ impl QuerySelector {
                 history: None,
                 config: text_editor::config::Config {
                     prefix: String::from("❯❯ "),
+                    continuation_prefix: Default::default(),
                     mask: None,
                     prefix_style: ContentStyle {
                         foreground_color: Some(Color::DarkGreen),

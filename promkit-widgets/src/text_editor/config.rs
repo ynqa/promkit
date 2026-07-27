@@ -8,7 +8,12 @@ use super::Mode;
 #[cfg_attr(feature = "serde", serde(default))]
 #[derive(Clone, Default)]
 pub struct Config {
+    /// Prefix displayed before the first logical row.
     pub prefix: String,
+    /// Prefix displayed before every logical row after the first.
+    ///
+    /// This is presentation-only and is never added to the editor text.
+    pub continuation_prefix: String,
     pub mask: Option<char>,
     #[cfg_attr(
         feature = "serde",
@@ -44,6 +49,7 @@ mod tests {
         fn config_fields_are_fully_loaded_from_toml() {
             let input = r#"
 prefix = ">> "
+continuation_prefix = "... "
 mask = "*"
 prefix_style = "fg=green,attr=bold"
 active_char_style = "bg=darkcyan,attr=underlined"
@@ -55,6 +61,7 @@ lines = 3
             let formatter: Config = toml::from_str(input).unwrap();
 
             assert_eq!(formatter.prefix, ">> ");
+            assert_eq!(formatter.continuation_prefix, "... ");
             assert_eq!(formatter.mask, Some('*'));
             assert_eq!(formatter.prefix_style.foreground_color, Some(Color::Green));
             assert!(formatter.prefix_style.attributes.has(Attribute::Bold));

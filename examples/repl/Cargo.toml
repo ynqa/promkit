@@ -1,0 +1,15 @@
+[package]
+name = "repl"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+futures = { workspace = true }
+promkit-widgets = { path = "../../promkit-widgets", features = ["texteditor"] }
+tokio = { workspace = true }
+
+[[bin]]
+name = "repl"
+path = "src/repl.rs"
