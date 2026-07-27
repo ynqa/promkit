@@ -13,6 +13,7 @@ name = "promkit"
 path = "src/lib.rs"
 
 [features]
+# Bundles
 default = []
 all = [
     "runtime",
@@ -30,6 +31,8 @@ all = [
     "texteditor",
     "tree",
 ]
+
+# Foundation
 core = ["dep:promkit-core"]
 runtime = [
     "core",
@@ -40,8 +43,12 @@ runtime = [
     "dep:tokio",
 ]
 widgets = ["core", "dep:promkit-widgets"]
+
+# Capabilities
 validate = []
 suggest = ["dep:radix_trie"]
+
+# Widgets
 checkbox = ["widgets", "promkit-widgets/checkbox"]
 json = ["widgets", "promkit-widgets/json"]
 yaml = ["widgets", "promkit-widgets/yaml"]
