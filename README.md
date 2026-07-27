@@ -235,6 +235,8 @@ cargo run --bin byop
 
 [Code](./examples/byop/src/byop.rs)
 
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/byop.gif" width="50%" height="auto">
+
 ### Multiline REPL
 
 <details>
@@ -247,6 +249,8 @@ cargo run --bin repl
 </details>
 
 [Code](./examples/repl/src/repl.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/repl.gif" width="50%" height="auto">
 
 ## License
 
