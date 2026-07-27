@@ -59,38 +59,29 @@ impl State {
     }
 
     fn column_at(&self, target: usize, projection: Projection) -> Option<usize> {
+        if target >= projection.width {
+            return None;
+        }
         let separator_width = display_width(&self.config.separator);
-        let mut used = 0usize;
+        let target = projection.horizontal_offset.checked_add(target)?;
+        let mut start = 0usize;
 
-        for column in projection.first_column..self.document.column_count() {
-            if column != projection.first_column {
-                if used.saturating_add(separator_width) > projection.width {
-                    break;
-                }
-                if target < used + separator_width {
-                    return None;
-                }
-                used += separator_width;
-            }
-
-            let available = projection.width.saturating_sub(used);
-            if available == 0 {
-                break;
-            }
-            let column_width = self.effective_column_width(column).min(available);
-            if target < used + column_width {
+        for column in 0..self.document.column_count() {
+            let end = start.saturating_add(self.document.column_width(column)?);
+            if target < end {
                 return Some(column);
             }
-            used += column_width;
+            start = end;
+
+            if column + 1 < self.document.column_count() {
+                let separator_end = start.saturating_add(separator_width);
+                if target < separator_end {
+                    return None;
+                }
+                start = separator_end;
+            }
         }
         None
-    }
-
-    fn effective_column_width(&self, column: usize) -> usize {
-        let width = self.document.column_width(column).unwrap_or(0).max(1);
-        self.config
-            .max_column_width
-            .map_or(width, |maximum| width.min(maximum.max(1)))
     }
 
     fn project(&self, width: usize, height: usize) -> CreatedGraphemes {
@@ -111,9 +102,15 @@ impl State {
         let header_visible = self.document.has_header();
         let body_height = height.saturating_sub(usize::from(header_visible));
         let rows = self.document.projected_rows(body_height);
+        let separator_width = display_width(&self.config.separator);
+        let content_width = self.document.content_width(separator_width);
+        let max_horizontal_offset = content_width.saturating_sub(width);
+        let horizontal_offset = self.document.horizontal_offset().min(max_horizontal_offset);
+        self.document.set_horizontal_offset(horizontal_offset);
         let projection = Projection {
             first_row: rows.start,
-            first_column: self.document.first_column(),
+            horizontal_offset,
+            max_horizontal_offset,
             body_height: rows.len(),
             width,
             header_visible,
@@ -121,9 +118,9 @@ impl State {
         self.document.set_projection(projection);
 
         let rendered_rows = usize::from(header_visible) + rows.len();
-        let content_width = self.projected_content_width(width);
+        let projected_width = content_width.saturating_sub(horizontal_offset).min(width);
         let mut graphemes = StyledGraphemes(VecDeque::with_capacity(
-            content_width
+            projected_width
                 .saturating_add(1)
                 .saturating_mul(rendered_rows),
         ));
@@ -169,62 +166,44 @@ impl State {
         style: ContentStyle,
     ) {
         let separator_width = display_width(&self.config.separator);
-        let mut used = 0usize;
+        let viewport_start = self.document.horizontal_offset();
+        let viewport_end = viewport_start.saturating_add(width);
+        let mut segment_start = 0usize;
 
-        for column in self.document.first_column()..self.document.column_count() {
-            if column != self.document.first_column() {
-                if used.saturating_add(separator_width) > width {
-                    break;
-                }
-                push_text(
-                    output,
-                    &self.config.separator,
-                    separator_width,
-                    self.config.separator_style,
-                );
-                used += separator_width;
-            }
-
-            let available = width.saturating_sub(used);
-            if available == 0 {
+        for column in 0..self.document.column_count() {
+            if segment_start >= viewport_end {
                 break;
             }
-            let column_width = self.effective_column_width(column).min(available);
+            let column_width = self.document.column_width(column).unwrap_or(1);
             let value = match row {
                 Some(row) => self.document.cell(row, column),
                 None => self.document.header_cell(column),
             }
             .unwrap_or("");
-            let value_width = push_text(output, value, column_width, style);
-            for _ in value_width..column_width {
-                output.push_back(StyledGrapheme::new(' ', style));
+            push_text_range(
+                output,
+                value,
+                column_width,
+                segment_start,
+                viewport_start,
+                viewport_end,
+                style,
+            );
+            segment_start = segment_start.saturating_add(column_width);
+
+            if column + 1 < self.document.column_count() {
+                push_text_range(
+                    output,
+                    &self.config.separator,
+                    separator_width,
+                    segment_start,
+                    viewport_start,
+                    viewport_end,
+                    self.config.separator_style,
+                );
+                segment_start = segment_start.saturating_add(separator_width);
             }
-            used += column_width;
         }
-    }
-
-    fn projected_content_width(&self, width: usize) -> usize {
-        let separator_width = display_width(&self.config.separator);
-        let mut used = 0usize;
-
-        for column in self.document.first_column()..self.document.column_count() {
-            if column != self.document.first_column() {
-                let Some(next) = used.checked_add(separator_width) else {
-                    return width;
-                };
-                if next > width {
-                    break;
-                }
-                used = next;
-            }
-
-            let available = width.saturating_sub(used);
-            if available == 0 {
-                break;
-            }
-            used = used.saturating_add(self.effective_column_width(column).min(available));
-        }
-        used
     }
 }
 
@@ -255,40 +234,68 @@ pub enum TableHit {
     Cell { row: usize, column: usize },
 }
 
-fn push_text(
+fn push_text_range(
     output: &mut StyledGraphemes,
     value: &str,
-    width: usize,
+    segment_width: usize,
+    segment_start: usize,
+    viewport_start: usize,
+    viewport_end: usize,
     style: ContentStyle,
-) -> usize {
-    if width == 0 {
-        return 0;
+) {
+    let segment_end = segment_start.saturating_add(segment_width);
+    if segment_end <= viewport_start || segment_start >= viewport_end {
+        return;
     }
 
-    let full_width = display_width(value);
-    let truncated = full_width > width;
-    let content_limit = if truncated {
-        width.saturating_sub(1)
-    } else {
-        width
-    };
-    let mut used = 0usize;
+    let visible_start = viewport_start.saturating_sub(segment_start);
+    let visible_end = viewport_end
+        .saturating_sub(segment_start)
+        .min(segment_width);
 
+    if value.is_ascii() {
+        for position in visible_start..visible_end {
+            let ch = value
+                .as_bytes()
+                .get(position)
+                .map_or(' ', |byte| display_char(char::from(*byte)));
+            output.push_back(StyledGrapheme::new(ch, style));
+        }
+        return;
+    }
+
+    let mut position = 0usize;
     for ch in value.chars() {
         let ch = display_char(ch);
         let ch_width = ch.width().unwrap_or(0);
-        if used.saturating_add(ch_width) > content_limit {
+        if ch_width == 0 {
+            if position > visible_start && position <= visible_end {
+                output.push_back(StyledGrapheme::new(ch, style));
+            }
+            continue;
+        }
+
+        let end = position.saturating_add(ch_width);
+        if end > visible_start && position < visible_end {
+            if position >= visible_start && end <= visible_end {
+                output.push_back(StyledGrapheme::new(ch, style));
+            } else {
+                let overlap_start = position.max(visible_start);
+                let overlap_end = end.min(visible_end);
+                for _ in overlap_start..overlap_end {
+                    output.push_back(StyledGrapheme::new(' ', style));
+                }
+            }
+        }
+        position = end;
+        if position >= visible_end {
             break;
         }
-        output.push_back(StyledGrapheme::new(ch, style));
-        used += ch_width;
     }
 
-    if truncated {
-        output.push_back(StyledGrapheme::new('…', style));
-        used += 1;
+    for _ in position.max(visible_start)..visible_end {
+        output.push_back(StyledGrapheme::new(' ', style));
     }
-    used
 }
 
 #[cfg(test)]
@@ -345,22 +352,39 @@ mod tests {
     }
 
     #[test]
-    fn horizontal_projection_scrolls_by_column() {
-        let mut state = state("a,b,c\none,two,three\n");
+    fn horizontal_projection_scrolls_by_display_cell() {
+        let mut state = state("abc,def\none,two\n");
+        state.config.separator = "|".to_owned();
 
-        let first = state.create_graphemes_in_viewport(20, 2);
-        assert!(first.graphemes.to_string().contains('a'));
+        let first = state.create_graphemes_in_viewport(2, 2);
+        assert!(first.graphemes.to_string().starts_with("ab"));
 
         state.document.scroll_right();
-        let second = state.create_graphemes_in_viewport(20, 2);
-        assert!(!second.graphemes.to_string().starts_with('a'));
-        assert!(second.graphemes.to_string().starts_with('b'));
+        let second = state.create_graphemes_in_viewport(2, 2);
+        assert!(second.graphemes.to_string().starts_with("bc"));
+        assert_eq!(state.document.horizontal_offset(), 1);
+    }
+
+    #[test]
+    fn horizontal_projection_preserves_cell_suffixes_without_ellipsis() {
+        let mut state = state("value\nabcdefghijklmnopqrstuvwxyz\n");
+        let initial = state.create_graphemes_in_viewport(10, 2);
+        assert!(!initial.graphemes.to_string().contains('…'));
+
+        for _ in 0..16 {
+            assert!(state.document.scroll_right());
+        }
+        let scrolled = state.create_graphemes_in_viewport(10, 2);
+        let lines = scrolled.graphemes.logical_lines();
+        assert_eq!(lines[1].to_string(), "qrstuvwxyz");
+        assert!(!scrolled.graphemes.to_string().contains('…'));
     }
 
     #[test]
     fn projection_replaces_embedded_newlines_and_respects_width() {
         let mut state = state("name,note\nalice,\"line 1\nline 2\"\n");
-        state.document.scroll_right();
+        state.create_graphemes_in_viewport(10, 2);
+        state.document.scroll_to_end();
         let projected = state.create_graphemes_in_viewport(10, 2);
 
         assert_eq!(projected.graphemes.logical_lines().len(), 2);
@@ -376,9 +400,12 @@ mod tests {
 
     #[test]
     fn resolves_header_and_body_hits_in_the_latest_viewport() {
-        let mut state = state("a,b,c\none,two,three\n");
+        let mut state = state("a,b,c\nx,y,z\n");
+        state.config.separator = "|".to_owned();
+        state.create_graphemes_in_viewport(3, 2);
         state.document.scroll_right();
-        state.create_graphemes_in_viewport(20, 2);
+        state.document.scroll_right();
+        state.create_graphemes_in_viewport(3, 2);
 
         assert_eq!(
             state.hit_at_viewport(ContentPosition { row: 0, column: 0 }),

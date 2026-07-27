@@ -13,11 +13,6 @@ pub struct Config {
     pub active_item_attribute: Attribute,
     /// Text inserted between visible columns.
     pub separator: String,
-    /// Maximum display width of one column.
-    ///
-    /// `None` keeps the widest cell width. The final visible column can still
-    /// be clipped to the terminal viewport.
-    pub max_column_width: Option<usize>,
     /// Maximum number of rendered rows, including the header.
     pub lines: Option<usize>,
 }
@@ -30,7 +25,6 @@ impl Default for Config {
             separator_style: ContentStyle::default(),
             active_item_attribute: Attribute::Reverse,
             separator: " │ ".to_owned(),
-            max_column_width: Some(32),
             lines: None,
         }
     }

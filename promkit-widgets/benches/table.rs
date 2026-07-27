@@ -52,7 +52,12 @@ fn benchmark_csv(c: &mut Criterion, path: &Path) {
     group.bench_function("viewport_projection_at_tail/120x40", |b| {
         b.iter(|| black_box(state.create_graphemes_in_viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT)));
     });
+    state.document.scroll_to_end();
+    group.bench_function("viewport_projection_at_bottom_right/120x40", |b| {
+        b.iter(|| black_box(state.create_graphemes_in_viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT)));
+    });
     state.document.head();
+    state.document.scroll_to_start();
 
     let mut forward = true;
     group.bench_function("vertical_cursor_only", |b| {
@@ -81,7 +86,7 @@ fn benchmark_csv(c: &mut Criterion, path: &Path) {
     });
 
     state.document.head();
-    state.document.scroll_to_first_column();
+    state.document.scroll_to_start();
     let mut forward = true;
     group.bench_function("vertical_cursor_and_projection/120x40", |b| {
         b.iter(|| {

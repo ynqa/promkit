@@ -232,6 +232,7 @@ mod tests {
     #[test]
     fn arrow_keys_move_on_both_axes() {
         let mut viewer = viewer();
+        viewer.table.create_graphemes_in_viewport(4, 2);
 
         viewer
             .handle_event(&Event::Key(KeyEvent::new(
@@ -247,12 +248,13 @@ mod tests {
                 KeyModifiers::NONE,
             )))
             .unwrap();
-        assert_eq!(viewer.table.document.first_column(), 1);
+        assert_eq!(viewer.table.document.horizontal_offset(), 1);
     }
 
     #[test]
     fn shifted_mouse_wheel_scrolls_horizontally() {
         let mut viewer = viewer();
+        viewer.table.create_graphemes_in_viewport(4, 2);
         viewer
             .handle_event(&Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -262,7 +264,7 @@ mod tests {
             }))
             .unwrap();
 
-        assert_eq!(viewer.table.document.first_column(), 1);
+        assert_eq!(viewer.table.document.horizontal_offset(), 1);
     }
 
     #[test]

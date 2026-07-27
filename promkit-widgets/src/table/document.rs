@@ -41,7 +41,8 @@ struct CellSpan {
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct Projection {
     pub(crate) first_row: usize,
-    pub(crate) first_column: usize,
+    pub(crate) horizontal_offset: usize,
+    pub(crate) max_horizontal_offset: usize,
     pub(crate) body_height: usize,
     pub(crate) width: usize,
     pub(crate) header_visible: bool,
@@ -57,11 +58,12 @@ pub struct Document {
     arena: String,
     cells: Box<[CellSpan]>,
     column_widths: Box<[usize]>,
+    cell_content_width: usize,
     record_count: usize,
     column_count: usize,
     has_header: bool,
     position: usize,
-    first_column: usize,
+    horizontal_offset: Cell<usize>,
     projection: Cell<Projection>,
 }
 
@@ -102,15 +104,21 @@ impl Document {
         }
 
         let has_header = options.has_headers && record_count > 0;
+        let cell_content_width = column_widths
+            .iter()
+            .copied()
+            .map(|width| width.max(1))
+            .fold(0usize, usize::saturating_add);
         Ok(Self {
             arena,
             cells: cells.into_boxed_slice(),
             column_widths: column_widths.into_boxed_slice(),
+            cell_content_width,
             record_count,
             column_count,
             has_header,
             position: 0,
-            first_column: 0,
+            horizontal_offset: Cell::new(0),
             projection: Cell::default(),
         })
     }
@@ -135,9 +143,9 @@ impl Document {
         self.position
     }
 
-    /// Returns the first horizontally visible column.
-    pub fn first_column(&self) -> usize {
-        self.first_column
+    /// Returns the horizontal viewport offset in terminal display cells.
+    pub fn horizontal_offset(&self) -> usize {
+        self.horizontal_offset.get()
     }
 
     /// Returns a header cell.
@@ -154,7 +162,19 @@ impl Document {
     }
 
     pub(crate) fn column_width(&self, column: usize) -> Option<usize> {
-        self.column_widths.get(column).copied()
+        self.column_widths
+            .get(column)
+            .copied()
+            .map(|width| width.max(1))
+    }
+
+    pub(crate) fn content_width(&self, separator_width: usize) -> usize {
+        self.cell_content_width
+            .saturating_add(separator_width.saturating_mul(self.column_count.saturating_sub(1)))
+    }
+
+    pub(crate) fn set_horizontal_offset(&self, horizontal_offset: usize) {
+        self.horizontal_offset.set(horizontal_offset);
     }
 
     pub(crate) fn projected_rows(&self, body_height: usize) -> Range<usize> {
@@ -212,34 +232,38 @@ impl Document {
         self.position != previous
     }
 
-    /// Scrolls the table one column left.
+    /// Scrolls the table one terminal display cell left.
     pub fn scroll_left(&mut self) -> bool {
-        let previous = self.first_column;
-        self.first_column = self.first_column.saturating_sub(1);
-        self.first_column != previous
+        let previous = self.horizontal_offset.get();
+        self.horizontal_offset.set(previous.saturating_sub(1));
+        self.horizontal_offset.get() != previous
     }
 
-    /// Scrolls the table one column right.
+    /// Scrolls the table one terminal display cell right.
+    ///
+    /// The right boundary is established by the latest viewport projection.
     pub fn scroll_right(&mut self) -> bool {
-        let previous = self.first_column;
-        if self.first_column + 1 < self.column_count {
-            self.first_column += 1;
+        let previous = self.horizontal_offset.get();
+        let maximum = self.projection.get().max_horizontal_offset;
+        if previous < maximum {
+            self.horizontal_offset.set(previous + 1);
         }
-        self.first_column != previous
+        self.horizontal_offset.get() != previous
     }
 
-    /// Scrolls horizontally to the first column.
-    pub fn scroll_to_first_column(&mut self) -> bool {
-        let previous = self.first_column;
-        self.first_column = 0;
-        self.first_column != previous
+    /// Scrolls horizontally to the beginning of the table.
+    pub fn scroll_to_start(&mut self) -> bool {
+        let previous = self.horizontal_offset.get();
+        self.horizontal_offset.set(0);
+        previous != 0
     }
 
-    /// Scrolls horizontally to the last column.
-    pub fn scroll_to_last_column(&mut self) -> bool {
-        let previous = self.first_column;
-        self.first_column = self.column_count.saturating_sub(1);
-        self.first_column != previous
+    /// Scrolls horizontally to the end of the latest viewport projection.
+    pub fn scroll_to_end(&mut self) -> bool {
+        let previous = self.horizontal_offset.get();
+        self.horizontal_offset
+            .set(self.projection.get().max_horizontal_offset);
+        self.horizontal_offset.get() != previous
     }
 
     fn record_cell(&self, record: usize, column: usize) -> Option<&str> {
