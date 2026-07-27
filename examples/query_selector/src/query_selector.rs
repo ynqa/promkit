@@ -2,8 +2,8 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
-                MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -69,12 +69,13 @@ impl QuerySelector {
             list: listbox::State {
                 listbox: Listbox::from(items.iter()),
                 config: listbox::Config {
+                    cursor: "❯ ".into(),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkCyan),
                         ..Default::default()
                     }),
+                    inactive_item_style: Some(ContentStyle::default()),
                     lines: Some(5),
-                    ..Default::default()
                 },
             },
             items,
@@ -88,13 +89,13 @@ impl QuerySelector {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
@@ -114,7 +115,7 @@ impl QuerySelector {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => {
                 self.list.listbox.backward();
             }
@@ -122,11 +123,13 @@ impl QuerySelector {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => {
                 self.list.listbox.forward();
             }
-            Event::Key(key) if key.kind == KeyEventKind::Press => {
+            Event::Key(key)
+                if key.kind == KeyEventKind::Press && key.state == KeyEventState::NONE =>
+            {
                 Self::edit(&mut self.query, key);
             }
             _ => {}
@@ -192,7 +195,7 @@ impl QuerySelector {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update([
                 (Index::Title, self.title.create_graphemes()),
@@ -222,9 +225,9 @@ impl Prompt for QuerySelector {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = String;

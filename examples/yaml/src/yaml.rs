@@ -9,11 +9,11 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton,
-                MouseEvent, MouseEventKind,
+                self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+                MouseButton, MouseEvent, MouseEventKind,
             },
             execute,
-            style::{Attribute, Attributes, ContentStyle},
+            style::{Attribute, Attributes, Color, ContentStyle},
             terminal,
         },
         render::{Renderer, SharedRenderer},
@@ -93,9 +93,38 @@ impl YamlViewer {
             yaml: yaml::State {
                 document,
                 config: yaml::Config {
-                    show_line_numbers: true,
+                    map_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    },
+                    sequence_style: ContentStyle {
+                        attributes: Attributes::from(Attribute::Bold),
+                        ..Default::default()
+                    },
+                    key_style: ContentStyle {
+                        foreground_color: Some(Color::DarkBlue),
+                        ..Default::default()
+                    },
+                    tag_style: ContentStyle {
+                        foreground_color: Some(Color::DarkYellow),
+                        ..Default::default()
+                    },
+                    string_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGreen),
+                        ..Default::default()
+                    },
+                    number_style: ContentStyle::default(),
+                    boolean_style: ContentStyle::default(),
+                    null_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        ..Default::default()
+                    },
+                    active_item_attribute: Attribute::Undercurled,
+                    inactive_item_attribute: Attribute::Dim,
+                    indent: 2,
                     overflow_mode: OverflowMode::Wrap,
-                    ..Default::default()
+                    lines: None,
+                    show_line_numbers: true,
                 },
             },
         }
@@ -107,19 +136,19 @@ impl YamlViewer {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollUp,
@@ -132,7 +161,7 @@ impl YamlViewer {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -145,7 +174,7 @@ impl YamlViewer {
                 code: KeyCode::Char(' '),
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => self.yaml.document.toggle(),
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
@@ -189,7 +218,7 @@ impl YamlViewer {
         let renderer = self
             .renderer
             .clone()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer.update(self.graphemes()?).render().await
     }
 }
@@ -204,9 +233,9 @@ impl Prompt for YamlViewer {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = ();

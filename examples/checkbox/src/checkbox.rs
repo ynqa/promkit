@@ -2,12 +2,11 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
-                MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
-            style::{Attribute, Attributes, ContentStyle},
+            style::{Attribute, Attributes, Color, ContentStyle},
         },
-        grapheme::StyledGraphemes,
         render::{Renderer, SharedRenderer},
         ScreenPosition, Widget,
     },
@@ -47,8 +46,15 @@ impl CheckboxPrompt {
             checkbox: checkbox::State {
                 checkbox: Checkbox::from_displayable(items),
                 config: checkbox::Config {
+                    cursor: "❯ ".into(),
+                    active_mark: '☒',
+                    inactive_mark: '☐',
+                    active_item_style: ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_item_style: ContentStyle::default(),
                     lines: Some(5),
-                    ..Default::default()
                 },
             },
         }
@@ -60,25 +66,25 @@ impl CheckboxPrompt {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Key(KeyEvent {
                 code: KeyCode::Char(' '),
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => self.checkbox.checkbox.toggle(),
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollUp,
@@ -91,7 +97,7 @@ impl CheckboxPrompt {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -131,7 +137,7 @@ impl CheckboxPrompt {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update([
                 (Index::Title, self.title.create_graphemes()),
@@ -159,15 +165,21 @@ impl Prompt for CheckboxPrompt {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
-    type Return = Vec<StyledGraphemes>;
+    type Return = Vec<String>;
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
-        Ok(self.checkbox.checkbox.get())
+        Ok(self
+            .checkbox
+            .checkbox
+            .get()
+            .iter()
+            .map(ToString::to_string)
+            .collect())
     }
 }
 

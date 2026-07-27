@@ -1,12 +1,13 @@
 use promkit::{
     core::{
         crossterm::event::{
-            Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind,
+            Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+            MouseEvent, MouseEventKind,
         },
         render::{Renderer, SharedRenderer},
-        Widget,
+        ScreenPosition, Widget,
     },
-    widgets::text::{self, Text},
+    widgets::text::{self, Text, TextHit},
     Prompt, Signal,
 };
 
@@ -37,19 +38,19 @@ impl TextPrompt {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollUp,
@@ -62,7 +63,7 @@ impl TextPrompt {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -70,6 +71,30 @@ impl TextPrompt {
                 ..
             }) => {
                 self.text.text.forward();
+            }
+            Event::Mouse(MouseEvent {
+                kind: MouseEventKind::Down(MouseButton::Left),
+                column,
+                row,
+                modifiers: KeyModifiers::NONE,
+            }) => {
+                let renderer = self.renderer.clone();
+                if let Some(position) = renderer
+                    .as_ref()
+                    .and_then(|renderer| {
+                        renderer.hit_test(ScreenPosition {
+                            row: *row,
+                            column: *column,
+                        })
+                    })
+                    .filter(|position| position.index == Index::Text)
+                {
+                    if let Some(TextHit::Select { index }) =
+                        self.text.hit_at(position.content_position())
+                    {
+                        self.text.text.move_to(index);
+                    }
+                }
             }
             _ => {}
         }
@@ -80,7 +105,7 @@ impl TextPrompt {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update([(Index::Text, self.text.create_graphemes())])
             .render()
@@ -99,9 +124,9 @@ impl Prompt for TextPrompt {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = ();

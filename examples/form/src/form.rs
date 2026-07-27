@@ -2,8 +2,8 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
-                MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -54,13 +54,13 @@ impl Form {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
@@ -83,17 +83,19 @@ impl Form {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => self.active = Some(active.saturating_sub(1)),
             Event::Key(KeyEvent {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => {
                 self.active = Some((active + 1).min(self.fields.len().saturating_sub(1)));
             }
-            Event::Key(key) if key.kind == KeyEventKind::Press => {
+            Event::Key(key)
+                if key.kind == KeyEventKind::Press && key.state == KeyEventState::NONE =>
+            {
                 Self::edit(&mut self.fields[active], key);
             }
             _ => {}
@@ -111,8 +113,26 @@ impl Form {
             }
             (KeyCode::Char('a'), KeyModifiers::CONTROL) => field.texteditor.move_to_head(),
             (KeyCode::Char('e'), KeyModifiers::CONTROL) => field.texteditor.move_to_tail(),
+            (KeyCode::Char('b'), KeyModifiers::ALT) => {
+                let word_break_chars = field.config.word_break_chars.clone();
+                field.texteditor.move_to_previous_nearest(&word_break_chars);
+            }
+            (KeyCode::Char('f'), KeyModifiers::ALT) => {
+                let word_break_chars = field.config.word_break_chars.clone();
+                field.texteditor.move_to_next_nearest(&word_break_chars);
+            }
             (KeyCode::Backspace, KeyModifiers::NONE) => field.texteditor.erase(),
             (KeyCode::Char('u'), KeyModifiers::CONTROL) => field.texteditor.erase_all(),
+            (KeyCode::Char('w'), KeyModifiers::CONTROL) => {
+                let word_break_chars = field.config.word_break_chars.clone();
+                field
+                    .texteditor
+                    .erase_to_previous_nearest(&word_break_chars);
+            }
+            (KeyCode::Char('d'), KeyModifiers::ALT) => {
+                let word_break_chars = field.config.word_break_chars.clone();
+                field.texteditor.erase_to_next_nearest(&word_break_chars);
+            }
             (KeyCode::Char(ch), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
                 match field.config.edit_mode {
                     text_editor::Mode::Insert => field.texteditor.insert(ch),
@@ -171,7 +191,7 @@ impl Form {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update(
                 self.fields
@@ -202,9 +222,9 @@ impl Prompt for Form {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = Vec<String>;

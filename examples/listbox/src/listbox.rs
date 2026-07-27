@@ -2,8 +2,8 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
-                MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
             style::{Attribute, Attributes, Color, ContentStyle},
         },
@@ -46,11 +46,13 @@ impl ListboxPrompt {
             list: listbox::State {
                 listbox: Listbox::from(items),
                 config: listbox::Config {
+                    cursor: "❯ ".into(),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkCyan),
                         ..Default::default()
                     }),
-                    ..Default::default()
+                    inactive_item_style: Some(ContentStyle::default()),
+                    lines: None,
                 },
             },
         }
@@ -62,19 +64,19 @@ impl ListboxPrompt {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollUp,
@@ -87,7 +89,7 @@ impl ListboxPrompt {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -125,7 +127,7 @@ impl ListboxPrompt {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update([
                 (Index::Title, self.title.create_graphemes()),
@@ -153,9 +155,9 @@ impl Prompt for ListboxPrompt {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = String;

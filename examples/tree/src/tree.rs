@@ -4,10 +4,10 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
-                MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
-            style::{Attribute, Attributes, ContentStyle},
+            style::{Attribute, Attributes, Color, ContentStyle},
         },
         render::{Renderer, SharedRenderer},
         ScreenPosition, Widget,
@@ -48,9 +48,16 @@ impl TreePrompt {
             tree: tree::State {
                 document,
                 config: tree::Config {
+                    folded_symbol: "▶︎ ".into(),
+                    unfolded_symbol: "▼ ".into(),
+                    active_item_style: ContentStyle {
+                        foreground_color: Some(Color::DarkCyan),
+                        ..Default::default()
+                    },
+                    inactive_item_style: ContentStyle::default(),
+                    indent: 2,
                     lines: Some(10),
                     show_line_numbers: true,
-                    ..Default::default()
                 },
             },
         }
@@ -62,19 +69,19 @@ impl TreePrompt {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Ok(Signal::Quit),
             Event::Key(KeyEvent {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => return Err(anyhow::anyhow!("ctrl+c")),
             Event::Key(KeyEvent {
                 code: KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollUp,
@@ -87,7 +94,7 @@ impl TreePrompt {
                 code: KeyCode::Down,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             })
             | Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollDown,
@@ -100,7 +107,7 @@ impl TreePrompt {
                 code: KeyCode::Char(' '),
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
-                ..
+                state: KeyEventState::NONE,
             }) => self.tree.document.toggle(),
             Event::Mouse(MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
@@ -131,7 +138,7 @@ impl TreePrompt {
         let renderer = self
             .renderer
             .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("renderer not initialized"))?;
+            .ok_or_else(|| anyhow::anyhow!("Renderer not initialized"))?;
         renderer
             .update([
                 (Index::Title, self.title.create_graphemes()),
@@ -159,9 +166,9 @@ impl Prompt for TreePrompt {
     }
 
     async fn evaluate(&mut self, event: &Event) -> anyhow::Result<Signal> {
-        let signal = self.handle_event(event)?;
+        let signal = self.handle_event(event);
         self.render().await?;
-        Ok(signal)
+        signal
     }
 
     type Return = Vec<String>;
