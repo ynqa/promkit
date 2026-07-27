@@ -6,10 +6,6 @@ pub mod checkbox;
 #[cfg_attr(docsrs, doc(cfg(feature = "readline")))]
 pub mod readline;
 
-#[cfg(feature = "text-editor")]
-#[cfg_attr(docsrs, doc(cfg(feature = "text-editor")))]
-pub mod text_editor;
-
 #[cfg(feature = "confirm")]
 #[cfg_attr(docsrs, doc(cfg(feature = "confirm")))]
 pub mod confirm;

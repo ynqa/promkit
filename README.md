@@ -28,7 +28,6 @@ promkit = "0.14.0"
     - A Derive macro that simplifies interactive form input
 - Rich preset components
   - [Readline](#readline) - Text input with auto-completion
-  - [TextEditor](#texteditor) - Multiline text editing
   - [Confirm](#confirm) - Yes/no confirmation prompt
   - [Password](#password) - Password input with masking and validation
   - [Form](#form) - Manage multiple text input fields
@@ -53,8 +52,8 @@ See [here](./Concept.md).
 
 ## Examples/Demos
 
-*promkit* provides presets so that users can try prompts immediately without
-having to build complex components for specific use cases.
+*promkit* provides presets and reusable widgets for building interactive
+terminal applications.
 
 Show you commands, code, and actual demo screens for examples
 that can be executed immediately below.
@@ -74,18 +73,18 @@ cargo run --bin readline
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/readline.gif" width="50%" height="auto">
 
-### TextEditor
+### Multiline REPL
 
 <details>
 <summary>Command</summary>
 
 ```bash
-cargo run --bin text_editor
+cargo run --bin repl
 ```
 
 </details>
 
-[Code](./examples/text_editor/src/text_editor.rs)
+[Code](./examples/repl/src/repl.rs)
 
 ### Confirm
 
