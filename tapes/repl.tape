@@ -11,7 +11,7 @@ Set Height 600
 Type@50ms "cargo run -q --bin repl" Enter Sleep 2s
 Type "{" Enter Sleep 1s
 Type "languages: [" Enter Sleep 1s
-Type "Lua, Rust" Enter Sleep 1s
+Type "Rust" Enter Sleep 1s
 Backspace 4 Type "]" Enter Sleep 1s
 Backspace 4 Type "}" Enter Sleep 1s
 Enter Sleep 2s

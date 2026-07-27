@@ -310,7 +310,7 @@ async fn main() -> anyhow::Result<()> {
         io::stdout(),
         cursor::Hide,
         event::EnableMouseCapture,
-        Print("Bracket REPL (blank line: submit block, \"exit\": quit)\r\n"),
+        Print("Bracket REPL (blank: submit, \"exit\": quit)\r\n"),
     )?;
     let _terminal_guard = TerminalGuard;
     let mut events = EventStream::new();
