@@ -60,6 +60,8 @@ When implementing a change:
 2. Make the smallest coherent edit set.
 3. Update tests/examples/docs that demonstrate behavior.
 4. Run validation commands locally when possible.
+5. For non-trivial implementation work, run the relevant `cargo bench` target
+   before and after the change and check for performance regressions.
 
 Recommended commands:
 
@@ -70,6 +72,25 @@ cargo test -- --nocapture --format pretty
 ```
 
 For broader changes, also build example crates.
+
+### Performance Validation
+
+- Benchmark new widgets, data structures, rendering paths, algorithms, and other
+  substantial implementations.
+- Compare against a pre-change result, using Criterion named baselines when the
+  relevant benchmark supports them.
+- Investigate and report meaningful regressions instead of relying only on a
+  successful benchmark run.
+- Documentation-only edits, formatting, and small changes outside
+  performance-sensitive paths may omit benchmarks. Small changes to hot paths
+  still require benchmark comparison.
+
+Select the benchmark and feature flags documented by the relevant crate. A
+typical invocation is:
+
+```bash
+cargo bench -p <crate> --bench <target> --features <features>
+```
 
 ## What Not to Put Here
 
