@@ -1,5 +1,40 @@
 # Concept
 
+## Direction Since v0.14.0
+
+Starting with v0.14.0, promkit is developed around two primary goals:
+
+1. Expand `promkit-widgets` with reusable state and view projections that
+   applications can combine without adopting a framework-owned event policy.
+2. Improve `promkit-core` rendering performance and correctness so wrapping,
+   resizing, scrolling, viewport movement, and repeated redraws remain stable
+   without leaving stale or visually corrupted terminal content.
+
+This direction emerged from a feedback loop between the library and applications
+built with it, including [jnv](https://github.com/ynqa/jnv) and
+[sig](https://github.com/ynqa/sig). Those applications showed that a useful
+terminal UI eventually needs an application-specific runtime and event loop.
+Modes, key bindings, focus, background work, cancellation, validation, and
+domain state transitions cannot be generalized into prompt presets without
+constraining the application or adding increasingly application-specific
+configuration.
+
+The resulting development loop is:
+
+1. Application development exposes rendering, state, and interaction needs.
+2. Reusable state-to-view behavior is extracted into `promkit-widgets`.
+3. Rendering correctness and performance improvements are made in
+   `promkit-core` and verified against regression scenarios and benchmarks.
+4. Application-specific orchestration remains in the application, while
+   examples document useful compositions.
+
+For this reason, the `promkit` crate no longer owns preset implementations.
+It provides an optional `Prompt` lifecycle runtime, capabilities, and a widget
+facade for applications that find them useful, but it is not intended to replace
+an application's event loop. Removing presets is therefore not only a code
+reorganization; it establishes application-owned orchestration as the project
+direction from v0.14.0 onward.
+
 ## Responsibility Boundaries and Data Flow
 
 promkit is organized around four responsibilities with clear boundaries:
