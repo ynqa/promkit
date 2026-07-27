@@ -73,19 +73,6 @@ cargo run --bin readline
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/readline.gif" width="50%" height="auto">
 
-### Multiline REPL
-
-<details>
-<summary>Command</summary>
-
-```bash
-cargo run --bin repl
-```
-
-</details>
-
-[Code](./examples/repl/src/repl.rs)
-
 ### Confirm
 
 <details>
@@ -229,6 +216,37 @@ cargo run --bin text
 [Code](./examples/text/src/text.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/text.gif" width="50%" height="auto">
+
+## Advanced Examples
+
+These examples demonstrate how to compose widgets and rendering primitives for
+application-specific event loops and asynchronous workflows.
+
+### BYOP
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin byop
+```
+
+</details>
+
+[Code](./examples/byop/src/byop.rs)
+
+### Multiline REPL
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin repl
+```
+
+</details>
+
+[Code](./examples/repl/src/repl.rs)
 
 ## License
 
