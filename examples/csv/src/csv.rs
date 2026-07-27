@@ -108,7 +108,7 @@ impl CsvViewer {
             }) => {
                 self.table
                     .document
-                    .scroll_left_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
+                    .scroll_right_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
@@ -132,7 +132,7 @@ impl CsvViewer {
             }) => {
                 self.table
                     .document
-                    .scroll_right_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
+                    .scroll_left_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
             }
             _ => {}
         }
@@ -270,15 +270,15 @@ mod tests {
     }
 
     #[test]
-    fn shifted_mouse_wheel_scrolls_horizontally() {
+    fn macos_horizontal_scroll_left_reveals_content_on_the_right() {
         let mut viewer = viewer();
         viewer.table.create_graphemes_in_viewport(4, 2);
         viewer
             .handle_event(&Event::Mouse(MouseEvent {
-                kind: MouseEventKind::ScrollDown,
+                kind: MouseEventKind::ScrollLeft,
                 column: 0,
                 row: 0,
-                modifiers: KeyModifiers::SHIFT,
+                modifiers: KeyModifiers::NONE,
             }))
             .unwrap();
 
@@ -286,6 +286,16 @@ mod tests {
             viewer.table.document.horizontal_offset(),
             MOUSE_HORIZONTAL_SCROLL_CELLS
         );
+
+        viewer
+            .handle_event(&Event::Mouse(MouseEvent {
+                kind: MouseEventKind::ScrollRight,
+                column: 0,
+                row: 0,
+                modifiers: KeyModifiers::NONE,
+            }))
+            .unwrap();
+        assert_eq!(viewer.table.document.horizontal_offset(), 0);
     }
 
     #[test]
