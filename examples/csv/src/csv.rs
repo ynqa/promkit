@@ -30,6 +30,9 @@ enum Index {
     Table,
 }
 
+const KEY_HORIZONTAL_SCROLL_CELLS: usize = 1;
+const MOUSE_HORIZONTAL_SCROLL_CELLS: usize = 3;
+
 struct CsvViewer {
     renderer: Option<SharedRenderer<Index>>,
     table: State,
@@ -88,8 +91,12 @@ impl CsvViewer {
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            })
-            | Event::Mouse(MouseEvent {
+            }) => {
+                self.table
+                    .document
+                    .scroll_left_by(KEY_HORIZONTAL_SCROLL_CELLS);
+            }
+            Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollLeft,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -99,15 +106,21 @@ impl CsvViewer {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             }) => {
-                self.table.document.scroll_left();
+                self.table
+                    .document
+                    .scroll_left_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
             }
             Event::Key(KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
                 kind: KeyEventKind::Press,
                 state: KeyEventState::NONE,
-            })
-            | Event::Mouse(MouseEvent {
+            }) => {
+                self.table
+                    .document
+                    .scroll_right_by(KEY_HORIZONTAL_SCROLL_CELLS);
+            }
+            Event::Mouse(MouseEvent {
                 kind: MouseEventKind::ScrollRight,
                 modifiers: KeyModifiers::NONE,
                 ..
@@ -117,7 +130,9 @@ impl CsvViewer {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             }) => {
-                self.table.document.scroll_right();
+                self.table
+                    .document
+                    .scroll_right_by(MOUSE_HORIZONTAL_SCROLL_CELLS);
             }
             _ => {}
         }
@@ -248,7 +263,10 @@ mod tests {
                 KeyModifiers::NONE,
             )))
             .unwrap();
-        assert_eq!(viewer.table.document.horizontal_offset(), 1);
+        assert_eq!(
+            viewer.table.document.horizontal_offset(),
+            KEY_HORIZONTAL_SCROLL_CELLS
+        );
     }
 
     #[test]
@@ -264,7 +282,10 @@ mod tests {
             }))
             .unwrap();
 
-        assert_eq!(viewer.table.document.horizontal_offset(), 1);
+        assert_eq!(
+            viewer.table.document.horizontal_offset(),
+            MOUSE_HORIZONTAL_SCROLL_CELLS
+        );
     }
 
     #[test]

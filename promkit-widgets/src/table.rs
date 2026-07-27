@@ -359,7 +359,7 @@ mod tests {
         let first = state.create_graphemes_in_viewport(2, 2);
         assert!(first.graphemes.to_string().starts_with("ab"));
 
-        state.document.scroll_right();
+        state.document.scroll_right_by(1);
         let second = state.create_graphemes_in_viewport(2, 2);
         assert!(second.graphemes.to_string().starts_with("bc"));
         assert_eq!(state.document.horizontal_offset(), 1);
@@ -371,9 +371,7 @@ mod tests {
         let initial = state.create_graphemes_in_viewport(10, 2);
         assert!(!initial.graphemes.to_string().contains('…'));
 
-        for _ in 0..16 {
-            assert!(state.document.scroll_right());
-        }
+        assert!(state.document.scroll_right_by(16));
         let scrolled = state.create_graphemes_in_viewport(10, 2);
         let lines = scrolled.graphemes.logical_lines();
         assert_eq!(lines[1].to_string(), "qrstuvwxyz");
@@ -403,8 +401,7 @@ mod tests {
         let mut state = state("a,b,c\nx,y,z\n");
         state.config.separator = "|".to_owned();
         state.create_graphemes_in_viewport(3, 2);
-        state.document.scroll_right();
-        state.document.scroll_right();
+        state.document.scroll_right_by(2);
         state.create_graphemes_in_viewport(3, 2);
 
         assert_eq!(

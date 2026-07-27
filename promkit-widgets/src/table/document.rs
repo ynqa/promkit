@@ -232,22 +232,21 @@ impl Document {
         self.position != previous
     }
 
-    /// Scrolls the table one terminal display cell left.
-    pub fn scroll_left(&mut self) -> bool {
+    /// Scrolls the table left by `cells` terminal display cells.
+    pub fn scroll_left_by(&mut self, cells: usize) -> bool {
         let previous = self.horizontal_offset.get();
-        self.horizontal_offset.set(previous.saturating_sub(1));
+        self.horizontal_offset.set(previous.saturating_sub(cells));
         self.horizontal_offset.get() != previous
     }
 
-    /// Scrolls the table one terminal display cell right.
+    /// Scrolls the table right by `cells` terminal display cells.
     ///
     /// The right boundary is established by the latest viewport projection.
-    pub fn scroll_right(&mut self) -> bool {
+    pub fn scroll_right_by(&mut self, cells: usize) -> bool {
         let previous = self.horizontal_offset.get();
         let maximum = self.projection.get().max_horizontal_offset;
-        if previous < maximum {
-            self.horizontal_offset.set(previous + 1);
-        }
+        self.horizontal_offset
+            .set(previous.saturating_add(cells).min(maximum));
         self.horizontal_offset.get() != previous
     }
 

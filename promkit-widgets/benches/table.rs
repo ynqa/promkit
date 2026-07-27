@@ -76,9 +76,9 @@ fn benchmark_csv(c: &mut Criterion, path: &Path) {
     group.bench_function("horizontal_scroll_only", |b| {
         b.iter(|| {
             let moved = if forward {
-                state.document.scroll_right()
+                state.document.scroll_right_by(1)
             } else {
-                state.document.scroll_left()
+                state.document.scroll_left_by(1)
             };
             forward = !forward;
             black_box(moved)
@@ -104,9 +104,9 @@ fn benchmark_csv(c: &mut Criterion, path: &Path) {
     group.bench_function("horizontal_scroll_and_projection/120x40", |b| {
         b.iter(|| {
             if forward {
-                state.document.scroll_right();
+                state.document.scroll_right_by(1);
             } else {
-                state.document.scroll_left();
+                state.document.scroll_left_by(1);
             }
             forward = !forward;
             black_box(state.create_graphemes_in_viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))
