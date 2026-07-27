@@ -25,6 +25,7 @@ all = [
     "query-selector",
     "readline",
     "spinner",
+    "table",
     "text",
     "tree",
 ]
@@ -46,6 +47,7 @@ readline = [
     "promkit-widgets/texteditor",
 ]
 spinner = ["promkit-widgets/spinner"]
+table = ["promkit-widgets/table"]
 text = ["promkit-widgets/text"]
 tree = ["promkit-widgets/text", "promkit-widgets/tree"]
 

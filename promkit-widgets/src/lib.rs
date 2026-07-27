@@ -27,6 +27,10 @@ pub use structured::yaml;
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
 pub mod listbox;
 
+#[cfg(feature = "table")]
+#[cfg_attr(docsrs, doc(cfg(feature = "table")))]
+pub mod table;
+
 #[cfg(feature = "text")]
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]
 pub mod text;
