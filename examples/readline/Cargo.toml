@@ -8,9 +8,8 @@ publish = false
 anyhow = { workspace = true }
 promkit = { path = "../../promkit", features = [
     "runtime",
-    "suggest",
     "validate",
-    "listbox",
+    "prefixsearch",
     "text",
     "texteditor",
 ] }

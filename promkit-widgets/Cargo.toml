@@ -10,11 +10,12 @@ readme = "README.md"
 
 [features]
 default = []
-all = ["checkbox", "json", "yaml", "listbox", "serde", "spinner", "status", "table", "text", "texteditor", "tree"]
+all = ["checkbox", "json", "yaml", "listbox", "prefixsearch", "serde", "spinner", "status", "table", "text", "texteditor", "tree"]
 checkbox = ["listbox"]
 json = ["dep:serde_json", "dep:rayon"]
 yaml = ["dep:serde_yaml", "dep:rayon"]
 listbox = []
+prefixsearch = ["dep:radix_trie"]
 serde = ["dep:serde", "dep:termcfg"]
 spinner = ["dep:tokio"]
 status = ["text"]
@@ -29,6 +30,7 @@ promkit-core = { path = "../promkit-core", version = "=0.5.0" }
 
 # Optional dependencies
 csv = { workspace = true, optional = true }
+radix_trie = { workspace = true, optional = true }
 rayon = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

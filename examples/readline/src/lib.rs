@@ -11,10 +11,9 @@ use promkit::{
         render::{Renderer, SharedRenderer},
         Widget,
     },
-    suggest::Suggest,
     validate::ValidatorManager,
     widgets::{
-        listbox::{self, Listbox},
+        prefix_search::{self, PrefixSearch},
         text, text_editor,
     },
     Prompt, Signal,
@@ -47,8 +46,7 @@ pub struct Readline {
     pub focus: Focus,
     pub title: text::State,
     pub readline: text_editor::State,
-    pub suggest: Option<Suggest>,
-    pub suggestions: listbox::State,
+    pub suggestions: prefix_search::State,
     pub validator: Option<ValidatorManager<str>>,
     pub error_message: text::State,
 }
@@ -90,10 +88,9 @@ impl Default for Readline {
                     lines: Default::default(),
                 },
             },
-            suggest: Default::default(),
-            suggestions: listbox::State {
-                listbox: Listbox::from(Vec::<String>::new()),
-                config: listbox::Config {
+            suggestions: prefix_search::State {
+                prefix_search: PrefixSearch::default(),
+                config: prefix_search::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkGrey),

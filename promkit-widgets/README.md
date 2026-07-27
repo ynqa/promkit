@@ -18,6 +18,7 @@ No widget is enabled by default.
 | `json` | Navigable JSON document |
 | `yaml` | Navigable YAML document |
 | `listbox` | List selection |
+| `prefixsearch` | Prefix-matched candidate selection backed by a radix trie |
 | `spinner` | Asynchronous spinner; enables Tokio |
 | `status` | Status display; enables `text` |
 | `text` | Styled text |

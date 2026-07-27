@@ -10,7 +10,7 @@ use promkit::{
         ScreenPosition,
     },
     widgets::{
-        listbox::{Listbox, ListboxHit},
+        prefix_search::PrefixSearchHit,
         text::Text,
         text_editor::{self, TextEditorHit},
     },
@@ -62,7 +62,7 @@ fn click(column: u16, row: u16, ctx: &mut Readline) {
             }
         }
         Index::Suggestion => {
-            if let Some(ListboxHit::Select { index }) =
+            if let Some(PrefixSearchHit::Select { index }) =
                 ctx.suggestions.hit_at(position.content_position())
             {
                 select_suggestion(index, ctx);
@@ -73,24 +73,23 @@ fn click(column: u16, row: u16, ctx: &mut Readline) {
 }
 
 fn select_suggestion(index: usize, ctx: &mut Readline) {
-    if ctx.suggestions.listbox.move_to(index) {
+    if ctx.suggestions.prefix_search.move_to(index) {
         ctx.focus = Focus::Suggestion;
     }
 }
 
 fn apply_suggestion(ctx: &mut Readline) {
-    if ctx.suggestions.listbox.selected().is_none() {
+    let Some(suggestion) = ctx.suggestions.prefix_search.get() else {
         dismiss_suggestions(ctx);
         return;
-    }
+    };
 
-    let suggestion = ctx.suggestions.listbox.get().to_string();
-    ctx.readline.texteditor.replace(&suggestion);
+    ctx.readline.texteditor.replace(suggestion);
     dismiss_suggestions(ctx);
 }
 
 fn dismiss_suggestions(ctx: &mut Readline) {
-    ctx.suggestions.listbox = Listbox::default();
+    ctx.suggestions.prefix_search.clear();
     ctx.focus = Focus::Readline;
 }
 
@@ -131,16 +130,11 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            if let Some(suggest) = &ctx.suggest {
-                let text = ctx.readline.texteditor.text_without_cursor().to_string();
-                if let Some(candidates) = suggest.prefix_search(text) {
-                    ctx.suggestions.listbox = Listbox::from(candidates);
-                    if ctx.suggestions.listbox.is_empty() {
-                        dismiss_suggestions(ctx);
-                    } else {
-                        ctx.focus = Focus::Suggestion;
-                    }
-                }
+            let text = ctx.readline.texteditor.text_without_cursor().to_string();
+            if ctx.suggestions.prefix_search.search(text) {
+                ctx.focus = Focus::Suggestion;
+            } else {
+                dismiss_suggestions(ctx);
             }
         }
         Event::Key(KeyEvent {
@@ -285,7 +279,7 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.suggestions.listbox.forward();
+            ctx.suggestions.prefix_search.forward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Up,
@@ -293,7 +287,7 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.suggestions.listbox.backward();
+            ctx.suggestions.prefix_search.backward();
         }
         _ => {
             let before = ctx.readline.texteditor.text_without_cursor();

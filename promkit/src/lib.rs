@@ -10,8 +10,6 @@ pub use promkit_core as core;
 #[cfg(feature = "widgets")]
 pub use promkit_widgets as widgets;
 
-#[cfg(feature = "suggest")]
-pub mod suggest;
 #[cfg(feature = "validate")]
 pub mod validate;
 

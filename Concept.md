@@ -103,9 +103,8 @@ features. The runtime is independent from the widget set:
 ```toml
 promkit = { version = "0.14.0", features = [
   "runtime",
-  "suggest",
   "validate",
-  "listbox",
+  "prefixsearch",
   "text",
   "texteditor",
 ] }
@@ -119,7 +118,7 @@ The application then combines its own state, event policy, and renderer:
 
 The examples are the reference implementations for these compositions.
 [`examples/readline`](./examples/readline/) combines text, text-editor, and
-listbox widgets with suggestion and validation capabilities.
+prefix-search widgets with validation.
 [`examples/async_task`](./examples/async_task/) demonstrates background updates
 that push grapheme changes directly to a shared renderer.
 
