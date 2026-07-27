@@ -17,13 +17,13 @@ promkit is organized around three responsibilities with clear boundaries:
    - `Widget::create_graphemes()` returns `CreatedGraphemes`: width-independent
      styled content, layout hints, and an optional logical cursor position.
    - Large widgets can override `create_graphemes_in_viewport(width, height)` to
-     project only content that can be displayed. Presets that use this path
+     project only content that can be displayed. Prompts that use this path
      obtain the current terminal size before updating the renderer.
    - Widget states focus on state and projection only.
 
 > [!IMPORTANT]
 > Widgets intentionally do not own event-loop policies.
-> Event handling stays in presets or custom `Prompt` implementations,
+> Event handling stays in application `Prompt` implementations,
 > which avoids key-binding conflicts when multiple widgets are combined.
 
 3. **Rendering (`promkit-core`)**
@@ -84,7 +84,7 @@ flowchart LR
         Continue -->|Continue| Observe
     end
 
-    subgraph Preset["promkit presets / custom prompt"]
+    subgraph Application["application prompt / examples"]
         Eval --> UpdateState[Update widget states]
         UpdateState --> Build[Widget::create_graphemes]
         Build --> Push[Renderer::update]
@@ -97,73 +97,31 @@ flowchart LR
 
 ## Customizability
 
-promkit supports customization at two levels.
+Applications select the capabilities and widgets they need through Cargo
+features. The runtime is independent from the widget set:
 
-### 1. Configure existing presets
-
-High-level presets (e.g. `Readline`) expose builder-style options such as:
-
-- title and style
-- prefix and cursor styles
-- suggestion and history
-- masking
-- word-break characters
-- validator
-- text editor visible line count
-- evaluator override
-
-```rust
-use std::collections::HashSet;
-
-use promkit::{
-    Prompt,
-    core::crossterm::style::{Color, ContentStyle},
-    preset::readline::Readline,
-    suggest::Suggest,
-};
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let result = Readline::default()
-        .title("Custom Title")
-        .prefix("$ ")
-        .prefix_style(ContentStyle {
-            foreground_color: Some(Color::DarkRed),
-            ..Default::default()
-        })
-        .active_char_style(ContentStyle {
-            background_color: Some(Color::DarkCyan),
-            ..Default::default()
-        })
-        .inactive_char_style(ContentStyle::default())
-        .enable_suggest(Suggest::from_iter(["option1", "option2"]))
-        .enable_history()
-        .mask('*')
-        .word_break_chars(HashSet::from([' ', '-']))
-        .text_editor_lines(3)
-        .validator(
-            |text| text.len() > 3,
-            |text| format!("Please enter more than 3 characters (current: {})", text.len()),
-        )
-        .run()
-        .await?;
-
-    println!("result: {result}");
-    Ok(())
-}
+```toml
+promkit = { version = "0.14.0", features = [
+  "runtime",
+  "suggest",
+  "validate",
+  "listbox",
+  "text",
+  "texteditor",
+] }
 ```
 
-### 2. Build your own prompt
+The application then combines its own state, event policy, and renderer:
 
-For advanced use cases, combine your own state + evaluator + renderer.
-
-- Implement `Widget` for custom state projection
+- Use the widget states required by the application
 - Implement `Prompt` for lifecycle and event handling
 - Use `Renderer::update(...).render().await` whenever UI should change
 
-This is the same pattern used in [`examples/byop`](./examples/byop/src/byop.rs),
-including async background updates (e.g. spinner/task monitor) that push
-grapheme updates directly to the shared renderer.
+The examples are the reference implementations for these compositions.
+[`examples/readline`](./examples/readline/) combines text, text-editor, and
+listbox widgets with suggestion and validation capabilities.
+[`examples/async_task`](./examples/async_task/) demonstrates background updates
+that push grapheme changes directly to a shared renderer.
 
 ## Quality Strategy for Rendering Behavior
 

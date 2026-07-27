@@ -6,7 +6,8 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-promkit = { path = "../../promkit", features = ["readline"] }
+promkit = { path = "../../promkit", features = ["runtime", "suggest"] }
+readline-example = { package = "readline", path = "../../examples/readline" }
 tokio = { workspace = true }
 
 [dev-dependencies]

@@ -1,8 +1,8 @@
 use promkit::{
     core::crossterm::{cursor, terminal},
-    preset::readline::Readline,
     Prompt,
 };
+use readline_example::Readline;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

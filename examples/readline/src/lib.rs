@@ -1,8 +1,8 @@
-//! Offers functionality for reading input from the user.
+//! A complete readline prompt composed from promkit widgets.
 
-use std::collections::HashSet;
+use std::{collections::HashSet, future::Future, pin::Pin};
 
-use crate::{
+use promkit::{
     core::{
         crossterm::{
             event::Event,
@@ -11,7 +11,6 @@ use crate::{
         render::{Renderer, SharedRenderer},
         Widget,
     },
-    preset::Evaluator,
     suggest::Suggest,
     validate::{ErrorMessageGenerator, Validator, ValidatorManager},
     widgets::{
@@ -19,12 +18,17 @@ use crate::{
         text::{self, Text},
         text_editor::{self, History},
     },
-    Signal,
+    Prompt, Signal,
 };
 
 pub mod evaluate;
 
-/// Represents the indices of various components in the readline preset.
+pub type Evaluator<T> =
+    for<'a> fn(
+        event: &'a Event,
+        ctx: &'a mut T,
+    ) -> Pin<Box<dyn Future<Output = Result<Signal, anyhow::Error>> + Send + 'a>>;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Title = 0,
@@ -33,35 +37,20 @@ pub enum Index {
     ErrorMessage = 3,
 }
 
-/// Represents the focus state of the readline,
-/// determining which component is currently active for input handling.
 pub enum Focus {
     Readline,
     Suggestion,
 }
 
-/// `Readline` struct provides functionality
-/// for reading a single line of input from the user.
-/// It supports various configurations
-/// such as input masking, history, suggestions, and custom styles.
 pub struct Readline {
-    /// Shared renderer for the prompt, allowing for rendering of UI components.
     pub renderer: Option<SharedRenderer<Index>>,
-    /// Function to evaluate the input events and update the state of the prompt.
     pub evaluator: Evaluator<Self>,
-    /// Holds the focus state for event handling, determining which component is currently focused.
     pub focus: Focus,
-    /// Holds a title's renderer state, used for rendering the title section.
     pub title: text::State,
-    /// Holds a text editor's renderer state, used for rendering the text input area.
     pub readline: text_editor::State,
-    /// Optional suggest component for autocomplete functionality.
     pub suggest: Option<Suggest>,
-    /// Holds a suggest box's renderer state, used when rendering suggestions for autocomplete.
     pub suggestions: listbox::State,
-    /// Optional validator manager for input validation.
     pub validator: Option<ValidatorManager<str>>,
-    /// Holds an error message's renderer state, used for rendering error messages.
     pub error_message: text::State,
 }
 
@@ -72,7 +61,7 @@ impl Default for Readline {
             evaluator: |event, ctx| Box::pin(evaluate::default(event, ctx)),
             focus: Focus::Readline,
             title: text::State {
-                config: text::config::Config {
+                config: text::Config {
                     style: Some(ContentStyle {
                         attributes: Attributes::from(Attribute::Bold),
                         ..Default::default()
@@ -84,7 +73,7 @@ impl Default for Readline {
             readline: text_editor::State {
                 texteditor: Default::default(),
                 history: Default::default(),
-                config: text_editor::config::Config {
+                config: text_editor::Config {
                     prefix: String::from("❯❯ "),
                     continuation_prefix: Default::default(),
                     mask: Default::default(),
@@ -105,7 +94,7 @@ impl Default for Readline {
             suggest: Default::default(),
             suggestions: listbox::State {
                 listbox: Listbox::from(Vec::<String>::new()),
-                config: listbox::config::Config {
+                config: listbox::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkGrey),
@@ -122,7 +111,7 @@ impl Default for Readline {
             validator: Default::default(),
             error_message: text::State {
                 text: Default::default(),
-                config: text::config::Config {
+                config: text::Config {
                     style: Some(ContentStyle {
                         foreground_color: Some(Color::DarkRed),
                         attributes: Attributes::from(Attribute::Bold),
@@ -135,8 +124,8 @@ impl Default for Readline {
     }
 }
 
-#[async_trait::async_trait]
-impl crate::Prompt for Readline {
+#[promkit::async_trait::async_trait]
+impl Prompt for Readline {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         self.renderer = Some(SharedRenderer::new(
             Renderer::try_new_with_graphemes(
@@ -163,94 +152,77 @@ impl crate::Prompt for Readline {
 
     fn finalize(&mut self) -> anyhow::Result<Self::Return> {
         let ret = self.readline.texteditor.text_without_cursor().to_string();
-
-        // Reset the text editor state for the next prompt.
         self.readline.texteditor.erase_all();
-
         Ok(ret)
     }
 }
 
 impl Readline {
-    /// Sets the title text displayed above the input field.
     pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
         self.title.text = Text::from(text);
         self
     }
 
-    /// Sets the style for the title text.
     pub fn title_style(mut self, style: ContentStyle) -> Self {
         self.title.config.style = Some(style);
         self
     }
 
-    /// Enables suggestion functionality with the provided `Suggest` instance.
     pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
         self.suggest = Some(suggest);
         self
     }
 
-    /// Enables history functionality allowing navigation through previous inputs.
     pub fn enable_history(mut self) -> Self {
         self.readline.history = Some(History::default());
         self
     }
 
-    /// Sets the prefix string displayed before the input text.
     pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
         self.readline.config.prefix = prefix.as_ref().to_string();
         self
     }
 
-    /// Sets the character used for masking input text, typically used for password fields.
     pub fn mask(mut self, mask: char) -> Self {
         self.readline.config.mask = Some(mask);
         self
     }
 
-    /// Sets the style for the prefix string.
     pub fn prefix_style(mut self, style: ContentStyle) -> Self {
         self.readline.config.prefix_style = style;
         self
     }
 
-    /// Sets the style for the currently active character in the input field.
     pub fn active_char_style(mut self, style: ContentStyle) -> Self {
         self.readline.config.active_char_style = style;
         self
     }
 
-    /// Sets the style for characters that are not currently active in the input field.
     pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
         self.readline.config.inactive_char_style = style;
         self
     }
 
-    /// Sets the edit mode for the text editor, either insert or overwrite.
     pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
         self.readline.config.edit_mode = mode;
         self
     }
 
-    /// Sets the characters to be for word break.
     pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
         self.readline.config.word_break_chars = characters;
         self
     }
 
-    /// Sets the number of lines available for rendering the text editor.
     pub fn text_editor_lines(mut self, lines: usize) -> Self {
         self.readline.config.lines = Some(lines);
         self
     }
 
-    /// Sets the function to evaluate the input, allowing for custom evaluation logic.
     pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
         self.evaluator = evaluator;
         self
     }
 
-    /// Configures a validator for the input with a function to validate the input and another to configure the error message.
     pub fn validator(
         mut self,
         validator: Validator<str>,
@@ -260,7 +232,6 @@ impl Readline {
         self
     }
 
-    /// Render the prompt with the specified width and height.
     async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {

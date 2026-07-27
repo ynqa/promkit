@@ -1,4 +1,5 @@
-use promkit::{preset::readline::Readline, suggest::Suggest, Prompt};
+use promkit::{suggest::Suggest, Prompt};
+use readline_example::Readline;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
