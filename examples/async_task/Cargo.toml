@@ -1,5 +1,5 @@
 [package]
-name = "byop"
+name = "async-task"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -9,5 +9,5 @@ promkit = { path = "../../promkit", features = ["readline", "spinner"] }
 tokio = { workspace = true }
 
 [[bin]]
-name = "byop"
-path = "src/byop.rs"
+name = "async_task"
+path = "src/async_task.rs"

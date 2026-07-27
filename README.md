@@ -222,20 +222,20 @@ cargo run --bin text
 These examples demonstrate how to compose widgets and rendering primitives for
 application-specific event loops and asynchronous workflows.
 
-### BYOP
+### Async Task with Spinner
 
 <details>
 <summary>Command</summary>
 
 ```bash
-cargo run --bin byop
+cargo run --bin async_task
 ```
 
 </details>
 
-[Code](./examples/byop/src/byop.rs)
+[Code](./examples/async_task/src/async_task.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/byop.gif" width="50%" height="auto">
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/async_task.gif" width="50%" height="auto">
 
 ### Multiline REPL
 

@@ -1,18 +1,15 @@
-/// BYOP (Build Your Own Preset) example for promkit.
+/// Async task with spinner example for promkit.
 ///
-/// This example demonstrates how to create a custom prompt using the `promkit` library.
+/// This example demonstrates how to create a responsive prompt that runs a background task.
 /// It includes a text editor for input, a spinner for async task execution, and a task
-/// monitor for managing background tasks.
+/// monitor for coordinating task state and rendered results.
 /// The prompt allows users to enter text, start a heavy task (actually a simulated delay),
 /// and see the results (actually show the input text) or errors
 /// displayed in the UI. The example showcases the integration of various widgets and state
 /// management techniques to create a responsive and interactive command-line application.
 ///
-/// # Example Usage
-/// To run this example, ensure you have the `promkit` library and its dependencies set up in
-/// your Rust project. Then, execute the main function which initializes the BYOP prompt and
-/// starts the event loop. You can interact with the prompt by typing commands and pressing
-/// Enter to execute tasks. Use Ctrl+C to exit the prompt.
+/// Type text and press Enter to start the task. The editor remains responsive while the
+/// spinner is active. Use Ctrl+C to exit the prompt.
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use promkit::{
@@ -37,7 +34,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-/// Represents the indices of various components in BYOP.
+/// Represents the indices of the async task prompt components.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum Index {
     Readline = 0,
@@ -153,8 +150,7 @@ impl TaskMonitor {
     }
 }
 
-/// Build Your Own Prompt
-struct Byop {
+struct AsyncTaskPrompt {
     renderer: SharedRenderer<Index>,
     task_monitor: Arc<TaskMonitor>,
     readline: text_editor::State,
@@ -162,7 +158,7 @@ struct Byop {
 }
 
 #[async_trait::async_trait]
-impl Prompt for Byop {
+impl Prompt for AsyncTaskPrompt {
     async fn initialize(&mut self) -> anyhow::Result<()> {
         Ok(())
     }
@@ -188,7 +184,7 @@ impl Prompt for Byop {
     }
 }
 
-impl Byop {
+impl AsyncTaskPrompt {
     async fn try_default() -> anyhow::Result<Self> {
         let readline = text_editor::State {
             config: text_editor::config::Config {
@@ -431,5 +427,5 @@ impl Byop {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    Byop::try_default().await?.spawn().await
+    AsyncTaskPrompt::try_default().await?.spawn().await
 }
