@@ -2,17 +2,23 @@
 
 ## Responsibility Boundaries and Data Flow
 
-promkit is organized around three responsibilities with clear boundaries:
+promkit is organized around four responsibilities with clear boundaries:
 
-1. **Event orchestration (`promkit`)**
-   - [`Prompt`](./promkit/src/lib.rs) defines lifecycle hooks:
+1. **Prompt lifecycle runtime (`promkit`)**
+   - [`Prompt`](./promkit/src/runtime.rs) defines lifecycle hooks:
      `initialize -> evaluate -> finalize`
-   - [`Prompt::run`](./promkit/src/lib.rs) manages terminal setup/teardown
+   - [`Prompt::run`](./promkit/src/runtime.rs) manages terminal setup/teardown
      (raw mode, cursor visibility) and drives input events from a singleton
      `EVENT_STREAM`.
    - Events are processed sequentially.
 
-2. **State management and UI materialization (`promkit-widgets` + `promkit-core`)**
+2. **Application event policy (`examples` and downstream applications)**
+   - Applications implement `Prompt` by combining the widget states they need.
+   - Key bindings, focus transitions, validation flow, and quit conditions stay
+     in the application.
+   - The examples are reference compositions, not APIs exported by `promkit`.
+
+3. **State management and UI materialization (`promkit-widgets`)**
    - Each widget state implements [`Widget`](./promkit-core/src/lib.rs).
    - `Widget::create_graphemes()` returns `CreatedGraphemes`: width-independent
      styled content, layout hints, and an optional logical cursor position.
@@ -26,7 +32,7 @@ promkit is organized around three responsibilities with clear boundaries:
 > Event handling stays in application `Prompt` implementations,
 > which avoids key-binding conflicts when multiple widgets are combined.
 
-3. **Rendering (`promkit-core`)**
+4. **Rendering (`promkit-core`)**
    - [`Renderer<K>`](./promkit-core/src/render.rs) stores ordered
      `CreatedGraphemes` chunks.
    - [`RendererLayout<K>`](./promkit-core/src/render/layout.rs) performs
@@ -42,13 +48,14 @@ promkit is organized around three responsibilities with clear boundaries:
      after layout is complete.
 
 This keeps responsibilities explicit:
-- prompt = control flow
+- runtime = lifecycle and terminal event stream
+- application prompt = event and focus policy
 - widgets = state to graphemes
 - core renderer = terminal output
 
 ## Event Loop
 
-Current core loop in [`Prompt::run`](./promkit/src/lib.rs):
+Current core loop in [`Prompt::run`](./promkit/src/runtime.rs):
 
 ```rust
 self.initialize().await?;
@@ -118,7 +125,9 @@ The application then combines its own state, event policy, and renderer:
 
 The examples are the reference implementations for these compositions.
 [`examples/readline`](./examples/readline/) combines text, text-editor, and
-prefix-search widgets with validation.
+prefix-search widgets with validation. `PrefixSearch` retains its radix trie,
+active query, and selection as widget state and projects matching candidates
+directly without repackaging them into a listbox.
 [`examples/async_task`](./examples/async_task/) demonstrates background updates
 that push grapheme changes directly to a shared renderer.
 

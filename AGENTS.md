@@ -23,7 +23,7 @@ built on top of [crossterm](https://github.com/crossterm-rs/crossterm).
 
 ## Workspace Map (High Level)
 
-- `promkit/`: public prompt presets and `Prompt` lifecycle
+- `promkit/`: optional `Prompt` lifecycle runtime, capabilities, and widget facade
 - `promkit-core/`: rendering primitives and terminal drawing
 - `promkit-widgets/`: reusable widget states
 - `promkit-derive/`: proc macros
@@ -34,9 +34,11 @@ built on top of [crossterm](https://github.com/crossterm-rs/crossterm).
 
 The authoritative model is in [Concept.md](./Concept.md). Keep these boundaries:
 
-1. Event orchestration belongs to `promkit` (`Prompt` lifecycle).
-2. `promkit-widgets` is state-to-view projection, without event-loop policy.
-3. Rendering concerns belong to `promkit-core`.
+1. The `Prompt` lifecycle and terminal event stream belong to `promkit`.
+2. Key bindings, focus transitions, and other event policy belong to application
+   `Prompt` implementations, including the examples.
+3. `promkit-widgets` is state-to-view projection, without event-loop policy.
+4. Rendering concerns belong to `promkit-core`.
 
 When adding features, preserve these boundaries before optimizing code layout.
 
@@ -45,7 +47,7 @@ When adding features, preserve these boundaries before optimizing code layout.
 ### Feature Wiring
 
 - Control module exposure via feature flags.
-  - Evidence: [promkit-widgets/src/lib.rs](./promkit-widgets/src/lib.rs), [promkit/src/preset.rs](./promkit/src/preset.rs)
+  - Evidence: [promkit-widgets/src/lib.rs](./promkit-widgets/src/lib.rs), [promkit/src/lib.rs](./promkit/src/lib.rs)
 - Wire `promkit` features to `promkit-widgets` features.
   - Evidence: [promkit/Cargo.toml](./promkit/Cargo.toml), [promkit-widgets/Cargo.toml](./promkit-widgets/Cargo.toml)
 
@@ -53,7 +55,8 @@ When adding features, preserve these boundaries before optimizing code layout.
 
 When implementing a change:
 
-1. Locate the boundary first (`promkit` vs `promkit-widgets` vs `promkit-core`).
+1. Locate the boundary first (application vs `promkit` vs `promkit-widgets` vs
+   `promkit-core`).
 2. Make the smallest coherent edit set.
 3. Update tests/examples/docs that demonstrate behavior.
 4. Run validation commands locally when possible.
