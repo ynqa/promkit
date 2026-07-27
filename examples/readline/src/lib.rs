@@ -12,11 +12,10 @@ use promkit::{
         Widget,
     },
     suggest::Suggest,
-    validate::{ErrorMessageGenerator, Validator, ValidatorManager},
+    validate::ValidatorManager,
     widgets::{
         listbox::{self, Listbox},
-        text::{self, Text},
-        text_editor::{self, History},
+        text, text_editor,
     },
     Prompt, Signal,
 };
@@ -158,80 +157,6 @@ impl Prompt for Readline {
 }
 
 impl Readline {
-    pub fn title<T: AsRef<str>>(mut self, text: T) -> Self {
-        self.title.text = Text::from(text);
-        self
-    }
-
-    pub fn title_style(mut self, style: ContentStyle) -> Self {
-        self.title.config.style = Some(style);
-        self
-    }
-
-    pub fn enable_suggest(mut self, suggest: Suggest) -> Self {
-        self.suggest = Some(suggest);
-        self
-    }
-
-    pub fn enable_history(mut self) -> Self {
-        self.readline.history = Some(History::default());
-        self
-    }
-
-    pub fn prefix<T: AsRef<str>>(mut self, prefix: T) -> Self {
-        self.readline.config.prefix = prefix.as_ref().to_string();
-        self
-    }
-
-    pub fn mask(mut self, mask: char) -> Self {
-        self.readline.config.mask = Some(mask);
-        self
-    }
-
-    pub fn prefix_style(mut self, style: ContentStyle) -> Self {
-        self.readline.config.prefix_style = style;
-        self
-    }
-
-    pub fn active_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.config.active_char_style = style;
-        self
-    }
-
-    pub fn inactive_char_style(mut self, style: ContentStyle) -> Self {
-        self.readline.config.inactive_char_style = style;
-        self
-    }
-
-    pub fn edit_mode(mut self, mode: text_editor::Mode) -> Self {
-        self.readline.config.edit_mode = mode;
-        self
-    }
-
-    pub fn word_break_chars(mut self, characters: HashSet<char>) -> Self {
-        self.readline.config.word_break_chars = characters;
-        self
-    }
-
-    pub fn text_editor_lines(mut self, lines: usize) -> Self {
-        self.readline.config.lines = Some(lines);
-        self
-    }
-
-    pub fn evaluator(mut self, evaluator: Evaluator<Self>) -> Self {
-        self.evaluator = evaluator;
-        self
-    }
-
-    pub fn validator(
-        mut self,
-        validator: Validator<str>,
-        error_message_generator: ErrorMessageGenerator<str>,
-    ) -> Self {
-        self.validator = Some(ValidatorManager::new(validator, error_message_generator));
-        self
-    }
-
     async fn render(&mut self) -> anyhow::Result<()> {
         match self.renderer.as_ref() {
             Some(renderer) => {

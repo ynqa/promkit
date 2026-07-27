@@ -1,23 +1,12 @@
-use promkit::{suggest::Suggest, Prompt};
+use promkit::Prompt;
 use readline_example::Readline;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     println!("Build completed successfully.");
 
-    Readline::default()
-        .title("Hi!")
-        .enable_suggest(Suggest::from_iter([
-            "apple",
-            "applet",
-            "application",
-            "banana",
-        ]))
-        .validator(
-            |text| text.len() > 10,
-            |text| format!("Length must be over 10 but got {}", text.len()),
-        )
-        .run()
-        .await?;
+    let mut prompt = Readline::default();
+    prompt.title.text = "Hi!".into();
+    prompt.run().await?;
     Ok(())
 }
