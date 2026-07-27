@@ -44,3 +44,7 @@ toml = "0.9.8"
 [[bench]]
 name = "structured"
 harness = false
+
+[[bench]]
+name = "table"
+harness = false
