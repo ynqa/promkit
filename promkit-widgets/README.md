@@ -1,101 +1,56 @@
 # promkit-widgets
 
-Reusable widget states for [promkit](https://github.com/ynqa/promkit).
+Reusable widget states for building interactive terminal applications with
+[promkit](https://github.com/ynqa/promkit).
 
-Each state implements `promkit_core::Widget` and projects its current state into
-styled graphemes and layout hints. Widgets do not own event loops or key
-bindings: event handling belongs to application `Prompt` implementations,
-while terminal layout and drawing belong to `promkit-core`.
-See [Concept.md](../Concept.md) for the full responsibility boundaries.
+`promkit-widgets` provides the state and view projection for common UI
+components. Each widget implements `promkit_core::Widget` and turns its current
+state into styled graphemes and layout hints for `promkit-core` to render.
 
-## Features
+## Getting started
 
-No widget is enabled by default.
+Widgets are opt-in Cargo features; none are enabled by default. Applications
+using the `promkit` runtime can enable them through the main crate:
 
-| Feature | Widget or capability |
-| --- | --- |
-| `checkbox` | Checkbox selection; enables `listbox` |
-| `json` | Navigable JSON document |
-| `yaml` | Navigable YAML document |
-| `listbox` | List selection |
-| `prefixsearch` | Prefix-matched candidate selection backed by a radix trie |
-| `spinner` | Asynchronous spinner; enables Tokio |
-| `status` | Status display; enables `text` |
-| `text` | Styled text |
-| `texteditor` | Editable text with history |
-| `tree` | Navigable structured tree |
-| `serde` | Serde support for widget configuration |
-| `all` | All features above |
+```toml
+[dependencies]
+promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
+```
 
-Enable only the widgets an application uses:
+The widget states can also be used directly:
 
 ```toml
 [dependencies]
 promkit-widgets = { version = "0.7", features = ["json", "yaml"] }
 ```
 
-The crate re-exports `promkit-core` as `promkit_widgets::core`. JSON and YAML
-states provide viewport-bounded projection so callers do not need to materialize
-every visible row of a large document on each cursor movement.
+`promkit` re-exports this crate as `promkit::widgets`, while
+`promkit-widgets` re-exports `promkit-core` as `promkit_widgets::core`.
 
-## Structured document loading
+## Widgets
 
-JSON and YAML documents can be built directly from strings or readers without
-first materializing a `serde_json::Value` or `serde_yaml::Value` tree:
+| Feature | Widget or capability |
+| --- | --- |
+| `checkbox` | Multiple-choice selection |
+| `listbox` | List selection |
+| `prefixsearch` | Prefix-matched candidate selection |
+| `json` | Navigable JSON documents |
+| `yaml` | Navigable YAML documents |
+| `tree` | Navigable tree structures |
+| `table` | Tabular CSV data |
+| `text` | Styled text |
+| `texteditor` | Editable text with history |
+| `spinner` | Asynchronous progress display |
+| `status` | Status display |
+| `serde` | Serde support for widget configuration |
+| `all` | All features above |
 
-```rust
-use std::{fs::File, io::BufReader};
+## Responsibilities
 
-use promkit_widgets::{json, yaml};
+Widgets manage state and project it into renderable content. They intentionally
+do not own event loops or key bindings: application `Prompt` implementations
+define input and focus behavior, and `promkit-core` handles terminal layout and
+drawing.
 
-let json_document = json::Document::from_str(r#"{"name":"alice"}"#).unwrap();
-let yaml_file = File::open("input.yaml").unwrap();
-let yaml_document = yaml::Document::from_reader(BufReader::new(yaml_file)).unwrap();
-```
-
-`Document::new` remains available when an application already has deserialized
-Serde values.
-
-## Structured benchmark
-
-The Criterion benchmark covers file reading, deserialization, document
-construction, cursor movement, and viewport projection for the bundled JSON and
-YAML fixtures:
-
-```bash
-cargo bench -p promkit-widgets --bench structured --features json,yaml
-```
-
-Criterion compares a run with its previous local result. Named baselines can be
-saved and compared across revisions with `--save-baseline NAME` and
-`--baseline NAME`. The benchmark currently reports regressions but does not
-enforce a CI failure threshold.
-
-Override either fixture when needed:
-
-```bash
-PROMKIT_STRUCTURED_JSON=/path/to/input.json \
-PROMKIT_STRUCTURED_YAML=/path/to/input.yaml \
-cargo bench -p promkit-widgets --bench structured --features json,yaml
-```
-
-This benchmark exercises the `promkit-widgets` projection layer. It does not
-measure `promkit-core::Renderer`, terminal layout, or terminal I/O.
-
-## Structured line numbers
-
-The `json`, `yaml`, and `tree` widgets can display stable, one-based line
-numbers by enabling `show_line_numbers` in their `Config`. Numbers refer to the
-fully expanded structure, so collapsing a node leaves gaps for its hidden rows.
-
-Applications configure line numbers directly on widget state:
-
-```rust
-let state = json::State {
-    document,
-    config: json::Config {
-        show_line_numbers: true,
-        ..Default::default()
-    },
-};
-```
+See [Concept.md](../Concept.md) for the architecture and the repository
+[examples](../examples/) for complete compositions.

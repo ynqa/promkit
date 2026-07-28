@@ -16,18 +16,29 @@ promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
 
 ## Features
 
-- Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
-- Modularized architecture
-  - [promkit-core](./promkit-core/)
-    - Core functionality for terminal rendering and keyed grapheme chunk management
-  - [promkit-widgets](./promkit-widgets/)
-    - Various UI components (text, listbox, tree, etc.)
-  - [promkit](./promkit/)
-    - Optional prompt runtime, capabilities, and widget facade
-  - [promkit-derive](./promkit-derive/)
-    - A Derive macro that simplifies interactive form input
-- Composable examples for readline, selection, structured data, forms, and
-  asynchronous workflows
+- **Application-owned composition** — Implement the
+  [`Prompt`](./promkit/src/runtime.rs) lifecycle and combine only the widget
+  states an application needs. Key bindings, focus, validation, background
+  work, and other event policy remain in the application instead of
+  framework-owned presets.
+- **Optional runtime and terminal lifecycle** — Use the asynchronous prompt
+  runtime when useful, and independently manage raw mode, the alternate screen,
+  cursor visibility, and mouse capture with
+  [`TerminalSession`](./promkit/src/terminal_session.rs).
+- **Viewport-aware rendering** — [`promkit-core`](./promkit-core/) handles
+  wrapping or truncation, vertical pane allocation, cursor scrolling, clipping,
+  resizing, and screen-to-widget hit testing.
+- **Reusable widget states** — [`promkit-widgets`](./promkit-widgets/) provides
+  text editing and display, list and checkbox selection, prefix search,
+  spinners and status output, trees, JSON and YAML documents, and CSV tables.
+- **Efficient large-content projection** — JSON, YAML, and table widgets can
+  project only the visible terminal viewport instead of rebuilding all content
+  on every redraw.
+- **Feature-gated modules** — No Cargo features are enabled by default. Choose
+  the runtime, terminal session, capabilities, and individual widgets needed by
+  the application.
+- **Cross-platform terminal support** — UNIX and Windows are supported through
+  [crossterm](https://github.com/crossterm-rs/crossterm).
 
 ## Concept
 
@@ -46,8 +57,26 @@ See [here](./Concept.md).
 terminal applications. The examples own their event policies and demonstrate
 how applications can compose the widgets they need.
 
-Show you commands, code, and actual demo screens for examples
-that can be executed immediately below.
+### Table of contents
+
+| Example | Description |
+| --- | --- |
+| [Readline](#readline) | Single-line editing with history and completion |
+| [Confirm](#confirm) | Validated yes-or-no input |
+| [Password](#password) | Masked input with validation |
+| [Form](#form) | Multiple editable fields in one prompt |
+| [Listbox](#listbox) | Keyboard-driven single selection |
+| [QuerySelector](#queryselector) | Prefix search over selectable candidates |
+| [Checkbox](#checkbox) | Keyboard-driven multiple selection |
+| [Tree](#tree) | Navigation and folding for hierarchical data |
+| [JSON](#json) | Line-numbered navigation and folding for JSON |
+| [YAML](#yaml) | Line-numbered navigation and folding for YAML |
+| [CSV](#csv) | Vertical and horizontal navigation for tabular data |
+| [Text](#text) | Scrollable styled text |
+| [Async Task with Spinner](#async-task-with-spinner) | Background work with live input and progress feedback |
+| [Multiline REPL](#multiline-repl) | Multiline editing in an interactive loop |
+
+Each section includes a command, source link, and recorded demo.
 
 ### Readline
 
@@ -130,7 +159,7 @@ cargo run --bin listbox
 <summary>Command</summary>
 
 ```bash
-cargo run --bin query_selector
+cargo run --bin query-selector
 ```
 </details>
 
@@ -193,6 +222,20 @@ cargo run --bin yaml ${PATH_TO_YAML_FILE}
 [Code](./examples/yaml/src/yaml.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/yaml.gif" width="50%" height="auto">
+
+### CSV
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin csv ${PATH_TO_CSV_FILE}
+```
+</details>
+
+[Code](./examples/csv/src/csv.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/csv.gif" width="50%" height="auto">
 
 ### Text
 
