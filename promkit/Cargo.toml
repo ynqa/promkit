@@ -17,6 +17,7 @@ path = "src/lib.rs"
 default = []
 all = [
     "runtime",
+    "terminal-session",
     "validate",
     "prefixsearch",
     "checkbox",
@@ -39,9 +40,9 @@ runtime = [
     "dep:anyhow",
     "dep:async-trait",
     "dep:futures",
-    "dep:scopeguard",
     "dep:tokio",
 ]
+terminal-session = ["dep:bitflags", "dep:crossterm"]
 widgets = ["core", "dep:promkit-widgets"]
 
 # Capabilities
@@ -64,10 +65,11 @@ tree = ["widgets", "promkit-widgets/tree"]
 [dependencies]
 anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
+bitflags = { workspace = true, optional = true }
+crossterm = { workspace = true, optional = true }
 futures = { workspace = true, optional = true }
 promkit-core = { path = "../promkit-core", version = "=0.5.0", optional = true }
 promkit-widgets = { path = "../promkit-widgets", version = "=0.7.0", default-features = false, optional = true }
-scopeguard = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]

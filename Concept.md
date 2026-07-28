@@ -42,9 +42,10 @@ promkit is organized around four responsibilities with clear boundaries:
 1. **Prompt lifecycle runtime (`promkit`)**
    - [`Prompt`](./promkit/src/runtime.rs) defines lifecycle hooks:
      `initialize -> evaluate -> finalize`
-   - [`Prompt::run`](./promkit/src/runtime.rs) manages terminal setup/teardown
-     (raw mode, cursor visibility) and drives input events from a singleton
-     `EVENT_STREAM`.
+   - [`Prompt::run`](./promkit/src/runtime.rs) drives input events from a
+     singleton `EVENT_STREAM`.
+   - `TerminalSession` manages opt-in terminal setup/teardown separately from
+     the prompt lifecycle.
    - Events are processed sequentially.
 
 2. **Application event policy (`examples` and downstream applications)**
@@ -83,7 +84,8 @@ promkit is organized around four responsibilities with clear boundaries:
      after layout is complete.
 
 This keeps responsibilities explicit:
-- runtime = lifecycle and terminal event stream
+- runtime = prompt lifecycle and terminal event stream
+- terminal session = terminal mode lifecycle
 - application prompt = event and focus policy
 - widgets = state to graphemes
 - core renderer = terminal output

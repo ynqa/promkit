@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 anyhow = { workspace = true }
 clap = { version = "4.5.60", features = ["derive"] }
-promkit = { path = "../../promkit", features = ["runtime", "table"] }
+promkit = { path = "../../promkit", features = ["runtime", "terminal-session", "table"] }
 tokio = { workspace = true }
 
 [[bin]]

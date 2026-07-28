@@ -11,7 +11,7 @@ use promkit::{
         ScreenPosition, Widget,
     },
     widgets::text_editor::{self, TextEditorHit},
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy)]
@@ -258,13 +258,18 @@ fn field(prefix_color: Color) -> text_editor::State {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let ret = Form::new([
-        field(Color::DarkRed),
-        field(Color::DarkGreen),
-        field(Color::DarkBlue),
-    ])
-    .run()
-    .await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        Form::new([
+            field(Color::DarkRed),
+            field(Color::DarkGreen),
+            field(Color::DarkBlue),
+        ])
+        .run()
+        .await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

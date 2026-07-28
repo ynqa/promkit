@@ -1,4 +1,6 @@
-use promkit::{validate::ValidatorManager, widgets::text::Text, Prompt};
+use promkit::{
+    validate::ValidatorManager, widgets::text::Text, Prompt, TerminalModes, TerminalSession,
+};
 use readline_example::Readline;
 
 #[tokio::main]
@@ -11,7 +13,12 @@ async fn main() -> anyhow::Result<()> {
         |text| format!("Length must be over 4 and within 10 but got {}", text.len()),
     ));
 
-    let ret = prompt.run().await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        prompt.run().await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

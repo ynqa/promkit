@@ -5,16 +5,16 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
-                MouseEvent, MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseEvent,
+                MouseEventKind,
             },
-            execute, terminal,
+            terminal,
         },
         render::{Renderer, SharedRenderer},
         Widget,
     },
     widgets::table::{CsvOptions, Document, State},
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 /// Interactive CSV viewer powered by promkit.
@@ -202,30 +202,16 @@ fn parse_document(args: &Args) -> anyhow::Result<Document> {
     }
 }
 
-/// Ensure the terminal is restored to its original state when dropped.
-struct TerminalGuard;
-
-impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        let _ = execute!(
-            io::stdout(),
-            terminal::LeaveAlternateScreen,
-            event::DisableMouseCapture
-        );
-    }
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let document = parse_document(&args)?;
 
-    execute!(
-        io::stdout(),
-        terminal::EnterAlternateScreen,
-        event::EnableMouseCapture
-    )?;
-    let _terminal_guard = TerminalGuard;
+    let modes = TerminalModes::RAW_MODE
+        | TerminalModes::ALTERNATE_SCREEN
+        | TerminalModes::HIDDEN_CURSOR
+        | TerminalModes::MOUSE_CAPTURE;
+    let _terminal_session = TerminalSession::try_new(modes)?;
 
     CsvViewer::new(document).run().await
 }

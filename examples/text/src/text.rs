@@ -8,7 +8,7 @@ use promkit::{
         ScreenPosition, Widget,
     },
     widgets::text::{self, Text, TextHit},
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -138,6 +138,9 @@ impl Prompt for TextPrompt {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let modes =
+        TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+    let _terminal_session = TerminalSession::try_new(modes)?;
     TextPrompt::new(std::fs::read_to_string("Cargo.toml")?)
         .run()
         .await
