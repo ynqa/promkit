@@ -4,8 +4,8 @@ Reusable widget states for [promkit](https://github.com/ynqa/promkit).
 
 Each state implements `promkit_core::Widget` and projects its current state into
 styled graphemes and layout hints. Widgets do not own event loops or key
-bindings: event handling belongs to `promkit` presets or custom `Prompt`
-implementations, while terminal layout and drawing belong to `promkit-core`.
+bindings: event handling belongs to application `Prompt` implementations,
+while terminal layout and drawing belong to `promkit-core`.
 See [Concept.md](../Concept.md) for the full responsibility boundaries.
 
 ## Features
@@ -18,6 +18,7 @@ No widget is enabled by default.
 | `json` | Navigable JSON document |
 | `yaml` | Navigable YAML document |
 | `listbox` | List selection |
+| `prefixsearch` | Prefix-matched candidate selection backed by a radix trie |
 | `spinner` | Asynchronous spinner; enables Tokio |
 | `status` | Status display; enables `text` |
 | `text` | Styled text |
@@ -69,8 +70,14 @@ The `json`, `yaml`, and `tree` widgets can display stable, one-based line
 numbers by enabling `show_line_numbers` in their `Config`. Numbers refer to the
 fully expanded structure, so collapsing a node leaves gaps for its hidden rows.
 
-The corresponding `promkit` presets expose `.show_line_numbers(bool)`:
+Applications configure line numbers directly on widget state:
 
 ```rust
-let preset = Json::new(document).show_line_numbers(true);
+let state = json::State {
+    document,
+    config: json::Config {
+        show_line_numbers: true,
+        ..Default::default()
+    },
+};
 ```

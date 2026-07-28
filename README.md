@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = "0.14.0"
+promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
 ```
 
 ## Features
@@ -23,21 +23,11 @@ promkit = "0.14.0"
   - [promkit-widgets](./promkit-widgets/)
     - Various UI components (text, listbox, tree, etc.)
   - [promkit](./promkit/)
-    - High-level presets and user interfaces
+    - Optional prompt runtime, capabilities, and widget facade
   - [promkit-derive](./promkit-derive/)
     - A Derive macro that simplifies interactive form input
-- Rich preset components
-  - [Readline](#readline) - Text input with auto-completion
-  - [Confirm](#confirm) - Yes/no confirmation prompt
-  - [Password](#password) - Password input with masking and validation
-  - [Form](#form) - Manage multiple text input fields
-  - [Listbox](#listbox) - Single selection interface from a list
-  - [QuerySelector](#queryselector) - Searchable selection interface
-  - [Checkbox](#checkbox) - Multiple selection checkbox interface
-  - [Tree](#tree) - Tree display for hierarchical data like file systems
-  - [JSON](#json) - Parse and interactively display JSON data
-  - [YAML](#yaml) - Parse and interactively display YAML data
-  - [Text](#text) - Static text display
+- Composable examples for readline, selection, structured data, forms, and
+  asynchronous workflows
 
 ## Concept
 
@@ -52,8 +42,9 @@ See [here](./Concept.md).
 
 ## Examples/Demos
 
-*promkit* provides presets and reusable widgets for building interactive
-terminal applications.
+*promkit* provides a runtime and reusable widgets for building interactive
+terminal applications. The examples own their event policies and demonstrate
+how applications can compose the widgets they need.
 
 Show you commands, code, and actual demo screens for examples
 that can be executed immediately below.
@@ -69,7 +60,8 @@ cargo run --bin readline
 
 </details>
 
-[Code](./examples/readline/src/readline.rs)
+[Composition](./examples/readline/src/lib.rs) /
+[Usage](./examples/readline/src/readline.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/readline.gif" width="50%" height="auto">
 

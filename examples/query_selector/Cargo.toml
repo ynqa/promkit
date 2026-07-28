@@ -6,7 +6,12 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-promkit = { path = "../../promkit", features = ["query-selector"] }
+promkit = { path = "../../promkit", features = [
+    "runtime",
+    "listbox",
+    "text",
+    "texteditor",
+] }
 tokio = { workspace = true }
 
 [[bin]]
