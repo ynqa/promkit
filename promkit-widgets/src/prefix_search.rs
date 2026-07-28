@@ -87,41 +87,49 @@ mod tests {
 
     use super::{Config, PrefixSearch, PrefixSearchHit, State};
 
-    #[test]
-    fn projects_trie_matches_and_resolves_hits() {
-        let mut prefix_search: PrefixSearch = ["apple", "applet", "application", "banana"]
-            .into_iter()
-            .collect();
-        prefix_search.search("app");
-        let mut state = State {
-            prefix_search,
-            config: Config {
-                lines: Some(3),
-                ..Default::default()
-            },
-        };
+    mod state {
+        use super::*;
 
-        let created = state.create_graphemes();
+        mod create_graphemes {
+            use super::*;
 
-        assert_eq!(
-            created.graphemes.to_string(),
-            "❯ apple\n  applet\n  application"
-        );
-        assert_eq!(created.layout.max_height, Some(3));
-        assert_eq!(created.cursor, Some(ContentPosition { row: 0, column: 0 }));
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 2, column: 80 }),
-            Some(PrefixSearchHit::Select { index: 2 })
-        );
-        assert_eq!(state.hit_at(ContentPosition { row: 3, column: 0 }), None);
+            #[test]
+            fn projects_trie_matches_and_tracks_hit_rows() {
+                let mut prefix_search: PrefixSearch = ["apple", "applet", "application", "banana"]
+                    .into_iter()
+                    .collect();
+                prefix_search.search("app");
+                let mut state = State {
+                    prefix_search,
+                    config: Config {
+                        lines: Some(3),
+                        ..Default::default()
+                    },
+                };
 
-        state.prefix_search.move_to(1);
-        let created = state.create_graphemes();
+                let created = state.create_graphemes();
 
-        assert_eq!(
-            created.graphemes.to_string(),
-            "  apple\n❯ applet\n  application"
-        );
-        assert_eq!(created.cursor, Some(ContentPosition { row: 1, column: 0 }));
+                assert_eq!(
+                    created.graphemes.to_string(),
+                    "❯ apple\n  applet\n  application"
+                );
+                assert_eq!(created.layout.max_height, Some(3));
+                assert_eq!(created.cursor, Some(ContentPosition { row: 0, column: 0 }));
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 2, column: 80 }),
+                    Some(PrefixSearchHit::Select { index: 2 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 3, column: 0 }), None);
+
+                state.prefix_search.move_to(1);
+                let created = state.create_graphemes();
+
+                assert_eq!(
+                    created.graphemes.to_string(),
+                    "  apple\n❯ applet\n  application"
+                );
+                assert_eq!(created.cursor, Some(ContentPosition { row: 1, column: 0 }));
+            }
+        }
     }
 }

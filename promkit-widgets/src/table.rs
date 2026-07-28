@@ -308,116 +308,137 @@ mod tests {
         State::new(Document::from_csv(input.as_bytes(), CsvOptions::default()).unwrap())
     }
 
-    #[test]
-    fn parses_quoted_and_multiline_cells_without_per_cell_ownership() {
-        let document = Document::from_csv(
-            "name,note\nalice,\"hello, world\"\nbob,\"line 1\nline 2\"\n".as_bytes(),
-            CsvOptions::default(),
-        )
-        .unwrap();
+    mod document {
+        use super::*;
 
-        assert_eq!(document.row_count(), 2);
-        assert_eq!(document.column_count(), 2);
-        assert_eq!(document.header_cell(1), Some("note"));
-        assert_eq!(document.cell(0, 1), Some("hello, world"));
-        assert_eq!(document.cell(1, 1), Some("line 1\nline 2"));
+        mod from_csv {
+            use super::*;
+
+            #[test]
+            fn parses_quoted_and_multiline_cells_without_per_cell_ownership() {
+                let document = Document::from_csv(
+                    "name,note\nalice,\"hello, world\"\nbob,\"line 1\nline 2\"\n".as_bytes(),
+                    CsvOptions::default(),
+                )
+                .unwrap();
+
+                assert_eq!(document.row_count(), 2);
+                assert_eq!(document.column_count(), 2);
+                assert_eq!(document.header_cell(1), Some("note"));
+                assert_eq!(document.cell(0, 1), Some("hello, world"));
+                assert_eq!(document.cell(1, 1), Some("line 1\nline 2"));
+            }
+
+            #[test]
+            fn supports_a_non_comma_delimiter() {
+                let document = Document::from_csv(
+                    "name\tvalue\nfirst\tone\n".as_bytes(),
+                    CsvOptions::default().delimiter(b'\t'),
+                )
+                .unwrap();
+
+                assert_eq!(document.cell(0, 1), Some("one"));
+            }
+
+            #[test]
+            fn rejects_non_rectangular_input() {
+                assert!(
+                    Document::from_csv("a,b\none,two\nthree\n".as_bytes(), CsvOptions::default())
+                        .is_err()
+                );
+            }
+        }
     }
 
-    #[test]
-    fn supports_a_non_comma_delimiter() {
-        let document = Document::from_csv(
-            "name\tvalue\nfirst\tone\n".as_bytes(),
-            CsvOptions::default().delimiter(b'\t'),
-        )
-        .unwrap();
+    mod state {
+        use super::*;
 
-        assert_eq!(document.cell(0, 1), Some("one"));
-    }
+        mod create_graphemes_in_viewport {
+            use super::*;
 
-    #[test]
-    fn vertical_projection_is_bounded_and_follows_the_cursor() {
-        let mut state = state("id,value\n1,one\n2,two\n3,three\n4,four\n");
+            #[test]
+            fn vertical_projection_is_bounded_and_follows_the_cursor() {
+                let mut state = state("id,value\n1,one\n2,two\n3,three\n4,four\n");
 
-        let initial = state.create_graphemes_in_viewport(40, 3);
-        assert_eq!(initial.graphemes.logical_lines().len(), 3);
-        assert!(initial.graphemes.to_string().contains("1"));
-        assert!(initial.graphemes.to_string().contains("2"));
+                let initial = state.create_graphemes_in_viewport(40, 3);
+                assert_eq!(initial.graphemes.logical_lines().len(), 3);
+                assert!(initial.graphemes.to_string().contains("1"));
+                assert!(initial.graphemes.to_string().contains("2"));
 
-        state.document.down();
-        state.document.down();
-        let moved = state.create_graphemes_in_viewport(40, 3);
-        assert!(!moved.graphemes.to_string().contains("1   "));
-        assert!(moved.graphemes.to_string().contains("3"));
-        assert_eq!(moved.cursor.unwrap().row, 2);
-    }
+                state.document.down();
+                state.document.down();
+                let moved = state.create_graphemes_in_viewport(40, 3);
+                assert!(!moved.graphemes.to_string().contains("1   "));
+                assert!(moved.graphemes.to_string().contains("3"));
+                assert_eq!(moved.cursor.unwrap().row, 2);
+            }
 
-    #[test]
-    fn horizontal_projection_scrolls_by_display_cell() {
-        let mut state = state("abc,def\none,two\n");
-        state.config.separator = "|".to_owned();
+            #[test]
+            fn horizontal_projection_scrolls_by_display_cell() {
+                let mut state = state("abc,def\none,two\n");
+                state.config.separator = "|".to_owned();
 
-        let first = state.create_graphemes_in_viewport(2, 2);
-        assert!(first.graphemes.to_string().starts_with("ab"));
+                let first = state.create_graphemes_in_viewport(2, 2);
+                assert!(first.graphemes.to_string().starts_with("ab"));
 
-        state.document.scroll_right_by(1);
-        let second = state.create_graphemes_in_viewport(2, 2);
-        assert!(second.graphemes.to_string().starts_with("bc"));
-        assert_eq!(state.document.horizontal_offset(), 1);
-    }
+                state.document.scroll_right_by(1);
+                let second = state.create_graphemes_in_viewport(2, 2);
+                assert!(second.graphemes.to_string().starts_with("bc"));
+                assert_eq!(state.document.horizontal_offset(), 1);
+            }
 
-    #[test]
-    fn horizontal_projection_preserves_cell_suffixes_without_ellipsis() {
-        let mut state = state("value\nabcdefghijklmnopqrstuvwxyz\n");
-        let initial = state.create_graphemes_in_viewport(10, 2);
-        assert!(!initial.graphemes.to_string().contains('…'));
+            #[test]
+            fn horizontal_projection_preserves_cell_suffixes_without_ellipsis() {
+                let mut state = state("value\nabcdefghijklmnopqrstuvwxyz\n");
+                let initial = state.create_graphemes_in_viewport(10, 2);
+                assert!(!initial.graphemes.to_string().contains('…'));
 
-        assert!(state.document.scroll_right_by(16));
-        let scrolled = state.create_graphemes_in_viewport(10, 2);
-        let lines = scrolled.graphemes.logical_lines();
-        assert_eq!(lines[1].to_string(), "qrstuvwxyz");
-        assert!(!scrolled.graphemes.to_string().contains('…'));
-    }
+                assert!(state.document.scroll_right_by(16));
+                let scrolled = state.create_graphemes_in_viewport(10, 2);
+                let lines = scrolled.graphemes.logical_lines();
+                assert_eq!(lines[1].to_string(), "qrstuvwxyz");
+                assert!(!scrolled.graphemes.to_string().contains('…'));
+            }
 
-    #[test]
-    fn projection_replaces_embedded_newlines_and_respects_width() {
-        let mut state = state("name,note\nalice,\"line 1\nline 2\"\n");
-        state.create_graphemes_in_viewport(10, 2);
-        state.document.scroll_to_end();
-        let projected = state.create_graphemes_in_viewport(10, 2);
+            #[test]
+            fn projection_replaces_embedded_newlines_and_respects_width() {
+                let mut state = state("name,note\nalice,\"line 1\nline 2\"\n");
+                state.create_graphemes_in_viewport(10, 2);
+                state.document.scroll_to_end();
+                let projected = state.create_graphemes_in_viewport(10, 2);
 
-        assert_eq!(projected.graphemes.logical_lines().len(), 2);
-        assert!(projected.graphemes.to_string().contains('↵'));
-        assert!(
-            projected
-                .graphemes
-                .logical_lines()
-                .iter()
-                .all(|line| line.widths() <= 10)
-        );
-    }
+                assert_eq!(projected.graphemes.logical_lines().len(), 2);
+                assert!(projected.graphemes.to_string().contains('↵'));
+                assert!(
+                    projected
+                        .graphemes
+                        .logical_lines()
+                        .iter()
+                        .all(|line| line.widths() <= 10)
+                );
+            }
+        }
 
-    #[test]
-    fn resolves_header_and_body_hits_in_the_latest_viewport() {
-        let mut state = state("a,b,c\nx,y,z\n");
-        state.config.separator = "|".to_owned();
-        state.create_graphemes_in_viewport(3, 2);
-        state.document.scroll_right_by(2);
-        state.create_graphemes_in_viewport(3, 2);
+        mod hit_at_viewport {
+            use super::*;
 
-        assert_eq!(
-            state.hit_at_viewport(ContentPosition { row: 0, column: 0 }),
-            Some(TableHit::Header { column: 1 })
-        );
-        assert_eq!(
-            state.hit_at_viewport(ContentPosition { row: 1, column: 0 }),
-            Some(TableHit::Cell { row: 0, column: 1 })
-        );
-    }
+            #[test]
+            fn resolves_header_and_body_in_the_latest_viewport() {
+                let mut state = state("a,b,c\nx,y,z\n");
+                state.config.separator = "|".to_owned();
+                state.create_graphemes_in_viewport(3, 2);
+                state.document.scroll_right_by(2);
+                state.create_graphemes_in_viewport(3, 2);
 
-    #[test]
-    fn rejects_non_rectangular_csv() {
-        assert!(
-            Document::from_csv("a,b\none,two\nthree\n".as_bytes(), CsvOptions::default()).is_err()
-        );
+                assert_eq!(
+                    state.hit_at_viewport(ContentPosition { row: 0, column: 0 }),
+                    Some(TableHit::Header { column: 1 })
+                );
+                assert_eq!(
+                    state.hit_at_viewport(ContentPosition { row: 1, column: 0 }),
+                    Some(TableHit::Cell { row: 0, column: 1 })
+                );
+            }
+        }
     }
 }

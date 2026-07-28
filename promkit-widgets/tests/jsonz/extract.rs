@@ -3,7 +3,7 @@ use std::str::FromStr;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_basic_extract() {
+fn extracts_visible_rows() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -61,7 +61,7 @@ fn test_basic_extract() {
 }
 
 #[test]
-fn test_extract_with_collapsed_open() {
+fn extracts_a_collapsed_open_container() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -120,7 +120,7 @@ fn test_extract_with_collapsed_open() {
 }
 
 #[test]
-fn test_extract_nested_structure() {
+fn extracts_a_nested_structure() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -176,7 +176,7 @@ fn test_extract_nested_structure() {
 }
 
 #[test]
-fn test_extract_boundary_cases() {
+fn handles_boundaries() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -200,7 +200,7 @@ fn test_extract_boundary_cases() {
 }
 
 #[test]
-fn test_extract_complex_nested_collapsed() {
+fn extracts_complex_nested_collapsed_containers() {
     let input = serde_json::Value::from_str(
         r#"
             {

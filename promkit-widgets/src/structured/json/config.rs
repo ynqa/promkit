@@ -261,92 +261,95 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    mod render_terminal_rows {
+    mod config {
         use super::*;
 
-        use crate::structured::json::jsonz::create_rows;
+        mod render_terminal_rows {
+            use super::*;
 
-        #[test]
-        fn test_ellipsis_mode_truncates_with_ellipsis() {
-            let value = json!({
-                "very_long_key": "abcdefghijklmnopqrstuvwxyz",
-            });
-            let rows = create_rows([&value]);
-            let width = 12;
+            use crate::structured::json::jsonz::create_rows;
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Truncate,
-                ..Default::default()
+            #[test]
+            fn truncate_mode_appends_an_ellipsis() {
+                let value = json!({
+                    "very_long_key": "abcdefghijklmnopqrstuvwxyz",
+                });
+                let rows = create_rows([&value]);
+                let width = 12;
+
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, width);
+
+                assert_eq!(lines.len(), rows.len());
+                assert!(lines.iter().all(|line| line.widths() <= width as usize));
+                assert!(
+                    lines
+                        .iter()
+                        .any(|line| line.chars().last().is_some_and(|ch| *ch == '…'))
+                );
             }
-            .render_terminal_rows(&rows, width);
 
-            assert_eq!(lines.len(), rows.len());
-            assert!(lines.iter().all(|line| line.widths() <= width as usize));
-            assert!(
-                lines
-                    .iter()
-                    .any(|line| line.chars().last().is_some_and(|ch| *ch == '…'))
-            );
-        }
+            #[test]
+            fn wrap_mode_wraps_without_an_ellipsis() {
+                let value = json!({
+                    "very_long_key": "abcdefghijklmnopqrstuvwxyz",
+                });
+                let rows = create_rows([&value]);
+                let width = 12;
 
-        #[test]
-        fn test_linewrap_mode_wraps_without_ellipsis() {
-            let value = json!({
-                "very_long_key": "abcdefghijklmnopqrstuvwxyz",
-            });
-            let rows = create_rows([&value]);
-            let width = 12;
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Wrap,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, width);
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Wrap,
-                ..Default::default()
+                assert!(lines.len() > rows.len());
+                assert!(lines.iter().all(|line| line.widths() <= width as usize));
+                assert!(
+                    lines
+                        .iter()
+                        .all(|line| !matches!(line.chars().last(), Some('…')))
+                );
             }
-            .render_terminal_rows(&rows, width);
-
-            assert!(lines.len() > rows.len());
-            assert!(lines.iter().all(|line| line.widths() <= width as usize));
-            assert!(
-                lines
-                    .iter()
-                    .all(|line| !matches!(line.chars().last(), Some('…')))
-            );
-        }
-    }
-
-    #[cfg(feature = "serde")]
-    mod serde_compatibility {
-        use super::*;
-        use promkit_core::crossterm::style::{Attributes, Color};
-
-        #[test]
-        fn missing_new_fields_are_filled_by_default() {
-            let mut value = serde_json::to_value(Config {
-                indent: 4,
-                ..Default::default()
-            })
-            .unwrap();
-            let obj = value.as_object_mut().unwrap();
-            obj.remove("active_item_attribute");
-            obj.remove("inactive_item_attribute");
-            obj.remove("overflow_mode");
-            obj.remove("lines");
-            obj.remove("show_line_numbers");
-
-            let formatter: Config = serde_json::from_value(value).unwrap();
-
-            assert_eq!(formatter.indent, 4);
-            assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
-            assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
-            assert_eq!(formatter.overflow_mode, OverflowMode::Truncate);
-            assert_eq!(formatter.lines, None);
-            assert!(!formatter.show_line_numbers);
         }
 
-        #[test]
-        fn config_fields_are_fully_loaded_from_toml() {
-            let input = r#"
+        #[cfg(feature = "serde")]
+        mod deserialize {
+            use super::*;
+            use promkit_core::crossterm::style::{Attributes, Color};
+
+            #[test]
+            fn missing_new_fields_are_filled_by_default() {
+                let mut value = serde_json::to_value(Config {
+                    indent: 4,
+                    ..Default::default()
+                })
+                .unwrap();
+                let obj = value.as_object_mut().unwrap();
+                obj.remove("active_item_attribute");
+                obj.remove("inactive_item_attribute");
+                obj.remove("overflow_mode");
+                obj.remove("lines");
+                obj.remove("show_line_numbers");
+
+                let formatter: Config = serde_json::from_value(value).unwrap();
+
+                assert_eq!(formatter.indent, 4);
+                assert_eq!(formatter.active_item_attribute, Attribute::NoBold);
+                assert_eq!(formatter.inactive_item_attribute, Attribute::NoBold);
+                assert_eq!(formatter.overflow_mode, OverflowMode::Truncate);
+                assert_eq!(formatter.lines, None);
+                assert!(!formatter.show_line_numbers);
+            }
+
+            #[test]
+            fn loads_all_fields_from_toml() {
+                let input = r#"
                 indent = 4
                 lines = 7
                 show_line_numbers = true
@@ -362,39 +365,40 @@ mod tests {
                 overflow_mode = "Wrap"
             "#;
 
-            let formatter: Config = toml::from_str(input).unwrap();
+                let formatter: Config = toml::from_str(input).unwrap();
 
-            assert_eq!(formatter.indent, 4);
-            assert_eq!(formatter.lines, Some(7));
-            assert!(formatter.show_line_numbers);
-            assert_eq!(
-                formatter.curly_brackets_style.attributes,
-                Attributes::from(Attribute::Bold),
-            );
-            assert_eq!(
-                formatter.square_brackets_style.attributes,
-                Attributes::from(Attribute::Bold),
-            );
-            assert_eq!(formatter.key_style.foreground_color, Some(Color::Cyan));
-            assert_eq!(
-                formatter.string_value_style.foreground_color,
-                Some(Color::Green),
-            );
-            assert_eq!(
-                formatter.number_value_style.foreground_color,
-                Some(Color::Yellow)
-            );
-            assert_eq!(
-                formatter.boolean_value_style.foreground_color,
-                Some(Color::Magenta),
-            );
-            assert_eq!(
-                formatter.null_value_style.foreground_color,
-                Some(Color::Grey)
-            );
-            assert_eq!(formatter.active_item_attribute, Attribute::Underlined);
-            assert_eq!(formatter.inactive_item_attribute, Attribute::Dim);
-            assert_eq!(formatter.overflow_mode, OverflowMode::Wrap);
+                assert_eq!(formatter.indent, 4);
+                assert_eq!(formatter.lines, Some(7));
+                assert!(formatter.show_line_numbers);
+                assert_eq!(
+                    formatter.curly_brackets_style.attributes,
+                    Attributes::from(Attribute::Bold),
+                );
+                assert_eq!(
+                    formatter.square_brackets_style.attributes,
+                    Attributes::from(Attribute::Bold),
+                );
+                assert_eq!(formatter.key_style.foreground_color, Some(Color::Cyan));
+                assert_eq!(
+                    formatter.string_value_style.foreground_color,
+                    Some(Color::Green),
+                );
+                assert_eq!(
+                    formatter.number_value_style.foreground_color,
+                    Some(Color::Yellow)
+                );
+                assert_eq!(
+                    formatter.boolean_value_style.foreground_color,
+                    Some(Color::Magenta),
+                );
+                assert_eq!(
+                    formatter.null_value_style.foreground_color,
+                    Some(Color::Grey)
+                );
+                assert_eq!(formatter.active_item_attribute, Attribute::Underlined);
+                assert_eq!(formatter.inactive_item_attribute, Attribute::Dim);
+                assert_eq!(formatter.overflow_mode, OverflowMode::Wrap);
+            }
         }
     }
 }

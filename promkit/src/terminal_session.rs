@@ -218,151 +218,167 @@ mod tests {
         TerminalSession::try_new_with(mock_backend, modes)
     }
 
-    #[test]
-    fn restores_fullscreen_modes_in_reverse_order() {
-        reset([]);
+    mod terminal_session {
+        use super::*;
 
-        let modes = TerminalModes::RAW_MODE
-            | TerminalModes::ALTERNATE_SCREEN
-            | TerminalModes::HIDDEN_CURSOR
-            | TerminalModes::MOUSE_CAPTURE;
-        let mut session = try_new(modes).unwrap();
-        session.restore().unwrap();
-        session.restore().unwrap();
+        mod restore {
+            use super::*;
 
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnableRawMode,
-                Operation::EnterAlternateScreen,
-                Operation::HideCursor,
-                Operation::EnableMouseCapture,
-                Operation::DisableMouseCapture,
-                Operation::ShowCursor,
-                Operation::LeaveAlternateScreen,
-                Operation::DisableRawMode,
-            ]
-        );
-    }
+            #[test]
+            fn restores_fullscreen_modes_in_reverse_order() {
+                reset([]);
 
-    #[test]
-    fn restores_terminal_when_dropped() {
-        reset([]);
+                let modes = TerminalModes::RAW_MODE
+                    | TerminalModes::ALTERNATE_SCREEN
+                    | TerminalModes::HIDDEN_CURSOR
+                    | TerminalModes::MOUSE_CAPTURE;
+                let mut session = try_new(modes).unwrap();
+                session.restore().unwrap();
+                session.restore().unwrap();
 
-        {
-            let modes = TerminalModes::RAW_MODE
-                | TerminalModes::HIDDEN_CURSOR
-                | TerminalModes::MOUSE_CAPTURE;
-            let _session = try_new(modes).unwrap();
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnableRawMode,
+                        Operation::EnterAlternateScreen,
+                        Operation::HideCursor,
+                        Operation::EnableMouseCapture,
+                        Operation::DisableMouseCapture,
+                        Operation::ShowCursor,
+                        Operation::LeaveAlternateScreen,
+                        Operation::DisableRawMode,
+                    ]
+                );
+            }
+
+            #[test]
+            fn continues_after_an_error_and_retries_failed_steps() {
+                reset([Operation::DisableMouseCapture]);
+
+                let modes = TerminalModes::RAW_MODE
+                    | TerminalModes::ALTERNATE_SCREEN
+                    | TerminalModes::HIDDEN_CURSOR
+                    | TerminalModes::MOUSE_CAPTURE;
+                let mut session = try_new(modes).unwrap();
+                assert_eq!(session.restore().unwrap_err().kind(), ErrorKind::Other);
+                session.restore().unwrap();
+
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnableRawMode,
+                        Operation::EnterAlternateScreen,
+                        Operation::HideCursor,
+                        Operation::EnableMouseCapture,
+                        Operation::DisableMouseCapture,
+                        Operation::ShowCursor,
+                        Operation::LeaveAlternateScreen,
+                        Operation::DisableRawMode,
+                        Operation::DisableMouseCapture,
+                    ]
+                );
+            }
+
+            #[test]
+            fn applies_only_requested_modes() {
+                reset([]);
+
+                let modes = TerminalModes::ALTERNATE_SCREEN | TerminalModes::MOUSE_CAPTURE;
+                let mut session = try_new(modes).unwrap();
+                session.restore().unwrap();
+
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnterAlternateScreen,
+                        Operation::EnableMouseCapture,
+                        Operation::DisableMouseCapture,
+                        Operation::LeaveAlternateScreen,
+                    ]
+                );
+            }
         }
 
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnableRawMode,
-                Operation::HideCursor,
-                Operation::EnableMouseCapture,
-                Operation::DisableMouseCapture,
-                Operation::ShowCursor,
-                Operation::DisableRawMode,
-            ]
-        );
-    }
+        mod drop {
+            use super::*;
 
-    #[test]
-    fn rolls_back_attempted_setup_when_setup_fails() {
-        reset([Operation::HideCursor]);
+            #[test]
+            fn restores_terminal_when_dropped() {
+                reset([]);
 
-        let modes = TerminalModes::RAW_MODE
-            | TerminalModes::ALTERNATE_SCREEN
-            | TerminalModes::HIDDEN_CURSOR
-            | TerminalModes::MOUSE_CAPTURE;
-        let error = try_new(modes).err().expect("setup must fail");
+                {
+                    let modes = TerminalModes::RAW_MODE
+                        | TerminalModes::HIDDEN_CURSOR
+                        | TerminalModes::MOUSE_CAPTURE;
+                    let _session = try_new(modes).unwrap();
+                }
 
-        assert_eq!(error.kind(), ErrorKind::Other);
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnableRawMode,
-                Operation::EnterAlternateScreen,
-                Operation::HideCursor,
-                Operation::ShowCursor,
-                Operation::LeaveAlternateScreen,
-                Operation::DisableRawMode,
-            ]
-        );
-    }
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnableRawMode,
+                        Operation::HideCursor,
+                        Operation::EnableMouseCapture,
+                        Operation::DisableMouseCapture,
+                        Operation::ShowCursor,
+                        Operation::DisableRawMode,
+                    ]
+                );
+            }
+        }
 
-    #[test]
-    fn restores_attempted_setup_when_setup_panics() {
-        reset([]);
+        mod try_new_with {
+            use super::*;
 
-        let modes = TerminalModes::RAW_MODE
-            | TerminalModes::ALTERNATE_SCREEN
-            | TerminalModes::HIDDEN_CURSOR
-            | TerminalModes::MOUSE_CAPTURE;
-        let panic = std::panic::catch_unwind(|| {
-            TerminalSession::try_new_with(panicking_backend, modes).ok();
-        });
+            #[test]
+            fn rolls_back_attempted_setup_when_setup_fails() {
+                reset([Operation::HideCursor]);
 
-        assert!(panic.is_err());
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnableRawMode,
-                Operation::EnterAlternateScreen,
-                Operation::HideCursor,
-                Operation::ShowCursor,
-                Operation::LeaveAlternateScreen,
-                Operation::DisableRawMode,
-            ]
-        );
-    }
+                let modes = TerminalModes::RAW_MODE
+                    | TerminalModes::ALTERNATE_SCREEN
+                    | TerminalModes::HIDDEN_CURSOR
+                    | TerminalModes::MOUSE_CAPTURE;
+                let error = try_new(modes).err().expect("setup must fail");
 
-    #[test]
-    fn continues_restoring_after_an_error_and_retries_failed_steps() {
-        reset([Operation::DisableMouseCapture]);
+                assert_eq!(error.kind(), ErrorKind::Other);
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnableRawMode,
+                        Operation::EnterAlternateScreen,
+                        Operation::HideCursor,
+                        Operation::ShowCursor,
+                        Operation::LeaveAlternateScreen,
+                        Operation::DisableRawMode,
+                    ]
+                );
+            }
 
-        let modes = TerminalModes::RAW_MODE
-            | TerminalModes::ALTERNATE_SCREEN
-            | TerminalModes::HIDDEN_CURSOR
-            | TerminalModes::MOUSE_CAPTURE;
-        let mut session = try_new(modes).unwrap();
-        assert_eq!(session.restore().unwrap_err().kind(), ErrorKind::Other);
-        session.restore().unwrap();
+            #[test]
+            fn restores_attempted_setup_when_setup_panics() {
+                reset([]);
 
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnableRawMode,
-                Operation::EnterAlternateScreen,
-                Operation::HideCursor,
-                Operation::EnableMouseCapture,
-                Operation::DisableMouseCapture,
-                Operation::ShowCursor,
-                Operation::LeaveAlternateScreen,
-                Operation::DisableRawMode,
-                Operation::DisableMouseCapture,
-            ]
-        );
-    }
+                let modes = TerminalModes::RAW_MODE
+                    | TerminalModes::ALTERNATE_SCREEN
+                    | TerminalModes::HIDDEN_CURSOR
+                    | TerminalModes::MOUSE_CAPTURE;
+                let panic = std::panic::catch_unwind(|| {
+                    TerminalSession::try_new_with(panicking_backend, modes).ok();
+                });
 
-    #[test]
-    fn applies_only_requested_modes() {
-        reset([]);
-
-        let modes = TerminalModes::ALTERNATE_SCREEN | TerminalModes::MOUSE_CAPTURE;
-        let mut session = try_new(modes).unwrap();
-        session.restore().unwrap();
-
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnterAlternateScreen,
-                Operation::EnableMouseCapture,
-                Operation::DisableMouseCapture,
-                Operation::LeaveAlternateScreen,
-            ]
-        );
+                assert!(panic.is_err());
+                assert_eq!(
+                    operations(),
+                    [
+                        Operation::EnableRawMode,
+                        Operation::EnterAlternateScreen,
+                        Operation::HideCursor,
+                        Operation::ShowCursor,
+                        Operation::LeaveAlternateScreen,
+                        Operation::DisableRawMode,
+                    ]
+                );
+            }
+        }
     }
 }

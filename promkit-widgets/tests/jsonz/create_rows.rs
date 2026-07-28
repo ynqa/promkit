@@ -5,7 +5,7 @@ use serde_json::Deserializer;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_empty_containers() {
+fn creates_rows_for_empty_containers() {
     let values: Vec<_> = Deserializer::from_str(
         r#"
             {}
@@ -43,7 +43,7 @@ fn test_empty_containers() {
 }
 
 #[test]
-fn test_nested_object() {
+fn creates_rows_for_a_nested_object() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -148,7 +148,7 @@ fn test_nested_object() {
 }
 
 #[test]
-fn test_nested_array() {
+fn creates_rows_for_a_nested_array() {
     let input = serde_json::Value::from_str(
         r#"
             [
@@ -257,7 +257,7 @@ fn test_nested_array() {
 }
 
 #[test]
-fn test_mixed_containers() {
+fn creates_rows_for_mixed_containers() {
     let input = serde_json::Value::from_str(
         r#"
             {

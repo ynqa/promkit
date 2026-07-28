@@ -191,20 +191,15 @@ impl History {
 }
 
 #[cfg(test)]
-mod test {
-    mod position {
+mod tests {
+    mod backward {
         use super::super::*;
 
         #[test]
-        fn navigation_stops_at_the_history_boundaries() {
+        fn stops_at_the_oldest_entry() {
             let mut history = History::default();
             history.insert("first");
             history.insert("second");
-
-            assert_eq!(history.position, 2);
-            assert_eq!(history.get(), "");
-            assert!(!history.forward());
-            assert_eq!(history.position, 2);
 
             assert!(history.backward());
             assert_eq!(history.position, 1);
@@ -214,11 +209,36 @@ mod test {
             assert_eq!(history.get(), "first");
             assert!(!history.backward());
             assert_eq!(history.position, 0);
+        }
+    }
 
+    mod forward {
+        use super::super::*;
+
+        #[test]
+        fn stops_at_the_editing_slot() {
+            let mut history = History::default();
+            history.insert("first");
+
+            assert!(!history.forward());
+            assert_eq!(history.position, 1);
+            assert!(history.backward());
             assert!(history.forward());
             assert_eq!(history.position, 1);
+        }
+    }
+
+    mod move_to_tail {
+        use super::super::*;
+
+        #[test]
+        fn selects_the_editing_slot() {
+            let mut history = History::default();
+            history.insert("first");
+            history.backward();
+
             history.move_to_tail();
-            assert_eq!(history.position, 2);
+            assert_eq!(history.position, 1);
         }
     }
 
@@ -226,7 +246,7 @@ mod test {
         use super::super::*;
 
         #[test]
-        fn test() {
+        fn appends_an_entry_before_the_editing_slot() {
             let mut h = History::default();
             h.insert("item");
             assert_eq!(
@@ -236,7 +256,7 @@ mod test {
         }
 
         #[test]
-        fn test_with_multiple_items() {
+        fn preserves_insertion_order() {
             let mut h = History::default();
             h.insert("item1");
             h.insert("item2");
@@ -247,7 +267,7 @@ mod test {
         }
 
         #[test]
-        fn test_with_limit_size() {
+        fn evicts_the_oldest_entry_at_the_size_limit() {
             let mut h = History {
                 limit_size: Some(2),
                 ..Default::default()
@@ -266,7 +286,7 @@ mod test {
         use super::super::*;
 
         #[test]
-        fn test() {
+        fn reports_whether_an_entry_exists() {
             let mut h = History::default();
             h.insert("existed");
             assert!(h.exists("existed"));

@@ -254,54 +254,58 @@ mod tests {
     use super::*;
     use crate::{grapheme::StyledGraphemes, widget::WidgetViewport};
 
-    #[test]
-    fn hit_test_and_screen_position_round_trip() {
-        let renderer = Renderer {
-            terminal: AsyncMutex::new(Terminal::new((0, 0))),
-            contents: SkipMap::new(),
-            layout_engine: Mutex::new(RendererLayout::default()),
-            layout: RwLock::new(Some(LayoutSnapshot {
-                origin: ScreenPosition { row: 3, column: 0 },
-                terminal_width: 20,
-                entries: vec![layout::LayoutEntry {
-                    index: 7usize,
-                    viewport: WidgetViewport {
-                        screen_row: 3,
-                        height: 2,
-                        content_row: 1,
-                    },
-                    rows: vec![
-                        layout::VisualRow {
-                            content_row: 0,
-                            content_column: 0,
-                            graphemes: StyledGraphemes::from("hidden"),
-                        },
-                        layout::VisualRow {
-                            content_row: 1,
-                            content_column: 0,
-                            graphemes: StyledGraphemes::from("first"),
-                        },
-                        layout::VisualRow {
-                            content_row: 2,
-                            content_column: 0,
-                            graphemes: StyledGraphemes::from("second"),
-                        },
-                    ],
-                }],
-            })),
-            last_terminal_size: Mutex::new(None),
-        };
+    mod hit_test {
+        use super::*;
 
-        let screen = ScreenPosition { row: 4, column: 2 };
-        let widget = renderer.hit_test(screen).unwrap();
-        assert_eq!(
-            widget,
-            WidgetPosition {
-                index: 7,
-                row: 2,
-                column: 2,
-            }
-        );
-        assert_eq!(renderer.screen_position(widget), Some(screen));
+        #[test]
+        fn maps_screen_positions_back_to_widget_positions() {
+            let renderer = Renderer {
+                terminal: AsyncMutex::new(Terminal::new((0, 0))),
+                contents: SkipMap::new(),
+                layout_engine: Mutex::new(RendererLayout::default()),
+                layout: RwLock::new(Some(LayoutSnapshot {
+                    origin: ScreenPosition { row: 3, column: 0 },
+                    terminal_width: 20,
+                    entries: vec![layout::LayoutEntry {
+                        index: 7usize,
+                        viewport: WidgetViewport {
+                            screen_row: 3,
+                            height: 2,
+                            content_row: 1,
+                        },
+                        rows: vec![
+                            layout::VisualRow {
+                                content_row: 0,
+                                content_column: 0,
+                                graphemes: StyledGraphemes::from("hidden"),
+                            },
+                            layout::VisualRow {
+                                content_row: 1,
+                                content_column: 0,
+                                graphemes: StyledGraphemes::from("first"),
+                            },
+                            layout::VisualRow {
+                                content_row: 2,
+                                content_column: 0,
+                                graphemes: StyledGraphemes::from("second"),
+                            },
+                        ],
+                    }],
+                })),
+                last_terminal_size: Mutex::new(None),
+            };
+
+            let screen = ScreenPosition { row: 4, column: 2 };
+            let widget = renderer.hit_test(screen).unwrap();
+            assert_eq!(
+                widget,
+                WidgetPosition {
+                    index: 7,
+                    row: 2,
+                    column: 2,
+                }
+            );
+            assert_eq!(renderer.screen_position(widget), Some(screen));
+        }
     }
 }

@@ -92,17 +92,25 @@ pub enum CheckboxHit {
 mod tests {
     use super::*;
 
-    #[test]
-    fn resolves_item_rows_for_hits() {
-        let state = State {
-            checkbox: Checkbox::from_displayable(["first", "second"]),
-            config: Config::default(),
-        };
+    mod state {
+        use super::*;
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 20 }),
-            Some(CheckboxHit::Toggle { index: 1 })
-        );
-        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+        mod hit_at {
+            use super::*;
+
+            #[test]
+            fn resolves_item_rows() {
+                let state = State {
+                    checkbox: Checkbox::from_displayable(["first", "second"]),
+                    config: Config::default(),
+                };
+
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 20 }),
+                    Some(CheckboxHit::Toggle { index: 1 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+            }
+        }
     }
 }

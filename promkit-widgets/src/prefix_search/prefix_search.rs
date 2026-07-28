@@ -118,65 +118,109 @@ mod tests {
             .collect()
     }
 
-    #[test]
-    fn search_filters_trie_and_selects_first_match() {
-        let mut prefix_search = prefix_search();
+    mod search {
+        use super::*;
 
-        assert!(prefix_search.search("app"));
-        assert_eq!(
-            prefix_search.candidates().collect::<Vec<_>>(),
-            vec!["apple", "applet", "application"]
-        );
-        assert_eq!(prefix_search.selected(), Some(0));
-        assert_eq!(prefix_search.get(), Some("apple"));
+        #[test]
+        fn filters_the_trie_and_selects_the_first_match() {
+            let mut prefix_search = prefix_search();
 
-        assert!(prefix_search.search("ban"));
-        assert_eq!(
-            prefix_search.candidates().collect::<Vec<_>>(),
-            vec!["banana"]
-        );
-        assert_eq!(prefix_search.selected(), Some(0));
-        assert_eq!(prefix_search.get(), Some("banana"));
+            assert!(prefix_search.search("app"));
+            assert_eq!(
+                prefix_search.candidates().collect::<Vec<_>>(),
+                vec!["apple", "applet", "application"]
+            );
+            assert_eq!(prefix_search.selected(), Some(0));
+            assert_eq!(prefix_search.get(), Some("apple"));
+
+            assert!(prefix_search.search("ban"));
+            assert_eq!(
+                prefix_search.candidates().collect::<Vec<_>>(),
+                vec!["banana"]
+            );
+            assert_eq!(prefix_search.selected(), Some(0));
+            assert_eq!(prefix_search.get(), Some("banana"));
+        }
+
+        #[test]
+        fn missing_match_clears_the_selection() {
+            let mut prefix_search = prefix_search();
+
+            assert!(prefix_search.search("app"));
+            assert!(!prefix_search.search("orange"));
+            assert!(prefix_search.is_empty());
+            assert_eq!(prefix_search.selected(), None);
+            assert_eq!(prefix_search.get(), None);
+        }
     }
 
-    #[test]
-    fn search_without_a_match_clears_the_selection() {
-        let mut prefix_search = prefix_search();
+    mod backward {
+        use super::*;
 
-        assert!(prefix_search.search("app"));
-        assert!(!prefix_search.search("orange"));
-        assert!(prefix_search.is_empty());
-        assert_eq!(prefix_search.selected(), None);
-        assert_eq!(prefix_search.get(), None);
+        #[test]
+        fn stops_at_the_first_match() {
+            let mut prefix_search = prefix_search();
+            prefix_search.search("app");
+
+            assert!(!prefix_search.backward());
+            assert_eq!(prefix_search.get(), Some("apple"));
+        }
     }
 
-    #[test]
-    fn navigation_stops_at_match_boundaries() {
-        let mut prefix_search = prefix_search();
-        prefix_search.search("app");
+    mod forward {
+        use super::*;
 
-        assert!(!prefix_search.backward());
-        assert!(prefix_search.forward());
-        assert_eq!(prefix_search.get(), Some("applet"));
-        assert!(prefix_search.forward());
-        assert_eq!(prefix_search.get(), Some("application"));
-        assert!(!prefix_search.forward());
-        assert!(!prefix_search.move_to(3));
-        assert_eq!(prefix_search.selected(), Some(2));
-        assert!(prefix_search.move_to(0));
-        assert_eq!(prefix_search.get(), Some("apple"));
+        #[test]
+        fn stops_at_the_last_match() {
+            let mut prefix_search = prefix_search();
+            prefix_search.search("app");
+
+            assert!(prefix_search.forward());
+            assert_eq!(prefix_search.get(), Some("applet"));
+            assert!(prefix_search.forward());
+            assert_eq!(prefix_search.get(), Some("application"));
+            assert!(!prefix_search.forward());
+        }
     }
 
-    #[test]
-    fn clear_hides_matches_without_removing_candidates() {
-        let mut prefix_search = prefix_search();
-        prefix_search.search("app");
+    mod move_to {
+        use super::*;
 
-        prefix_search.clear();
+        #[test]
+        fn rejects_an_out_of_bounds_index() {
+            let mut prefix_search = prefix_search();
+            prefix_search.search("app");
+            prefix_search.move_to(2);
 
-        assert!(prefix_search.is_empty());
-        assert_eq!(prefix_search.selected(), None);
-        assert!(prefix_search.search("app"));
-        assert_eq!(prefix_search.get(), Some("apple"));
+            assert!(!prefix_search.move_to(3));
+            assert_eq!(prefix_search.selected(), Some(2));
+        }
+
+        #[test]
+        fn selects_the_given_match() {
+            let mut prefix_search = prefix_search();
+            prefix_search.search("app");
+            prefix_search.move_to(2);
+
+            assert!(prefix_search.move_to(0));
+            assert_eq!(prefix_search.get(), Some("apple"));
+        }
+    }
+
+    mod clear {
+        use super::*;
+
+        #[test]
+        fn hides_matches_without_removing_candidates() {
+            let mut prefix_search = prefix_search();
+            prefix_search.search("app");
+
+            prefix_search.clear();
+
+            assert!(prefix_search.is_empty());
+            assert_eq!(prefix_search.selected(), None);
+            assert!(prefix_search.search("app"));
+            assert_eq!(prefix_search.get(), Some("apple"));
+        }
     }
 }

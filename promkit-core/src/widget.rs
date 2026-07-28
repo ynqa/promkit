@@ -161,39 +161,47 @@ pub trait Widget {
 mod tests {
     use super::*;
 
-    #[test]
-    fn viewport_does_not_scroll_while_position_is_visible() {
-        let mut viewport = WidgetViewport {
-            height: 3,
-            content_row: 4,
-            ..Default::default()
-        };
+    mod widget_viewport {
+        use super::*;
 
-        assert_eq!(
-            viewport.scroll_to_include(VisualPosition { row: 6, column: 0 }),
-            ViewportChange::Unchanged
-        );
-        assert_eq!(viewport.content_row, 4);
-    }
+        mod scroll_to_include {
+            use super::*;
 
-    #[test]
-    fn viewport_scrolls_the_minimum_distance() {
-        let mut viewport = WidgetViewport {
-            height: 3,
-            content_row: 4,
-            ..Default::default()
-        };
+            #[test]
+            fn does_not_scroll_while_the_position_is_visible() {
+                let mut viewport = WidgetViewport {
+                    height: 3,
+                    content_row: 4,
+                    ..Default::default()
+                };
 
-        assert_eq!(
-            viewport.scroll_to_include(VisualPosition { row: 7, column: 0 }),
-            ViewportChange::Scrolled
-        );
-        assert_eq!(viewport.content_row, 5);
+                assert_eq!(
+                    viewport.scroll_to_include(VisualPosition { row: 6, column: 0 }),
+                    ViewportChange::Unchanged
+                );
+                assert_eq!(viewport.content_row, 4);
+            }
 
-        assert_eq!(
-            viewport.scroll_to_include(VisualPosition { row: 2, column: 0 }),
-            ViewportChange::Scrolled
-        );
-        assert_eq!(viewport.content_row, 2);
+            #[test]
+            fn scrolls_the_minimum_distance_to_include_the_position() {
+                let mut viewport = WidgetViewport {
+                    height: 3,
+                    content_row: 4,
+                    ..Default::default()
+                };
+
+                assert_eq!(
+                    viewport.scroll_to_include(VisualPosition { row: 7, column: 0 }),
+                    ViewportChange::Scrolled
+                );
+                assert_eq!(viewport.content_row, 5);
+
+                assert_eq!(
+                    viewport.scroll_to_include(VisualPosition { row: 2, column: 0 }),
+                    ViewportChange::Scrolled
+                );
+                assert_eq!(viewport.content_row, 2);
+            }
+        }
     }
 }

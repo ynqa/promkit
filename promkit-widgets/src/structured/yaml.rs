@@ -104,187 +104,202 @@ pub enum YamlHit {
 mod tests {
     use super::*;
 
-    #[test]
-    fn creates_full_content_and_resolves_visible_rows_for_hits() {
-        let value =
-            serde_yaml::from_str("first: one\nsecond:\n  nested: two\nthird: three\n").unwrap();
-        let mut state = State {
-            document: Document::new([&value]),
-            config: Config::default(),
-        };
+    mod state {
+        use super::*;
 
-        let initial = state.create_graphemes();
-        assert!(initial.graphemes.to_string().contains("first: one"));
-        assert!(initial.graphemes.to_string().contains("third: three"));
-        assert_eq!(initial.cursor.unwrap().row, 0);
+        mod create_graphemes_in_viewport {
+            use super::*;
 
-        state.document.down();
-        let moved = state.create_graphemes();
-        assert!(moved.graphemes.to_string().contains("first: one"));
-        assert_eq!(moved.cursor.unwrap().row, 1);
+            #[test]
+            fn viewport_projection_is_bounded_and_resolves_hits() {
+                let value = serde_yaml::from_str(
+                    "first: one\nsecond:\n  nested: two\n  extra: value\nthird: three\n",
+                )
+                .unwrap();
+                let mut state = State {
+                    document: Document::new([&value]),
+                    config: Config::default(),
+                };
 
-        assert!(matches!(
-            state.hit_at(ContentPosition { row: 1, column: 4 }),
-            Some(YamlHit::Toggle { .. })
-        ));
-    }
+                state.create_graphemes_in_viewport(80, 2);
+                state.document.down();
+                let projected = state.create_graphemes_in_viewport(80, 2);
+                let rendered = projected.graphemes.to_string();
 
-    #[test]
-    fn viewport_projection_is_bounded_and_resolves_hits() {
-        let value = serde_yaml::from_str(
-            "first: one\nsecond:\n  nested: two\n  extra: value\nthird: three\n",
-        )
-        .unwrap();
-        let mut state = State {
-            document: Document::new([&value]),
-            config: Config::default(),
-        };
+                assert!(rendered.contains("first: one"));
+                assert!(rendered.contains("second: "));
+                assert!(!rendered.contains("nested: two"));
+                assert!(!rendered.contains("extra: value"));
+                assert!(!rendered.contains("third: three"));
+                assert_eq!(projected.cursor.unwrap().row, 1);
 
-        state.create_graphemes_in_viewport(80, 2);
-        state.document.down();
-        let projected = state.create_graphemes_in_viewport(80, 2);
-        let rendered = projected.graphemes.to_string();
+                let YamlHit::Toggle { row_index } = state
+                    .hit_at_viewport(ContentPosition { row: 1, column: 4 })
+                    .unwrap();
+                state.document.toggle_at(row_index);
 
-        assert!(rendered.contains("first: one"));
-        assert!(rendered.contains("second: "));
-        assert!(!rendered.contains("nested: two"));
-        assert!(!rendered.contains("extra: value"));
-        assert!(!rendered.contains("third: three"));
-        assert_eq!(projected.cursor.unwrap().row, 1);
+                let collapsed = state.create_graphemes_in_viewport(80, 2);
+                assert!(collapsed.graphemes.to_string().contains("second: {…}"));
+            }
 
-        let YamlHit::Toggle { row_index } = state
-            .hit_at_viewport(ContentPosition { row: 1, column: 4 })
-            .unwrap();
-        state.document.toggle_at(row_index);
+            #[test]
+            fn viewport_projection_stays_stable_until_cursor_leaves_it() {
+                let value =
+                    serde_yaml::from_str("first: 1\nsecond: 2\nthird: 3\nfourth: 4\n").unwrap();
+                let mut state = State {
+                    document: Document::new([&value]),
+                    config: Config::default(),
+                };
 
-        let collapsed = state.create_graphemes_in_viewport(80, 2);
-        assert!(collapsed.graphemes.to_string().contains("second: {…}"));
-    }
+                let initial = state.create_graphemes_in_viewport(80, 3);
+                assert!(initial.graphemes.to_string().starts_with("first: 1"));
+                assert_eq!(initial.cursor.unwrap().row, 0);
 
-    #[test]
-    fn viewport_projection_stays_stable_until_cursor_leaves_it() {
-        let value = serde_yaml::from_str("first: 1\nsecond: 2\nthird: 3\nfourth: 4\n").unwrap();
-        let mut state = State {
-            document: Document::new([&value]),
-            config: Config::default(),
-        };
+                state.document.down();
+                let moved_inside = state.create_graphemes_in_viewport(80, 3);
+                assert!(moved_inside.graphemes.to_string().starts_with("first: 1"));
+                assert_eq!(moved_inside.cursor.unwrap().row, 1);
 
-        let initial = state.create_graphemes_in_viewport(80, 3);
-        assert!(initial.graphemes.to_string().starts_with("first: 1"));
-        assert_eq!(initial.cursor.unwrap().row, 0);
+                state.document.down();
+                let moved_to_edge = state.create_graphemes_in_viewport(80, 3);
+                assert!(moved_to_edge.graphemes.to_string().starts_with("first: 1"));
+                assert_eq!(moved_to_edge.cursor.unwrap().row, 2);
 
-        state.document.down();
-        let moved_inside = state.create_graphemes_in_viewport(80, 3);
-        assert!(moved_inside.graphemes.to_string().starts_with("first: 1"));
-        assert_eq!(moved_inside.cursor.unwrap().row, 1);
+                state.document.down();
+                let moved_outside = state.create_graphemes_in_viewport(80, 3);
+                assert!(moved_outside.graphemes.to_string().starts_with("second: 2"));
+                assert_eq!(moved_outside.cursor.unwrap().row, 2);
 
-        state.document.down();
-        let moved_to_edge = state.create_graphemes_in_viewport(80, 3);
-        assert!(moved_to_edge.graphemes.to_string().starts_with("first: 1"));
-        assert_eq!(moved_to_edge.cursor.unwrap().row, 2);
+                state.document.up();
+                let moved_back_inside = state.create_graphemes_in_viewport(80, 3);
+                assert!(
+                    moved_back_inside
+                        .graphemes
+                        .to_string()
+                        .starts_with("second: 2")
+                );
+                assert_eq!(moved_back_inside.cursor.unwrap().row, 1);
 
-        state.document.down();
-        let moved_outside = state.create_graphemes_in_viewport(80, 3);
-        assert!(moved_outside.graphemes.to_string().starts_with("second: 2"));
-        assert_eq!(moved_outside.cursor.unwrap().row, 2);
+                state.document.up();
+                state.create_graphemes_in_viewport(80, 3);
+                state.document.up();
+                let moved_above = state.create_graphemes_in_viewport(80, 3);
+                assert!(moved_above.graphemes.to_string().starts_with("first: 1"));
+                assert_eq!(moved_above.cursor.unwrap().row, 0);
+            }
 
-        state.document.up();
-        let moved_back_inside = state.create_graphemes_in_viewport(80, 3);
-        assert!(
-            moved_back_inside
-                .graphemes
-                .to_string()
-                .starts_with("second: 2")
-        );
-        assert_eq!(moved_back_inside.cursor.unwrap().row, 1);
+            #[test]
+            fn configured_line_limit_bounds_viewport_projection() {
+                let value = serde_yaml::from_str("first: one\nsecond: two\n").unwrap();
+                let state = State {
+                    document: Document::new([&value]),
+                    config: Config {
+                        lines: Some(1),
+                        ..Config::default()
+                    },
+                };
 
-        state.document.up();
-        state.create_graphemes_in_viewport(80, 3);
-        state.document.up();
-        let moved_above = state.create_graphemes_in_viewport(80, 3);
-        assert!(moved_above.graphemes.to_string().starts_with("first: 1"));
-        assert_eq!(moved_above.cursor.unwrap().row, 0);
-    }
+                let projected = state.create_graphemes_in_viewport(80, 20);
+                assert_eq!(projected.graphemes.logical_lines().len(), 1);
+            }
 
-    #[test]
-    fn configured_line_limit_bounds_viewport_projection() {
-        let value = serde_yaml::from_str("first: one\nsecond: two\n").unwrap();
-        let state = State {
-            document: Document::new([&value]),
-            config: Config {
-                lines: Some(1),
-                ..Config::default()
-            },
-        };
+            #[test]
+            fn viewport_projection_uses_stable_line_numbers() {
+                let value =
+                    serde_yaml::from_str("first: one\nsecond: two\nthird: three\n").unwrap();
+                let mut state = State {
+                    document: Document::new([&value]),
+                    config: Config {
+                        show_line_numbers: true,
+                        ..Default::default()
+                    },
+                };
 
-        let projected = state.create_graphemes_in_viewport(80, 20);
-        assert_eq!(projected.graphemes.logical_lines().len(), 1);
-    }
+                state.create_graphemes_in_viewport(80, 2);
+                state.document.down();
+                state.document.down();
 
-    #[test]
-    fn preserves_expanded_line_numbers_after_toggle() {
-        let value = serde_yaml::from_str("first:\n  nested: one\nlast: two\n").unwrap();
-        let mut state = State {
-            document: Document::new([&value]),
-            config: Config {
-                show_line_numbers: true,
-                ..Default::default()
-            },
-        };
-
-        assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 3]);
-
-        state.document.toggle();
-
-        assert_eq!(state.document.visible_line_numbers(), vec![1, 3]);
-        assert_eq!(
-            state.create_graphemes().graphemes.to_string(),
-            "1 first: {…}\n3 last: two"
-        );
-    }
-
-    #[test]
-    fn collapsed_root_containers_use_the_first_visible_line_number() {
-        for (source, expected) in [
-            ("first: one\nsecond: two\n", "1 {…}"),
-            ("- first\n- second\n", "1 […]"),
-        ] {
-            let value = serde_yaml::from_str(source).unwrap();
-            let mut state = State {
-                document: Document::new([&value]),
-                config: Config {
-                    show_line_numbers: true,
-                    ..Default::default()
-                },
-            };
-
-            state.document.set_nodes_visibility(true);
-
-            assert_eq!(state.create_graphemes().graphemes.to_string(), expected);
+                assert_eq!(
+                    state
+                        .create_graphemes_in_viewport(80, 2)
+                        .graphemes
+                        .to_string(),
+                    "2 second: two\n3 third: three"
+                );
+            }
         }
-    }
 
-    #[test]
-    fn viewport_projection_uses_stable_line_numbers() {
-        let value = serde_yaml::from_str("first: one\nsecond: two\nthird: three\n").unwrap();
-        let mut state = State {
-            document: Document::new([&value]),
-            config: Config {
-                show_line_numbers: true,
-                ..Default::default()
-            },
-        };
+        mod create_graphemes {
+            use super::*;
 
-        state.create_graphemes_in_viewport(80, 2);
-        state.document.down();
-        state.document.down();
+            #[test]
+            fn creates_full_content_and_resolves_visible_rows_for_hits() {
+                let value =
+                    serde_yaml::from_str("first: one\nsecond:\n  nested: two\nthird: three\n")
+                        .unwrap();
+                let mut state = State {
+                    document: Document::new([&value]),
+                    config: Config::default(),
+                };
 
-        assert_eq!(
-            state
-                .create_graphemes_in_viewport(80, 2)
-                .graphemes
-                .to_string(),
-            "2 second: two\n3 third: three"
-        );
+                let initial = state.create_graphemes();
+                assert!(initial.graphemes.to_string().contains("first: one"));
+                assert!(initial.graphemes.to_string().contains("third: three"));
+                assert_eq!(initial.cursor.unwrap().row, 0);
+
+                state.document.down();
+                let moved = state.create_graphemes();
+                assert!(moved.graphemes.to_string().contains("first: one"));
+                assert_eq!(moved.cursor.unwrap().row, 1);
+
+                assert!(matches!(
+                    state.hit_at(ContentPosition { row: 1, column: 4 }),
+                    Some(YamlHit::Toggle { .. })
+                ));
+            }
+
+            #[test]
+            fn preserves_expanded_line_numbers_after_toggle() {
+                let value = serde_yaml::from_str("first:\n  nested: one\nlast: two\n").unwrap();
+                let mut state = State {
+                    document: Document::new([&value]),
+                    config: Config {
+                        show_line_numbers: true,
+                        ..Default::default()
+                    },
+                };
+
+                assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 3]);
+
+                state.document.toggle();
+
+                assert_eq!(state.document.visible_line_numbers(), vec![1, 3]);
+                assert_eq!(
+                    state.create_graphemes().graphemes.to_string(),
+                    "1 first: {…}\n3 last: two"
+                );
+            }
+
+            #[test]
+            fn collapsed_root_containers_use_the_first_visible_line_number() {
+                for (source, expected) in [
+                    ("first: one\nsecond: two\n", "1 {…}"),
+                    ("- first\n- second\n", "1 […]"),
+                ] {
+                    let value = serde_yaml::from_str(source).unwrap();
+                    let mut state = State {
+                        document: Document::new([&value]),
+                        config: Config {
+                            show_line_numbers: true,
+                            ..Default::default()
+                        },
+                    };
+
+                    state.document.set_nodes_visibility(true);
+
+                    assert_eq!(state.create_graphemes().graphemes.to_string(), expected);
+                }
+            }
+        }
     }
 }

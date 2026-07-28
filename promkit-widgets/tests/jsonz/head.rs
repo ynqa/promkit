@@ -5,7 +5,7 @@ use serde_json::Deserializer;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_head_after_toggle() {
+fn remains_on_the_first_row_after_toggle() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -29,7 +29,7 @@ fn test_head_after_toggle() {
 }
 
 #[test]
-fn test_jsonl() {
+fn remains_on_the_first_json_lines_document() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {

@@ -129,43 +129,80 @@ mod tests {
 
     use super::Listbox;
 
-    #[test]
-    fn default_is_empty() {
-        let listbox = Listbox::default();
-        assert!(listbox.is_empty());
-        assert_eq!(listbox.len(), 0);
-        assert_eq!(listbox.selected(), None);
-        assert!(!listbox.is_tail());
+    mod default {
+        use super::*;
+
+        #[test]
+        fn creates_an_empty_list() {
+            let listbox = Listbox::default();
+            assert!(listbox.is_empty());
+            assert_eq!(listbox.len(), 0);
+            assert_eq!(listbox.selected(), None);
+            assert!(!listbox.is_tail());
+        }
     }
 
-    #[test]
-    fn pushing_first_item_selects_it() {
-        let mut listbox = Listbox::default();
-        listbox.push_string("first".into());
+    mod push_string {
+        use super::*;
 
-        assert_eq!(listbox.selected(), Some(0));
-        assert_eq!(listbox.get(), StyledGraphemes::from("first"));
+        #[test]
+        fn selects_the_first_item() {
+            let mut listbox = Listbox::default();
+            listbox.push_string("first".into());
+
+            assert_eq!(listbox.selected(), Some(0));
+            assert_eq!(listbox.get(), StyledGraphemes::from("first"));
+        }
     }
 
-    #[test]
-    fn navigation_stops_at_the_list_boundaries() {
-        let mut listbox = Listbox::from(["first", "second"]);
+    mod backward {
+        use super::*;
 
-        assert_eq!(listbox.selected(), Some(0));
-        assert!(!listbox.backward());
-        assert!(listbox.forward());
-        assert_eq!(listbox.selected(), Some(1));
-        assert!(!listbox.forward());
+        #[test]
+        fn stops_at_the_head() {
+            let mut listbox = Listbox::from(["first", "second"]);
 
-        assert!(listbox.move_to(0));
-        assert_eq!(listbox.selected(), Some(0));
-        assert!(!listbox.move_to(2));
-        assert_eq!(listbox.selected(), Some(0));
+            assert!(!listbox.backward());
+            assert_eq!(listbox.selected(), Some(0));
+        }
+    }
 
-        listbox.move_to_head();
-        assert_eq!(listbox.selected(), Some(0));
-        listbox.move_to_tail();
-        assert_eq!(listbox.selected(), Some(1));
-        assert!(listbox.is_tail());
+    mod forward {
+        use super::*;
+
+        #[test]
+        fn stops_at_the_tail() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            assert!(listbox.forward());
+            assert_eq!(listbox.selected(), Some(1));
+            assert!(!listbox.forward());
+            assert_eq!(listbox.selected(), Some(1));
+        }
+    }
+
+    mod move_to {
+        use super::*;
+
+        #[test]
+        fn rejects_an_out_of_bounds_index() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            assert!(!listbox.move_to(2));
+            assert_eq!(listbox.selected(), Some(0));
+        }
+    }
+
+    mod move_to_tail {
+        use super::*;
+
+        #[test]
+        fn selects_the_last_item() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            listbox.move_to_tail();
+            assert_eq!(listbox.selected(), Some(1));
+            assert!(listbox.is_tail());
+        }
     }
 }

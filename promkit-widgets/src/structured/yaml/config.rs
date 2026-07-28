@@ -316,80 +316,84 @@ impl Config {
 mod tests {
     use super::*;
 
-    mod render_terminal_rows {
+    mod config {
         use super::*;
-        use crate::structured::ContainerNode;
 
-        #[test]
-        fn renders_sequence_mapping_first_key_on_item_line() {
-            let rows = vec![
-                Row {
-                    depth: 1,
-                    key: None,
-                    is_sequence_item: true,
-                    node: YamlNode::Container(ContainerNode::Open {
-                        typ: ContainerType::Object,
-                        collapsed: false,
-                        close_index: 3,
-                    }),
-                },
-                Row {
-                    depth: 2,
-                    key: Some("name".to_string()),
-                    is_sequence_item: false,
-                    node: YamlNode::String("alice".to_string()),
-                },
-                Row {
-                    depth: 2,
-                    key: Some("age".to_string()),
-                    is_sequence_item: false,
-                    node: YamlNode::Number(match serde_yaml::from_str("20").unwrap() {
-                        serde_yaml::Value::Number(number) => number,
-                        _ => unreachable!(),
-                    }),
-                },
-            ];
+        mod render_terminal_rows {
+            use super::*;
+            use crate::structured::ContainerNode;
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Truncate,
-                ..Default::default()
+            #[test]
+            fn renders_sequence_mapping_first_key_on_item_line() {
+                let rows = vec![
+                    Row {
+                        depth: 1,
+                        key: None,
+                        is_sequence_item: true,
+                        node: YamlNode::Container(ContainerNode::Open {
+                            typ: ContainerType::Object,
+                            collapsed: false,
+                            close_index: 3,
+                        }),
+                    },
+                    Row {
+                        depth: 2,
+                        key: Some("name".to_string()),
+                        is_sequence_item: false,
+                        node: YamlNode::String("alice".to_string()),
+                    },
+                    Row {
+                        depth: 2,
+                        key: Some("age".to_string()),
+                        is_sequence_item: false,
+                        node: YamlNode::Number(match serde_yaml::from_str("20").unwrap() {
+                            serde_yaml::Value::Number(number) => number,
+                            _ => unreachable!(),
+                        }),
+                    },
+                ];
+
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, 80)
+                .into_iter()
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>();
+
+                assert_eq!(
+                    lines,
+                    vec!["- name: alice".to_string(), "  age: 20".to_string(),]
+                );
             }
-            .render_terminal_rows(&rows, 80)
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
 
-            assert_eq!(
-                lines,
-                vec!["- name: alice".to_string(), "  age: 20".to_string(),]
-            );
-        }
+            #[test]
+            fn does_not_indent_the_first_root_mapping_key() {
+                let value = serde_yaml::from_str("name: alice\naddress:\n  city: Tokyo\n").unwrap();
+                let document = crate::structured::yaml::Document::new([&value]);
+                let rows = document.extract_rows_from_current(usize::MAX);
 
-        #[test]
-        fn does_not_indent_the_first_root_mapping_key() {
-            let value = serde_yaml::from_str("name: alice\naddress:\n  city: Tokyo\n").unwrap();
-            let document = crate::structured::yaml::Document::new([&value]);
-            let rows = document.extract_rows_from_current(usize::MAX);
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, 80)
+                .into_iter()
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>();
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Truncate,
-                ..Default::default()
+                assert_eq!(
+                    lines,
+                    vec![
+                        "name: alice".to_string(),
+                        "address: ".to_string(),
+                        "  city: Tokyo".to_string(),
+                    ]
+                );
             }
-            .render_terminal_rows(&rows, 80)
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
-
-            assert_eq!(
-                lines,
-                vec![
-                    "name: alice".to_string(),
-                    "address: ".to_string(),
-                    "  city: Tokyo".to_string(),
-                ]
-            );
         }
     }
 }

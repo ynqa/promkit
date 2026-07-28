@@ -376,115 +376,139 @@ mod tests {
     use super::*;
     use crate::widget::WidgetLayout;
 
-    #[test]
-    fn layout_maps_logical_cursor_to_wrapped_row() {
-        let created = CreatedGraphemes {
-            graphemes: StyledGraphemes::from("abcdefghij"),
-            cursor: Some(ContentPosition { row: 0, column: 8 }),
-            ..Default::default()
-        };
-        let cursor = created.cursor.unwrap();
-        let rows = layout_content(created.graphemes, created.layout.width_mode, 4);
+    mod visual_position {
+        use super::*;
 
-        assert_eq!(rows.len(), 3);
-        assert_eq!(
-            visual_position(&rows, cursor),
-            Some(VisualPosition { row: 2, column: 0 })
-        );
-    }
-
-    #[test]
-    fn wrap_preserves_a_grapheme_wider_than_the_terminal() {
-        let created = CreatedGraphemes {
-            graphemes: StyledGraphemes::from("界"),
-            cursor: Some(ContentPosition { row: 0, column: 0 }),
-            ..Default::default()
-        };
-
-        let cursor = created.cursor.unwrap();
-        let rows = layout_content(created.graphemes, created.layout.width_mode, 1);
-
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].content_row, 0);
-        assert_eq!(rows[0].content_column, 0);
-        assert_eq!(rows[0].graphemes.to_string(), "…");
-        assert_eq!(
-            visual_position(&rows, cursor),
-            Some(VisualPosition { row: 0, column: 0 })
-        );
-    }
-
-    #[test]
-    fn wrap_preserves_columns_after_a_grapheme_wider_than_the_terminal() {
-        let created = CreatedGraphemes {
-            graphemes: StyledGraphemes::from("界a"),
-            cursor: Some(ContentPosition { row: 0, column: 2 }),
-            ..Default::default()
-        };
-
-        let cursor = created.cursor.unwrap();
-        let rows = layout_content(created.graphemes, created.layout.width_mode, 1);
-
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].content_column, 0);
-        assert_eq!(rows[0].graphemes.to_string(), "…");
-        assert_eq!(rows[1].content_column, 2);
-        assert_eq!(rows[1].graphemes.to_string(), "a");
-        assert_eq!(
-            visual_position(&rows, cursor),
-            Some(VisualPosition { row: 1, column: 0 })
-        );
-    }
-
-    #[test]
-    fn truncate_keeps_one_visual_row_per_logical_row() {
-        let created = CreatedGraphemes {
-            graphemes: StyledGraphemes::from("abcdefghij\nsecond"),
-            layout: WidgetLayout {
-                width_mode: WidthMode::Truncate,
+        #[test]
+        fn maps_a_logical_cursor_to_its_wrapped_row() {
+            let created = CreatedGraphemes {
+                graphemes: StyledGraphemes::from("abcdefghij"),
+                cursor: Some(ContentPosition { row: 0, column: 8 }),
                 ..Default::default()
-            },
-            cursor: None,
-        };
-        let rows = layout_content(created.graphemes, created.layout.width_mode, 4);
+            };
+            let cursor = created.cursor.unwrap();
+            let rows = layout_content(created.graphemes, created.layout.width_mode, 4);
 
-        assert_eq!(rows.len(), 2);
-        assert_eq!(rows[0].graphemes.to_string(), "abc…");
-        assert_eq!(rows[1].graphemes.to_string(), "sec…");
+            assert_eq!(rows.len(), 3);
+            assert_eq!(
+                visual_position(&rows, cursor),
+                Some(VisualPosition { row: 2, column: 0 })
+            );
+        }
     }
 
-    #[test]
-    fn layout_preserves_empty_logical_rows() {
-        let rows = layout_content(StyledGraphemes::from("first\n\n"), WidthMode::Wrap, 80);
-        let text = rows
-            .iter()
-            .map(|row| row.graphemes.to_string())
-            .collect::<Vec<_>>();
+    mod wrap_line {
+        use super::*;
 
-        assert_eq!(text, ["first", "", ""]);
-    }
-
-    #[test]
-    fn allocates_height_and_preserves_viewport_between_frames() {
-        let created = CreatedGraphemes {
-            graphemes: StyledGraphemes::from("first\nsecond\nthird"),
-            layout: WidgetLayout {
-                max_height: Some(2),
+        #[test]
+        fn preserves_a_grapheme_wider_than_the_terminal() {
+            let created = CreatedGraphemes {
+                graphemes: StyledGraphemes::from("界"),
+                cursor: Some(ContentPosition { row: 0, column: 0 }),
                 ..Default::default()
-            },
-            cursor: Some(ContentPosition { row: 2, column: 0 }),
-        };
-        let mut layout = RendererLayout::default();
+            };
 
-        let first = layout.layout([(0, created.clone())], 80, 24).unwrap();
-        assert_eq!(first.pane_count(), 1);
-        assert_eq!(first.visual_row_count(), 3);
-        assert_eq!(first.visible_row_count(), 2);
-        let first_panes = first.panes();
-        assert_eq!(first_panes[0][0].to_string(), "second");
+            let cursor = created.cursor.unwrap();
+            let rows = layout_content(created.graphemes, created.layout.width_mode, 1);
 
-        let second = layout.layout([(0, created)], 80, 24).unwrap();
-        let second_panes = second.panes();
-        assert_eq!(second_panes[0][0].to_string(), "second");
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0].content_row, 0);
+            assert_eq!(rows[0].content_column, 0);
+            assert_eq!(rows[0].graphemes.to_string(), "…");
+            assert_eq!(
+                visual_position(&rows, cursor),
+                Some(VisualPosition { row: 0, column: 0 })
+            );
+        }
+
+        #[test]
+        fn preserves_columns_after_a_grapheme_wider_than_the_terminal() {
+            let created = CreatedGraphemes {
+                graphemes: StyledGraphemes::from("界a"),
+                cursor: Some(ContentPosition { row: 0, column: 2 }),
+                ..Default::default()
+            };
+
+            let cursor = created.cursor.unwrap();
+            let rows = layout_content(created.graphemes, created.layout.width_mode, 1);
+
+            assert_eq!(rows.len(), 2);
+            assert_eq!(rows[0].content_column, 0);
+            assert_eq!(rows[0].graphemes.to_string(), "…");
+            assert_eq!(rows[1].content_column, 2);
+            assert_eq!(rows[1].graphemes.to_string(), "a");
+            assert_eq!(
+                visual_position(&rows, cursor),
+                Some(VisualPosition { row: 1, column: 0 })
+            );
+        }
+    }
+
+    mod truncate_line {
+        use super::*;
+
+        #[test]
+        fn keeps_one_visual_row_per_logical_row() {
+            let created = CreatedGraphemes {
+                graphemes: StyledGraphemes::from("abcdefghij\nsecond"),
+                layout: WidgetLayout {
+                    width_mode: WidthMode::Truncate,
+                    ..Default::default()
+                },
+                cursor: None,
+            };
+            let rows = layout_content(created.graphemes, created.layout.width_mode, 4);
+
+            assert_eq!(rows.len(), 2);
+            assert_eq!(rows[0].graphemes.to_string(), "abc…");
+            assert_eq!(rows[1].graphemes.to_string(), "sec…");
+        }
+    }
+
+    mod into_logical_lines {
+        use super::*;
+
+        #[test]
+        fn preserves_empty_logical_rows() {
+            let rows = layout_content(StyledGraphemes::from("first\n\n"), WidthMode::Wrap, 80);
+            let text = rows
+                .iter()
+                .map(|row| row.graphemes.to_string())
+                .collect::<Vec<_>>();
+
+            assert_eq!(text, ["first", "", ""]);
+        }
+    }
+
+    mod renderer_layout {
+        use super::*;
+
+        mod layout {
+            use super::*;
+
+            #[test]
+            fn allocates_height_and_preserves_the_viewport_between_frames() {
+                let created = CreatedGraphemes {
+                    graphemes: StyledGraphemes::from("first\nsecond\nthird"),
+                    layout: WidgetLayout {
+                        max_height: Some(2),
+                        ..Default::default()
+                    },
+                    cursor: Some(ContentPosition { row: 2, column: 0 }),
+                };
+                let mut layout = RendererLayout::default();
+
+                let first = layout.layout([(0, created.clone())], 80, 24).unwrap();
+                assert_eq!(first.pane_count(), 1);
+                assert_eq!(first.visual_row_count(), 3);
+                assert_eq!(first.visible_row_count(), 2);
+                let first_panes = first.panes();
+                assert_eq!(first_panes[0][0].to_string(), "second");
+
+                let second = layout.layout([(0, created)], 80, 24).unwrap();
+                let second_panes = second.panes();
+                assert_eq!(second_panes[0][0].to_string(), "second");
+            }
+        }
     }
 }
