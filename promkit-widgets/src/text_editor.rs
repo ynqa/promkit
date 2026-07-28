@@ -144,7 +144,7 @@ pub enum TextEditorHit {
 }
 
 #[cfg(test)]
-mod state_tests {
+mod tests {
     use super::*;
 
     fn state(text: &str, prefix: &str) -> State {
@@ -158,158 +158,170 @@ mod state_tests {
         }
     }
 
-    #[test]
-    fn resolves_prefix_input_and_trailing_columns() {
-        let state = state("abc", ">> ");
+    mod state {
+        use super::*;
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 1 }),
-            Some(TextEditorHit::Cursor { index: 0 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 4 }),
-            Some(TextEditorHit::Cursor { index: 1 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 80 }),
-            Some(TextEditorHit::Cursor { index: 3 })
-        );
-        assert_eq!(state.hit_at(ContentPosition { row: 1, column: 0 }), None);
-    }
+        mod hit_at {
+            use super::*;
 
-    #[test]
-    fn resolves_columns_inside_wide_characters() {
-        let state = state("界a", "");
+            #[test]
+            fn resolves_prefix_input_and_trailing_columns() {
+                let state = state("abc", ">> ");
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 0 }),
-            Some(TextEditorHit::Cursor { index: 0 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 1 }),
-            Some(TextEditorHit::Cursor { index: 0 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 2 }),
-            Some(TextEditorHit::Cursor { index: 1 })
-        );
-    }
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 1 }),
+                    Some(TextEditorHit::Cursor { index: 0 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 4 }),
+                    Some(TextEditorHit::Cursor { index: 1 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 80 }),
+                    Some(TextEditorHit::Cursor { index: 3 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 1, column: 0 }), None);
+            }
 
-    #[test]
-    fn uses_the_rendered_mask_width() {
-        let mut state = state("界a", "");
-        state.config.mask = Some('*');
+            #[test]
+            fn resolves_columns_inside_wide_characters() {
+                let state = state("界a", "");
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 1 }),
-            Some(TextEditorHit::Cursor { index: 1 })
-        );
-    }
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 0 }),
+                    Some(TextEditorHit::Cursor { index: 0 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 1 }),
+                    Some(TextEditorHit::Cursor { index: 0 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 2 }),
+                    Some(TextEditorHit::Cursor { index: 1 })
+                );
+            }
 
-    #[test]
-    fn renders_a_multiline_cursor_at_its_logical_position() {
-        let state = state("ab\n界c", ">> ");
+            #[test]
+            fn uses_the_rendered_mask_width() {
+                let mut state = state("界a", "");
+                state.config.mask = Some('*');
 
-        let created = state.create_graphemes();
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 1 }),
+                    Some(TextEditorHit::Cursor { index: 1 })
+                );
+            }
 
-        assert_eq!(">> ab\n界c ", created.graphemes.to_string());
-        assert_eq!(Some(ContentPosition { row: 1, column: 3 }), created.cursor);
-    }
+            #[test]
+            fn resolves_clicks_on_each_multiline_row() {
+                let state = state("ab\n界c", ">> ");
 
-    #[test]
-    fn renders_a_visible_cursor_before_a_newline() {
-        let mut state = state("ab\ncd", "");
-        assert!(state.texteditor.move_to(2));
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 0, column: 80 }),
+                    Some(TextEditorHit::Cursor { index: 2 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 0 }),
+                    Some(TextEditorHit::Cursor { index: 3 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 1 }),
+                    Some(TextEditorHit::Cursor { index: 3 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 2 }),
+                    Some(TextEditorHit::Cursor { index: 4 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 80 }),
+                    Some(TextEditorHit::Cursor { index: 5 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+            }
 
-        let created = state.create_graphemes();
+            #[test]
+            fn resolves_clicks_on_empty_multiline_rows() {
+                let state = state("a\n\nb", "");
 
-        assert_eq!("ab \ncd ", created.graphemes.to_string());
-        assert_eq!(Some(ContentPosition { row: 0, column: 2 }), created.cursor);
-    }
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 0 }),
+                    Some(TextEditorHit::Cursor { index: 2 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 2, column: 0 }),
+                    Some(TextEditorHit::Cursor { index: 3 })
+                );
+            }
 
-    #[test]
-    fn resolves_clicks_on_each_multiline_row() {
-        let state = state("ab\n界c", ">> ");
+            #[test]
+            fn uses_the_continuation_prefix_width_for_multiline_hits() {
+                let mut state = state("first\nsecond", ">>> ");
+                state.config.continuation_prefix = "... ".into();
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 0, column: 80 }),
-            Some(TextEditorHit::Cursor { index: 2 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 0 }),
-            Some(TextEditorHit::Cursor { index: 3 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 1 }),
-            Some(TextEditorHit::Cursor { index: 3 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 2 }),
-            Some(TextEditorHit::Cursor { index: 4 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 80 }),
-            Some(TextEditorHit::Cursor { index: 5 })
-        );
-        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
-    }
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 2 }),
+                    Some(TextEditorHit::Cursor { index: 6 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 5 }),
+                    Some(TextEditorHit::Cursor { index: 7 })
+                );
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 80 }),
+                    Some(TextEditorHit::Cursor { index: 12 })
+                );
+            }
+        }
 
-    #[test]
-    fn resolves_clicks_on_empty_multiline_rows() {
-        let state = state("a\n\nb", "");
+        mod create_graphemes {
+            use super::*;
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 0 }),
-            Some(TextEditorHit::Cursor { index: 2 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 2, column: 0 }),
-            Some(TextEditorHit::Cursor { index: 3 })
-        );
-    }
+            #[test]
+            fn renders_a_multiline_cursor_at_its_logical_position() {
+                let state = state("ab\n界c", ">> ");
 
-    #[test]
-    fn masking_preserves_multiline_layout_and_cursor_position() {
-        let mut state = state("ab\n界c", ">> ");
-        state.config.mask = Some('*');
+                let created = state.create_graphemes();
 
-        let created = state.create_graphemes();
+                assert_eq!(">> ab\n界c ", created.graphemes.to_string());
+                assert_eq!(Some(ContentPosition { row: 1, column: 3 }), created.cursor);
+            }
 
-        assert_eq!(">> **\n** ", created.graphemes.to_string());
-        assert_eq!(Some(ContentPosition { row: 1, column: 2 }), created.cursor);
-    }
+            #[test]
+            fn renders_a_visible_cursor_before_a_newline() {
+                let mut state = state("ab\ncd", "");
+                assert!(state.texteditor.move_to(2));
 
-    #[test]
-    fn renders_a_continuation_prefix_without_changing_the_editor_text() {
-        let mut state = state("first\nsecond", ">>> ");
-        state.config.continuation_prefix = "... ".into();
+                let created = state.create_graphemes();
 
-        let created = state.create_graphemes();
+                assert_eq!("ab \ncd ", created.graphemes.to_string());
+                assert_eq!(Some(ContentPosition { row: 0, column: 2 }), created.cursor);
+            }
 
-        assert_eq!(
-            state.texteditor.text_without_cursor().to_string(),
-            "first\nsecond"
-        );
-        assert_eq!(created.graphemes.to_string(), ">>> first\n... second ");
-        assert_eq!(created.cursor, Some(ContentPosition { row: 1, column: 10 }));
-    }
+            #[test]
+            fn masking_preserves_multiline_layout_and_cursor_position() {
+                let mut state = state("ab\n界c", ">> ");
+                state.config.mask = Some('*');
 
-    #[test]
-    fn uses_the_continuation_prefix_width_for_multiline_hits() {
-        let mut state = state("first\nsecond", ">>> ");
-        state.config.continuation_prefix = "... ".into();
+                let created = state.create_graphemes();
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 2 }),
-            Some(TextEditorHit::Cursor { index: 6 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 5 }),
-            Some(TextEditorHit::Cursor { index: 7 })
-        );
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 80 }),
-            Some(TextEditorHit::Cursor { index: 12 })
-        );
+                assert_eq!(">> **\n** ", created.graphemes.to_string());
+                assert_eq!(Some(ContentPosition { row: 1, column: 2 }), created.cursor);
+            }
+
+            #[test]
+            fn renders_a_continuation_prefix_without_changing_the_editor_text() {
+                let mut state = state("first\nsecond", ">>> ");
+                state.config.continuation_prefix = "... ".into();
+
+                let created = state.create_graphemes();
+
+                assert_eq!(
+                    state.texteditor.text_without_cursor().to_string(),
+                    "first\nsecond"
+                );
+                assert_eq!(created.graphemes.to_string(), ">>> first\n... second ");
+                assert_eq!(created.cursor, Some(ContentPosition { row: 1, column: 10 }));
+            }
+        }
     }
 }

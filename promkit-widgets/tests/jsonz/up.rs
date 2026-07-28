@@ -3,7 +3,7 @@ use std::str::FromStr;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_collapsed_containers() {
+fn skips_collapsed_container_contents() {
     let input = serde_json::Value::from_str(
         r#"
             {

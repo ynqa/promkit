@@ -402,69 +402,85 @@ mod tests {
     use super::*;
     use promkit_widgets::core::Widget;
 
-    #[test]
-    fn completes_only_nonempty_balanced_input() {
-        assert_eq!(completion(""), Completion::Empty);
-        assert_eq!(completion("value {"), Completion::Incomplete);
-        assert_eq!(completion("value {\n    [item]\n}"), Completion::Complete);
-        assert_eq!(completion("{]"), Completion::Invalid);
+    mod completion {
+        use super::*;
+
+        #[test]
+        fn classifies_empty_balanced_unbalanced_and_invalid_input() {
+            assert_eq!(completion(""), Completion::Empty);
+            assert_eq!(completion("value {"), Completion::Incomplete);
+            assert_eq!(completion("value {\n    [item]\n}"), Completion::Complete);
+            assert_eq!(completion("{]"), Completion::Invalid);
+        }
     }
 
-    #[test]
-    fn enter_continues_unclosed_input_with_indentation() {
-        let mut editor = text_editor::TextEditor::new("{");
+    mod enter {
+        use super::*;
 
-        assert_eq!(enter(&mut editor), Control::Continue);
-        assert_eq!(editor.text_without_cursor().to_string(), "{\n    ");
+        #[test]
+        fn continues_unclosed_input_with_indentation() {
+            let mut editor = text_editor::TextEditor::new("{");
+
+            assert_eq!(enter(&mut editor), Control::Continue);
+            assert_eq!(editor.text_without_cursor().to_string(), "{\n    ");
+        }
+
+        #[test]
+        fn submits_complete_single_line_input() {
+            let mut editor = text_editor::TextEditor::new("value");
+
+            assert_eq!(enter(&mut editor), Control::Submit("value".to_string()));
+        }
+
+        fn assert_blank_continuation_line_submits(input: &str) {
+            let mut editor = text_editor::TextEditor::new(input);
+
+            assert_eq!(enter(&mut editor), Control::Continue);
+            assert_eq!(
+                editor.text_without_cursor().to_string(),
+                format!("{input}\n")
+            );
+            assert_eq!(enter(&mut editor), Control::Submit(format!("{input}\n")));
+        }
+
+        #[test]
+        fn empty_continuation_line_submits_a_curly_bracket_block() {
+            assert_blank_continuation_line_submits("{\n    value\n}");
+        }
+
+        #[test]
+        fn empty_continuation_line_submits_a_square_bracket_block() {
+            assert_blank_continuation_line_submits("[\n    value\n]");
+        }
     }
 
-    #[test]
-    fn enter_submits_complete_single_line_input() {
-        let mut editor = text_editor::TextEditor::new("value");
+    mod text_editor_state {
+        use super::*;
 
-        assert_eq!(enter(&mut editor), Control::Submit("value".to_string()));
-    }
+        mod create_graphemes {
+            use super::*;
 
-    fn assert_blank_continuation_line_submits(input: &str) {
-        let mut editor = text_editor::TextEditor::new(input);
+            #[test]
+            fn continuation_prefix_is_only_presentational() {
+                let state = text_editor::State {
+                    texteditor: text_editor::TextEditor::new("first\nsecond"),
+                    config: text_editor::Config {
+                        prefix: "❯❯❯ ".into(),
+                        continuation_prefix: "... ".into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                };
 
-        assert_eq!(enter(&mut editor), Control::Continue);
-        assert_eq!(
-            editor.text_without_cursor().to_string(),
-            format!("{input}\n")
-        );
-        assert_eq!(enter(&mut editor), Control::Submit(format!("{input}\n")));
-    }
-
-    #[test]
-    fn empty_continuation_line_submits_a_curly_bracket_block() {
-        assert_blank_continuation_line_submits("{\n    value\n}");
-    }
-
-    #[test]
-    fn empty_continuation_line_submits_a_square_bracket_block() {
-        assert_blank_continuation_line_submits("[\n    value\n]");
-    }
-
-    #[test]
-    fn continuation_prefix_is_only_presentational() {
-        let state = text_editor::State {
-            texteditor: text_editor::TextEditor::new("first\nsecond"),
-            config: text_editor::Config {
-                prefix: "❯❯❯ ".into(),
-                continuation_prefix: "... ".into(),
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-        assert_eq!(
-            state.create_graphemes().graphemes.to_string(),
-            "❯❯❯ first\n... second "
-        );
-        assert_eq!(
-            state.texteditor.text_without_cursor().to_string(),
-            "first\nsecond"
-        );
+                assert_eq!(
+                    state.create_graphemes().graphemes.to_string(),
+                    "❯❯❯ first\n... second "
+                );
+                assert_eq!(
+                    state.texteditor.text_without_cursor().to_string(),
+                    "first\nsecond"
+                );
+            }
+        }
     }
 }

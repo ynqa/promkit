@@ -100,75 +100,87 @@ pub enum TreeHit {
 mod tests {
     use super::*;
 
-    #[test]
-    fn resolves_visible_rows_for_hits() {
-        let state = State {
-            document: Document::new(vec![
-                Row {
-                    id: "root".into(),
-                    path: vec!["root".into()],
-                    depth: 0,
-                    has_children: true,
-                    collapsed: false,
-                },
-                Row {
-                    id: "child".into(),
-                    path: vec!["root".into(), "child".into()],
-                    depth: 1,
-                    has_children: false,
-                    collapsed: false,
-                },
-            ]),
-            config: Config::default(),
-        };
+    mod state {
+        use super::*;
 
-        assert_eq!(
-            state.hit_at(ContentPosition { row: 1, column: 20 }),
-            Some(TreeHit::Toggle { row_index: 1 })
-        );
-        assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
-    }
+        mod hit_at {
+            use super::*;
 
-    #[test]
-    fn preserves_expanded_line_numbers_after_toggle() {
-        let mut state = State {
-            document: Document::new(vec![
-                Row {
-                    id: "root".into(),
-                    path: vec!["root".into()],
-                    depth: 0,
-                    has_children: true,
-                    collapsed: false,
-                },
-                Row {
-                    id: "child".into(),
-                    path: vec!["root".into(), "child".into()],
-                    depth: 1,
-                    has_children: false,
-                    collapsed: false,
-                },
-                Row {
-                    id: "sibling".into(),
-                    path: vec!["sibling".into()],
-                    depth: 0,
-                    has_children: false,
-                    collapsed: false,
-                },
-            ]),
-            config: Config {
-                show_line_numbers: true,
-                ..Default::default()
-            },
-        };
+            #[test]
+            fn resolves_visible_rows() {
+                let state = State {
+                    document: Document::new(vec![
+                        Row {
+                            id: "root".into(),
+                            path: vec!["root".into()],
+                            depth: 0,
+                            has_children: true,
+                            collapsed: false,
+                        },
+                        Row {
+                            id: "child".into(),
+                            path: vec!["root".into(), "child".into()],
+                            depth: 1,
+                            has_children: false,
+                            collapsed: false,
+                        },
+                    ]),
+                    config: Config::default(),
+                };
 
-        assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 3]);
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 20 }),
+                    Some(TreeHit::Toggle { row_index: 1 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+            }
+        }
 
-        state.document.toggle();
+        mod create_graphemes {
+            use super::*;
 
-        assert_eq!(state.document.visible_line_numbers(), vec![1, 3]);
-        let rendered = state.create_graphemes().graphemes.to_string();
-        assert!(rendered.starts_with("1 "));
-        assert!(rendered.contains("\n3 "));
-        assert!(!rendered.contains("\n2 "));
+            #[test]
+            fn preserves_expanded_line_numbers_after_toggle() {
+                let mut state = State {
+                    document: Document::new(vec![
+                        Row {
+                            id: "root".into(),
+                            path: vec!["root".into()],
+                            depth: 0,
+                            has_children: true,
+                            collapsed: false,
+                        },
+                        Row {
+                            id: "child".into(),
+                            path: vec!["root".into(), "child".into()],
+                            depth: 1,
+                            has_children: false,
+                            collapsed: false,
+                        },
+                        Row {
+                            id: "sibling".into(),
+                            path: vec!["sibling".into()],
+                            depth: 0,
+                            has_children: false,
+                            collapsed: false,
+                        },
+                    ]),
+                    config: Config {
+                        show_line_numbers: true,
+                        ..Default::default()
+                    },
+                };
+
+                assert_eq!(state.document.visible_line_numbers(), vec![1, 2, 3]);
+
+                state.document.toggle();
+
+                assert_eq!(state.document.visible_line_numbers(), vec![1, 3]);
+                let rendered = state.create_graphemes().graphemes.to_string();
+                assert!(rendered.starts_with("1 "));
+                assert!(rendered.contains("\n3 "));
+                assert!(!rendered.contains("\n2 "));
+            }
+        }
     }
 }

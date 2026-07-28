@@ -225,43 +225,55 @@ mod tests {
         Document::new(values.iter())
     }
 
-    #[test]
-    fn from_str_matches_value_conversion() {
-        let expected = via_value(INPUT);
-        let actual = Document::from_str(INPUT).unwrap();
+    mod from_str {
+        use super::*;
 
-        assert_eq!(actual.rows(), expected.rows());
-    }
+        #[test]
+        fn matches_value_conversion() {
+            let expected = via_value(INPUT);
+            let actual = Document::from_str(INPUT).unwrap();
 
-    #[test]
-    fn from_reader_matches_value_conversion() {
-        let expected = via_value(INPUT);
-        let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
+            assert_eq!(actual.rows(), expected.rows());
+        }
 
-        assert_eq!(actual.rows(), expected.rows());
-    }
+        #[test]
+        fn matches_value_conversion_for_edge_cases() {
+            for input in [
+                "",
+                " \n\t",
+                "null",
+                "{}",
+                "[]",
+                "-0 1.25e3",
+                r#""escaped\ntext" {"a":[],"b":{}}"#,
+            ] {
+                let expected = via_value(input);
+                let actual = Document::from_str(input).unwrap();
 
-    #[test]
-    fn direct_parsing_matches_value_conversion_for_edge_cases() {
-        for input in [
-            "",
-            " \n\t",
-            "null",
-            "{}",
-            "[]",
-            "-0 1.25e3",
-            r#""escaped\ntext" {"a":[],"b":{}}"#,
-        ] {
-            let expected = via_value(input);
-            let actual = Document::from_str(input).unwrap();
+                assert_eq!(actual.rows(), expected.rows(), "input: {input:?}");
+            }
+        }
 
-            assert_eq!(actual.rows(), expected.rows(), "input: {input:?}");
+        #[test]
+        fn reports_invalid_json() {
+            assert!(Document::from_str(r#"{"missing":"close""#).is_err());
         }
     }
 
-    #[test]
-    fn direct_parsing_reports_invalid_json() {
-        assert!(Document::from_str(r#"{"missing":"close""#).is_err());
-        assert!(Document::from_reader(Cursor::new(b"[1,")).is_err());
+    mod from_reader {
+        use super::*;
+
+        #[test]
+        fn matches_value_conversion() {
+            let expected = via_value(INPUT);
+            let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
+
+            assert_eq!(actual.rows(), expected.rows());
+        }
+
+        #[test]
+        fn reports_invalid_json() {
+            assert!(Document::from_reader(Cursor::new(b"[1,")).is_err());
+        }
     }
 }

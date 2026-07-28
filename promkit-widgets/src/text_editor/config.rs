@@ -38,7 +38,7 @@ pub struct Config {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "serde")]
-    mod serde_compatibility {
+    mod deserialize {
         use std::collections::HashSet;
 
         use promkit_core::crossterm::style::{Attribute, Color};
@@ -46,7 +46,7 @@ mod tests {
         use super::super::{Config, Mode};
 
         #[test]
-        fn config_fields_are_fully_loaded_from_toml() {
+        fn loads_all_fields_from_toml() {
             let input = r#"
 prefix = ">> "
 continuation_prefix = "... "

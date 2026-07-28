@@ -171,100 +171,109 @@ impl Terminal {
 mod tests {
     use super::*;
 
-    fn rows(count: usize) -> Vec<Vec<StyledGraphemes>> {
-        vec![
-            (0..count)
-                .map(|index| StyledGraphemes::from(format!("row {index}")))
-                .collect(),
-        ]
-    }
+    mod terminal {
+        use super::*;
 
-    fn command_bytes(command: impl crate::crossterm::Command) -> Vec<u8> {
-        let mut output = Vec::new();
-        crossterm::queue!(output, command).unwrap();
-        output
-    }
+        mod draw_rows_to {
+            use super::*;
+            use crate::crossterm::terminal as crossterm_terminal;
 
-    fn command_offset(output: &[u8], command: impl crate::crossterm::Command) -> usize {
-        let command = command_bytes(command);
-        output
-            .windows(command.len())
-            .position(|window| window == command)
-            .expect("expected terminal command was not emitted")
-    }
+            fn rows(count: usize) -> Vec<Vec<StyledGraphemes>> {
+                vec![
+                    (0..count)
+                        .map(|index| StyledGraphemes::from(format!("row {index}")))
+                        .collect(),
+                ]
+            }
 
-    #[test]
-    fn growing_frame_scrolls_only_after_clearing_the_previous_frame() {
-        let mut terminal = Terminal::new((0, 7));
-        let mut output = Vec::new();
+            fn command_bytes(command: impl crate::crossterm::Command) -> Vec<u8> {
+                let mut output = Vec::new();
+                crossterm::queue!(output, command).unwrap();
+                output
+            }
 
-        terminal.draw_rows_to(&mut output, &rows(8), 10).unwrap();
+            fn command_offset(output: &[u8], command: impl crate::crossterm::Command) -> usize {
+                let command = command_bytes(command);
+                output
+                    .windows(command.len())
+                    .position(|window| window == command)
+                    .expect("expected terminal command was not emitted")
+            }
 
-        let clear = command_offset(
-            &output,
-            terminal::Clear(terminal::ClearType::FromCursorDown),
-        );
-        let scroll = command_offset(&output, terminal::ScrollUp(1));
+            #[test]
+            fn growing_frame_scrolls_only_after_clearing_the_previous_frame() {
+                let mut terminal = Terminal::new((0, 7));
+                let mut output = Vec::new();
 
-        assert!(clear < scroll);
-        assert_eq!(terminal.position, (0, 2));
-    }
+                terminal.draw_rows_to(&mut output, &rows(8), 10).unwrap();
 
-    #[test]
-    fn shrinking_frame_scrolls_preceding_output_back_down_before_redrawing() {
-        let mut terminal = Terminal::new((0, 7));
-        terminal
-            .draw_rows_to(&mut Vec::new(), &rows(8), 10)
-            .unwrap();
-        assert_eq!(terminal.position, (0, 2));
+                let clear = command_offset(
+                    &output,
+                    crossterm_terminal::Clear(crossterm_terminal::ClearType::FromCursorDown),
+                );
+                let scroll = command_offset(&output, crossterm_terminal::ScrollUp(1));
 
-        let mut output = Vec::new();
-        terminal.draw_rows_to(&mut output, &rows(3), 10).unwrap();
+                assert!(clear < scroll);
+                assert_eq!(terminal.position, (0, 2));
+            }
 
-        let scroll_down = command_offset(&output, terminal::ScrollDown(5));
-        let clear = command_offset(
-            &output,
-            terminal::Clear(terminal::ClearType::FromCursorDown),
-        );
-        let draw = command_bytes(cursor::MoveTo(0, 7));
-        let draw = output
-            .windows(draw.len())
-            .enumerate()
-            .filter(|(_, window)| *window == draw)
-            .map(|(offset, _)| offset)
-            .nth(1)
-            .expect("expected a move from the clear position to the draw position");
+            #[test]
+            fn shrinking_frame_scrolls_preceding_output_back_down_before_redrawing() {
+                let mut terminal = Terminal::new((0, 7));
+                terminal
+                    .draw_rows_to(&mut Vec::new(), &rows(8), 10)
+                    .unwrap();
+                assert_eq!(terminal.position, (0, 2));
 
-        assert!(scroll_down < clear);
-        assert!(clear < draw);
-        assert_eq!(terminal.position, (0, 7));
-    }
+                let mut output = Vec::new();
+                terminal.draw_rows_to(&mut output, &rows(3), 10).unwrap();
 
-    #[test]
-    fn draw_frame_controls_wrapping_inside_a_synchronized_update() {
-        let mut terminal = Terminal::new((0, 0));
-        let mut output = Vec::new();
+                let scroll_down = command_offset(&output, crossterm_terminal::ScrollDown(5));
+                let clear = command_offset(
+                    &output,
+                    crossterm_terminal::Clear(crossterm_terminal::ClearType::FromCursorDown),
+                );
+                let draw = command_bytes(cursor::MoveTo(0, 7));
+                let draw = output
+                    .windows(draw.len())
+                    .enumerate()
+                    .filter(|(_, window)| *window == draw)
+                    .map(|(offset, _)| offset)
+                    .nth(1)
+                    .expect("expected a move from the clear position to the draw position");
 
-        terminal.draw_rows_to(&mut output, &rows(1), 10).unwrap();
+                assert!(scroll_down < clear);
+                assert!(clear < draw);
+                assert_eq!(terminal.position, (0, 7));
+            }
 
-        let begin = command_offset(&output, terminal::BeginSynchronizedUpdate);
-        let disable_wrap = command_offset(&output, terminal::DisableLineWrap);
-        let enable_wrap = command_offset(&output, terminal::EnableLineWrap);
-        let end = command_offset(&output, terminal::EndSynchronizedUpdate);
+            #[test]
+            fn draw_frame_controls_wrapping_inside_a_synchronized_update() {
+                let mut terminal = Terminal::new((0, 0));
+                let mut output = Vec::new();
 
-        assert!(begin < disable_wrap);
-        assert!(disable_wrap < enable_wrap);
-        assert!(enable_wrap < end);
-    }
+                terminal.draw_rows_to(&mut output, &rows(1), 10).unwrap();
 
-    #[test]
-    fn trailing_empty_panes_do_not_trigger_scrolling() {
-        let mut terminal = Terminal::new((0, 9));
-        let panes: Vec<Vec<StyledGraphemes>> =
-            vec![vec![StyledGraphemes::from("only row")], Vec::new()];
+                let begin = command_offset(&output, crossterm_terminal::BeginSynchronizedUpdate);
+                let disable_wrap = command_offset(&output, crossterm_terminal::DisableLineWrap);
+                let enable_wrap = command_offset(&output, crossterm_terminal::EnableLineWrap);
+                let end = command_offset(&output, crossterm_terminal::EndSynchronizedUpdate);
 
-        terminal.draw_rows_to(&mut Vec::new(), &panes, 10).unwrap();
+                assert!(begin < disable_wrap);
+                assert!(disable_wrap < enable_wrap);
+                assert!(enable_wrap < end);
+            }
 
-        assert_eq!(terminal.position, (0, 9));
+            #[test]
+            fn trailing_empty_panes_do_not_trigger_scrolling() {
+                let mut terminal = Terminal::new((0, 9));
+                let panes: Vec<Vec<StyledGraphemes>> =
+                    vec![vec![StyledGraphemes::from("only row")], Vec::new()];
+
+                terminal.draw_rows_to(&mut Vec::new(), &panes, 10).unwrap();
+
+                assert_eq!(terminal.position, (0, 9));
+            }
+        }
     }
 }

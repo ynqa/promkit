@@ -104,40 +104,70 @@ mod tests {
 
     use super::Text;
 
-    #[test]
-    fn empty_input_creates_no_lines() {
-        let text = Text::from("");
-        assert!(text.items().is_empty());
+    mod from {
+        use super::*;
+
+        #[test]
+        fn empty_input_creates_no_lines() {
+            let text = Text::from("");
+            assert!(text.items().is_empty());
+        }
+
+        #[test]
+        fn explicit_empty_lines_are_preserved() {
+            let text = Text::from("a\n\nb");
+            assert_eq!(text.items().len(), 3);
+            assert_eq!(text.items()[1].chars(), vec!['\0']);
+        }
     }
 
-    #[test]
-    fn explicit_empty_lines_are_preserved() {
-        let text = Text::from("a\n\nb");
-        assert_eq!(text.items().len(), 3);
-        assert_eq!(text.items()[1].chars(), vec!['\0']);
+    mod replace_contents {
+        use super::*;
+
+        #[test]
+        fn restores_a_current_line_for_empty_text() {
+            let mut text = Text::default();
+            text.replace_contents(vec![StyledGraphemes::from("first")]);
+
+            assert_eq!(text.current_line(), Some(0));
+        }
     }
 
-    #[test]
-    fn replacing_empty_text_restores_a_current_line() {
-        let mut text = Text::default();
-        text.replace_contents(vec![StyledGraphemes::from("first")]);
+    mod backward {
+        use super::*;
 
-        assert_eq!(text.current_line(), Some(0));
+        #[test]
+        fn stops_at_the_first_line() {
+            let mut text = Text::from("first\nsecond");
+
+            assert!(!text.backward());
+            assert_eq!(text.current_line(), Some(0));
+        }
     }
 
-    #[test]
-    fn navigation_stops_at_the_text_boundaries() {
-        let mut text = Text::from("first\nsecond");
+    mod forward {
+        use super::*;
 
-        assert_eq!(text.current_line(), Some(0));
-        assert!(!text.backward());
-        assert!(text.forward());
-        assert_eq!(text.current_line(), Some(1));
-        assert!(!text.forward());
+        #[test]
+        fn stops_at_the_last_line() {
+            let mut text = Text::from("first\nsecond");
 
-        assert!(text.move_to(0));
-        assert_eq!(text.current_line(), Some(0));
-        assert!(!text.move_to(2));
-        assert_eq!(text.current_line(), Some(0));
+            assert!(text.forward());
+            assert_eq!(text.current_line(), Some(1));
+            assert!(!text.forward());
+            assert_eq!(text.current_line(), Some(1));
+        }
+    }
+
+    mod move_to {
+        use super::*;
+
+        #[test]
+        fn rejects_an_out_of_bounds_line() {
+            let mut text = Text::from("first\nsecond");
+
+            assert!(!text.move_to(2));
+            assert_eq!(text.current_line(), Some(0));
+        }
     }
 }

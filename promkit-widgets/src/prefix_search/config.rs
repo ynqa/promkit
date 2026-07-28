@@ -32,13 +32,13 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "serde")]
-    mod serde_compatibility {
+    mod deserialize {
         use promkit_core::crossterm::style::{Attribute, Color};
 
         use super::super::Config;
 
         #[test]
-        fn config_fields_are_fully_loaded_from_toml() {
+        fn loads_all_fields_from_toml() {
             let input = r#"
 cursor = "> "
 active_item_style = "fg=cyan,attr=bold"

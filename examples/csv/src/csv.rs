@@ -230,67 +230,79 @@ mod tests {
         )
     }
 
-    #[test]
-    fn arrow_keys_move_on_both_axes() {
-        let mut viewer = viewer();
-        viewer.table.create_graphemes_in_viewport(4, 2);
+    mod csv_viewer {
+        use super::*;
 
-        viewer
-            .handle_event(&Event::Key(KeyEvent::new(
-                KeyCode::Down,
-                KeyModifiers::NONE,
-            )))
-            .unwrap();
-        assert_eq!(viewer.table.document.position(), 1);
+        mod handle_event {
+            use super::*;
 
-        viewer
-            .handle_event(&Event::Key(KeyEvent::new(
-                KeyCode::Right,
-                KeyModifiers::NONE,
-            )))
-            .unwrap();
-        assert_eq!(
-            viewer.table.document.horizontal_offset(),
-            KEY_HORIZONTAL_SCROLL_CELLS
-        );
+            #[test]
+            fn arrow_keys_move_on_both_axes() {
+                let mut viewer = viewer();
+                viewer.table.create_graphemes_in_viewport(4, 2);
+
+                viewer
+                    .handle_event(&Event::Key(KeyEvent::new(
+                        KeyCode::Down,
+                        KeyModifiers::NONE,
+                    )))
+                    .unwrap();
+                assert_eq!(viewer.table.document.position(), 1);
+
+                viewer
+                    .handle_event(&Event::Key(KeyEvent::new(
+                        KeyCode::Right,
+                        KeyModifiers::NONE,
+                    )))
+                    .unwrap();
+                assert_eq!(
+                    viewer.table.document.horizontal_offset(),
+                    KEY_HORIZONTAL_SCROLL_CELLS
+                );
+            }
+
+            #[test]
+            fn macos_horizontal_scroll_left_reveals_content_on_the_right() {
+                let mut viewer = viewer();
+                viewer.table.create_graphemes_in_viewport(4, 2);
+                viewer
+                    .handle_event(&Event::Mouse(MouseEvent {
+                        kind: MouseEventKind::ScrollLeft,
+                        column: 0,
+                        row: 0,
+                        modifiers: KeyModifiers::NONE,
+                    }))
+                    .unwrap();
+
+                assert_eq!(
+                    viewer.table.document.horizontal_offset(),
+                    MOUSE_HORIZONTAL_SCROLL_CELLS
+                );
+
+                viewer
+                    .handle_event(&Event::Mouse(MouseEvent {
+                        kind: MouseEventKind::ScrollRight,
+                        column: 0,
+                        row: 0,
+                        modifiers: KeyModifiers::NONE,
+                    }))
+                    .unwrap();
+                assert_eq!(viewer.table.document.horizontal_offset(), 0);
+            }
+        }
     }
 
-    #[test]
-    fn macos_horizontal_scroll_left_reveals_content_on_the_right() {
-        let mut viewer = viewer();
-        viewer.table.create_graphemes_in_viewport(4, 2);
-        viewer
-            .handle_event(&Event::Mouse(MouseEvent {
-                kind: MouseEventKind::ScrollLeft,
-                column: 0,
-                row: 0,
-                modifiers: KeyModifiers::NONE,
-            }))
-            .unwrap();
+    mod parse_document {
+        use super::*;
 
-        assert_eq!(
-            viewer.table.document.horizontal_offset(),
-            MOUSE_HORIZONTAL_SCROLL_CELLS
-        );
+        #[test]
+        fn loads_the_large_csv_fixture_from_a_file() {
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../promkit-widgets/benches/table.csv");
+            let document = parse_document(&Args { input: Some(path) }).unwrap();
 
-        viewer
-            .handle_event(&Event::Mouse(MouseEvent {
-                kind: MouseEventKind::ScrollRight,
-                column: 0,
-                row: 0,
-                modifiers: KeyModifiers::NONE,
-            }))
-            .unwrap();
-        assert_eq!(viewer.table.document.horizontal_offset(), 0);
-    }
-
-    #[test]
-    fn loads_the_large_csv_fixture_from_a_file() {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../promkit-widgets/benches/table.csv");
-        let document = parse_document(&Args { input: Some(path) }).unwrap();
-
-        assert_eq!(document.row_count(), 47_852);
-        assert_eq!(document.column_count(), 12);
+            assert_eq!(document.row_count(), 47_852);
+            assert_eq!(document.column_count(), 12);
+        }
     }
 }

@@ -3,7 +3,7 @@ use std::str::FromStr;
 use promkit_widgets::json::jsonz::{PrettyRender, create_rows};
 
 #[test]
-fn render_pretty() {
+fn renders_nested_rows() {
     let expected = r#"
 {
     "array": [

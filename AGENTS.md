@@ -44,6 +44,31 @@ When adding features, preserve these boundaries before optimizing code layout.
 
 ## Coding Conventions
 
+### Test Organization
+
+- Name the outer inline test module `tests`.
+- Group tests under a module named after the function or method under test.
+- When a file defines multiple production types, add a type-level module before
+  the function-level module.
+- Name test functions after the behavior or scenario being verified. Do not use
+  generic names such as `test` or repeat the function name in a `test_*` prefix.
+
+For example:
+
+```rust
+#[cfg(test)]
+mod tests {
+    mod widget_viewport {
+        mod scroll_to_include {
+            #[test]
+            fn does_not_scroll_while_the_position_is_visible() {
+                // ...
+            }
+        }
+    }
+}
+```
+
 ### Feature Wiring
 
 - Control module exposure via feature flags.

@@ -394,593 +394,646 @@ impl TextEditor {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
-    fn new_with_position(s: String, p: usize) -> TextEditor {
-        let text = StyledGraphemes::from(s);
-        TextEditor {
-            position: p.min(text.len().saturating_sub(1)),
-            text,
-            preferred_column: None,
-        }
-    }
-
-    mod position {
+    mod text_editor {
         use super::*;
 
-        #[test]
-        fn starts_at_the_trailing_cursor() {
-            let texteditor = TextEditor::new("abc");
-
-            assert_eq!(texteditor.position(), 3);
+        fn new_with_position(s: String, p: usize) -> TextEditor {
+            let text = StyledGraphemes::from(s);
+            TextEditor {
+                position: p.min(text.len().saturating_sub(1)),
+                text,
+                preferred_column: None,
+            }
         }
 
-        #[test]
-        fn direct_and_relative_moves_preserve_position_on_failure() {
-            let mut texteditor = TextEditor::new("abc");
+        mod new {
+            use super::*;
 
-            assert!(texteditor.move_to(1));
-            assert_eq!(texteditor.position(), 1);
-            assert!(!texteditor.move_to(4));
-            assert_eq!(texteditor.position(), 1);
+            #[test]
+            fn starts_at_the_trailing_cursor() {
+                let texteditor = TextEditor::new("abc");
 
-            assert!(texteditor.shift(0, 2));
-            assert_eq!(texteditor.position(), 3);
-            assert!(!texteditor.shift(0, 1));
-            assert_eq!(texteditor.position(), 3);
-            assert!(!texteditor.shift(4, 0));
-            assert_eq!(texteditor.position(), 3);
-        }
-    }
-
-    mod masking {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let txt = new_with_position(String::from("abcde "), 0);
-            assert_eq!(StyledGraphemes::from("***** "), txt.masking('*'))
+                assert_eq!(texteditor.position(), 3);
+            }
         }
 
-        #[test]
-        fn preserves_newlines_in_multiline_text() {
-            let txt = TextEditor::new("ab\nc");
+        mod move_to {
+            use super::*;
 
-            assert_eq!(StyledGraphemes::from("**\n* "), txt.masking('*'));
-        }
-    }
+            #[test]
+            fn preserves_the_position_when_the_target_is_out_of_bounds() {
+                let mut texteditor = TextEditor::new("abc");
 
-    mod erase {
-        use super::*;
-
-        #[test]
-        fn test_for_empty() {
-            let txt = TextEditor::default();
-            assert_eq!(StyledGraphemes::from(" "), txt.text());
-            assert_eq!(0, txt.position());
+                assert!(texteditor.move_to(1));
+                assert_eq!(texteditor.position(), 1);
+                assert!(!texteditor.move_to(4));
+                assert_eq!(texteditor.position(), 1);
+            }
         }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("bc "),
-                0, // indicate `b`.
-            );
-            txt.erase();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod shift {
+            use super::*;
+
+            #[test]
+            fn preserves_the_position_when_the_target_is_out_of_bounds() {
+                let mut texteditor = TextEditor::new("abc");
+                assert!(texteditor.move_to(1));
+
+                assert!(texteditor.shift(0, 2));
+                assert_eq!(texteditor.position(), 3);
+                assert!(!texteditor.shift(0, 1));
+                assert_eq!(texteditor.position(), 3);
+                assert!(!texteditor.shift(4, 0));
+                assert_eq!(texteditor.position(), 3);
+            }
         }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            let new = new_with_position(
-                String::from("ab "),
-                2, // indicate tail.
-            );
-            txt.erase();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod masking {
+            use super::*;
+
+            #[test]
+            fn replaces_non_whitespace_characters_with_the_mask() {
+                let txt = new_with_position(String::from("abcde "), 0);
+                assert_eq!(StyledGraphemes::from("***** "), txt.masking('*'))
+            }
+
+            #[test]
+            fn preserves_newlines_in_multiline_text() {
+                let txt = TextEditor::new("ab\nc");
+
+                assert_eq!(StyledGraphemes::from("**\n* "), txt.masking('*'));
+            }
         }
 
-        #[test]
-        fn test_at_head() {
-            let txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            assert_eq!(StyledGraphemes::from("abc "), txt.text());
-            assert_eq!(0, txt.position());
-        }
-    }
+        mod erase {
+            use super::*;
 
-    mod find_previous_nearest_index {
-        use super::*;
+            #[test]
+            fn empty_editor_is_unchanged() {
+                let txt = TextEditor::default();
+                assert_eq!(StyledGraphemes::from(" "), txt.text());
+                assert_eq!(0, txt.position());
+            }
 
-        use std::collections::HashSet;
+            #[test]
+            fn removes_the_character_before_the_cursor() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("bc "),
+                    0, // indicate `b`.
+                );
+                txt.erase();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-        #[test]
-        fn test() {
-            let mut txt = new_with_position(String::from("koko momo jojo "), 11); // indicate `o`.
-            assert_eq!(10, txt.find_previous_nearest_index(&HashSet::from([' '])));
-            txt.move_to(10);
-            assert_eq!(5, txt.find_previous_nearest_index(&HashSet::from([' '])));
-        }
+            #[test]
+            fn removes_the_last_character_at_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                let new = new_with_position(
+                    String::from("ab "),
+                    2, // indicate tail.
+                );
+                txt.erase();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-        #[test]
-        fn test_with_no_target() {
-            let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(0, txt.find_previous_nearest_index(&HashSet::from(['z'])));
-        }
-    }
-
-    mod find_next_nearest_index {
-        use super::*;
-
-        use std::collections::HashSet;
-
-        #[test]
-        fn test() {
-            let mut txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(10, txt.find_next_nearest_index(&HashSet::from([' '])));
-            txt.move_to(10);
-            assert_eq!(14, txt.find_next_nearest_index(&HashSet::from([' '])));
-        }
-
-        #[test]
-        fn test_with_no_target() {
-            let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
-            assert_eq!(14, txt.find_next_nearest_index(&HashSet::from(['z'])));
-        }
-    }
-
-    mod insert {
-        use super::*;
-
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            let new = new_with_position(
-                String::from("d "),
-                1, // indicate tail.
-            );
-            txt.insert('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+            #[test]
+            fn head_is_unchanged() {
+                let txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                assert_eq!(StyledGraphemes::from("abc "), txt.text());
+                assert_eq!(0, txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("adbc "),
-                2, // indicate `b`.
-            );
-            txt.insert('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod find_previous_nearest_index {
+            use super::*;
+
+            use std::collections::HashSet;
+
+            #[test]
+            fn finds_the_previous_word_boundary() {
+                let mut txt = new_with_position(String::from("koko momo jojo "), 11); // indicate `o`.
+                assert_eq!(10, txt.find_previous_nearest_index(&HashSet::from([' '])));
+                txt.move_to(10);
+                assert_eq!(5, txt.find_previous_nearest_index(&HashSet::from([' '])));
+            }
+
+            #[test]
+            fn returns_the_head_when_no_boundary_exists() {
+                let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+                assert_eq!(0, txt.find_previous_nearest_index(&HashSet::from(['z'])));
+            }
         }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            let new = new_with_position(
-                String::from("abcd "),
-                4, // indicate tail.
-            );
-            txt.insert('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod find_next_nearest_index {
+            use super::*;
+
+            use std::collections::HashSet;
+
+            #[test]
+            fn finds_the_next_word_boundary() {
+                let mut txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+                assert_eq!(10, txt.find_next_nearest_index(&HashSet::from([' '])));
+                txt.move_to(10);
+                assert_eq!(14, txt.find_next_nearest_index(&HashSet::from([' '])));
+            }
+
+            #[test]
+            fn returns_the_tail_when_no_boundary_exists() {
+                let txt = new_with_position(String::from("koko momo jojo "), 7); // indicate `m`.
+                assert_eq!(14, txt.find_next_nearest_index(&HashSet::from(['z'])));
+            }
         }
 
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            let new = new_with_position(
-                String::from("dabc "),
-                1, // indicate `a`.
-            );
-            txt.insert('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
-    }
+        mod insert {
+            use super::*;
 
-    mod multiline {
-        use super::*;
+            #[test]
+            fn inserts_into_an_empty_editor() {
+                let mut txt = TextEditor::default();
+                let new = new_with_position(
+                    String::from("d "),
+                    1, // indicate tail.
+                );
+                txt.insert('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-        #[test]
-        fn reports_logical_position_using_display_columns() {
-            let mut txt = TextEditor::new("ab\n界c");
+            #[test]
+            fn inserts_before_the_cursor() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("adbc "),
+                    2, // indicate `b`.
+                );
+                txt.insert('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-            assert_eq!(TextPosition { row: 1, column: 3 }, txt.logical_position());
+            #[test]
+            fn appends_at_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                let new = new_with_position(
+                    String::from("abcd "),
+                    4, // indicate tail.
+                );
+                txt.insert('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-            assert!(txt.move_to(3)); // Before `界`.
-            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
-        }
-
-        #[test]
-        fn inserts_a_newline_at_the_cursor() {
-            let mut txt = TextEditor::new("abcd");
-            assert!(txt.move_to(2));
-
-            txt.insert_newline();
-
-            assert_eq!("ab\ncd", txt.text_without_cursor().to_string());
-            assert_eq!(3, txt.position());
-            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
-        }
-
-        #[test]
-        fn moves_vertically_and_preserves_the_preferred_display_column() {
-            let mut txt = TextEditor::new("abcdef\nxy\n123456");
-            assert!(txt.move_to(6)); // End of the first line.
-
-            assert!(txt.move_down());
-            assert_eq!(9, txt.position()); // End of the shorter second line.
-            assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
-
-            assert!(txt.move_down());
-            assert_eq!(16, txt.position()); // Restore column 6 on the third line.
-            assert_eq!(TextPosition { row: 2, column: 6 }, txt.logical_position());
-
-            assert!(txt.move_up());
-            assert_eq!(9, txt.position());
-            assert!(txt.move_up());
-            assert_eq!(6, txt.position());
-        }
-
-        #[test]
-        fn moves_vertically_using_wide_character_display_widths() {
-            let mut txt = TextEditor::new("界a\n123");
-            assert!(txt.move_to(1)); // Display column 2 after `界`.
-
-            assert!(txt.move_down());
-
-            assert_eq!(5, txt.position());
-            assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
+            #[test]
+            fn prepends_at_the_head() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                let new = new_with_position(
+                    String::from("dabc "),
+                    1, // indicate `a`.
+                );
+                txt.insert('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
         }
 
-        #[test]
-        fn stops_vertical_movement_at_document_boundaries() {
-            let mut txt = TextEditor::new("ab\ncd");
-            txt.move_to_head();
+        mod logical_position {
+            use super::*;
 
-            assert!(!txt.move_up());
-            assert_eq!(0, txt.position());
+            #[test]
+            fn uses_display_columns() {
+                let mut txt = TextEditor::new("ab\n界c");
 
-            assert!(txt.move_to(3));
-            assert!(txt.move_up());
-            assert_eq!(0, txt.position());
-            assert!(!txt.move_up());
+                assert_eq!(TextPosition { row: 1, column: 3 }, txt.logical_position());
 
-            txt.move_to_tail();
-            assert!(!txt.move_down());
+                assert!(txt.move_to(3)); // Before `界`.
+                assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+            }
+
+            #[test]
+            fn handles_empty_lines_and_a_trailing_newline() {
+                let mut txt = TextEditor::new("a\n\n");
+
+                assert_eq!(TextPosition { row: 2, column: 0 }, txt.logical_position());
+                assert!(txt.move_up());
+                assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+                assert!(txt.move_up());
+                assert_eq!(TextPosition { row: 0, column: 0 }, txt.logical_position());
+            }
         }
 
-        #[test]
-        fn moves_to_the_current_line_boundaries() {
-            let mut txt = TextEditor::new("ab\ncd");
-            assert!(txt.move_to(4)); // Before `d`.
+        mod insert_newline {
+            use super::*;
 
-            txt.move_to_line_head();
-            assert_eq!(3, txt.position());
+            #[test]
+            fn inserts_at_the_cursor() {
+                let mut txt = TextEditor::new("abcd");
+                assert!(txt.move_to(2));
 
-            txt.move_to_line_tail();
-            assert_eq!(5, txt.position());
+                txt.insert_newline();
+
+                assert_eq!("ab\ncd", txt.text_without_cursor().to_string());
+                assert_eq!(3, txt.position());
+                assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
+            }
         }
 
-        #[test]
-        fn erases_a_newline_forward_and_joins_lines() {
-            let mut txt = TextEditor::new("ab\ncd");
-            assert!(txt.move_to(2)); // Before the newline.
+        mod move_down {
+            use super::*;
 
-            txt.erase_forward();
+            #[test]
+            fn preserves_the_preferred_display_column() {
+                let mut txt = TextEditor::new("abcdef\nxy\n123456");
+                assert!(txt.move_to(6)); // End of the first line.
 
-            assert_eq!("abcd", txt.text_without_cursor().to_string());
-            assert_eq!(2, txt.position());
-            assert_eq!(TextPosition { row: 0, column: 2 }, txt.logical_position());
+                assert!(txt.move_down());
+                assert_eq!(9, txt.position()); // End of the shorter second line.
+                assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
+
+                assert!(txt.move_down());
+                assert_eq!(16, txt.position()); // Restore column 6 on the third line.
+                assert_eq!(TextPosition { row: 2, column: 6 }, txt.logical_position());
+
+                assert!(txt.move_up());
+                assert_eq!(9, txt.position());
+                assert!(txt.move_up());
+                assert_eq!(6, txt.position());
+            }
+
+            #[test]
+            fn uses_wide_character_display_widths() {
+                let mut txt = TextEditor::new("界a\n123");
+                assert!(txt.move_to(1)); // Display column 2 after `界`.
+
+                assert!(txt.move_down());
+
+                assert_eq!(5, txt.position());
+                assert_eq!(TextPosition { row: 1, column: 2 }, txt.logical_position());
+            }
+
+            #[test]
+            fn stops_at_the_document_tail() {
+                let mut txt = TextEditor::new("ab\ncd");
+                txt.move_to_tail();
+
+                assert!(!txt.move_down());
+            }
         }
 
-        #[test]
-        fn handles_empty_lines_and_a_trailing_newline() {
-            let mut txt = TextEditor::new("a\n\n");
+        mod move_up {
+            use super::*;
 
-            assert_eq!(TextPosition { row: 2, column: 0 }, txt.logical_position());
-            assert!(txt.move_up());
-            assert_eq!(TextPosition { row: 1, column: 0 }, txt.logical_position());
-            assert!(txt.move_up());
-            assert_eq!(TextPosition { row: 0, column: 0 }, txt.logical_position());
-        }
-    }
+            #[test]
+            fn stops_at_the_document_head() {
+                let mut txt = TextEditor::new("ab\ncd");
+                txt.move_to_head();
 
-    mod overwrite {
-        use super::*;
+                assert!(!txt.move_up());
+                assert_eq!(0, txt.position());
 
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            let new = new_with_position(
-                String::from("d "),
-                1, // indicate tail.
-            );
-            txt.overwrite('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+                assert!(txt.move_to(3));
+                assert!(txt.move_up());
+                assert_eq!(0, txt.position());
+                assert!(!txt.move_up());
+            }
         }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("adc "),
-                2, // indicate `c`.
-            );
-            txt.overwrite('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod move_to_line_head {
+            use super::*;
+
+            #[test]
+            fn moves_to_the_current_line_head() {
+                let mut txt = TextEditor::new("ab\ncd");
+                assert!(txt.move_to(4)); // Before `d`.
+
+                txt.move_to_line_head();
+                assert_eq!(3, txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            let new = new_with_position(
-                String::from("abcd "),
-                4, // indicate tail.
-            );
-            txt.overwrite('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod move_to_line_tail {
+            use super::*;
+
+            #[test]
+            fn moves_to_the_current_line_tail() {
+                let mut txt = TextEditor::new("ab\ncd");
+                assert!(txt.move_to(4)); // Before `d`.
+
+                txt.move_to_line_tail();
+                assert_eq!(5, txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            let new = new_with_position(
-                String::from("dbc "),
-                1, // indicate `b`.
-            );
-            txt.overwrite('d');
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
-    }
+        mod erase_forward {
+            use super::*;
 
-    mod backward {
-        use super::*;
+            #[test]
+            fn erases_a_newline_and_joins_lines() {
+                let mut txt = TextEditor::new("ab\ncd");
+                assert!(txt.move_to(2)); // Before the newline.
 
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            txt.backward();
-            assert_eq!(StyledGraphemes::from(" "), txt.text());
-            assert_eq!(0, txt.position());
+                txt.erase_forward();
+
+                assert_eq!("abcd", txt.text_without_cursor().to_string());
+                assert_eq!(2, txt.position());
+                assert_eq!(TextPosition { row: 0, column: 2 }, txt.logical_position());
+            }
         }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            txt.backward();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod overwrite {
+            use super::*;
+
+            #[test]
+            fn inserts_into_an_empty_editor() {
+                let mut txt = TextEditor::default();
+                let new = new_with_position(
+                    String::from("d "),
+                    1, // indicate tail.
+                );
+                txt.overwrite('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn replaces_the_character_at_the_cursor() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("adc "),
+                    2, // indicate `c`.
+                );
+                txt.overwrite('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn appends_at_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                let new = new_with_position(
+                    String::from("abcd "),
+                    4, // indicate tail.
+                );
+                txt.overwrite('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn replaces_the_first_character_at_the_head() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                let new = new_with_position(
+                    String::from("dbc "),
+                    1, // indicate `b`.
+                );
+                txt.overwrite('d');
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                2, // indicate `c`.
-            );
-            txt.backward();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod backward {
+            use super::*;
+
+            #[test]
+            fn empty_editor_is_unchanged() {
+                let mut txt = TextEditor::default();
+                txt.backward();
+                assert_eq!(StyledGraphemes::from(" "), txt.text());
+                assert_eq!(0, txt.position());
+            }
+
+            #[test]
+            fn moves_back_one_character() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                txt.backward();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn moves_back_from_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    2, // indicate `c`.
+                );
+                txt.backward();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn head_is_unchanged() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                txt.backward();
+                assert_eq!(StyledGraphemes::from("abc "), txt.text());
+                assert_eq!(0, txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            txt.backward();
-            assert_eq!(StyledGraphemes::from("abc "), txt.text());
-            assert_eq!(0, txt.position());
-        }
-    }
+        mod forward {
+            use super::*;
 
-    mod forward {
-        use super::*;
+            #[test]
+            fn empty_editor_is_unchanged() {
+                let mut txt = TextEditor::default();
+                txt.forward();
+                assert_eq!(StyledGraphemes::from(" "), txt.text());
+                assert_eq!(0, txt.position());
+            }
 
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            txt.forward();
-            assert_eq!(StyledGraphemes::from(" "), txt.text());
-            assert_eq!(0, txt.position());
-        }
+            #[test]
+            fn moves_forward_one_character() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    2, // indicate `c`.
+                );
+                txt.forward();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                2, // indicate `c`.
-            );
-            txt.forward();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
+            #[test]
+            fn tail_is_unchanged() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                txt.forward();
+                assert_eq!(StyledGraphemes::from("abc "), txt.text());
+                assert_eq!(3, txt.position());
+            }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            txt.forward();
-            assert_eq!(StyledGraphemes::from("abc "), txt.text());
-            assert_eq!(3, txt.position());
-        }
-
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            txt.forward();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
-    }
-
-    mod to_head {
-        use super::*;
-
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            txt.move_to_head();
-            assert_eq!(StyledGraphemes::from(" "), txt.text());
-            assert_eq!(0, txt.position());
+            #[test]
+            fn moves_forward_from_the_head() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                txt.forward();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            txt.move_to_head();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+        mod move_to_head {
+            use super::*;
+
+            #[test]
+            fn empty_editor_is_unchanged() {
+                let mut txt = TextEditor::default();
+                txt.move_to_head();
+                assert_eq!(StyledGraphemes::from(" "), txt.text());
+                assert_eq!(0, txt.position());
+            }
+
+            #[test]
+            fn moves_to_the_head() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                txt.move_to_head();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn moves_from_the_tail_to_the_head() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                txt.move_to_head();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
+
+            #[test]
+            fn head_is_unchanged() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                txt.move_to_head();
+                assert_eq!(StyledGraphemes::from("abc "), txt.text());
+                assert_eq!(0, txt.position());
+            }
         }
 
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            txt.move_to_head();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
+        mod move_to_tail {
+            use super::*;
 
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            txt.move_to_head();
-            assert_eq!(StyledGraphemes::from("abc "), txt.text());
-            assert_eq!(0, txt.position());
-        }
-    }
+            #[test]
+            fn empty_editor_is_unchanged() {
+                let mut txt = TextEditor::default();
+                txt.move_to_tail();
+                assert_eq!(StyledGraphemes::from(" "), txt.text());
+                assert_eq!(0, txt.position());
+            }
 
-    mod to_tail {
-        use super::*;
+            #[test]
+            fn moves_to_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    1, // indicate `b`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                txt.move_to_tail();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
 
-        #[test]
-        fn test_for_empty() {
-            let mut txt = TextEditor::default();
-            txt.move_to_tail();
-            assert_eq!(StyledGraphemes::from(" "), txt.text());
-            assert_eq!(0, txt.position());
-        }
+            #[test]
+            fn tail_is_unchanged() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                txt.move_to_tail();
+                assert_eq!(StyledGraphemes::from("abc "), txt.text());
+                assert_eq!(3, txt.position());
+            }
 
-        #[test]
-        fn test_at_non_edge() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                1, // indicate `b`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            txt.move_to_tail();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
-        }
-
-        #[test]
-        fn test_at_tail() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            txt.move_to_tail();
-            assert_eq!(StyledGraphemes::from("abc "), txt.text());
-            assert_eq!(3, txt.position());
-        }
-
-        #[test]
-        fn test_at_head() {
-            let mut txt = new_with_position(
-                String::from("abc "),
-                0, // indicate `a`.
-            );
-            let new = new_with_position(
-                String::from("abc "),
-                3, // indicate tail.
-            );
-            txt.move_to_tail();
-            assert_eq!(new.text(), txt.text());
-            assert_eq!(new.position(), txt.position());
+            #[test]
+            fn moves_from_the_head_to_the_tail() {
+                let mut txt = new_with_position(
+                    String::from("abc "),
+                    0, // indicate `a`.
+                );
+                let new = new_with_position(
+                    String::from("abc "),
+                    3, // indicate tail.
+                );
+                txt.move_to_tail();
+                assert_eq!(new.text(), txt.text());
+                assert_eq!(new.position(), txt.position());
+            }
         }
     }
 }

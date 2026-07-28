@@ -8,7 +8,7 @@ fn number(raw: &str) -> serde_yaml::Number {
 }
 
 #[test]
-fn test_all_cases_yaml_multi_documents_rows() {
+fn creates_rows_for_all_document_shapes() {
     let input = r#"
 ---
 null_value: null

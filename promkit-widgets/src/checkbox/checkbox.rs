@@ -141,19 +141,23 @@ impl Checkbox {
 mod tests {
     use super::*;
 
-    #[test]
-    fn toggling_an_empty_checkbox_is_a_no_op() {
-        let mut checkbox = Checkbox::from_displayable(Vec::<String>::new());
-        checkbox.toggle();
+    mod toggle {
+        use super::*;
 
-        assert!(checkbox.picked_indexes().is_empty());
+        #[test]
+        fn empty_checkbox_is_unchanged() {
+            let mut checkbox = Checkbox::from_displayable(Vec::<String>::new());
+            checkbox.toggle();
+
+            assert!(checkbox.picked_indexes().is_empty());
+        }
     }
 
     mod new_with_checked {
         use super::*;
 
         #[test]
-        fn test() {
+        fn initializes_items_and_checked_indexes() {
             // Prepare a list of items with their checked status
             let items = vec![
                 (String::from("1"), true),
