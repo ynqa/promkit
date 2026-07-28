@@ -30,6 +30,16 @@ fn benchmark_fixture(c: &mut Criterion, path: &Path) {
         b.iter(|| black_box(json::Document::new(black_box(values.iter()))));
     });
 
+    group.bench_function("from_file/via_value", |b| {
+        b.iter(|| black_box(from_file_via_value(black_box(path))));
+    });
+    // TODO: Add `from_file/direct` when `json::Document::from_reader` is available.
+
+    group.bench_function("from_str/via_value", |b| {
+        b.iter(|| black_box(from_str_via_value(black_box(input.as_str()))));
+    });
+    // TODO: Add `from_str/direct` when `json::Document::from_str` is available.
+
     let document = json::Document::new(values.iter());
     drop(values);
     drop(input);
@@ -77,4 +87,14 @@ fn parse(input: &str) -> Vec<serde_json::Value> {
         .into_iter::<serde_json::Value>()
         .collect::<Result<Vec<_>, _>>()
         .unwrap()
+}
+
+fn from_file_via_value(path: &Path) -> json::Document {
+    let input = fs::read_to_string(path).unwrap();
+    from_str_via_value(&input)
+}
+
+fn from_str_via_value(input: &str) -> json::Document {
+    let values = parse(input);
+    json::Document::new(values.iter())
 }
