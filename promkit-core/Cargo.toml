@@ -1,6 +1,6 @@
 [package]
 name = "promkit-core"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Core library for promkit"
@@ -14,3 +14,10 @@ crossbeam-skiplist = { workspace = true }
 crossterm = { workspace = true }
 tokio = { workspace = true }
 unicode-width = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.8.2"
+
+[[bench]]
+name = "renderer_layout"
+harness = false

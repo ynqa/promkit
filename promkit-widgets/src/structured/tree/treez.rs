@@ -240,97 +240,117 @@ mod tests {
         ]
     }
 
-    #[test]
-    fn extract_skips_hidden_descendants() {
-        let mut rows = create_test_rows();
-        rows[0].collapsed = true;
+    mod row_operation {
+        use super::*;
 
-        assert_eq!(
-            rows.extract(0, 5),
-            vec![Row {
-                depth: 0,
-                id: "root".into(),
-                path: vec!["root".into()],
-                has_children: true,
-                collapsed: true,
-            }]
-        );
+        mod extract {
+            use super::*;
+
+            #[test]
+            fn skips_hidden_descendants() {
+                let mut rows = create_test_rows();
+                rows[0].collapsed = true;
+
+                assert_eq!(
+                    rows.extract(0, 5),
+                    vec![Row {
+                        depth: 0,
+                        id: "root".into(),
+                        path: vec!["root".into()],
+                        has_children: true,
+                        collapsed: true,
+                    }]
+                );
+            }
+        }
+
+        mod down {
+            use super::*;
+
+            #[test]
+            fn skips_hidden_descendants() {
+                let mut rows = create_test_rows();
+                rows[1].collapsed = true;
+
+                assert_eq!(rows.down(1), 4);
+            }
+        }
     }
 
-    #[test]
-    fn down_skips_hidden_descendants() {
-        let mut rows = create_test_rows();
-        rows[1].collapsed = true;
+    mod adapter {
+        use super::*;
 
-        assert_eq!(rows.down(1), 4);
-    }
+        mod create_rows {
+            use super::*;
 
-    #[test]
-    fn create_rows_is_generic() {
-        let root = TestNode {
-            id: "root",
-            children: vec![
-                TestNode {
-                    id: "a",
+            #[test]
+            fn supports_arbitrary_node_types() {
+                let root = TestNode {
+                    id: "root",
                     children: vec![
                         TestNode {
-                            id: "aa",
-                            children: vec![],
+                            id: "a",
+                            children: vec![
+                                TestNode {
+                                    id: "aa",
+                                    children: vec![],
+                                },
+                                TestNode {
+                                    id: "ab",
+                                    children: vec![],
+                                },
+                            ],
                         },
                         TestNode {
-                            id: "ab",
+                            id: "b",
                             children: vec![],
                         },
                     ],
-                },
-                TestNode {
-                    id: "b",
-                    children: vec![],
-                },
-            ],
-        };
+                };
 
-        let rows = TestAdapter.create_rows(&root).unwrap();
+                let rows = TestAdapter.create_rows(&root).unwrap();
 
-        assert_eq!(
-            rows,
-            vec![
-                Row {
-                    depth: 0,
-                    id: "root".into(),
-                    path: vec!["root".into()],
-                    has_children: true,
-                    collapsed: true,
-                },
-                Row {
-                    depth: 1,
-                    id: "a".into(),
-                    path: vec!["root".into(), "a".into()],
-                    has_children: true,
-                    collapsed: true,
-                },
-                Row {
-                    depth: 2,
-                    id: "aa".into(),
-                    path: vec!["root".into(), "a".into(), "aa".into()],
-                    has_children: false,
-                    collapsed: false,
-                },
-                Row {
-                    depth: 2,
-                    id: "ab".into(),
-                    path: vec!["root".into(), "a".into(), "ab".into()],
-                    has_children: false,
-                    collapsed: false,
-                },
-                Row {
-                    depth: 1,
-                    id: "b".into(),
-                    path: vec!["root".into(), "b".into()],
-                    has_children: false,
-                    collapsed: false,
-                },
-            ]
-        );
+                assert_eq!(
+                    rows,
+                    vec![
+                        Row {
+                            depth: 0,
+                            id: "root".into(),
+                            path: vec!["root".into()],
+                            has_children: true,
+                            collapsed: true,
+                        },
+                        Row {
+                            depth: 1,
+                            id: "a".into(),
+                            path: vec!["root".into(), "a".into()],
+                            has_children: true,
+                            collapsed: true,
+                        },
+                        Row {
+                            depth: 2,
+                            id: "aa".into(),
+                            path: vec!["root".into(), "a".into(), "aa".into()],
+                            has_children: false,
+                            collapsed: false,
+                        },
+                        Row {
+                            depth: 2,
+                            id: "ab".into(),
+                            path: vec!["root".into(), "a".into(), "ab".into()],
+                            has_children: false,
+                            collapsed: false,
+                        },
+                        Row {
+                            depth: 1,
+                            id: "b".into(),
+                            path: vec!["root".into(), "b".into()],
+                            has_children: false,
+                            collapsed: false,
+                        },
+                    ]
+                );
+            }
+        }
     }
 }

@@ -38,10 +38,56 @@ impl Document {
         self.rows.extract(self.position, n)
     }
 
+    /// Returns all currently visible rows from the beginning of the document.
+    pub fn visible_rows(&self) -> Vec<Row> {
+        self.rows.extract(self.rows.head(), usize::MAX)
+    }
+
+    /// Returns stable one-based line numbers for the currently visible rows.
+    pub(super) fn visible_line_numbers(&self) -> Vec<usize> {
+        if self.rows.is_empty() {
+            return Vec::new();
+        }
+
+        let mut line_numbers = Vec::new();
+        let mut index = self.rows.head();
+        loop {
+            line_numbers.push(index + 1);
+            let next = self.rows.down(index);
+            if next == index {
+                break;
+            }
+            index = next;
+        }
+        line_numbers
+    }
+
+    /// Returns the number of rows in the fully expanded tree.
+    pub(super) fn line_count(&self) -> usize {
+        self.rows.len()
+    }
+
+    /// Returns the selected row's index in the visible row sequence.
+    pub fn visible_position(&self) -> usize {
+        visible_position(&self.rows, self.position)
+    }
+
     /// Toggles the visibility of a node at the cursor's current position.
     pub fn toggle(&mut self) {
         let index = self.rows.toggle(self.position);
         self.position = index;
+    }
+
+    /// Toggles the row identified by its underlying document index.
+    pub fn toggle_at(&mut self, row_index: usize) {
+        if row_index < self.rows.len() {
+            self.position = self.rows.toggle(row_index);
+        }
+    }
+
+    /// Resolves a visible row number to its underlying document index.
+    pub fn row_index_at_visible_position(&self, visible_position: usize) -> Option<usize> {
+        row_index_at_visible_position(&self.rows, visible_position)
     }
 
     /// Sets the visibility of all rows.
@@ -77,4 +123,36 @@ impl Document {
         self.position = self.rows.tail();
         true
     }
+}
+
+fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
+    let mut position = rows.head();
+    let mut visible = 0;
+
+    while position != target {
+        let next = rows.down(position);
+        if next == position {
+            break;
+        }
+        position = next;
+        visible += 1;
+    }
+
+    visible
+}
+
+fn row_index_at_visible_position(rows: &Vec<Row>, target: usize) -> Option<usize> {
+    if rows.is_empty() {
+        return None;
+    }
+
+    let mut position = rows.head();
+    for _ in 0..target {
+        let next = rows.down(position);
+        if next == position {
+            return None;
+        }
+        position = next;
+    }
+    Some(position)
 }

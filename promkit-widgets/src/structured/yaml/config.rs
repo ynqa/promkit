@@ -101,6 +101,8 @@ pub struct Config {
 
     /// Number of lines available for rendering.
     pub lines: Option<usize>,
+    /// Whether to display stable one-based line numbers to the left of the content.
+    pub show_line_numbers: bool,
 }
 
 impl Default for Config {
@@ -119,6 +121,7 @@ impl Default for Config {
             indent: 2,
             overflow_mode: OverflowMode::default(),
             lines: None,
+            show_line_numbers: false,
         }
     }
 }
@@ -164,12 +167,12 @@ impl Config {
         StyledGraphemes::from(typ.collapsed_preview()).apply_style(style)
     }
 
-    fn render_node(&self, row: &Row, node: &YamlNode) -> Option<StyledGraphemes> {
+    fn render_node(&self, node: &YamlNode) -> Option<StyledGraphemes> {
         match node {
             YamlNode::Tagged { tag, node } => {
                 let tag_part =
                     StyledGraphemes::from(format!("{} ", tag)).apply_style(self.tag_style);
-                match self.render_node(row, node) {
+                match self.render_node(node) {
                     Some(value) => Some(vec![tag_part, value].into_iter().collect()),
                     None => Some(tag_part),
                 }
@@ -202,12 +205,25 @@ impl Config {
 
     /// Format YAML rows into terminal lines with styling and width constraints.
     pub fn render_terminal_rows(&self, rows: &[Row], width: u16) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, 0, Some(width as usize))
+    }
+
+    /// Formats width-independent rows for the core renderer.
+    pub fn render_content_rows(&self, rows: &[Row], active_row: usize) -> Vec<StyledGraphemes> {
+        self.render_rows(rows, active_row, None)
+    }
+
+    fn render_rows(
+        &self,
+        rows: &[Row],
+        active_row: usize,
+        width: Option<usize>,
+    ) -> Vec<StyledGraphemes> {
         let mut formatted = Vec::new();
-        let width = width as usize;
         let mut i = 0;
+        let mut rendered_row = 0;
 
         while i < rows.len() {
-            let source_index = i;
             let row = &rows[i];
 
             // Collection roots occupy depth 0 as an operation row, so their
@@ -233,7 +249,7 @@ impl Config {
                     parts.push(StyledGraphemes::from(": "));
                 }
 
-                if let Some(value) = self.render_node(row, &row.node) {
+                if let Some(value) = self.render_node(&row.node) {
                     parts.push(value);
                 }
 
@@ -245,29 +261,27 @@ impl Config {
                         ..
                     })
                 ) && row.is_sequence_item
+                    && let Some(next_row) = rows.get(i + 1)
+                    && next_row.depth == row.depth + 1
+                    && !next_row.is_sequence_item
+                    && let Some(key) = &next_row.key
                 {
-                    if let Some(next_row) = rows.get(i + 1) {
-                        if next_row.depth == row.depth + 1 && !next_row.is_sequence_item {
-                            if let Some(key) = &next_row.key {
-                                parts.push(
-                                    StyledGraphemes::from(Self::render_yaml_string(key))
-                                        .apply_style(self.key_style),
-                                );
-                                parts.push(StyledGraphemes::from(": "));
+                    parts.push(
+                        StyledGraphemes::from(Self::render_yaml_string(key))
+                            .apply_style(self.key_style),
+                    );
+                    parts.push(StyledGraphemes::from(": "));
 
-                                if let Some(value) = self.render_node(next_row, &next_row.node) {
-                                    parts.push(value);
-                                }
-
-                                i += 1;
-                            }
-                        }
+                    if let Some(value) = self.render_node(&next_row.node) {
+                        parts.push(value);
                     }
+
+                    i += 1;
                 }
             }
 
             let mut content: StyledGraphemes = parts.into_iter().collect();
-            content = content.apply_attribute(if source_index == 0 {
+            content = content.apply_attribute(if rendered_row == active_row {
                 self.active_item_attribute
             } else {
                 self.inactive_item_attribute
@@ -275,17 +289,23 @@ impl Config {
 
             let mut line: StyledGraphemes = vec![indent, content].into_iter().collect();
 
-            match self.overflow_mode {
-                OverflowMode::Truncate => {
-                    line = line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
-                    formatted.push(line);
+            if let Some(width) = width {
+                match self.overflow_mode {
+                    OverflowMode::Truncate => {
+                        line =
+                            line.truncated_line_with_ellipsis(width, &StyledGraphemes::from("…"));
+                        formatted.push(line);
+                    }
+                    OverflowMode::Wrap => {
+                        formatted.extend(line.wrapped_lines(width));
+                    }
                 }
-                OverflowMode::Wrap => {
-                    formatted.extend(line.wrapped_lines(width));
-                }
+            } else {
+                formatted.push(line);
             }
 
             i += 1;
+            rendered_row += 1;
         }
 
         formatted
@@ -296,80 +316,84 @@ impl Config {
 mod tests {
     use super::*;
 
-    mod render_terminal_rows {
+    mod config {
         use super::*;
-        use crate::structured::ContainerNode;
 
-        #[test]
-        fn renders_sequence_mapping_first_key_on_item_line() {
-            let rows = vec![
-                Row {
-                    depth: 1,
-                    key: None,
-                    is_sequence_item: true,
-                    node: YamlNode::Container(ContainerNode::Open {
-                        typ: ContainerType::Object,
-                        collapsed: false,
-                        close_index: 3,
-                    }),
-                },
-                Row {
-                    depth: 2,
-                    key: Some("name".to_string()),
-                    is_sequence_item: false,
-                    node: YamlNode::String("alice".to_string()),
-                },
-                Row {
-                    depth: 2,
-                    key: Some("age".to_string()),
-                    is_sequence_item: false,
-                    node: YamlNode::Number(match serde_yaml::from_str("20").unwrap() {
-                        serde_yaml::Value::Number(number) => number,
-                        _ => unreachable!(),
-                    }),
-                },
-            ];
+        mod render_terminal_rows {
+            use super::*;
+            use crate::structured::ContainerNode;
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Truncate,
-                ..Default::default()
+            #[test]
+            fn renders_sequence_mapping_first_key_on_item_line() {
+                let rows = vec![
+                    Row {
+                        depth: 1,
+                        key: None,
+                        is_sequence_item: true,
+                        node: YamlNode::Container(ContainerNode::Open {
+                            typ: ContainerType::Object,
+                            collapsed: false,
+                            close_index: 3,
+                        }),
+                    },
+                    Row {
+                        depth: 2,
+                        key: Some("name".to_string()),
+                        is_sequence_item: false,
+                        node: YamlNode::String("alice".to_string()),
+                    },
+                    Row {
+                        depth: 2,
+                        key: Some("age".to_string()),
+                        is_sequence_item: false,
+                        node: YamlNode::Number(match serde_yaml::from_str("20").unwrap() {
+                            serde_yaml::Value::Number(number) => number,
+                            _ => unreachable!(),
+                        }),
+                    },
+                ];
+
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, 80)
+                .into_iter()
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>();
+
+                assert_eq!(
+                    lines,
+                    vec!["- name: alice".to_string(), "  age: 20".to_string(),]
+                );
             }
-            .render_terminal_rows(&rows, 80)
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
 
-            assert_eq!(
-                lines,
-                vec!["- name: alice".to_string(), "  age: 20".to_string(),]
-            );
-        }
+            #[test]
+            fn does_not_indent_the_first_root_mapping_key() {
+                let value = serde_yaml::from_str("name: alice\naddress:\n  city: Tokyo\n").unwrap();
+                let document = crate::structured::yaml::Document::new([&value]);
+                let rows = document.extract_rows_from_current(usize::MAX);
 
-        #[test]
-        fn does_not_indent_the_first_root_mapping_key() {
-            let value = serde_yaml::from_str("name: alice\naddress:\n  city: Tokyo\n").unwrap();
-            let document = crate::structured::yaml::Document::new([&value]);
-            let rows = document.extract_rows_from_current(usize::MAX);
+                let lines = Config {
+                    indent: 2,
+                    overflow_mode: OverflowMode::Truncate,
+                    ..Default::default()
+                }
+                .render_terminal_rows(&rows, 80)
+                .into_iter()
+                .map(|line| line.to_string())
+                .collect::<Vec<_>>();
 
-            let lines = Config {
-                indent: 2,
-                overflow_mode: OverflowMode::Truncate,
-                ..Default::default()
+                assert_eq!(
+                    lines,
+                    vec![
+                        "name: alice".to_string(),
+                        "address: ".to_string(),
+                        "  city: Tokyo".to_string(),
+                    ]
+                );
             }
-            .render_terminal_rows(&rows, 80)
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
-
-            assert_eq!(
-                lines,
-                vec![
-                    "name: alice".to_string(),
-                    "address: ".to_string(),
-                    "  city: Tokyo".to_string(),
-                ]
-            );
         }
     }
 }

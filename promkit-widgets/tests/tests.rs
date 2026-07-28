@@ -13,7 +13,11 @@ mod jsonz {
 }
 
 mod yamlz {
+    mod down;
     mod extract;
+    mod head;
     mod multi_documents;
-    mod navigation;
+    mod tail;
+    mod toggle;
+    mod up;
 }

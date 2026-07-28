@@ -1,0 +1,39 @@
+Scenario "multiline_wrap_cursor_redraw"
+Command "CARGO_BIN_EXE_text-editor-fixture"
+Terminal rows 6 cols 12
+Cursor row 6 col 1
+
+Step "spawn"
+Settle 300ms
+Expect:
+  r00 |············|
+  r01 |············|
+  r02 |············|
+  r03 |············|
+  r04 |············|
+  r05 |❯❯❯·········|
+
+Step "wrap two logical rows"
+Input "abcdefghij"
+Input enter
+Input "klmnopqrst"
+Settle 100ms
+Expect:
+  r00 |············|
+  r01 |············|
+  r02 |❯❯❯·abcdefgh|
+  r03 |ij··········|
+  r04 |...·klmnopqr|
+  r05 |st··········|
+
+Step "move between wrapped logical rows and redraw"
+Input up
+Input "X"
+Settle 100ms
+Expect:
+  r00 |············|
+  r01 |············|
+  r02 |❯❯❯·abcdefgh|
+  r03 |ijX·········|
+  r04 |...·klmnopqr|
+  r05 |st··········|

@@ -1,0 +1,18 @@
+[package]
+name = "async-task"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+promkit = { path = "../../promkit", features = [
+    "runtime",
+    "spinner",
+    "terminal-session",
+    "texteditor",
+] }
+tokio = { workspace = true }
+
+[[bin]]
+name = "async_task"
+path = "src/async_task.rs"

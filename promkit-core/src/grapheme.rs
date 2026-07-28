@@ -45,6 +45,10 @@ impl StyledGrapheme {
         self.width
     }
 
+    pub fn character(&self) -> char {
+        self.ch
+    }
+
     pub fn apply_style(&mut self, style: ContentStyle) {
         self.style = style;
     }
@@ -151,6 +155,43 @@ impl StyledGraphemes {
     /// Calculates the total display width of all `Grapheme` instances in the collection.
     pub fn widths(&self) -> usize {
         self.0.iter().map(|grapheme| grapheme.width).sum()
+    }
+
+    /// Calculates the display width before the given grapheme index.
+    pub fn widths_to(&self, index: usize) -> usize {
+        self.0
+            .iter()
+            .take(index)
+            .map(|grapheme| grapheme.width)
+            .sum()
+    }
+
+    /// Splits content at explicit newlines without applying terminal wrapping.
+    pub fn logical_lines(&self) -> Vec<StyledGraphemes> {
+        if self.is_empty() {
+            return Vec::new();
+        }
+
+        let mut lines = Vec::new();
+        let mut line = StyledGraphemes::default();
+        let mut last_was_newline = false;
+
+        for styled in self.iter() {
+            if styled.ch == '\n' {
+                lines.push(line);
+                line = StyledGraphemes::default();
+                last_was_newline = true;
+            } else {
+                line.push_back(styled.clone());
+                last_was_newline = false;
+            }
+        }
+
+        if !line.is_empty() || last_was_newline {
+            lines.push(line);
+        }
+
+        lines
     }
 
     /// Returns a displayable format of the styled graphemes.
@@ -407,331 +448,335 @@ impl fmt::Display for StyledGraphemesDisplay<'_> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
-    mod from_str {
+    mod styled_graphemes {
         use super::*;
 
-        #[test]
-        fn test() {
-            let style = ContentStyle::default();
-            let graphemes = StyledGraphemes::from_str("abc", style.clone());
-            assert_eq!(3, graphemes.0.len());
-            assert!(graphemes.0.iter().all(|g| g.style == style));
-        }
-    }
+        mod from_str {
+            use super::*;
 
-    mod from_lines {
-        use super::*;
-
-        #[test]
-        fn test_empty() {
-            let g = StyledGraphemes::from_lines(Vec::new());
-            assert!(g.is_empty());
+            #[test]
+            fn creates_graphemes_with_the_given_style() {
+                let style = ContentStyle::default();
+                let graphemes = StyledGraphemes::from_str("abc", style);
+                assert_eq!(3, graphemes.0.len());
+                assert!(graphemes.0.iter().all(|g| g.style == style));
+            }
         }
 
-        #[test]
-        fn test_join() {
-            let g = StyledGraphemes::from_lines(vec![
-                StyledGraphemes::from("abc"),
-                StyledGraphemes::from("def"),
-            ]);
-            assert_eq!("abc\ndef", g.to_string());
-        }
-    }
+        mod from_lines {
+            use super::*;
 
-    mod chars {
-        use super::*;
+            #[test]
+            fn empty_input_returns_empty_graphemes() {
+                let g = StyledGraphemes::from_lines(Vec::new());
+                assert!(g.is_empty());
+            }
 
-        #[test]
-        fn test() {
-            let graphemes = StyledGraphemes::from("abc");
-            let chars = graphemes.chars();
-            assert_eq!(vec!['a', 'b', 'c'], chars);
-        }
-    }
-
-    mod widths {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let graphemes = StyledGraphemes::from("a b");
-            assert_eq!(3, graphemes.widths()); // 'a' and 'b' are each 1 width, and space is 1 width
-        }
-    }
-
-    mod styled_display {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let graphemes = StyledGraphemes::from("abc");
-            let display = graphemes.styled_display();
-            assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
-        }
-    }
-
-    mod apply_style {
-        use super::*;
-
-        use crossterm::style::Color;
-
-        #[test]
-        fn test() {
-            let mut graphemes = StyledGraphemes::from("abc");
-            let new_style = ContentStyle {
-                foreground_color: Some(Color::Green),
-                ..Default::default()
-            };
-            graphemes = graphemes.apply_style(new_style.clone());
-            assert!(graphemes.iter().all(|g| g.style == new_style));
-        }
-    }
-
-    mod apply_style_at {
-        use super::*;
-
-        use crossterm::style::Color;
-
-        #[test]
-        fn test_apply_style_at_specific_index() {
-            let mut graphemes = StyledGraphemes::from("abc");
-            let new_style = ContentStyle {
-                foreground_color: Some(Color::Green),
-                ..Default::default()
-            };
-            graphemes = graphemes.apply_style_at(1, new_style.clone());
-            assert_eq!(graphemes.0[1].style, new_style);
-            assert_ne!(graphemes.0[0].style, new_style);
-            assert_ne!(graphemes.0[2].style, new_style);
+            #[test]
+            fn inserts_newlines_between_lines() {
+                let g = StyledGraphemes::from_lines(vec![
+                    StyledGraphemes::from("abc"),
+                    StyledGraphemes::from("def"),
+                ]);
+                assert_eq!("abc\ndef", g.to_string());
+            }
         }
 
-        #[test]
-        fn test_apply_style_at_out_of_bounds_index() {
-            let mut graphemes = StyledGraphemes::from("abc");
-            let new_style = ContentStyle {
-                foreground_color: Some(Color::Green),
-                ..Default::default()
-            };
-            graphemes = graphemes.apply_style_at(5, new_style.clone()); // Out of bounds
-            assert_eq!(graphemes.0.len(), 3); // Ensure no changes in length
-        }
-    }
+        mod chars {
+            use super::*;
 
-    mod apply_attribute {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let mut graphemes = StyledGraphemes::from("abc");
-            graphemes = graphemes.apply_attribute(Attribute::Bold);
-            assert!(
-                graphemes
-                    .iter()
-                    .all(|g| g.style.attributes.has(Attribute::Bold))
-            );
-        }
-    }
-
-    mod find_all {
-        use super::*;
-
-        #[test]
-        fn test_with_empty_query() {
-            let graphemes = StyledGraphemes::from("Hello, world!");
-            let indices = graphemes.find_all("");
-            assert!(
-                indices.is_empty(),
-                "Should return an empty vector for an empty query string"
-            );
+            #[test]
+            fn returns_the_characters() {
+                let graphemes = StyledGraphemes::from("abc");
+                let chars = graphemes.chars();
+                assert_eq!(vec!['a', 'b', 'c'], chars);
+            }
         }
 
-        #[test]
-        fn test_with_repeated_substring() {
-            let graphemes = StyledGraphemes::from("Hello, world! Hello, universe!");
-            let indices = graphemes.find_all("Hello");
-            assert_eq!(
-                indices,
-                vec![0, 14],
-                "Should find all starting indices of 'Hello'"
-            );
+        mod widths {
+            use super::*;
+
+            #[test]
+            fn sums_display_widths() {
+                let graphemes = StyledGraphemes::from("a b");
+                assert_eq!(3, graphemes.widths()); // 'a' and 'b' are each 1 width, and space is 1 width
+            }
         }
 
-        #[test]
-        fn test_with_nonexistent_substring() {
-            let graphemes = StyledGraphemes::from("Hello, world!");
-            let indices = graphemes.find_all("xyz");
-            assert!(
-                indices.is_empty(),
-                "Should return an empty vector for a non-existent substring"
-            );
+        mod styled_display {
+            use super::*;
+
+            #[test]
+            fn renders_characters_with_default_styles() {
+                let graphemes = StyledGraphemes::from("abc");
+                let display = graphemes.styled_display();
+                assert_eq!(format!("{}", display), "abc"); // Assuming default styles do not alter appearance
+            }
         }
 
-        #[test]
-        fn test_with_special_character() {
-            let graphemes = StyledGraphemes::from("µs µs µs");
-            let indices = graphemes.find_all("s");
-            assert_eq!(
-                indices,
-                vec![1, 4, 7],
-                "Should correctly find indices of substring 'µs'"
-            );
+        mod apply_style {
+            use super::*;
+
+            use crossterm::style::Color;
+
+            #[test]
+            fn applies_the_style_to_every_grapheme() {
+                let mut graphemes = StyledGraphemes::from("abc");
+                let new_style = ContentStyle {
+                    foreground_color: Some(Color::Green),
+                    ..Default::default()
+                };
+                graphemes = graphemes.apply_style(new_style);
+                assert!(graphemes.iter().all(|g| g.style == new_style));
+            }
         }
 
-        #[test]
-        fn test_with_single_character() {
-            let graphemes = StyledGraphemes::from("abcabcabc");
-            let indices = graphemes.find_all("b");
-            assert_eq!(
-                indices,
-                vec![1, 4, 7],
-                "Should find all indices of character 'b'"
-            );
+        mod apply_style_at {
+            use super::*;
+
+            use crossterm::style::Color;
+
+            #[test]
+            fn applies_the_style_at_the_given_index() {
+                let mut graphemes = StyledGraphemes::from("abc");
+                let new_style = ContentStyle {
+                    foreground_color: Some(Color::Green),
+                    ..Default::default()
+                };
+                graphemes = graphemes.apply_style_at(1, new_style);
+                assert_eq!(graphemes.0[1].style, new_style);
+                assert_ne!(graphemes.0[0].style, new_style);
+                assert_ne!(graphemes.0[2].style, new_style);
+            }
+
+            #[test]
+            fn ignores_an_out_of_bounds_index() {
+                let mut graphemes = StyledGraphemes::from("abc");
+                let new_style = ContentStyle {
+                    foreground_color: Some(Color::Green),
+                    ..Default::default()
+                };
+                graphemes = graphemes.apply_style_at(5, new_style); // Out of bounds
+                assert_eq!(graphemes.0.len(), 3); // Ensure no changes in length
+            }
         }
 
-        #[test]
-        fn test_with_full_match() {
-            let graphemes = StyledGraphemes::from("Hello");
-            let indices = graphemes.find_all("Hello");
-            assert_eq!(indices, vec![0], "Should match the entire string");
+        mod apply_attribute {
+            use super::*;
+
+            #[test]
+            fn applies_the_attribute_to_every_grapheme() {
+                let mut graphemes = StyledGraphemes::from("abc");
+                graphemes = graphemes.apply_attribute(Attribute::Bold);
+                assert!(
+                    graphemes
+                        .iter()
+                        .all(|g| g.style.attributes.has(Attribute::Bold))
+                );
+            }
         }
 
-        #[test]
-        fn test_with_partial_overlap() {
-            let graphemes = StyledGraphemes::from("ababa");
-            let indices = graphemes.find_all("aba");
-            assert_eq!(
-                indices,
-                vec![0, 2],
-                "Should handle overlapping matches correctly"
-            );
-        }
-    }
+        mod find_all {
+            use super::*;
 
-    mod highlight {
-        use super::*;
+            #[test]
+            fn empty_query_returns_no_matches() {
+                let graphemes = StyledGraphemes::from("Hello, world!");
+                let indices = graphemes.find_all("");
+                assert!(
+                    indices.is_empty(),
+                    "Should return an empty vector for an empty query string"
+                );
+            }
 
-        #[test]
-        fn test_with_empty_query() {
-            let graphemes = StyledGraphemes::from("Hello, world!");
-            let expected = graphemes.clone();
-            let highlighted = graphemes.highlight("", ContentStyle::default());
-            assert_eq!(highlighted.unwrap(), expected);
-        }
-    }
+            #[test]
+            fn finds_repeated_substrings() {
+                let graphemes = StyledGraphemes::from("Hello, world! Hello, universe!");
+                let indices = graphemes.find_all("Hello");
+                assert_eq!(
+                    indices,
+                    vec![0, 14],
+                    "Should find all starting indices of 'Hello'"
+                );
+            }
 
-    mod replace {
-        use super::*;
+            #[test]
+            fn missing_substring_returns_no_matches() {
+                let graphemes = StyledGraphemes::from("Hello, world!");
+                let indices = graphemes.find_all("xyz");
+                assert!(
+                    indices.is_empty(),
+                    "Should return an empty vector for a non-existent substring"
+                );
+            }
 
-        #[test]
-        fn test() {
-            let graphemes = StyledGraphemes::from("banana");
-            assert_eq!("bonono", graphemes.replace("a", "o").to_string());
-        }
+            #[test]
+            fn handles_multibyte_characters() {
+                let graphemes = StyledGraphemes::from("µs µs µs");
+                let indices = graphemes.find_all("s");
+                assert_eq!(
+                    indices,
+                    vec![1, 4, 7],
+                    "Should correctly find indices of substring 'µs'"
+                );
+            }
 
-        #[test]
-        fn test_with_nonexistent_character() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hello World", graphemes.replace("x", "o").to_string());
-        }
+            #[test]
+            fn finds_single_characters() {
+                let graphemes = StyledGraphemes::from("abcabcabc");
+                let indices = graphemes.find_all("b");
+                assert_eq!(
+                    indices,
+                    vec![1, 4, 7],
+                    "Should find all indices of character 'b'"
+                );
+            }
 
-        #[test]
-        fn test_with_empty_string() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hell Wrld", graphemes.replace("o", "").to_string());
-        }
+            #[test]
+            fn matches_the_entire_input() {
+                let graphemes = StyledGraphemes::from("Hello");
+                let indices = graphemes.find_all("Hello");
+                assert_eq!(indices, vec![0], "Should match the entire string");
+            }
 
-        #[test]
-        fn test_with_multiple_characters() {
-            let graphemes = StyledGraphemes::from("Hello World");
-            assert_eq!("Hellabc Wabcrld", graphemes.replace("o", "abc").to_string());
-        }
-    }
-
-    mod replace_range {
-        use super::*;
-
-        #[test]
-        fn test() {
-            let mut graphemes = StyledGraphemes::from("Hello");
-            graphemes.replace_range(1..5, "i");
-            assert_eq!("Hi", graphemes.to_string());
-        }
-    }
-
-    mod wrapped_lines {
-        use super::*;
-
-        #[test]
-        fn test_empty() {
-            let input = StyledGraphemes::default();
-            let rows = input.wrapped_lines(10);
-            assert_eq!(rows.len(), 0);
-        }
-
-        #[test]
-        fn test_wrap_by_width() {
-            let input = StyledGraphemes::from("123456");
-            let rows = input.wrapped_lines(3);
-            assert_eq!(rows.len(), 2);
-            assert_eq!("123", rows[0].to_string());
-            assert_eq!("456", rows[1].to_string());
+            #[test]
+            fn finds_overlapping_matches() {
+                let graphemes = StyledGraphemes::from("ababa");
+                let indices = graphemes.find_all("aba");
+                assert_eq!(
+                    indices,
+                    vec![0, 2],
+                    "Should handle overlapping matches correctly"
+                );
+            }
         }
 
-        #[test]
-        fn test_split_by_newline() {
-            let input = StyledGraphemes::from("ab\ncd");
-            let rows = input.wrapped_lines(10);
-            assert_eq!(rows.len(), 2);
-            assert_eq!("ab", rows[0].to_string());
-            assert_eq!("cd", rows[1].to_string());
+        mod highlight {
+            use super::*;
+
+            #[test]
+            fn empty_query_returns_the_input_unchanged() {
+                let graphemes = StyledGraphemes::from("Hello, world!");
+                let expected = graphemes.clone();
+                let highlighted = graphemes.highlight("", ContentStyle::default());
+                assert_eq!(highlighted.unwrap(), expected);
+            }
         }
 
-        #[test]
-        fn test_trailing_newline() {
-            let input = StyledGraphemes::from("ab\n");
-            let rows = input.wrapped_lines(10);
-            assert_eq!(rows.len(), 2);
-            assert_eq!("ab", rows[0].to_string());
-            assert_eq!("", rows[1].to_string());
-        }
-    }
+        mod replace {
+            use super::*;
 
-    mod truncated_line_with_ellipsis {
-        use super::*;
+            #[test]
+            fn replaces_all_occurrences() {
+                let graphemes = StyledGraphemes::from("banana");
+                assert_eq!("bonono", graphemes.replace("a", "o").to_string());
+            }
 
-        #[test]
-        fn test_no_truncate() {
-            let input = StyledGraphemes::from("abc");
-            let ellipsis = StyledGraphemes::from("…");
-            let output = input.truncated_line_with_ellipsis(10, &ellipsis);
-            assert_eq!("abc", output.to_string());
-        }
+            #[test]
+            fn missing_pattern_leaves_the_input_unchanged() {
+                let graphemes = StyledGraphemes::from("Hello World");
+                assert_eq!("Hello World", graphemes.replace("x", "o").to_string());
+            }
 
-        #[test]
-        fn test_width_zero() {
-            let input = StyledGraphemes::from("abc");
-            let ellipsis = StyledGraphemes::from("…");
-            let output = input.truncated_line_with_ellipsis(0, &ellipsis);
-            assert_eq!("", output.to_string());
-        }
+            #[test]
+            fn empty_replacement_removes_matches() {
+                let graphemes = StyledGraphemes::from("Hello World");
+                assert_eq!("Hell Wrld", graphemes.replace("o", "").to_string());
+            }
 
-        #[test]
-        fn test_ellipsis_only() {
-            let input = StyledGraphemes::from("abc");
-            let ellipsis = StyledGraphemes::from("…");
-            let output = input.truncated_line_with_ellipsis(1, &ellipsis);
-            assert_eq!("…", output.to_string());
+            #[test]
+            fn longer_replacement_expands_matches() {
+                let graphemes = StyledGraphemes::from("Hello World");
+                assert_eq!("Hellabc Wabcrld", graphemes.replace("o", "abc").to_string());
+            }
         }
 
-        #[test]
-        fn test_truncate() {
-            let input = StyledGraphemes::from("abcdef");
-            let ellipsis = StyledGraphemes::from("…");
-            let output = input.truncated_line_with_ellipsis(4, &ellipsis);
-            assert_eq!("abc…", output.to_string());
+        mod replace_range {
+            use super::*;
+
+            #[test]
+            fn replaces_the_given_range() {
+                let mut graphemes = StyledGraphemes::from("Hello");
+                graphemes.replace_range(1..5, "i");
+                assert_eq!("Hi", graphemes.to_string());
+            }
+        }
+
+        mod wrapped_lines {
+            use super::*;
+
+            #[test]
+            fn empty_input_returns_no_lines() {
+                let input = StyledGraphemes::default();
+                let rows = input.wrapped_lines(10);
+                assert_eq!(rows.len(), 0);
+            }
+
+            #[test]
+            fn wraps_at_the_display_width() {
+                let input = StyledGraphemes::from("123456");
+                let rows = input.wrapped_lines(3);
+                assert_eq!(rows.len(), 2);
+                assert_eq!("123", rows[0].to_string());
+                assert_eq!("456", rows[1].to_string());
+            }
+
+            #[test]
+            fn splits_at_explicit_newlines() {
+                let input = StyledGraphemes::from("ab\ncd");
+                let rows = input.wrapped_lines(10);
+                assert_eq!(rows.len(), 2);
+                assert_eq!("ab", rows[0].to_string());
+                assert_eq!("cd", rows[1].to_string());
+            }
+
+            #[test]
+            fn preserves_a_trailing_empty_line() {
+                let input = StyledGraphemes::from("ab\n");
+                let rows = input.wrapped_lines(10);
+                assert_eq!(rows.len(), 2);
+                assert_eq!("ab", rows[0].to_string());
+                assert_eq!("", rows[1].to_string());
+            }
+        }
+
+        mod truncated_line_with_ellipsis {
+            use super::*;
+
+            #[test]
+            fn returns_the_input_when_it_fits() {
+                let input = StyledGraphemes::from("abc");
+                let ellipsis = StyledGraphemes::from("…");
+                let output = input.truncated_line_with_ellipsis(10, &ellipsis);
+                assert_eq!("abc", output.to_string());
+            }
+
+            #[test]
+            fn zero_width_returns_empty_graphemes() {
+                let input = StyledGraphemes::from("abc");
+                let ellipsis = StyledGraphemes::from("…");
+                let output = input.truncated_line_with_ellipsis(0, &ellipsis);
+                assert_eq!("", output.to_string());
+            }
+
+            #[test]
+            fn returns_only_the_ellipsis_when_no_content_fits() {
+                let input = StyledGraphemes::from("abc");
+                let ellipsis = StyledGraphemes::from("…");
+                let output = input.truncated_line_with_ellipsis(1, &ellipsis);
+                assert_eq!("…", output.to_string());
+            }
+
+            #[test]
+            fn truncates_content_and_appends_the_ellipsis() {
+                let input = StyledGraphemes::from("abcdef");
+                let ellipsis = StyledGraphemes::from("…");
+                let output = input.truncated_line_with_ellipsis(4, &ellipsis);
+                assert_eq!("abc…", output.to_string());
+            }
         }
     }
 }

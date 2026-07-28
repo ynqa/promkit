@@ -1,4 +1,6 @@
-use promkit_core::{Widget, grapheme::StyledGraphemes};
+use promkit_core::{
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+};
 
 #[path = "listbox/listbox.rs"]
 mod inner;
@@ -18,44 +20,89 @@ pub struct State {
 }
 
 impl Widget for State {
-    fn create_graphemes(&self, _width: u16, height: u16) -> StyledGraphemes {
-        let height = match self.config.lines {
-            Some(lines) => lines.min(height as usize),
-            None => height as usize,
-        };
-
-        let lines = self
-            .listbox
-            .items()
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i >= self.listbox.position() && *i < self.listbox.position() + height)
-            .map(|(i, item)| {
-                if i == self.listbox.position() {
-                    let init = StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(&self.config.cursor),
-                        item,
-                    ]);
-                    if let Some(style) = &self.config.active_item_style {
-                        init.apply_style(*style)
-                    } else {
-                        init
-                    }
+    fn create_graphemes(&self) -> CreatedGraphemes {
+        let lines = self.listbox.items().iter().enumerate().map(|(i, item)| {
+            if Some(i) == self.listbox.selected() {
+                let init =
+                    StyledGraphemes::from_iter([&StyledGraphemes::from(&self.config.cursor), item]);
+                if let Some(style) = &self.config.active_item_style {
+                    init.apply_style(*style)
                 } else {
-                    let init = StyledGraphemes::from_iter([
-                        &StyledGraphemes::from(
-                            " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
-                        ),
-                        item,
-                    ]);
-                    if let Some(style) = &self.config.inactive_item_style {
-                        init.apply_style(*style)
-                    } else {
-                        init
-                    }
+                    init
                 }
-            });
+            } else {
+                let init = StyledGraphemes::from_iter([
+                    &StyledGraphemes::from(
+                        " ".repeat(StyledGraphemes::from(&self.config.cursor).widths()),
+                    ),
+                    item,
+                ]);
+                if let Some(style) = &self.config.inactive_item_style {
+                    init.apply_style(*style)
+                } else {
+                    init
+                }
+            }
+        });
 
-        StyledGraphemes::from_lines(lines)
+        CreatedGraphemes {
+            graphemes: StyledGraphemes::from_lines(lines),
+            layout: WidgetLayout {
+                max_height: self.config.lines,
+                ..Default::default()
+            },
+            cursor: self.listbox.selected().map(|selected| ContentPosition {
+                row: selected,
+                column: 0,
+            }),
+        }
+    }
+}
+
+impl State {
+    /// Interprets a listbox content position as a selectable item.
+    ///
+    /// Wrapped visual rows are normalized to their logical content row by the
+    /// core renderer before this method resolves the item index.
+    pub fn hit_at(&self, position: ContentPosition) -> Option<ListboxHit> {
+        self.listbox
+            .items()
+            .get(position.row)
+            .map(|_| ListboxHit::Select {
+                index: position.row,
+            })
+    }
+}
+
+/// Semantic targets exposed by the listbox widget.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ListboxHit {
+    Select { index: usize },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod state {
+        use super::*;
+
+        mod hit_at {
+            use super::*;
+
+            #[test]
+            fn resolves_item_rows() {
+                let state = State {
+                    listbox: Listbox::from(["first", "second"]),
+                    config: Config::default(),
+                };
+
+                assert_eq!(
+                    state.hit_at(ContentPosition { row: 1, column: 20 }),
+                    Some(ListboxHit::Select { index: 1 })
+                );
+                assert_eq!(state.hit_at(ContentPosition { row: 2, column: 0 }), None);
+            }
+        }
     }
 }

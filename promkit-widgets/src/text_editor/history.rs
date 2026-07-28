@@ -5,8 +5,6 @@ use std::{
     path::Path,
 };
 
-use crate::cursor::Cursor;
-
 /// Manages the history of user inputs for a text editor.
 /// This structure allows for the storage,
 /// retrieval, and navigation through past inputs.
@@ -18,7 +16,8 @@ use crate::cursor::Cursor;
 #[derive(Clone)]
 pub struct History {
     /// Buffer storing the history of inputs as strings.
-    cursor: Cursor<VecDeque<String>>,
+    entries: VecDeque<String>,
+    position: usize,
 
     /// Optional limit on the number of entries in the history.
     /// If set, the history will not exceed this number of entries,
@@ -31,7 +30,8 @@ impl Default for History {
     /// and initializes the position at 0.
     fn default() -> Self {
         Self {
-            cursor: Cursor::new(VecDeque::from([String::new()]), 0, false),
+            entries: VecDeque::from([String::new()]),
+            position: 0,
             limit_size: None,
         }
     }
@@ -50,7 +50,7 @@ impl History {
     /// Returns `Ok(())` if the history was successfully saved, or an `io::Error` otherwise.
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
         let mut file = File::create(path)?;
-        let mut contents = self.cursor.contents().clone();
+        let mut contents = self.entries.clone();
 
         // Note: The initial empty string ("") in the history
         // is not included in the save operation.
@@ -99,11 +99,11 @@ impl History {
             let line = line?;
             if !line.is_empty() {
                 // Avoid adding empty lines
-                ret.cursor.contents_mut().push_back(line);
+                ret.entries.push_back(line);
             }
         }
         // Ensure there's always an empty string at the end of the buffer
-        ret.cursor.contents_mut().push_back(String::new());
+        ret.entries.push_back(String::new());
         ret.move_to_tail(); // Move cursor to the end after loading
         Ok(ret)
     }
@@ -129,14 +129,14 @@ impl History {
     pub fn insert<T: AsRef<str>>(&mut self, item: T) {
         let item = item.as_ref().to_string();
         if !self.exists(&item) {
-            let init_state = self.cursor.contents_mut().pop_back().unwrap();
-            self.cursor.contents_mut().push_back(item);
+            let init_state = self.entries.pop_back().unwrap();
+            self.entries.push_back(item);
             if let Some(limit) = self.limit_size
-                && limit < self.cursor.contents_mut().len()
+                && limit < self.entries.len()
             {
-                self.cursor.contents_mut().pop_front();
+                self.entries.pop_front();
             }
-            self.cursor.contents_mut().push_back(init_state);
+            self.entries.push_back(init_state);
         }
         self.move_to_tail();
     }
@@ -145,9 +145,8 @@ impl History {
     /// based on the current position.
     /// Returns an empty string if the position is out of bounds.
     pub fn get(&self) -> String {
-        self.cursor
-            .contents()
-            .get(self.cursor.position())
+        self.entries
+            .get(self.position)
             .unwrap_or(&String::new())
             .to_string()
     }
@@ -162,55 +161,113 @@ impl History {
     ///
     /// Returns `true` if the item exists in the history, `false` otherwise.
     fn exists<T: AsRef<str>>(&self, item: T) -> bool {
-        self.cursor.contents().iter().any(|i| i == item.as_ref())
+        self.entries.iter().any(|i| i == item.as_ref())
     }
 
     /// Moves the current position backward in the history, if possible.
     /// Returns `true` if the position was successfully moved backward, `false` otherwise.
     pub fn backward(&mut self) -> bool {
-        self.cursor.backward()
+        let Some(position) = self.position.checked_sub(1) else {
+            return false;
+        };
+        self.position = position;
+        true
     }
 
     /// Moves the current position forward in the history, if possible.
     /// Returns `true` if the position was successfully moved forward, `false` otherwise.
     pub fn forward(&mut self) -> bool {
-        self.cursor.forward()
+        if self.position.saturating_add(1) >= self.entries.len() {
+            return false;
+        }
+        self.position += 1;
+        true
     }
 
     /// Moves the current position to the tail (end) of the history buffer.
     pub fn move_to_tail(&mut self) {
-        self.cursor.move_to_tail()
+        self.position = self.entries.len() - 1;
     }
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
+    mod backward {
+        use super::super::*;
+
+        #[test]
+        fn stops_at_the_oldest_entry() {
+            let mut history = History::default();
+            history.insert("first");
+            history.insert("second");
+
+            assert!(history.backward());
+            assert_eq!(history.position, 1);
+            assert_eq!(history.get(), "second");
+            assert!(history.backward());
+            assert_eq!(history.position, 0);
+            assert_eq!(history.get(), "first");
+            assert!(!history.backward());
+            assert_eq!(history.position, 0);
+        }
+    }
+
+    mod forward {
+        use super::super::*;
+
+        #[test]
+        fn stops_at_the_editing_slot() {
+            let mut history = History::default();
+            history.insert("first");
+
+            assert!(!history.forward());
+            assert_eq!(history.position, 1);
+            assert!(history.backward());
+            assert!(history.forward());
+            assert_eq!(history.position, 1);
+        }
+    }
+
+    mod move_to_tail {
+        use super::super::*;
+
+        #[test]
+        fn selects_the_editing_slot() {
+            let mut history = History::default();
+            history.insert("first");
+            history.backward();
+
+            history.move_to_tail();
+            assert_eq!(history.position, 1);
+        }
+    }
+
     mod insert {
         use super::super::*;
 
         #[test]
-        fn test() {
+        fn appends_an_entry_before_the_editing_slot() {
             let mut h = History::default();
             h.insert("item");
             assert_eq!(
                 VecDeque::from([String::from("item"), String::new()]),
-                *h.cursor.contents()
+                h.entries
             );
         }
 
         #[test]
-        fn test_with_multiple_items() {
+        fn preserves_insertion_order() {
             let mut h = History::default();
             h.insert("item1");
             h.insert("item2");
             assert_eq!(
                 VecDeque::from([String::from("item1"), String::from("item2"), String::new()]),
-                *h.cursor.contents()
+                h.entries
             );
         }
 
         #[test]
-        fn test_with_limit_size() {
+        fn evicts_the_oldest_entry_at_the_size_limit() {
             let mut h = History {
                 limit_size: Some(2),
                 ..Default::default()
@@ -220,7 +277,7 @@ mod test {
             h.insert("item3");
             assert_eq!(
                 VecDeque::from([String::from("item2"), String::from("item3"), String::new()]),
-                *h.cursor.contents()
+                h.entries
             );
         }
     }
@@ -229,7 +286,7 @@ mod test {
         use super::super::*;
 
         #[test]
-        fn test() {
+        fn reports_whether_an_entry_exists() {
             let mut h = History::default();
             h.insert("existed");
             assert!(h.exists("existed"));

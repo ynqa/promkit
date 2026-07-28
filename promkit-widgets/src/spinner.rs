@@ -60,7 +60,7 @@ pub async fn run<S, I>(
 ) -> anyhow::Result<()>
 where
     S: State,
-    I: Clone + Ord + Send,
+    I: Clone + Ord + Send + Sync + 'static,
 {
     let mut frame_index = 0;
     let mut interval = tokio::time::interval(spinner.duration);

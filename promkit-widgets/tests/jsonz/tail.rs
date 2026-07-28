@@ -5,7 +5,7 @@ use serde_json::Deserializer;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_tail_after_toggle() {
+fn follows_visibility_after_toggle() {
     let input = serde_json::Value::from_str(
         r#"
             {
@@ -29,7 +29,7 @@ fn test_tail_after_toggle() {
 }
 
 #[test]
-fn test_jsonl() {
+fn selects_the_last_visible_json_lines_document() {
     let inputs: Vec<_> = Deserializer::from_str(
         r#"
             {

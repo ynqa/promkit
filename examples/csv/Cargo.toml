@@ -1,0 +1,15 @@
+[package]
+name = "csv-viewer"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { version = "4.5.60", features = ["derive"] }
+promkit = { path = "../../promkit", features = ["runtime", "terminal-session", "table"] }
+tokio = { workspace = true }
+
+[[bin]]
+name = "csv"
+path = "src/csv.rs"

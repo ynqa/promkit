@@ -10,6 +10,32 @@ pub mod yaml;
 #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
 pub mod tree;
 
+use std::cell::Cell;
+
+use promkit_core::grapheme::StyledGraphemes;
+
+fn with_line_numbers(
+    lines: Vec<StyledGraphemes>,
+    line_numbers: Vec<usize>,
+    line_count: usize,
+) -> Vec<StyledGraphemes> {
+    debug_assert_eq!(lines.len(), line_numbers.len());
+    let width = line_count.max(1).to_string().len();
+
+    line_numbers
+        .into_iter()
+        .zip(lines)
+        .map(|(line_number, line)| {
+            [
+                StyledGraphemes::from(format!("{line_number:>width$} ")),
+                line,
+            ]
+            .into_iter()
+            .collect()
+        })
+        .collect()
+}
+
 /// Container type of structured widget.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContainerType {
@@ -103,4 +129,108 @@ pub trait RowOperation {
 
     /// Extract up to `n` visible rows starting from `current`.
     fn extract(&self, current: usize, n: usize) -> Vec<Self::Row>;
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct ProjectionViewport {
+    start: usize,
+    cursor: usize,
+    cursor_row: usize,
+    height: usize,
+    initialized: bool,
+}
+
+pub(crate) fn projection_viewport<R>(
+    rows: &Vec<R>,
+    cursor: usize,
+    height: usize,
+    viewport: &Cell<ProjectionViewport>,
+) -> (usize, usize)
+where
+    Vec<R>: RowOperation<Row = R>,
+{
+    if rows.is_empty() || height == 0 {
+        return (rows.head(), 0);
+    }
+
+    let previous = viewport.get();
+    let (start, cursor_row) = if !previous.initialized {
+        place_cursor_from(rows, rows.head(), cursor, height)
+    } else if previous.height != height {
+        place_cursor_from(rows, previous.start, cursor, height)
+    } else if cursor == previous.cursor {
+        (previous.start, previous.cursor_row)
+    } else if cursor > previous.cursor && is_next(rows, previous.cursor, cursor) {
+        if previous.cursor_row + 1 < height {
+            (previous.start, previous.cursor_row + 1)
+        } else {
+            (rows.down(previous.start), height - 1)
+        }
+    } else if cursor < previous.cursor && is_previous(rows, previous.cursor, cursor) {
+        if previous.cursor_row > 0 {
+            (previous.start, previous.cursor_row - 1)
+        } else {
+            (cursor, 0)
+        }
+    } else {
+        place_cursor_from(rows, previous.start, cursor, height)
+    };
+
+    viewport.set(ProjectionViewport {
+        start,
+        cursor,
+        cursor_row,
+        height,
+        initialized: true,
+    });
+    (start, cursor_row)
+}
+
+#[inline]
+fn is_next<R>(rows: &Vec<R>, previous: usize, cursor: usize) -> bool
+where
+    Vec<R>: RowOperation<Row = R>,
+{
+    cursor == previous.saturating_add(1) || rows.down(previous) == cursor
+}
+
+#[inline]
+fn is_previous<R>(rows: &Vec<R>, previous: usize, cursor: usize) -> bool
+where
+    Vec<R>: RowOperation<Row = R>,
+{
+    cursor.saturating_add(1) == previous || rows.up(previous) == cursor
+}
+
+fn place_cursor_from<R>(rows: &Vec<R>, start: usize, cursor: usize, height: usize) -> (usize, usize)
+where
+    Vec<R>: RowOperation<Row = R>,
+{
+    if cursor < start {
+        return (cursor, 0);
+    }
+
+    let mut position = start;
+    for cursor_row in 0..height {
+        if position == cursor {
+            return (start, cursor_row);
+        }
+        let next = rows.down(position);
+        if next == position {
+            break;
+        }
+        position = next;
+    }
+
+    let mut start = cursor;
+    let mut cursor_row = 0;
+    while cursor_row + 1 < height {
+        let previous = rows.up(start);
+        if previous == start {
+            break;
+        }
+        start = previous;
+        cursor_row += 1;
+    }
+    (start, cursor_row)
 }

@@ -18,6 +18,13 @@ fn resize_roundtrip_wrap_reflow() -> Result<()> {
 }
 
 #[test]
+fn titled_long_input_resize_roundtrip_clears_stale_rows() -> Result<()> {
+    run(include_str!(
+        "scenarios/titled_long_input_resize_roundtrip_clears_stale_rows.th"
+    ))
+}
+
+#[test]
 fn tiny_viewport_overflow_wrap_scroll() -> Result<()> {
     run(include_str!(
         "scenarios/tiny_viewport_overflow_wrap_scroll.th"

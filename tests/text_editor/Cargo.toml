@@ -1,0 +1,18 @@
+[package]
+name = "text-editor-tests"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+futures = { workspace = true }
+promkit-widgets = { path = "../../promkit-widgets", features = ["texteditor"] }
+tokio = { workspace = true }
+
+[dev-dependencies]
+termharness = "0.2.0"
+
+[[bin]]
+name = "text-editor-fixture"
+path = "src/text_editor_fixture.rs"

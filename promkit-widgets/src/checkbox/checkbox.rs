@@ -91,11 +91,27 @@ impl Checkbox {
 
     /// Toggles the selection state of the item at the current cursor position within the listbox.
     pub fn toggle(&mut self) {
-        if self.picked.contains(&self.listbox.position()) {
-            self.picked.remove(&self.listbox.position());
+        let Some(position) = self.listbox.selected() else {
+            return;
+        };
+
+        if self.picked.contains(&position) {
+            self.picked.remove(&position);
         } else {
-            self.picked.insert(self.listbox.position());
+            self.picked.insert(position);
         }
+    }
+
+    /// Moves to an item by index and toggles its selection state.
+    ///
+    /// Returns `false` without changing the checkbox when the index is out of
+    /// bounds.
+    pub fn toggle_at(&mut self, index: usize) -> bool {
+        if !self.listbox.move_to(index) {
+            return false;
+        }
+        self.toggle();
+        true
     }
 
     /// Moves the cursor backward in the listbox, if possible.
@@ -125,11 +141,23 @@ impl Checkbox {
 mod tests {
     use super::*;
 
+    mod toggle {
+        use super::*;
+
+        #[test]
+        fn empty_checkbox_is_unchanged() {
+            let mut checkbox = Checkbox::from_displayable(Vec::<String>::new());
+            checkbox.toggle();
+
+            assert!(checkbox.picked_indexes().is_empty());
+        }
+    }
+
     mod new_with_checked {
         use super::*;
 
         #[test]
-        fn test() {
+        fn initializes_items_and_checked_indexes() {
             // Prepare a list of items with their checked status
             let items = vec![
                 (String::from("1"), true),

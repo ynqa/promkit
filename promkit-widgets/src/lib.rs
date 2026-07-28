@@ -2,8 +2,6 @@
 
 pub use promkit_core as core;
 
-pub mod cursor;
-
 #[cfg(feature = "checkbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "checkbox")))]
 pub mod checkbox;
@@ -28,6 +26,14 @@ pub use structured::yaml;
 #[cfg(feature = "listbox")]
 #[cfg_attr(docsrs, doc(cfg(feature = "listbox")))]
 pub mod listbox;
+
+#[cfg(feature = "prefixsearch")]
+#[cfg_attr(docsrs, doc(cfg(feature = "prefixsearch")))]
+pub mod prefix_search;
+
+#[cfg(feature = "table")]
+#[cfg_attr(docsrs, doc(cfg(feature = "table")))]
+pub mod table;
 
 #[cfg(feature = "text")]
 #[cfg_attr(docsrs, doc(cfg(feature = "text")))]

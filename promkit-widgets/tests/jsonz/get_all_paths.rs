@@ -5,7 +5,7 @@ use serde_json::Deserializer;
 use promkit_widgets::json::jsonz::*;
 
 #[test]
-fn test_get_all_paths() {
+fn returns_all_paths() {
     let v = serde_json::Value::from_str(
         r#"
             {
@@ -101,7 +101,7 @@ fn test_get_all_paths() {
 }
 
 #[test]
-fn test_get_all_paths_for_jsonl() {
+fn returns_all_paths_for_json_lines() {
     let binding = Deserializer::from_str(
         r#"
             {"user": "alice", "age": 30, "hobbies": ["reading", "gaming"]}

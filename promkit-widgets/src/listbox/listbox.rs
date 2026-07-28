@@ -2,70 +2,75 @@ use std::fmt;
 
 use promkit_core::grapheme::StyledGraphemes;
 
-use crate::cursor::Cursor;
-
 /// A `Listbox` struct that encapsulates a list of strings,
-/// allowing for navigation and manipulation through a cursor.
+/// allowing for navigation and manipulation through a selected position.
 /// It supports basic operations
-/// such as moving the cursor forward and backward,
+/// such as moving the selection forward and backward,
 /// retrieving the current item,
 /// and initializing from an iterator of displayable items.
-#[derive(Clone)]
-pub struct Listbox(Cursor<Vec<StyledGraphemes>>);
-
-impl Default for Listbox {
-    fn default() -> Self {
-        Self(Cursor::new(Vec::new(), 0, false))
-    }
+#[derive(Clone, Default)]
+pub struct Listbox {
+    items: Vec<StyledGraphemes>,
+    selected: Option<usize>,
 }
 
 impl<E: fmt::Display, I: IntoIterator<Item = E>> From<I> for Listbox {
     fn from(items: I) -> Self {
-        Self(Cursor::new(
-            items
-                .into_iter()
-                .map(|e| StyledGraphemes::from(format!("{}", e)))
-                .collect(),
-            0,
-            false,
-        ))
+        let items = items
+            .into_iter()
+            .map(|e| StyledGraphemes::from(format!("{}", e)))
+            .collect::<Vec<_>>();
+        let selected = (!items.is_empty()).then_some(0);
+
+        Self { items, selected }
     }
 }
 
 impl Listbox {
     pub fn len(&self) -> usize {
-        self.0.contents().len()
+        self.items.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0.contents().is_empty()
+        self.items.is_empty()
     }
 
     pub fn push_string(&mut self, item: String) {
-        self.0.contents_mut().push(StyledGraphemes::from(item));
+        self.items.push(StyledGraphemes::from(item));
+        if self.selected.is_none() {
+            self.selected = Some(0);
+        }
     }
 
     /// Creates a new `Listbox` from a vector of `StyledGraphemes`.
     pub fn from_styled_graphemes(items: Vec<StyledGraphemes>) -> Self {
-        Self(Cursor::new(items, 0, false))
+        let selected = (!items.is_empty()).then_some(0);
+        Self { items, selected }
     }
 
     /// Returns a reference to the vector of items in the listbox.
     pub fn items(&self) -> &Vec<StyledGraphemes> {
-        self.0.contents()
+        &self.items
     }
 
-    /// Returns the current position of the cursor within the listbox.
+    /// Returns the selected position, defaulting to zero when empty.
+    ///
+    /// Use [`Self::selected`] when the empty state needs to be distinguished.
     pub fn position(&self) -> usize {
-        self.0.position()
+        self.selected.unwrap_or_default()
+    }
+
+    /// Returns the selected position, or `None` when the listbox is empty.
+    pub fn selected(&self) -> Option<usize> {
+        self.selected
     }
 
     /// Retrieves the item at the current cursor position as a `String`.
     /// If the cursor is at a position without an item,
     /// returns an empty `String`.
     pub fn get(&self) -> StyledGraphemes {
-        self.items()
-            .get(self.position())
+        self.selected
+            .and_then(|position| self.items.get(position))
             .unwrap_or(&StyledGraphemes::default())
             .clone()
     }
@@ -73,38 +78,131 @@ impl Listbox {
     /// Moves the cursor backward in the listbox, if possible.
     /// Returns `true` if the cursor was successfully moved backward, `false` otherwise.
     pub fn backward(&mut self) -> bool {
-        self.0.backward()
+        let Some(position) = self.selected.filter(|position| *position > 0) else {
+            return false;
+        };
+        self.selected = Some(position - 1);
+        true
     }
 
     /// Moves the cursor forward in the listbox, if possible.
     /// Returns `true` if the cursor was successfully moved forward, `false` otherwise.
     pub fn forward(&mut self) -> bool {
-        self.0.forward()
+        let Some(position) = self
+            .selected
+            .filter(|position| position.saturating_add(1) < self.items.len())
+        else {
+            return false;
+        };
+        self.selected = Some(position + 1);
+        true
+    }
+
+    /// Moves the cursor to an item by index.
+    pub fn move_to(&mut self, position: usize) -> bool {
+        if position < self.items.len() {
+            self.selected = Some(position);
+            true
+        } else {
+            false
+        }
     }
 
     /// Moves the cursor to the head (beginning) of the listbox.
     pub fn move_to_head(&mut self) {
-        self.0.move_to_head()
+        self.selected = (!self.items.is_empty()).then_some(0);
     }
 
     /// Moves the cursor to the tail of the listbox.
     pub fn move_to_tail(&mut self) {
-        self.0.move_to_tail()
+        self.selected = self.items.len().checked_sub(1);
     }
 
     pub fn is_tail(&self) -> bool {
-        self.0.is_tail()
+        self.selected.is_some() && self.selected == self.items.len().checked_sub(1)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use promkit_core::grapheme::StyledGraphemes;
+
     use super::Listbox;
 
-    #[test]
-    fn default_is_empty() {
-        let listbox = Listbox::default();
-        assert!(listbox.is_empty());
-        assert_eq!(listbox.len(), 0);
+    mod default {
+        use super::*;
+
+        #[test]
+        fn creates_an_empty_list() {
+            let listbox = Listbox::default();
+            assert!(listbox.is_empty());
+            assert_eq!(listbox.len(), 0);
+            assert_eq!(listbox.selected(), None);
+            assert!(!listbox.is_tail());
+        }
+    }
+
+    mod push_string {
+        use super::*;
+
+        #[test]
+        fn selects_the_first_item() {
+            let mut listbox = Listbox::default();
+            listbox.push_string("first".into());
+
+            assert_eq!(listbox.selected(), Some(0));
+            assert_eq!(listbox.get(), StyledGraphemes::from("first"));
+        }
+    }
+
+    mod backward {
+        use super::*;
+
+        #[test]
+        fn stops_at_the_head() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            assert!(!listbox.backward());
+            assert_eq!(listbox.selected(), Some(0));
+        }
+    }
+
+    mod forward {
+        use super::*;
+
+        #[test]
+        fn stops_at_the_tail() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            assert!(listbox.forward());
+            assert_eq!(listbox.selected(), Some(1));
+            assert!(!listbox.forward());
+            assert_eq!(listbox.selected(), Some(1));
+        }
+    }
+
+    mod move_to {
+        use super::*;
+
+        #[test]
+        fn rejects_an_out_of_bounds_index() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            assert!(!listbox.move_to(2));
+            assert_eq!(listbox.selected(), Some(0));
+        }
+    }
+
+    mod move_to_tail {
+        use super::*;
+
+        #[test]
+        fn selects_the_last_item() {
+            let mut listbox = Listbox::from(["first", "second"]);
+
+            listbox.move_to_tail();
+            assert_eq!(listbox.selected(), Some(1));
+            assert!(listbox.is_tail());
+        }
     }
 }

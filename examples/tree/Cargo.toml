@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-promkit = { path = "../../promkit", features = ["tree"] }
+promkit = { path = "../../promkit", features = ["runtime", "terminal-session", "tree", "text"] }
 tokio = { workspace = true }
 
 [[bin]]

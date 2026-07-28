@@ -1,13 +1,21 @@
 use promkit::{
     core::crossterm::{cursor, terminal},
-    preset::readline::Readline,
-    Prompt,
+    Prompt, TerminalModes, TerminalSession,
 };
+use readline_example::Readline;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     loop {
-        match Readline::default().run().await {
+        let result = {
+            let modes = TerminalModes::RAW_MODE
+                | TerminalModes::HIDDEN_CURSOR
+                | TerminalModes::MOUSE_CAPTURE;
+            let _terminal_session = TerminalSession::try_new(modes)?;
+            Readline::default().run().await
+        };
+
+        match result {
             Ok(cmd) => {
                 // If the prompt is finalized on the last line, print one line-feed
                 // first so the result does not overwrite the prompt line.

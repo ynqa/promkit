@@ -1,0 +1,19 @@
+id,task,area,owner,status,progress,updated,notes
+001,Define widget API,Core,Alice,Done,100%,2026-07-03,Keep state separate from event policy
+002,Add table projection,Widgets,Bob,Done,100%,2026-07-05,Render only the visible viewport
+003,Parse CSV input,Widgets,Carol,Done,100%,2026-07-06,Support files and standard input
+004,Style table header,Examples,Diego,Done,100%,2026-07-08,Use a distinct header style
+005,Add row navigation,Examples,Erin,Done,100%,2026-07-09,Handle up and down arrow keys
+006,Add column scrolling,Examples,Farah,Done,100%,2026-07-10,Handle left and right arrow keys
+007,Support mouse wheel,Examples,Gabriel,Done,100%,2026-07-11,Map wheel events to table movement
+008,Measure parsing speed,Benchmarks,Hana,In progress,75%,2026-07-14,Compare representative CSV fixtures
+009,Measure projection speed,Benchmarks,Ivan,In progress,60%,2026-07-15,Track visible row rendering cost
+010,Test quoted fields,Tests,Julia,Done,100%,2026-07-16,Include commas and multiline values
+011,Test narrow terminals,Tests,Kai,In review,90%,2026-07-18,Verify horizontal clipping behavior
+012,Test empty input,Tests,Lina,Done,100%,2026-07-19,Keep empty documents safe to render
+013,Write CSV example,Examples,Min,Done,100%,2026-07-20,Show file and standard input usage
+014,Record demo tape,Docs,Nora,In progress,50%,2026-07-22,Demonstrate both scroll directions
+015,Review keyboard help,Docs,Omar,Planned,10%,2026-07-24,Document Enter and Ctrl-C behavior
+016,Build release artifacts,Release,Priya,Planned,0%,2026-07-25,Publish all workspace crates together
+017,Run compatibility checks,Release,Quinn,Planned,0%,2026-07-26,Test supported terminal environments
+018,Publish release notes,Release,Rui,Planned,0%,2026-07-28,Summarize the user-facing changes

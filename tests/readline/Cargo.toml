@@ -6,12 +6,17 @@ publish = false
 
 [dependencies]
 anyhow = { workspace = true }
-promkit = { path = "../../promkit", features = ["readline"] }
+promkit = { path = "../../promkit", features = ["runtime", "terminal-session", "text"] }
+readline-example = { package = "readline", path = "../../examples/readline" }
 tokio = { workspace = true }
 
 [dev-dependencies]
-termharness = "0.1.0"
+termharness = "0.2.0"
 
 [[bin]]
 name = "readline-fixture"
 path = "src/readline_fixture.rs"
+
+[[bin]]
+name = "titled-readline-fixture"
+path = "src/titled_readline_fixture.rs"

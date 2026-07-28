@@ -16,5 +16,7 @@ Cargo.lock
 # Ignore GIF files in the tapes directory
 tapes/*.gif
 
-# Ignore test artifacts emitted by zsh-render-parity integration tests
-zsh-render-parity/.artifacts/
+# Keep tape fixtures under version control
+!tapes/*.csv
+!tapes/*.json
+!tapes/*.yaml

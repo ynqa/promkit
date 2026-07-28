@@ -1,0 +1,50 @@
+Scenario "multiline_viewport_scrolls_with_cursor"
+Command "CARGO_BIN_EXE_text-editor-fixture"
+Terminal rows 7 cols 18
+Cursor row 7 col 1
+
+Step "spawn"
+Settle 300ms
+Expect:
+  r00 |··················|
+  r01 |··················|
+  r02 |··················|
+  r03 |··················|
+  r04 |··················|
+  r05 |··················|
+  r06 |❯❯❯···············|
+
+Step "scroll to the last four rows"
+Input "one"
+Input enter
+Input "two"
+Input enter
+Input "three"
+Input enter
+Input "four"
+Input enter
+Input "five"
+Input enter
+Input "six"
+Settle 100ms
+Expect:
+  r00 |··················|
+  r01 |··················|
+  r02 |··················|
+  r03 |...·three·········|
+  r04 |...·four··········|
+  r05 |...·five··········|
+  r06 |...·six···········|
+
+Step "move the cursor up and scroll the viewport"
+Input up 4
+Input "X"
+Settle 100ms
+Expect:
+  r00 |··················|
+  r01 |··················|
+  r02 |··················|
+  r03 |...·twoX··········|
+  r04 |...·three·········|
+  r05 |...·four··········|
+  r06 |...·five··········|

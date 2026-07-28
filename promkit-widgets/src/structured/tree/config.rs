@@ -18,6 +18,8 @@ pub struct Config {
     pub inactive_item_style: ContentStyle,
     pub indent: usize,
     pub lines: Option<usize>,
+    /// Whether to display stable one-based line numbers to the left of the content.
+    pub show_line_numbers: bool,
 }
 
 impl Default for Config {
@@ -32,6 +34,7 @@ impl Default for Config {
             inactive_item_style: ContentStyle::default(),
             indent: 2,
             lines: None,
+            show_line_numbers: false,
         }
     }
 }
@@ -39,13 +42,13 @@ impl Default for Config {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "serde")]
-    mod serde_compatibility {
+    mod deserialize {
         use promkit_core::crossterm::style::{Attribute, Color};
 
         use super::super::Config;
 
         #[test]
-        fn config_fields_are_fully_loaded_from_toml() {
+        fn loads_all_fields_from_toml() {
             let input = r#"
 folded_symbol = "> "
 unfolded_symbol = "v "
@@ -53,6 +56,7 @@ active_item_style = "fg=cyan,attr=bold"
 inactive_item_style = "fg=grey"
 indent = 4
 lines = 9
+show_line_numbers = true
 "#;
             let formatter: Config = toml::from_str(input).unwrap();
 
@@ -69,6 +73,7 @@ lines = 9
             );
             assert_eq!(formatter.indent, 4);
             assert_eq!(formatter.lines, Some(9));
+            assert!(formatter.show_line_numbers);
         }
     }
 }
