@@ -46,8 +46,26 @@ See [here](./Concept.md).
 terminal applications. The examples own their event policies and demonstrate
 how applications can compose the widgets they need.
 
-Show you commands, code, and actual demo screens for examples
-that can be executed immediately below.
+### Table of contents
+
+| Example | Description |
+| --- | --- |
+| [Readline](#readline) | Single-line editing with history and completion |
+| [Confirm](#confirm) | Validated yes-or-no input |
+| [Password](#password) | Masked input with validation |
+| [Form](#form) | Multiple editable fields in one prompt |
+| [Listbox](#listbox) | Keyboard-driven single selection |
+| [QuerySelector](#queryselector) | Prefix search over selectable candidates |
+| [Checkbox](#checkbox) | Keyboard-driven multiple selection |
+| [Tree](#tree) | Navigation and folding for hierarchical data |
+| [JSON](#json) | Line-numbered navigation and folding for JSON |
+| [YAML](#yaml) | Line-numbered navigation and folding for YAML |
+| [CSV](#csv) | Vertical and horizontal navigation for tabular data |
+| [Text](#text) | Scrollable styled text |
+| [Async Task with Spinner](#async-task-with-spinner) | Background work with live input and progress feedback |
+| [Multiline REPL](#multiline-repl) | Multiline editing in an interactive loop |
+
+Each section includes a command, source link, and recorded demo.
 
 ### Readline
 
@@ -130,7 +148,7 @@ cargo run --bin listbox
 <summary>Command</summary>
 
 ```bash
-cargo run --bin query_selector
+cargo run --bin query-selector
 ```
 </details>
 
@@ -193,6 +211,20 @@ cargo run --bin yaml ${PATH_TO_YAML_FILE}
 [Code](./examples/yaml/src/yaml.rs)
 
 <img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/yaml.gif" width="50%" height="auto">
+
+### CSV
+
+<details>
+<summary>Command</summary>
+
+```bash
+cargo run --bin csv ${PATH_TO_CSV_FILE}
+```
+</details>
+
+[Code](./examples/csv/src/csv.rs)
+
+<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/csv.gif" width="50%" height="auto">
 
 ### Text
 
