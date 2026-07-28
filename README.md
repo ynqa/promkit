@@ -16,18 +16,29 @@ promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
 
 ## Features
 
-- Cross-platform support for both UNIX and Windows utilizing [crossterm](https://github.com/crossterm-rs/crossterm)
-- Modularized architecture
-  - [promkit-core](./promkit-core/)
-    - Core functionality for terminal rendering and keyed grapheme chunk management
-  - [promkit-widgets](./promkit-widgets/)
-    - Various UI components (text, listbox, tree, etc.)
-  - [promkit](./promkit/)
-    - Optional prompt runtime, capabilities, and widget facade
-  - [promkit-derive](./promkit-derive/)
-    - A Derive macro that simplifies interactive form input
-- Composable examples for readline, selection, structured data, forms, and
-  asynchronous workflows
+- **Application-owned composition** — Implement the
+  [`Prompt`](./promkit/src/runtime.rs) lifecycle and combine only the widget
+  states an application needs. Key bindings, focus, validation, background
+  work, and other event policy remain in the application instead of
+  framework-owned presets.
+- **Optional runtime and terminal lifecycle** — Use the asynchronous prompt
+  runtime when useful, and independently manage raw mode, the alternate screen,
+  cursor visibility, and mouse capture with
+  [`TerminalSession`](./promkit/src/terminal_session.rs).
+- **Viewport-aware rendering** — [`promkit-core`](./promkit-core/) handles
+  wrapping or truncation, vertical pane allocation, cursor scrolling, clipping,
+  resizing, and screen-to-widget hit testing.
+- **Reusable widget states** — [`promkit-widgets`](./promkit-widgets/) provides
+  text editing and display, list and checkbox selection, prefix search,
+  spinners and status output, trees, JSON and YAML documents, and CSV tables.
+- **Efficient large-content projection** — JSON, YAML, and table widgets can
+  project only the visible terminal viewport instead of rebuilding all content
+  on every redraw.
+- **Feature-gated modules** — No Cargo features are enabled by default. Choose
+  the runtime, terminal session, capabilities, and individual widgets needed by
+  the application.
+- **Cross-platform terminal support** — UNIX and Windows are supported through
+  [crossterm](https://github.com/crossterm-rs/crossterm).
 
 ## Concept
 
