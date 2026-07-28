@@ -15,7 +15,7 @@ use promkit::{
         text::{self, Text},
         text_editor::{self, TextEditorHit},
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -239,19 +239,24 @@ impl Prompt for QuerySelector {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let ret = QuerySelector::new(0..100, |text, items| {
-        text.parse::<usize>()
-            .map(|query| {
-                items
-                    .iter()
-                    .filter(|item| query <= item.parse::<usize>().unwrap_or_default())
-                    .cloned()
-                    .collect()
-            })
-            .unwrap_or_else(|_| items.to_vec())
-    })
-    .run()
-    .await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        QuerySelector::new(0..100, |text, items| {
+            text.parse::<usize>()
+                .map(|query| {
+                    items
+                        .iter()
+                        .filter(|item| query <= item.parse::<usize>().unwrap_or_default())
+                        .cloned()
+                        .collect()
+                })
+                .unwrap_or_else(|_| items.to_vec())
+        })
+        .run()
+        .await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

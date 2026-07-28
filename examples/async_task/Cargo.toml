@@ -8,6 +8,7 @@ publish = false
 promkit = { path = "../../promkit", features = [
     "runtime",
     "spinner",
+    "terminal-session",
     "texteditor",
 ] }
 tokio = { workspace = true }

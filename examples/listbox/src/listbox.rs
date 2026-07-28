@@ -14,7 +14,7 @@ use promkit::{
         listbox::{self, Listbox, ListboxHit},
         text::{self, Text},
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -169,7 +169,12 @@ impl Prompt for ListboxPrompt {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let ret = ListboxPrompt::new(0..100).run().await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        ListboxPrompt::new(0..100).run().await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

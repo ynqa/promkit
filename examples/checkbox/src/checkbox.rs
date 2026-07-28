@@ -14,7 +14,7 @@ use promkit::{
         checkbox::{self, Checkbox, CheckboxHit},
         text::{self, Text},
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -185,20 +185,25 @@ impl Prompt for CheckboxPrompt {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let ret = CheckboxPrompt::new([
-        "Apple",
-        "Banana",
-        "Orange",
-        "Mango",
-        "Strawberry",
-        "Pineapple",
-        "Grape",
-        "Watermelon",
-        "Kiwi",
-        "Pear",
-    ])
-    .run()
-    .await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        CheckboxPrompt::new([
+            "Apple",
+            "Banana",
+            "Orange",
+            "Mango",
+            "Strawberry",
+            "Pineapple",
+            "Grape",
+            "Watermelon",
+            "Kiwi",
+            "Pear",
+        ])
+        .run()
+        .await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

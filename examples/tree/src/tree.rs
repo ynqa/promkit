@@ -16,7 +16,7 @@ use promkit::{
         structured::tree::{self, Document, TreeHit},
         text::{self, Text},
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -182,7 +182,12 @@ impl Prompt for TreePrompt {
 async fn main() -> anyhow::Result<()> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../promkit/src");
     let document = Document::from_path(&root)?;
-    let ret = TreePrompt::new(document).run().await?;
+    let ret = {
+        let modes =
+            TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+        let _terminal_session = TerminalSession::try_new(modes)?;
+        TreePrompt::new(document).run().await?
+    };
     println!("result: {:?}", ret);
     Ok(())
 }

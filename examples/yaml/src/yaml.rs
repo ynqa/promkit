@@ -9,10 +9,9 @@ use promkit::{
     core::{
         crossterm::{
             event::{
-                self, Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
-                MouseButton, MouseEvent, MouseEventKind,
+                Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers, MouseButton,
+                MouseEvent, MouseEventKind,
             },
-            execute,
             style::{Attribute, Attributes, Color, ContentStyle},
             terminal,
         },
@@ -23,7 +22,7 @@ use promkit::{
         text::{self, Text},
         yaml::{self, config::OverflowMode, Document, YamlHit},
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 
 /// Interactive YAML viewer powered by promkit.
@@ -229,30 +228,16 @@ impl Prompt for YamlViewer {
     }
 }
 
-/// Ensure the terminal is restored to its original state when dropped.
-struct TerminalGuard;
-
-impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        let _ = execute!(
-            io::stdout(),
-            terminal::LeaveAlternateScreen,
-            event::DisableMouseCapture
-        );
-    }
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let document = parse_document(&args)?;
 
-    execute!(
-        io::stdout(),
-        terminal::EnterAlternateScreen,
-        event::EnableMouseCapture
-    )?;
-    let _terminal_guard = TerminalGuard;
+    let modes = TerminalModes::RAW_MODE
+        | TerminalModes::ALTERNATE_SCREEN
+        | TerminalModes::HIDDEN_CURSOR
+        | TerminalModes::MOUSE_CAPTURE;
+    let _terminal_session = TerminalSession::try_new(modes)?;
 
     YamlViewer::new(document).run().await
 }

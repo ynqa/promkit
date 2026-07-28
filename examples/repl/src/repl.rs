@@ -3,17 +3,16 @@
 use std::{collections::HashSet, io};
 
 use futures::StreamExt;
+use promkit::{TerminalModes, TerminalSession};
 use promkit_widgets::{
     core::{
         crossterm::{
-            cursor,
             event::{
-                self, Event, EventStream, KeyCode, KeyEvent, KeyEventKind, KeyEventState,
-                KeyModifiers, MouseButton, MouseEvent, MouseEventKind,
+                Event, EventStream, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers,
+                MouseButton, MouseEvent, MouseEventKind,
             },
             execute,
             style::{Color, ContentStyle, Print},
-            terminal::{disable_raw_mode, enable_raw_mode},
         },
         render::{Renderer, SharedRenderer},
         ScreenPosition, Widget,
@@ -39,15 +38,6 @@ enum Control {
     Continue,
     Submit(String),
     Exit,
-}
-
-struct TerminalGuard;
-
-impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        execute!(io::stdout(), cursor::Show, event::DisableMouseCapture,).ok();
-        disable_raw_mode().ok();
-    }
 }
 
 struct Repl {
@@ -305,14 +295,13 @@ impl Repl {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    enable_raw_mode()?;
+    let modes =
+        TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+    let _terminal_session = TerminalSession::try_new(modes)?;
     execute!(
         io::stdout(),
-        cursor::Hide,
-        event::EnableMouseCapture,
         Print("Bracket REPL (blank: submit, \"exit\": quit)\r\n"),
     )?;
-    let _terminal_guard = TerminalGuard;
     let mut events = EventStream::new();
 
     loop {

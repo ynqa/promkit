@@ -27,7 +27,7 @@ use promkit::{
         spinner::{self, State},
         text_editor,
     },
-    Prompt, Signal,
+    Prompt, Signal, TerminalModes, TerminalSession,
 };
 use tokio::{
     sync::{mpsc, RwLock},
@@ -427,5 +427,8 @@ impl AsyncTaskPrompt {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let modes =
+        TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR | TerminalModes::MOUSE_CAPTURE;
+    let _terminal_session = TerminalSession::try_new(modes)?;
     AsyncTaskPrompt::try_default().await?.spawn().await
 }

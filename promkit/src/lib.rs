@@ -17,3 +17,8 @@ pub mod validate;
 mod runtime;
 #[cfg(feature = "runtime")]
 pub use runtime::{Prompt, Signal, EVENT_STREAM};
+
+#[cfg(feature = "terminal-session")]
+mod terminal_session;
+#[cfg(feature = "terminal-session")]
+pub use terminal_session::{TerminalModes, TerminalSession};

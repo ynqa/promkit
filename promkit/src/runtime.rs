@@ -1,21 +1,16 @@
 //! A small lifecycle runtime for sequential, interactive prompts.
 //!
-//! This module owns terminal setup, teardown, and event delivery. Applications
-//! remain responsible for composing widgets, mapping events to state changes,
-//! rendering updates, focus management, validation, and quit policy.
+//! This module owns prompt lifecycle and event delivery. Applications remain
+//! responsible for terminal setup and teardown, composing widgets, mapping
+//! events to state changes, rendering updates, focus management, validation,
+//! and quit policy.
 
-use std::{io, sync::LazyLock};
+use std::sync::LazyLock;
 
 use futures::StreamExt;
-use scopeguard::defer;
 use tokio::sync::Mutex;
 
-use crate::core::crossterm::{
-    cursor,
-    event::{self, Event, EventStream},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode},
-};
+use crate::core::crossterm::event::{Event, EventStream};
 
 /// The singleton terminal event stream used by [`Prompt::run`].
 ///
@@ -57,13 +52,11 @@ pub enum Signal {
 pub trait Prompt {
     /// Prepares the prompt before terminal events are evaluated.
     ///
-    /// [`Prompt::run`] calls this after enabling raw mode, hiding the cursor,
-    /// and enabling mouse capture. Implementations commonly initialize their
-    /// renderer and draw the initial prompt here.
+    /// Implementations commonly initialize their renderer and draw the initial
+    /// prompt here.
     ///
     /// If this method returns an error, the error is propagated and
-    /// [`Prompt::finalize`] is not called. Terminal modes configured by
-    /// [`Prompt::run`] are still restored.
+    /// [`Prompt::finalize`] is not called.
     async fn initialize(&mut self) -> anyhow::Result<()>;
 
     /// Applies one terminal event to the application-owned prompt state.
@@ -94,47 +87,26 @@ pub trait Prompt {
     ///
     /// This method:
     ///
-    /// 1. enables raw mode, hides the cursor, and enables mouse capture;
-    /// 2. calls [`Prompt::initialize`];
-    /// 3. reads events from [`EVENT_STREAM`] and passes non-resize events to
+    /// 1. calls [`Prompt::initialize`];
+    /// 2. reads events from [`EVENT_STREAM`] and passes non-resize events to
     ///    [`Prompt::evaluate`] until it returns [`Signal::Quit`];
-    /// 4. calls [`Prompt::finalize`]; and
-    /// 5. restores cursor visibility, disables mouse capture, and disables raw
-    ///    mode.
-    ///
-    /// Terminal restoration is attempted when the method exits, including
-    /// error paths. Restoration errors are ignored so that an earlier prompt
-    /// error is preserved.
+    /// 3. calls [`Prompt::finalize`].
     ///
     /// # Runtime scope
     ///
-    /// The runtime writes terminal commands to standard output and processes
-    /// one prompt sequentially. It does not enter or leave the alternate
-    /// screen, redraw immediately on resize, multiplex application events, or
-    /// coordinate concurrent prompts. Applications that need those policies
-    /// should own their event loop and use `promkit-core` and
-    /// `promkit-widgets` directly.
+    /// The runtime processes one prompt sequentially. It does not configure or
+    /// restore terminal modes, redraw immediately on resize, multiplex
+    /// application events, or coordinate concurrent prompts. Callers are
+    /// responsible for the terminal lifecycle and can use `TerminalSession`
+    /// when the `terminal-session` feature is enabled.
     ///
     /// # Errors
     ///
-    /// Returns errors from terminal setup, [`Prompt::initialize`],
-    /// [`Prompt::evaluate`], or [`Prompt::finalize`]. An error yielded by the
-    /// terminal event stream ends the loop and is not propagated; in that case,
-    /// [`Prompt::finalize`] determines the result.
+    /// Returns errors from [`Prompt::initialize`], [`Prompt::evaluate`], or
+    /// [`Prompt::finalize`]. An error yielded by the terminal event stream ends
+    /// the loop and is not propagated; in that case, [`Prompt::finalize`]
+    /// determines the result.
     async fn run(&mut self) -> anyhow::Result<Self::Return> {
-        defer! {
-            execute!(
-                io::stdout(),
-                cursor::Show,
-                event::DisableMouseCapture,
-            )
-            .ok();
-            disable_raw_mode().ok();
-        };
-
-        enable_raw_mode()?;
-        execute!(io::stdout(), cursor::Hide, event::EnableMouseCapture)?;
-
         self.initialize().await?;
 
         while let Some(event) = EVENT_STREAM.lock().await.next().await {
