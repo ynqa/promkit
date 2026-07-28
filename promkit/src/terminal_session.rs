@@ -7,10 +7,7 @@ use crossterm::{
     cursor,
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
-    terminal::{
-        disable_raw_mode, enable_raw_mode, is_raw_mode_enabled, EnterAlternateScreen,
-        LeaveAlternateScreen,
-    },
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 bitflags! {
@@ -63,8 +60,7 @@ fn crossterm_backend(operation: Operation) -> io::Result<()> {
 /// unwinding.
 ///
 /// If setup fails partway through, all modes whose setup was attempted are
-/// restored before the setup error is returned. Raw mode is not disabled if it
-/// was already enabled before the session started.
+/// restored before the setup error is returned.
 ///
 /// # Example
 ///
@@ -93,14 +89,10 @@ impl TerminalSession {
     /// then mouse capture. If a step returns an error or unwinds, [`Drop`]
     /// attempts to reverse every step that had started.
     pub fn try_new(modes: TerminalModes) -> io::Result<Self> {
-        Self::try_new_with(crossterm_backend, modes, is_raw_mode_enabled()?)
+        Self::try_new_with(crossterm_backend, modes)
     }
 
-    fn try_new_with(
-        backend: Backend,
-        modes: TerminalModes,
-        raw_mode_was_enabled: bool,
-    ) -> io::Result<Self> {
+    fn try_new_with(backend: Backend, modes: TerminalModes) -> io::Result<Self> {
         let mut session = Self {
             backend,
             pending_restore: TerminalModes::empty(),
@@ -115,7 +107,7 @@ impl TerminalSession {
             (TerminalModes::HIDDEN_CURSOR, Operation::HideCursor),
             (TerminalModes::MOUSE_CAPTURE, Operation::EnableMouseCapture),
         ] {
-            if !modes.contains(mode) || (mode == TerminalModes::RAW_MODE && raw_mode_was_enabled) {
+            if !modes.contains(mode) {
                 continue;
             }
 
@@ -223,7 +215,7 @@ mod tests {
     }
 
     fn try_new(modes: TerminalModes) -> io::Result<TerminalSession> {
-        TerminalSession::try_new_with(mock_backend, modes, false)
+        TerminalSession::try_new_with(mock_backend, modes)
     }
 
     #[test]
@@ -310,7 +302,7 @@ mod tests {
             | TerminalModes::HIDDEN_CURSOR
             | TerminalModes::MOUSE_CAPTURE;
         let panic = std::panic::catch_unwind(|| {
-            TerminalSession::try_new_with(panicking_backend, modes, false).ok();
+            TerminalSession::try_new_with(panicking_backend, modes).ok();
         });
 
         assert!(panic.is_err());
@@ -369,30 +361,6 @@ mod tests {
                 Operation::EnterAlternateScreen,
                 Operation::EnableMouseCapture,
                 Operation::DisableMouseCapture,
-                Operation::LeaveAlternateScreen,
-            ]
-        );
-    }
-
-    #[test]
-    fn preserves_raw_mode_that_was_already_enabled() {
-        reset([]);
-
-        let modes = TerminalModes::RAW_MODE
-            | TerminalModes::ALTERNATE_SCREEN
-            | TerminalModes::HIDDEN_CURSOR
-            | TerminalModes::MOUSE_CAPTURE;
-        let mut session = TerminalSession::try_new_with(mock_backend, modes, true).unwrap();
-        session.restore().unwrap();
-
-        assert_eq!(
-            operations(),
-            [
-                Operation::EnterAlternateScreen,
-                Operation::HideCursor,
-                Operation::EnableMouseCapture,
-                Operation::DisableMouseCapture,
-                Operation::ShowCursor,
                 Operation::LeaveAlternateScreen,
             ]
         );
