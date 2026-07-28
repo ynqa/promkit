@@ -11,7 +11,7 @@ Put the package in your `Cargo.toml`.
 
 ```toml
 [dependencies]
-promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
+promkit = { version = "0.15.0", features = ["runtime", "texteditor"] }
 ```
 
 ## Features

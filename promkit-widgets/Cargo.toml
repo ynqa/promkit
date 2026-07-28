@@ -1,6 +1,6 @@
 [package]
 name = "promkit-widgets"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2024"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 description = "Widgets for promkit"
@@ -26,7 +26,7 @@ tree = []
 
 [dependencies]
 anyhow = { workspace = true }
-promkit-core = { path = "../promkit-core", version = "=0.5.0" }
+promkit-core = { path = "../promkit-core", version = "=0.6.0" }
 
 # Optional dependencies
 csv = { workspace = true, optional = true }

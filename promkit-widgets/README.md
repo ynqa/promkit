@@ -14,14 +14,14 @@ using the `promkit` runtime can enable them through the main crate:
 
 ```toml
 [dependencies]
-promkit = { version = "0.14.0", features = ["runtime", "texteditor"] }
+promkit = { version = "0.15.0", features = ["runtime", "texteditor"] }
 ```
 
 The widget states can also be used directly:
 
 ```toml
 [dependencies]
-promkit-widgets = { version = "0.7", features = ["json", "yaml"] }
+promkit-widgets = { version = "0.8", features = ["json", "yaml"] }
 ```
 
 `promkit` re-exports this crate as `promkit::widgets`, while
