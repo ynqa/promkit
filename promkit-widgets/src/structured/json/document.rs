@@ -1,6 +1,9 @@
-use std::cell::Cell;
+use std::{cell::Cell, io::Read};
 
-use super::jsonz::{self, Row, RowOperation};
+use super::{
+    deserializer,
+    jsonz::{self, Row, RowOperation},
+};
 use crate::structured::{ProjectionViewport, projection_viewport};
 
 /// Represents a navigable JSON document, allowing for efficient row navigation and folding.
@@ -13,11 +16,34 @@ pub struct Document {
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_json::Value>>(iter: I) -> Self {
+        Self::from_rows(jsonz::create_rows(iter))
+    }
+
+    /// Parses one or more JSON values directly into a navigable document.
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(input: &str) -> Result<Self, serde_json::Error> {
+        <Self as std::str::FromStr>::from_str(input)
+    }
+
+    /// Reads one or more JSON values directly into a navigable document.
+    pub fn from_reader<R: Read>(reader: R) -> Result<Self, serde_json::Error> {
+        deserializer::from_reader(reader).map(Self::from_rows)
+    }
+
+    fn from_rows(rows: Vec<Row>) -> Self {
         Self {
-            rows: jsonz::create_rows(iter),
+            rows,
             position: 0,
             viewport: Cell::default(),
         }
+    }
+}
+
+impl std::str::FromStr for Document {
+    type Err = serde_json::Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        deserializer::from_str(input).map(Self::from_rows)
     }
 }
 
@@ -177,4 +203,65 @@ fn row_index_at_visible_position(rows: &Vec<Row>, start: usize, target: usize) -
         position = next;
     }
     Some(position)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::Document;
+
+    const INPUT: &str = r#"
+{"name":"alice","active":true,"score":12.5,"items":[null,1,{"nested":"value"}]}
+[true]
+"tail"
+"#;
+
+    fn via_value(input: &str) -> Document {
+        let values = serde_json::Deserializer::from_str(input)
+            .into_iter::<serde_json::Value>()
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        Document::new(values.iter())
+    }
+
+    #[test]
+    fn from_str_matches_value_conversion() {
+        let expected = via_value(INPUT);
+        let actual = Document::from_str(INPUT).unwrap();
+
+        assert_eq!(actual.rows(), expected.rows());
+    }
+
+    #[test]
+    fn from_reader_matches_value_conversion() {
+        let expected = via_value(INPUT);
+        let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
+
+        assert_eq!(actual.rows(), expected.rows());
+    }
+
+    #[test]
+    fn direct_parsing_matches_value_conversion_for_edge_cases() {
+        for input in [
+            "",
+            " \n\t",
+            "null",
+            "{}",
+            "[]",
+            "-0 1.25e3",
+            r#""escaped\ntext" {"a":[],"b":{}}"#,
+        ] {
+            let expected = via_value(input);
+            let actual = Document::from_str(input).unwrap();
+
+            assert_eq!(actual.rows(), expected.rows(), "input: {input:?}");
+        }
+    }
+
+    #[test]
+    fn direct_parsing_reports_invalid_json() {
+        assert!(Document::from_str(r#"{"missing":"close""#).is_err());
+        assert!(Document::from_reader(Cursor::new(b"[1,")).is_err());
+    }
 }

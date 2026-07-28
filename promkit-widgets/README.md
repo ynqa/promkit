@@ -38,6 +38,24 @@ The crate re-exports `promkit-core` as `promkit_widgets::core`. JSON and YAML
 states provide viewport-bounded projection so callers do not need to materialize
 every visible row of a large document on each cursor movement.
 
+## Structured document loading
+
+JSON and YAML documents can be built directly from strings or readers without
+first materializing a `serde_json::Value` or `serde_yaml::Value` tree:
+
+```rust
+use std::{fs::File, io::BufReader};
+
+use promkit_widgets::{json, yaml};
+
+let json_document = json::Document::from_str(r#"{"name":"alice"}"#).unwrap();
+let yaml_file = File::open("input.yaml").unwrap();
+let yaml_document = yaml::Document::from_reader(BufReader::new(yaml_file)).unwrap();
+```
+
+`Document::new` remains available when an application already has deserialized
+Serde values.
+
 ## Structured benchmark
 
 The Criterion benchmark covers file reading, deserialization, document

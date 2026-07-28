@@ -1,6 +1,9 @@
-use std::cell::Cell;
+use std::{cell::Cell, io::Read};
 
-use crate::structured::yaml::yamlz::{self, Row, RowOperation};
+use crate::structured::yaml::{
+    deserializer,
+    yamlz::{self, Row, RowOperation},
+};
 use crate::structured::{ProjectionViewport, projection_viewport};
 
 /// Represents a navigable YAML document, allowing for efficient row navigation and folding.
@@ -15,7 +18,21 @@ pub struct Document {
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
-        let rows = yamlz::create_rows(iter);
+        Self::from_rows(yamlz::create_rows(iter))
+    }
+
+    /// Parses one or more YAML documents directly into a navigable document.
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(input: &str) -> Result<Self, serde_yaml::Error> {
+        <Self as std::str::FromStr>::from_str(input)
+    }
+
+    /// Reads one or more YAML documents directly into a navigable document.
+    pub fn from_reader<R: Read>(reader: R) -> Result<Self, serde_yaml::Error> {
+        deserializer::from_reader(reader).map(Self::from_rows)
+    }
+
+    fn from_rows(rows: Vec<Row>) -> Self {
         let position = rows.head();
         let mut line_numbers = vec![None; rows.len()];
         let mut line_count = 0;
@@ -41,6 +58,14 @@ impl Document {
             line_count,
             viewport: Cell::default(),
         }
+    }
+}
+
+impl std::str::FromStr for Document {
+    type Err = serde_yaml::Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        deserializer::from_str(input).map(Self::from_rows)
     }
 }
 
@@ -216,4 +241,87 @@ fn row_index_at_visible_position(rows: &Vec<Row>, start: usize, target: usize) -
         position = next;
     }
     Some(position)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use serde::Deserialize;
+
+    use super::Document;
+
+    const INPUT: &str = r#"
+---
+name: alice
+1: one
+true: enabled
+null: nothing
+? [first, second]
+: sequence-key
+tagged: !Thing
+  nested: value
+items:
+  - null
+  - {}
+  - &anchor
+    aliased: true
+  - *anchor
+---
+!Root
+second: [1, 2]
+"#;
+
+    fn via_value(input: &str) -> Document {
+        let values = serde_yaml::Deserializer::from_str(input)
+            .map(serde_yaml::Value::deserialize)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        Document::new(values.iter())
+    }
+
+    #[test]
+    fn from_str_matches_value_conversion() {
+        let expected = via_value(INPUT);
+        let actual = Document::from_str(INPUT).unwrap();
+
+        assert_eq!(actual.rows(), expected.rows());
+    }
+
+    #[test]
+    fn from_reader_matches_value_conversion() {
+        let expected = via_value(INPUT);
+        let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
+
+        assert_eq!(actual.rows(), expected.rows());
+    }
+
+    #[test]
+    fn direct_parsing_matches_value_conversion_for_scalar_forms() {
+        for input in [
+            "",
+            "null\n",
+            "~\n",
+            ".nan\n",
+            ".inf\n",
+            "-.inf\n",
+            "'quoted'\n",
+            "|\n  multiline\n  text\n",
+            "!!str 1\n",
+            "!!int '1'\n",
+            "---\n...\n---\n{}\n",
+        ] {
+            let expected = via_value(input);
+            let actual = Document::from_str(input).unwrap();
+
+            assert_eq!(actual.rows(), expected.rows(), "input: {input:?}");
+        }
+    }
+
+    #[test]
+    fn direct_parsing_reports_invalid_yaml() {
+        assert!(Document::from_str("key: [unterminated").is_err());
+        assert!(Document::from_reader(Cursor::new(b"key: {")).is_err());
+        assert!(Document::from_str("duplicate: one\nduplicate: two\n").is_err());
+    }
 }

@@ -370,7 +370,7 @@ impl RowOperation for Vec<Row> {
     }
 }
 
-fn normalize_mapping_key_for_display(mapping_key: &serde_yaml::Value) -> Option<String> {
+pub(super) fn normalize_mapping_key_for_display(mapping_key: &serde_yaml::Value) -> Option<String> {
     match mapping_key {
         serde_yaml::Value::String(s) => Some(s.clone()),
         serde_yaml::Value::Number(n) => Some(n.to_string()),

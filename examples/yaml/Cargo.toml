@@ -8,7 +8,6 @@ publish = false
 anyhow = { workspace = true }
 clap = { version = "4.5.60", features = ["derive"] }
 promkit = { path = "../../promkit", features = ["runtime", "yaml", "text"] }
-serde = { workspace = true }
 tokio = { workspace = true }
 
 [[bin]]

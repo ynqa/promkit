@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, Read},
+    io::{self, BufReader},
     path::PathBuf,
 };
 
@@ -20,13 +20,11 @@ use promkit::{
         ScreenPosition, Widget,
     },
     widgets::{
-        serde_yaml::{Deserializer, Value},
         text::{self, Text},
         yaml::{self, config::OverflowMode, Document, YamlHit},
     },
     Prompt, Signal,
 };
-use serde::Deserialize;
 
 /// Interactive YAML viewer powered by promkit.
 #[derive(Debug, Parser)]
@@ -36,32 +34,18 @@ struct Args {
     input: Option<PathBuf>,
 }
 
-/// Read YAML input from a file or stdin based on the provided arguments.
-fn parse_input(args: &Args) -> anyhow::Result<String> {
-    let mut input = String::new();
-
+/// Parse a YAML document from a file or stdin based on the provided arguments.
+fn parse_document(args: &Args) -> anyhow::Result<Document> {
     match &args.input {
-        None => {
-            io::stdin().read_to_string(&mut input)?;
-        }
+        None => Document::from_reader(io::stdin().lock()).map_err(anyhow::Error::from),
         Some(path) if path == &PathBuf::from("-") => {
-            io::stdin().read_to_string(&mut input)?;
+            Document::from_reader(io::stdin().lock()).map_err(anyhow::Error::from)
         }
         Some(path) => {
-            File::open(path)?.read_to_string(&mut input)?;
+            let file = File::open(path)?;
+            Document::from_reader(BufReader::new(file)).map_err(anyhow::Error::from)
         }
     }
-
-    Ok(input)
-}
-
-/// Parse a YAML string into a vector of serde_yaml::Value,
-/// allowing for multiple YAML documents in the input.
-fn parse_yaml_values(input: &str) -> anyhow::Result<Vec<Value>> {
-    Deserializer::from_str(input)
-        .map(Value::deserialize)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::from)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -261,8 +245,7 @@ impl Drop for TerminalGuard {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let input = parse_input(&args)?;
-    let values = parse_yaml_values(&input)?;
+    let document = parse_document(&args)?;
 
     execute!(
         io::stdout(),
@@ -271,6 +254,5 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let _terminal_guard = TerminalGuard;
 
-    let document = Document::new(values.iter());
     YamlViewer::new(document).run().await
 }
