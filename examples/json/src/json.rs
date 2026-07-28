@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, Read},
+    io::{self, BufReader},
     path::PathBuf,
 };
 
@@ -21,7 +21,6 @@ use promkit::{
     },
     widgets::{
         json::{self, config::OverflowMode, Document, JsonHit},
-        serde_json::{self, Deserializer, Value},
         text::{self, Text},
     },
     Prompt, Signal,
@@ -35,33 +34,18 @@ struct Args {
     input: Option<PathBuf>,
 }
 
-/// Read JSON input from a file or stdin based on the provided arguments.
-fn parse_input(args: &Args) -> anyhow::Result<String> {
-    let mut input = String::new();
-
+/// Parse a JSON document from a file or stdin based on the provided arguments.
+fn parse_document(args: &Args) -> anyhow::Result<Document> {
     match &args.input {
-        None => {
-            io::stdin().read_to_string(&mut input)?;
-        }
+        None => Document::from_reader(io::stdin().lock()).map_err(anyhow::Error::from),
         Some(path) if path == &PathBuf::from("-") => {
-            io::stdin().read_to_string(&mut input)?;
+            Document::from_reader(io::stdin().lock()).map_err(anyhow::Error::from)
         }
         Some(path) => {
-            File::open(path)?.read_to_string(&mut input)?;
+            let file = File::open(path)?;
+            Document::from_reader(BufReader::new(file)).map_err(anyhow::Error::from)
         }
     }
-
-    Ok(input)
-}
-
-/// Parse a JSON string into a vector of serde_json::Value,
-/// allowing for multiple JSON objects in the input.
-fn parse_json_values(input: &str) -> anyhow::Result<Vec<Value>> {
-    let deserializer: serde_json::StreamDeserializer<'_, serde_json::de::StrRead<'_>, Value> =
-        Deserializer::from_str(input).into_iter::<Value>();
-    deserializer
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(anyhow::Error::from)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -257,8 +241,7 @@ impl Drop for TerminalGuard {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let input = parse_input(&args)?;
-    let values = parse_json_values(&input)?;
+    let document = parse_document(&args)?;
 
     execute!(
         io::stdout(),
@@ -267,6 +250,5 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let _terminal_guard = TerminalGuard;
 
-    let document = Document::new(values.iter());
     JsonViewer::new(document).run().await
 }

@@ -1,4 +1,9 @@
-use std::{fs, hint::black_box, path::Path};
+use std::{
+    fs::{self, File},
+    hint::black_box,
+    io::BufReader,
+    path::Path,
+};
 
 use criterion::Criterion;
 use promkit_core::Widget;
@@ -34,12 +39,19 @@ fn benchmark_fixture(c: &mut Criterion, path: &Path) {
     group.bench_function("from_file/via_value", |b| {
         b.iter(|| black_box(from_file_via_value(black_box(path))));
     });
-    // TODO: Add `from_file/direct` when `yaml::Document::from_reader` is available.
+    group.bench_function("from_file/direct", |b| {
+        b.iter(|| {
+            let file = File::open(black_box(path)).unwrap();
+            black_box(yaml::Document::from_reader(BufReader::new(file)).unwrap())
+        });
+    });
 
     group.bench_function("from_str/via_value", |b| {
         b.iter(|| black_box(from_str_via_value(black_box(input.as_str()))));
     });
-    // TODO: Add `from_str/direct` when `yaml::Document::from_str` is available.
+    group.bench_function("from_str/direct", |b| {
+        b.iter(|| black_box(yaml::Document::from_str(black_box(input.as_str())).unwrap()));
+    });
 
     let document = yaml::Document::new(values.iter());
     drop(values);

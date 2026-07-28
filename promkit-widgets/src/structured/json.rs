@@ -6,6 +6,7 @@ mod document;
 pub use document::Document;
 pub mod config;
 pub use config::Config;
+mod deserializer;
 pub mod jsonz;
 
 use crate::structured::PrettyRender;
