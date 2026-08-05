@@ -114,6 +114,7 @@ impl Default for Readline {
                         ..Default::default()
                     }),
                     lines: None,
+                    ..Default::default()
                 },
             },
         }
