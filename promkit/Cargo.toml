@@ -26,7 +26,6 @@ all = [
     "listbox",
     "serde",
     "spinner",
-    "status",
     "table",
     "text",
     "texteditor",
@@ -56,7 +55,6 @@ listbox = ["widgets", "promkit-widgets/listbox"]
 prefixsearch = ["widgets", "promkit-widgets/prefixsearch"]
 serde = ["widgets", "promkit-widgets/serde"]
 spinner = ["widgets", "promkit-widgets/spinner"]
-status = ["widgets", "promkit-widgets/status"]
 table = ["widgets", "promkit-widgets/table"]
 text = ["widgets", "promkit-widgets/text"]
 texteditor = ["widgets", "promkit-widgets/texteditor"]

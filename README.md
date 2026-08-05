@@ -30,7 +30,7 @@ promkit = { version = "0.15.0", features = ["runtime", "texteditor"] }
   resizing, and screen-to-widget hit testing.
 - **Reusable widget states** — [`promkit-widgets`](./promkit-widgets/) provides
   text editing and display, list and checkbox selection, prefix search,
-  spinners and status output, trees, JSON and YAML documents, and CSV tables.
+  spinners, trees, JSON and YAML documents, and CSV tables.
 - **Efficient large-content projection** — JSON, YAML, and table widgets can
   project only the visible terminal viewport instead of rebuilding all content
   on every redraw.

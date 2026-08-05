@@ -41,7 +41,6 @@ promkit-widgets = { version = "0.8", features = ["json", "yaml"] }
 | `text` | Styled text |
 | `texteditor` | Editable text with history |
 | `spinner` | Asynchronous progress display |
-| `status` | Status display |
 | `serde` | Serde support for widget configuration |
 | `all` | All features above |
 
