@@ -10,7 +10,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Patch versions are not included due to maintenance cost considerations.
 > More detailed version tracking may be described as the project matures.
 
-## [Unreleased]
+## [0.14.0] - 2026-07-28
+
+### Added
+
+- Added configurable `TerminalSession` management for raw mode, alternate screen, cursor visibility, and mouse capture
+- Added a prefix-search widget for composing filtered selection interfaces
+- Added mouse-click support for text input, selection lists, checkboxes, trees, JSON, and YAML
+- Added multiline text editing with continuation indentation and block submission, together with a REPL example
+- Added a CSV table widget for navigating large files vertically and horizontally by display cell
+- Added stable line numbers and viewport-aware projection to the JSON and YAML widgets
+- Expanded terminal rendering regression coverage with [termharness](https://github.com/ynqa/termharness), running applications in a pseudo-terminal, replaying keyboard input and window resizing, and comparing the resulting screen with expected output
+- Added renderer-managed widget layout and screen-to-widget hit testing
+
+### Changed
+
+- Shifted from framework-owned prompt presets to application-owned composition using reusable widget states and the optional `Prompt` runtime
+- Reorganized Cargo features into runtime, terminal lifecycle, capabilities, and individual widgets
+- Changed widgets to produce `CreatedGraphemes` with layout hints and logical cursor positions
+- Improved renderer layout performance by extracting a terminal-independent layout engine and reducing layout cloning
+- Improved structured JSON and YAML loading by parsing directly into rows and bounding projection to the visible viewport
+- Updated `promkit-core` to `v0.5.0` and `promkit-widgets` to `v0.7.0`
+
+### Removed
+
+- Removed the built-in prompt presets and the generic widget cursor abstraction
+
+### Fixed
+
+- Preserved preceding terminal output and cleared stale rows correctly across resize and redraw cycles
+- Preserved overwide graphemes during wrapping
+- Stabilized JSON and YAML viewports, line numbers, root navigation, and keyed-container toggling
+- Corrected CSV mouse scrolling behavior on macOS
 
 ## [0.13.0] - 2026-07-24
 
