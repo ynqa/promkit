@@ -30,10 +30,10 @@ impl<T: fmt::Display> FromIterator<T> for PrefixSearch {
 }
 
 impl PrefixSearch {
-    /// Updates the active query and selects the first matching candidate.
+    /// Sets the active query and selects the first matching candidate.
     ///
     /// Returns `true` when at least one candidate matches.
-    pub fn search(&mut self, query: impl AsRef<str>) -> bool {
+    pub fn set_query(&mut self, query: impl AsRef<str>) -> bool {
         self.query = Some(query.as_ref().to_string());
         let has_match = self.candidates().next().is_some();
         self.selected = has_match.then_some(0);
@@ -118,14 +118,14 @@ mod tests {
             .collect()
     }
 
-    mod search {
+    mod set_query {
         use super::*;
 
         #[test]
         fn filters_the_trie_and_selects_the_first_match() {
             let mut prefix_search = prefix_search();
 
-            assert!(prefix_search.search("app"));
+            assert!(prefix_search.set_query("app"));
             assert_eq!(
                 prefix_search.candidates().collect::<Vec<_>>(),
                 vec!["apple", "applet", "application"]
@@ -133,7 +133,7 @@ mod tests {
             assert_eq!(prefix_search.selected(), Some(0));
             assert_eq!(prefix_search.get(), Some("apple"));
 
-            assert!(prefix_search.search("ban"));
+            assert!(prefix_search.set_query("ban"));
             assert_eq!(
                 prefix_search.candidates().collect::<Vec<_>>(),
                 vec!["banana"]
@@ -146,8 +146,8 @@ mod tests {
         fn missing_match_clears_the_selection() {
             let mut prefix_search = prefix_search();
 
-            assert!(prefix_search.search("app"));
-            assert!(!prefix_search.search("orange"));
+            assert!(prefix_search.set_query("app"));
+            assert!(!prefix_search.set_query("orange"));
             assert!(prefix_search.is_empty());
             assert_eq!(prefix_search.selected(), None);
             assert_eq!(prefix_search.get(), None);
@@ -160,7 +160,7 @@ mod tests {
         #[test]
         fn stops_at_the_first_match() {
             let mut prefix_search = prefix_search();
-            prefix_search.search("app");
+            prefix_search.set_query("app");
 
             assert!(!prefix_search.backward());
             assert_eq!(prefix_search.get(), Some("apple"));
@@ -173,7 +173,7 @@ mod tests {
         #[test]
         fn stops_at_the_last_match() {
             let mut prefix_search = prefix_search();
-            prefix_search.search("app");
+            prefix_search.set_query("app");
 
             assert!(prefix_search.forward());
             assert_eq!(prefix_search.get(), Some("applet"));
@@ -189,7 +189,7 @@ mod tests {
         #[test]
         fn rejects_an_out_of_bounds_index() {
             let mut prefix_search = prefix_search();
-            prefix_search.search("app");
+            prefix_search.set_query("app");
             prefix_search.move_to(2);
 
             assert!(!prefix_search.move_to(3));
@@ -199,7 +199,7 @@ mod tests {
         #[test]
         fn selects_the_given_match() {
             let mut prefix_search = prefix_search();
-            prefix_search.search("app");
+            prefix_search.set_query("app");
             prefix_search.move_to(2);
 
             assert!(prefix_search.move_to(0));
@@ -213,13 +213,13 @@ mod tests {
         #[test]
         fn hides_matches_without_removing_candidates() {
             let mut prefix_search = prefix_search();
-            prefix_search.search("app");
+            prefix_search.set_query("app");
 
             prefix_search.clear();
 
             assert!(prefix_search.is_empty());
             assert_eq!(prefix_search.selected(), None);
-            assert!(prefix_search.search("app"));
+            assert!(prefix_search.set_query("app"));
             assert_eq!(prefix_search.get(), Some("apple"));
         }
     }

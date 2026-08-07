@@ -131,7 +131,7 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
             state: KeyEventState::NONE,
         }) => {
             let text = ctx.readline.texteditor.text_without_cursor().to_string();
-            if ctx.suggestions.prefix_search.search(text) {
+            if ctx.suggestions.prefix_search.set_query(text) {
                 ctx.focus = Focus::Suggestion;
             } else {
                 dismiss_suggestions(ctx);

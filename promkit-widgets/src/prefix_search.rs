@@ -98,7 +98,7 @@ mod tests {
                 let mut prefix_search: PrefixSearch = ["apple", "applet", "application", "banana"]
                     .into_iter()
                     .collect();
-                prefix_search.search("app");
+                prefix_search.set_query("app");
                 let mut state = State {
                     prefix_search,
                     config: Config {
