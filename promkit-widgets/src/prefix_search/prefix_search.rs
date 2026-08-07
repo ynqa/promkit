@@ -1,63 +1,88 @@
-use std::{fmt, iter::FromIterator};
+use std::{fmt, iter::FromIterator, sync::Arc};
 
 use radix_trie::{Trie, TrieCommon};
 
 /// Prefix-search candidates backed directly by a radix trie.
 #[derive(Clone)]
 pub struct PrefixSearch {
-    candidates: Trie<String, ()>,
-    query: Option<String>,
-    selected: Option<usize>,
+    candidates: Arc<[String]>,
+    index: Trie<String, usize>,
 }
 
 impl Default for PrefixSearch {
     fn default() -> Self {
         Self {
-            candidates: Trie::new(),
-            query: None,
-            selected: None,
+            candidates: Arc::default(),
+            index: Trie::new(),
         }
     }
 }
 
 impl<T: fmt::Display> FromIterator<T> for PrefixSearch {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        Self {
-            candidates: Trie::from_iter(iter.into_iter().map(|item| (item.to_string(), ()))),
-            ..Default::default()
-        }
+        let candidates = iter
+            .into_iter()
+            .map(|item| item.to_string())
+            .collect::<Arc<[_]>>();
+        let index = Trie::from_iter(
+            candidates
+                .iter()
+                .enumerate()
+                .map(|(index, candidate)| (candidate.clone(), index)),
+        );
+
+        Self { candidates, index }
     }
 }
 
 impl PrefixSearch {
-    /// Sets the active query and selects the first matching candidate.
-    ///
-    /// Returns `true` when at least one candidate matches.
-    pub fn set_query(&mut self, query: impl AsRef<str>) -> bool {
-        self.query = Some(query.as_ref().to_string());
-        let has_match = self.candidates().next().is_some();
-        self.selected = has_match.then_some(0);
-        has_match
-    }
+    /// Creates an independently selectable snapshot of candidates matching `query`.
+    pub fn query(&self, query: impl AsRef<str>) -> PrefixSearchResult {
+        let candidates = self
+            .index
+            .get_raw_descendant(query.as_ref())
+            .into_iter()
+            .flat_map(|subtrie| subtrie.iter().map(|(_, index)| *index))
+            .collect::<Vec<_>>();
+        let selected = (!candidates.is_empty()).then_some(0);
 
-    /// Clears the active query and selection without removing candidates.
+        PrefixSearchResult {
+            source: Arc::clone(&self.candidates),
+            candidates,
+            selected,
+        }
+    }
+}
+
+/// A selectable snapshot produced by a prefix query.
+#[derive(Clone, Default)]
+pub struct PrefixSearchResult {
+    source: Arc<[String]>,
+    candidates: Vec<usize>,
+    selected: Option<usize>,
+}
+
+impl PrefixSearchResult {
+    /// Clears the snapshot and its selection.
     pub fn clear(&mut self) {
-        self.query = None;
+        self.candidates.clear();
         self.selected = None;
     }
 
-    /// Returns candidates matching the active query directly from the trie.
+    /// Returns the candidates in this snapshot.
     pub fn candidates(&self) -> impl Iterator<Item = &str> {
-        self.query
-            .as_deref()
-            .and_then(|query| self.candidates.get_raw_descendant(query))
-            .into_iter()
-            .flat_map(|subtrie| subtrie.iter().map(|(candidate, _)| candidate.as_str()))
+        self.candidates
+            .iter()
+            .filter_map(|index| self.source.get(*index))
+            .map(String::as_str)
     }
 
-    /// Returns the candidate at `index` in the current match set.
+    /// Returns the candidate at `index`.
     pub fn candidate_at(&self, index: usize) -> Option<&str> {
-        self.candidates().nth(index)
+        self.candidates
+            .get(index)
+            .and_then(|index| self.source.get(*index))
+            .map(String::as_str)
     }
 
     /// Returns the selected candidate index.
@@ -71,9 +96,9 @@ impl PrefixSearch {
             .and_then(|selected| self.candidate_at(selected))
     }
 
-    /// Returns whether the current match set is empty.
+    /// Returns whether the snapshot is empty.
     pub fn is_empty(&self) -> bool {
-        self.candidates().next().is_none()
+        self.candidates.is_empty()
     }
 
     /// Moves the selection to the previous candidate.
@@ -89,7 +114,7 @@ impl PrefixSearch {
     pub fn forward(&mut self) -> bool {
         let Some(selected) = self
             .selected
-            .filter(|selected| self.candidate_at(selected.saturating_add(1)).is_some())
+            .filter(|selected| selected.saturating_add(1) < self.candidates.len())
         else {
             return false;
         };
@@ -99,7 +124,7 @@ impl PrefixSearch {
 
     /// Moves the selection to a candidate by index.
     pub fn move_to(&mut self, index: usize) -> bool {
-        if self.candidate_at(index).is_some() {
+        if index < self.candidates.len() {
             self.selected = Some(index);
             true
         } else {
@@ -110,7 +135,7 @@ impl PrefixSearch {
 
 #[cfg(test)]
 mod tests {
-    use super::PrefixSearch;
+    use super::{PrefixSearch, PrefixSearchResult};
 
     fn prefix_search() -> PrefixSearch {
         ["apple", "applet", "application", "banana"]
@@ -118,109 +143,109 @@ mod tests {
             .collect()
     }
 
-    mod set_query {
+    mod prefix_search {
         use super::*;
 
-        #[test]
-        fn filters_the_trie_and_selects_the_first_match() {
-            let mut prefix_search = prefix_search();
+        mod query {
+            use super::*;
 
-            assert!(prefix_search.set_query("app"));
-            assert_eq!(
-                prefix_search.candidates().collect::<Vec<_>>(),
-                vec!["apple", "applet", "application"]
-            );
-            assert_eq!(prefix_search.selected(), Some(0));
-            assert_eq!(prefix_search.get(), Some("apple"));
+            #[test]
+            fn returns_an_independently_selectable_snapshot() {
+                let prefix_search = prefix_search();
 
-            assert!(prefix_search.set_query("ban"));
-            assert_eq!(
-                prefix_search.candidates().collect::<Vec<_>>(),
-                vec!["banana"]
-            );
-            assert_eq!(prefix_search.selected(), Some(0));
-            assert_eq!(prefix_search.get(), Some("banana"));
-        }
+                let mut application = prefix_search.query("app");
+                let banana = prefix_search.query("ban");
+                application.forward();
 
-        #[test]
-        fn missing_match_clears_the_selection() {
-            let mut prefix_search = prefix_search();
+                assert_eq!(
+                    application.candidates().collect::<Vec<_>>(),
+                    vec!["apple", "applet", "application"]
+                );
+                assert_eq!(application.get(), Some("applet"));
+                assert_eq!(banana.candidates().collect::<Vec<_>>(), vec!["banana"]);
+                assert_eq!(banana.get(), Some("banana"));
+            }
 
-            assert!(prefix_search.set_query("app"));
-            assert!(!prefix_search.set_query("orange"));
-            assert!(prefix_search.is_empty());
-            assert_eq!(prefix_search.selected(), None);
-            assert_eq!(prefix_search.get(), None);
+            #[test]
+            fn returns_an_empty_snapshot_for_a_missing_prefix() {
+                let result = prefix_search().query("orange");
+
+                assert!(result.is_empty());
+                assert_eq!(result.selected(), None);
+                assert_eq!(result.get(), None);
+            }
         }
     }
 
-    mod backward {
+    mod prefix_search_result {
         use super::*;
 
-        #[test]
-        fn stops_at_the_first_match() {
-            let mut prefix_search = prefix_search();
-            prefix_search.set_query("app");
-
-            assert!(!prefix_search.backward());
-            assert_eq!(prefix_search.get(), Some("apple"));
-        }
-    }
-
-    mod forward {
-        use super::*;
-
-        #[test]
-        fn stops_at_the_last_match() {
-            let mut prefix_search = prefix_search();
-            prefix_search.set_query("app");
-
-            assert!(prefix_search.forward());
-            assert_eq!(prefix_search.get(), Some("applet"));
-            assert!(prefix_search.forward());
-            assert_eq!(prefix_search.get(), Some("application"));
-            assert!(!prefix_search.forward());
-        }
-    }
-
-    mod move_to {
-        use super::*;
-
-        #[test]
-        fn rejects_an_out_of_bounds_index() {
-            let mut prefix_search = prefix_search();
-            prefix_search.set_query("app");
-            prefix_search.move_to(2);
-
-            assert!(!prefix_search.move_to(3));
-            assert_eq!(prefix_search.selected(), Some(2));
+        fn result() -> PrefixSearchResult {
+            prefix_search().query("app")
         }
 
-        #[test]
-        fn selects_the_given_match() {
-            let mut prefix_search = prefix_search();
-            prefix_search.set_query("app");
-            prefix_search.move_to(2);
+        mod backward {
+            use super::*;
 
-            assert!(prefix_search.move_to(0));
-            assert_eq!(prefix_search.get(), Some("apple"));
+            #[test]
+            fn stops_at_the_first_candidate() {
+                let mut result = result();
+
+                assert!(!result.backward());
+                assert_eq!(result.get(), Some("apple"));
+            }
         }
-    }
 
-    mod clear {
-        use super::*;
+        mod forward {
+            use super::*;
 
-        #[test]
-        fn hides_matches_without_removing_candidates() {
-            let mut prefix_search = prefix_search();
-            prefix_search.set_query("app");
+            #[test]
+            fn stops_at_the_last_candidate() {
+                let mut result = result();
 
-            prefix_search.clear();
+                assert!(result.forward());
+                assert_eq!(result.get(), Some("applet"));
+                assert!(result.forward());
+                assert_eq!(result.get(), Some("application"));
+                assert!(!result.forward());
+            }
+        }
 
-            assert!(prefix_search.is_empty());
-            assert_eq!(prefix_search.selected(), None);
-            assert!(prefix_search.set_query("app"));
-            assert_eq!(prefix_search.get(), Some("apple"));
+        mod move_to {
+            use super::*;
+
+            #[test]
+            fn rejects_an_out_of_bounds_index() {
+                let mut result = result();
+                result.move_to(2);
+
+                assert!(!result.move_to(3));
+                assert_eq!(result.selected(), Some(2));
+            }
+
+            #[test]
+            fn selects_the_given_candidate() {
+                let mut result = result();
+                result.move_to(2);
+
+                assert!(result.move_to(0));
+                assert_eq!(result.get(), Some("apple"));
+            }
+        }
+
+        mod clear {
+            use super::*;
+
+            #[test]
+            fn removes_candidates_and_selection_from_the_snapshot() {
+                let mut result = result();
+
+                result.clear();
+
+                assert!(result.is_empty());
+                assert_eq!(result.selected(), None);
+                assert_eq!(result.get(), None);
+            }
         }
     }
 }

@@ -73,13 +73,13 @@ fn click(column: u16, row: u16, ctx: &mut Readline) {
 }
 
 fn select_suggestion(index: usize, ctx: &mut Readline) {
-    if ctx.suggestions.prefix_search.move_to(index) {
+    if ctx.suggestions.result.move_to(index) {
         ctx.focus = Focus::Suggestion;
     }
 }
 
 fn apply_suggestion(ctx: &mut Readline) {
-    let Some(suggestion) = ctx.suggestions.prefix_search.get() else {
+    let Some(suggestion) = ctx.suggestions.result.get() else {
         dismiss_suggestions(ctx);
         return;
     };
@@ -89,7 +89,7 @@ fn apply_suggestion(ctx: &mut Readline) {
 }
 
 fn dismiss_suggestions(ctx: &mut Readline) {
-    ctx.suggestions.prefix_search.clear();
+    ctx.suggestions.result.clear();
     ctx.focus = Focus::Readline;
 }
 
@@ -131,7 +131,8 @@ pub async fn readline(event: &Event, ctx: &mut Readline) -> anyhow::Result<Signa
             state: KeyEventState::NONE,
         }) => {
             let text = ctx.readline.texteditor.text_without_cursor().to_string();
-            if ctx.suggestions.prefix_search.set_query(text) {
+            ctx.suggestions.result = ctx.prefix_search.query(text);
+            if !ctx.suggestions.result.is_empty() {
                 ctx.focus = Focus::Suggestion;
             } else {
                 dismiss_suggestions(ctx);
@@ -279,7 +280,7 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.suggestions.prefix_search.forward();
+            ctx.suggestions.result.forward();
         }
         Event::Key(KeyEvent {
             code: KeyCode::Up,
@@ -287,7 +288,7 @@ pub async fn suggestion(event: &Event, ctx: &mut Readline) -> anyhow::Result<Sig
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         }) => {
-            ctx.suggestions.prefix_search.backward();
+            ctx.suggestions.result.backward();
         }
         _ => {
             let before = ctx.readline.texteditor.text_without_cursor();

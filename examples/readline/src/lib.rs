@@ -46,6 +46,7 @@ pub struct Readline {
     pub focus: Focus,
     pub title: text::State,
     pub readline: text_editor::State,
+    pub prefix_search: PrefixSearch,
     pub suggestions: prefix_search::State,
     pub validator: Option<ValidatorManager<str>>,
     pub error_message: text::State,
@@ -88,8 +89,9 @@ impl Default for Readline {
                     lines: Default::default(),
                 },
             },
+            prefix_search: PrefixSearch::default(),
             suggestions: prefix_search::State {
-                prefix_search: PrefixSearch::default(),
+                result: Default::default(),
                 config: prefix_search::Config {
                     cursor: String::from("❯ "),
                     active_item_style: Some(ContentStyle {
