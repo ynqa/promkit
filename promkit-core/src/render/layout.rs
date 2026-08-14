@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use crate::{
     grapheme::StyledGraphemes,
     widget::{
-        ContentPosition, CreatedGraphemes, ScreenPosition, VisualPosition, WidgetViewport,
+        ContentPosition, CreatedGraphemes, Height, ScreenPosition, VisualPosition, WidgetViewport,
         WidthMode,
     },
 };
@@ -81,7 +81,8 @@ impl<K> PreparedLayout<K> {
         self.entries.len()
     }
 
-    /// Returns the number of visual rows produced before viewport clipping.
+    /// Returns the number of visual rows retained before viewport clipping,
+    /// including empty rows reserved by fill-sized panes.
     pub fn visual_row_count(&self) -> usize {
         self.entries.iter().map(|entry| entry.rows.len()).sum()
     }
@@ -148,19 +149,29 @@ impl<K: Clone + Ord> RendererLayout<K> {
             return Err(anyhow::anyhow!("Insufficient space to display all panes"));
         }
 
-        let mut entries = Vec::with_capacity(laid_out.len());
-        let mut used_height = 0usize;
         let pane_count = laid_out.len();
+        let desired_heights = laid_out
+            .iter()
+            .map(|(_, layout, _, rows)| match layout.height {
+                Height::Content => layout.max_height.unwrap_or(rows.len()).min(rows.len()),
+                Height::Fill => layout.max_height.unwrap_or(terminal_height as usize),
+            })
+            .map(|height| height.max(1))
+            .collect::<Vec<_>>();
+        let heights = allocate_heights(
+            &desired_heights,
+            &laid_out
+                .iter()
+                .map(|(_, layout, _, _)| layout.height)
+                .collect::<Vec<_>>(),
+            terminal_height as usize,
+        );
+        let mut entries = Vec::with_capacity(pane_count);
 
-        for (pane_index, (index, layout, cursor, rows)) in laid_out.into_iter().enumerate() {
-            let panes_after = pane_count.saturating_sub(pane_index + 1);
-            let available = (terminal_height as usize)
-                .saturating_sub(used_height)
-                .saturating_sub(panes_after);
-            let desired = layout.max_height.unwrap_or(rows.len()).min(rows.len());
-            let height = desired.min(available).max(1);
-            used_height = used_height.saturating_add(height);
-
+        for ((index, layout, cursor, mut rows), height) in laid_out.into_iter().zip(heights) {
+            if layout.height == Height::Fill && rows.len() < height {
+                pad_rows_to_height(&mut rows, height);
+            }
             let mut viewport = WidgetViewport {
                 height: height as u16,
                 content_row: self.viewport_rows.get(&index).copied().unwrap_or_default(),
@@ -195,6 +206,57 @@ impl<K: Clone + Ord> RendererLayout<K> {
     pub(super) fn remove(&mut self, index: &K) {
         self.viewport_rows.remove(index);
     }
+}
+
+fn allocate_heights(desired: &[usize], sizing: &[Height], available: usize) -> Vec<usize> {
+    debug_assert_eq!(desired.len(), sizing.len());
+    debug_assert!(desired.len() <= available);
+
+    let mut heights = vec![1usize; desired.len()];
+    let mut remaining = available.saturating_sub(heights.len());
+
+    for (index, (&desired, &sizing)) in desired.iter().zip(sizing).enumerate() {
+        if sizing == Height::Fill {
+            continue;
+        }
+        let extra = desired.saturating_sub(1).min(remaining);
+        heights[index] = heights[index].saturating_add(extra);
+        remaining = remaining.saturating_sub(extra);
+    }
+
+    while remaining > 0 {
+        let mut distributed = false;
+        for (index, sizing) in sizing.iter().enumerate() {
+            if *sizing == Height::Fill && heights[index] < desired[index] {
+                heights[index] += 1;
+                remaining -= 1;
+                distributed = true;
+                if remaining == 0 {
+                    break;
+                }
+            }
+        }
+        if !distributed {
+            break;
+        }
+    }
+
+    heights
+}
+
+fn pad_rows_to_height(rows: &mut Vec<VisualRow>, height: usize) {
+    let first_padding_row = rows
+        .last()
+        .map_or(0, |row| row.content_row.saturating_add(1));
+    rows.extend(
+        (first_padding_row..)
+            .take(height.saturating_sub(rows.len()))
+            .map(|content_row| VisualRow {
+                content_row,
+                content_column: 0,
+                graphemes: StyledGraphemes::default(),
+            }),
+    );
 }
 
 fn layout_content(
@@ -376,6 +438,46 @@ mod tests {
     use super::*;
     use crate::widget::WidgetLayout;
 
+    mod allocate_heights {
+        use super::*;
+
+        #[test]
+        fn preserves_content_allocation_in_key_order() {
+            assert_eq!(
+                allocate_heights(
+                    &[10, 10, 10],
+                    &[Height::Content, Height::Content, Height::Content],
+                    8,
+                ),
+                [6, 1, 1]
+            );
+        }
+
+        #[test]
+        fn shares_height_equally_between_fill_entries() {
+            assert_eq!(
+                allocate_heights(
+                    &[2, 10, 10],
+                    &[Height::Content, Height::Fill, Height::Fill],
+                    10,
+                ),
+                [2, 4, 4]
+            );
+        }
+
+        #[test]
+        fn reallocates_height_after_a_fill_entry_reaches_its_limit() {
+            assert_eq!(
+                allocate_heights(
+                    &[2, 20, 3],
+                    &[Height::Content, Height::Fill, Height::Fill],
+                    12,
+                ),
+                [2, 7, 3]
+            );
+        }
+    }
+
     mod visual_position {
         use super::*;
 
@@ -508,6 +610,28 @@ mod tests {
                 let second = layout.layout([(0, created)], 80, 24).unwrap();
                 let second_panes = second.panes();
                 assert_eq!(second_panes[0][0].to_string(), "second");
+            }
+
+            #[test]
+            fn fills_the_allocated_height_beyond_content() {
+                let created = || CreatedGraphemes {
+                    graphemes: StyledGraphemes::from("content"),
+                    layout: WidgetLayout {
+                        height: Height::Fill,
+                        ..Default::default()
+                    },
+                    cursor: None,
+                };
+                let mut layout = RendererLayout::default();
+
+                let prepared = layout
+                    .layout([(0, created()), (1, created())], 80, 6)
+                    .unwrap();
+
+                assert_eq!(
+                    prepared.panes().iter().map(Vec::len).collect::<Vec<_>>(),
+                    [3, 3]
+                );
             }
         }
     }

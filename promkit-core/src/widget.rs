@@ -67,14 +67,28 @@ pub enum WidthMode {
     Truncate,
 }
 
+/// Vertical sizing behavior applied by the renderer.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Height {
+    /// Use the content height, subject to [`WidgetLayout::max_height`].
+    #[default]
+    Content,
+    /// Share the height left after content-sized widgets with other fill widgets,
+    /// subject to [`WidgetLayout::max_height`].
+    Fill,
+}
+
 /// Layout constraints requested by a widget.
 ///
 /// `max_height` is a preference rather than a terminal allocation. The renderer
 /// combines it with the laid-out content height, terminal height, and the other
-/// non-empty widgets. `width_mode` controls whether each logical row wraps or is
-/// truncated with an ellipsis.
+/// non-empty widgets. [`Height::Content`] uses that content-derived height,
+/// while [`Height::Fill`] shares the remaining terminal height equally with
+/// other fill widgets. `width_mode` controls whether each logical row wraps or
+/// is truncated with an ellipsis.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct WidgetLayout {
+    pub height: Height,
     pub max_height: Option<usize>,
     pub width_mode: WidthMode,
 }

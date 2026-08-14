@@ -48,6 +48,7 @@ impl Widget for State {
                     config::OverflowMode::Truncate => WidthMode::Truncate,
                     config::OverflowMode::Wrap => WidthMode::Wrap,
                 },
+                ..Default::default()
             },
             cursor: self
                 .text

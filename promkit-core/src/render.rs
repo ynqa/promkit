@@ -6,9 +6,10 @@
 //! include its cursor, and delegates the resulting visible rows to the terminal.
 //!
 //! Empty items and items with `max_height == Some(0)` do not occupy space.
-//! Remaining items are allocated in key order while reserving at least one row
-//! for every later non-empty item. A terminal that cannot provide one row per
-//! non-empty item produces an error.
+//! Content-sized items are allocated in key order while reserving at least one
+//! row for every non-empty item. The remaining height is shared equally between
+//! items using [`crate::Height::Fill`]. A terminal that cannot provide one row
+//! per non-empty item produces an error.
 //!
 //! A successful render saves a layout snapshot. [`Renderer::hit_test`] and
 //! [`Renderer::screen_position`] always use that snapshot, so event handling maps

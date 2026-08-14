@@ -66,6 +66,7 @@ impl State {
                     config::OverflowMode::Truncate => WidthMode::Truncate,
                     config::OverflowMode::Wrap => WidthMode::Wrap,
                 },
+                ..Default::default()
             },
             cursor: (!rows.is_empty()).then_some(ContentPosition {
                 row: active_row,

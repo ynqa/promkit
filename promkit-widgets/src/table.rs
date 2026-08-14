@@ -94,6 +94,7 @@ impl State {
                 layout: WidgetLayout {
                     max_height: self.config.lines,
                     width_mode: WidthMode::Truncate,
+                    ..Default::default()
                 },
                 ..CreatedGraphemes::default()
             };
@@ -153,6 +154,7 @@ impl State {
             layout: WidgetLayout {
                 max_height: self.config.lines,
                 width_mode: WidthMode::Truncate,
+                ..Default::default()
             },
             cursor,
         }
