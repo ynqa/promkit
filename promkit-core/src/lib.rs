@@ -7,6 +7,6 @@ pub mod terminal;
 pub mod widget;
 
 pub use widget::{
-    ContentPosition, CreatedGraphemes, Height, ScreenPosition, ViewportChange, VisualPosition,
-    Widget, WidgetLayout, WidgetPosition, WidgetViewport, WidthMode,
+    ContentPosition, CreatedGraphemes, HeightPolicy, ScreenPosition, ViewportChange,
+    VisualPosition, Widget, WidgetLayout, WidgetPosition, WidgetViewport, WidthMode,
 };

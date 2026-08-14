@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 use crate::{
     grapheme::StyledGraphemes,
     widget::{
-        ContentPosition, CreatedGraphemes, Height, ScreenPosition, VisualPosition, WidgetViewport,
-        WidthMode,
+        ContentPosition, CreatedGraphemes, HeightPolicy, ScreenPosition, VisualPosition,
+        WidgetViewport, WidthMode,
     },
 };
 
@@ -152,9 +152,9 @@ impl<K: Clone + Ord> RendererLayout<K> {
         let pane_count = laid_out.len();
         let desired_heights = laid_out
             .iter()
-            .map(|(_, layout, _, rows)| match layout.height {
-                Height::Content => layout.max_height.unwrap_or(rows.len()).min(rows.len()),
-                Height::Fill => layout.max_height.unwrap_or(terminal_height as usize),
+            .map(|(_, layout, _, rows)| match layout.height_policy {
+                HeightPolicy::Content => layout.max_height.unwrap_or(rows.len()).min(rows.len()),
+                HeightPolicy::Fill => layout.max_height.unwrap_or(terminal_height as usize),
             })
             .map(|height| height.max(1))
             .collect::<Vec<_>>();
@@ -162,14 +162,14 @@ impl<K: Clone + Ord> RendererLayout<K> {
             &desired_heights,
             &laid_out
                 .iter()
-                .map(|(_, layout, _, _)| layout.height)
+                .map(|(_, layout, _, _)| layout.height_policy)
                 .collect::<Vec<_>>(),
             terminal_height as usize,
         );
         let mut entries = Vec::with_capacity(pane_count);
 
         for ((index, layout, cursor, mut rows), height) in laid_out.into_iter().zip(heights) {
-            if layout.height == Height::Fill && rows.len() < height {
+            if layout.height_policy == HeightPolicy::Fill && rows.len() < height {
                 pad_rows_to_height(&mut rows, height);
             }
             let mut viewport = WidgetViewport {
@@ -208,15 +208,15 @@ impl<K: Clone + Ord> RendererLayout<K> {
     }
 }
 
-fn allocate_heights(desired: &[usize], sizing: &[Height], available: usize) -> Vec<usize> {
-    debug_assert_eq!(desired.len(), sizing.len());
+fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usize) -> Vec<usize> {
+    debug_assert_eq!(desired.len(), policies.len());
     debug_assert!(desired.len() <= available);
 
     let mut heights = vec![1usize; desired.len()];
     let mut remaining = available.saturating_sub(heights.len());
 
-    for (index, (&desired, &sizing)) in desired.iter().zip(sizing).enumerate() {
-        if sizing == Height::Fill {
+    for (index, (&desired, &policy)) in desired.iter().zip(policies).enumerate() {
+        if policy == HeightPolicy::Fill {
             continue;
         }
         let extra = desired.saturating_sub(1).min(remaining);
@@ -226,8 +226,8 @@ fn allocate_heights(desired: &[usize], sizing: &[Height], available: usize) -> V
 
     while remaining > 0 {
         let mut distributed = false;
-        for (index, sizing) in sizing.iter().enumerate() {
-            if *sizing == Height::Fill && heights[index] < desired[index] {
+        for (index, policy) in policies.iter().enumerate() {
+            if *policy == HeightPolicy::Fill && heights[index] < desired[index] {
                 heights[index] += 1;
                 remaining -= 1;
                 distributed = true;
@@ -446,7 +446,11 @@ mod tests {
             assert_eq!(
                 allocate_heights(
                     &[10, 10, 10],
-                    &[Height::Content, Height::Content, Height::Content],
+                    &[
+                        HeightPolicy::Content,
+                        HeightPolicy::Content,
+                        HeightPolicy::Content,
+                    ],
                     8,
                 ),
                 [6, 1, 1]
@@ -458,7 +462,11 @@ mod tests {
             assert_eq!(
                 allocate_heights(
                     &[2, 10, 10],
-                    &[Height::Content, Height::Fill, Height::Fill],
+                    &[
+                        HeightPolicy::Content,
+                        HeightPolicy::Fill,
+                        HeightPolicy::Fill,
+                    ],
                     10,
                 ),
                 [2, 4, 4]
@@ -470,7 +478,11 @@ mod tests {
             assert_eq!(
                 allocate_heights(
                     &[2, 20, 3],
-                    &[Height::Content, Height::Fill, Height::Fill],
+                    &[
+                        HeightPolicy::Content,
+                        HeightPolicy::Fill,
+                        HeightPolicy::Fill,
+                    ],
                     12,
                 ),
                 [2, 7, 3]
@@ -617,7 +629,7 @@ mod tests {
                 let created = || CreatedGraphemes {
                     graphemes: StyledGraphemes::from("content"),
                     layout: WidgetLayout {
-                        height: Height::Fill,
+                        height_policy: HeightPolicy::Fill,
                         ..Default::default()
                     },
                     cursor: None,

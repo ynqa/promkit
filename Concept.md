@@ -28,11 +28,11 @@ The resulting development loop is:
 4. Application-specific orchestration remains in the application, while
    examples document useful compositions.
 
-The renderer supports two vertical sizing modes. `Height::Content` uses the
-wrapped content height, optionally capped by `max_height`. `Height::Fill`
-shares the height remaining after content-sized items equally with other fill
-items. Keeping these modes explicit avoids making individual widgets reproduce
-container-level allocation policy.
+The renderer supports two vertical sizing policies. `HeightPolicy::Content`
+uses the wrapped content height, optionally capped by `max_height`.
+`HeightPolicy::Fill` shares the height remaining after content-sized items
+equally with other fill items. Keeping these policies explicit avoids making
+individual widgets reproduce container-level allocation policy.
 
 For this reason, the `promkit` crate no longer owns preset implementations.
 It provides an optional `Prompt` lifecycle runtime, capabilities, and a widget
