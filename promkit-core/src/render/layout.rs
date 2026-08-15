@@ -4,9 +4,12 @@ use crate::{
     grapheme::StyledGraphemes,
     widget::{
         ContentPosition, CreatedGraphemes, HeightPolicy, ScreenPosition, VisualPosition,
-        WidgetViewport, WidthMode,
+        WidgetLayout, WidgetViewport, WidthMode,
     },
 };
+
+mod height;
+use height::HeightRequest;
 
 /// Terminal-size-dependent renderer layout without terminal I/O.
 ///
@@ -31,6 +34,28 @@ pub(super) struct VisualRow {
     pub(super) content_row: usize,
     pub(super) content_column: usize,
     pub(super) graphemes: StyledGraphemes,
+}
+
+#[derive(Clone, Debug)]
+struct LaidOutPane<K> {
+    index: K,
+    layout: WidgetLayout,
+    cursor: Option<ContentPosition>,
+    rows: Vec<VisualRow>,
+}
+
+impl<K> LaidOutPane<K> {
+    fn occupies_space(&self) -> bool {
+        !self.rows.is_empty() && self.layout.max_height != Some(0)
+    }
+
+    fn height_request(&self) -> HeightRequest {
+        HeightRequest::new(
+            self.layout.height_policy,
+            self.rows.len(),
+            self.layout.max_height,
+        )
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -140,9 +165,14 @@ impl<K: Clone + Ord> RendererLayout<K> {
                     cursor,
                 } = created;
                 let rows = layout_content(graphemes, layout.width_mode, terminal_width as usize);
-                (index, layout, cursor, rows)
+                LaidOutPane {
+                    index,
+                    layout,
+                    cursor,
+                    rows,
+                }
             })
-            .filter(|(_, layout, _, rows)| !rows.is_empty() && layout.max_height != Some(0))
+            .filter(LaidOutPane::occupies_space)
             .collect::<Vec<_>>();
 
         if laid_out.len() > terminal_height as usize {
@@ -150,52 +180,43 @@ impl<K: Clone + Ord> RendererLayout<K> {
         }
 
         let pane_count = laid_out.len();
-        let desired_heights = laid_out
+        let height_requests = laid_out
             .iter()
-            .map(|(_, layout, _, rows)| match layout.height_policy {
-                HeightPolicy::OrderedContent | HeightPolicy::FairContent => {
-                    layout.max_height.unwrap_or(rows.len()).min(rows.len())
-                }
-                HeightPolicy::FairFill => layout.max_height.unwrap_or(terminal_height as usize),
-            })
-            .map(|height| height.max(1))
+            .map(LaidOutPane::height_request)
             .collect::<Vec<_>>();
-        let heights = allocate_heights(
-            &desired_heights,
-            &laid_out
-                .iter()
-                .map(|(_, layout, _, _)| layout.height_policy)
-                .collect::<Vec<_>>(),
-            terminal_height as usize,
-        );
+        let heights = height::allocate(&height_requests, terminal_height as usize);
         let mut entries = Vec::with_capacity(pane_count);
 
-        for ((index, layout, cursor, mut rows), height) in laid_out.into_iter().zip(heights) {
-            if layout.height_policy == HeightPolicy::FairFill && rows.len() < height {
-                pad_rows_to_height(&mut rows, height);
+        for (mut pane, height) in laid_out.into_iter().zip(heights) {
+            if pane.layout.height_policy == HeightPolicy::FairFill && pane.rows.len() < height {
+                pad_rows_to_height(&mut pane.rows, height);
             }
             let mut viewport = WidgetViewport {
                 height: height as u16,
-                content_row: self.viewport_rows.get(&index).copied().unwrap_or_default(),
+                content_row: self
+                    .viewport_rows
+                    .get(&pane.index)
+                    .copied()
+                    .unwrap_or_default(),
                 ..Default::default()
             };
 
-            let max_content_row = rows.len().saturating_sub(height);
+            let max_content_row = pane.rows.len().saturating_sub(height);
             viewport.content_row = viewport.content_row.min(max_content_row);
 
-            if let Some(cursor) = cursor
-                && let Some(position) = visual_position(&rows, cursor)
+            if let Some(cursor) = pane.cursor
+                && let Some(position) = visual_position(&pane.rows, cursor)
             {
                 viewport.scroll_to_include(position);
                 viewport.content_row = viewport.content_row.min(max_content_row);
             }
 
             self.viewport_rows
-                .insert(index.clone(), viewport.content_row);
+                .insert(pane.index.clone(), viewport.content_row);
             entries.push(LayoutEntry {
-                index,
+                index: pane.index,
                 viewport,
-                rows,
+                rows: pane.rows,
             });
         }
 
@@ -208,75 +229,6 @@ impl<K: Clone + Ord> RendererLayout<K> {
     pub(super) fn remove(&mut self, index: &K) {
         self.viewport_rows.remove(index);
     }
-}
-
-fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usize) -> Vec<usize> {
-    debug_assert_eq!(desired.len(), policies.len());
-    debug_assert!(desired.len() <= available);
-
-    let mut heights = vec![1usize; desired.len()];
-    let mut remaining = available.saturating_sub(heights.len());
-
-    for (index, (&desired, &policy)) in desired.iter().zip(policies).enumerate() {
-        match policy {
-            HeightPolicy::OrderedContent => {}
-            HeightPolicy::FairContent | HeightPolicy::FairFill => continue,
-        }
-        let extra = desired.saturating_sub(1).min(remaining);
-        heights[index] = heights[index].saturating_add(extra);
-        remaining = remaining.saturating_sub(extra);
-    }
-
-    while remaining > 0 {
-        let mut distributed = false;
-        for (index, policy) in policies.iter().enumerate() {
-            if matches!(policy, HeightPolicy::FairContent | HeightPolicy::FairFill) {
-                heights[index] += 1;
-                remaining -= 1;
-                distributed = true;
-                if remaining == 0 {
-                    break;
-                }
-            }
-        }
-        if !distributed {
-            break;
-        }
-    }
-
-    let mut redistributable = 0;
-    for (index, policy) in policies.iter().enumerate() {
-        if *policy != HeightPolicy::FairFill || heights[index] <= desired[index] {
-            continue;
-        }
-        redistributable += heights[index] - desired[index];
-        heights[index] = desired[index];
-    }
-
-    for (index, policy) in policies.iter().enumerate() {
-        if *policy == HeightPolicy::FairContent {
-            heights[index] = heights[index].min(desired[index]);
-        }
-    }
-
-    while redistributable > 0 {
-        let mut distributed = false;
-        for (index, policy) in policies.iter().enumerate() {
-            if *policy == HeightPolicy::FairFill && heights[index] < desired[index] {
-                heights[index] += 1;
-                redistributable -= 1;
-                distributed = true;
-                if redistributable == 0 {
-                    break;
-                }
-            }
-        }
-        if !distributed {
-            break;
-        }
-    }
-
-    heights
 }
 
 fn pad_rows_to_height(rows: &mut Vec<VisualRow>, height: usize) {
@@ -472,74 +424,6 @@ pub(super) fn visual_position(
 mod tests {
     use super::*;
     use crate::widget::WidgetLayout;
-
-    mod allocate_heights {
-        use super::*;
-
-        #[test]
-        fn preserves_content_allocation_in_key_order() {
-            assert_eq!(
-                allocate_heights(
-                    &[10, 10, 10],
-                    &[
-                        HeightPolicy::OrderedContent,
-                        HeightPolicy::OrderedContent,
-                        HeightPolicy::OrderedContent,
-                    ],
-                    8,
-                ),
-                [6, 1, 1]
-            );
-        }
-
-        #[test]
-        fn shares_height_equally_between_fair_fill_entries() {
-            assert_eq!(
-                allocate_heights(
-                    &[2, 10, 10],
-                    &[
-                        HeightPolicy::OrderedContent,
-                        HeightPolicy::FairFill,
-                        HeightPolicy::FairFill,
-                    ],
-                    10,
-                ),
-                [2, 4, 4]
-            );
-        }
-
-        #[test]
-        fn reallocates_height_after_a_fair_fill_entry_reaches_its_limit() {
-            assert_eq!(
-                allocate_heights(
-                    &[2, 20, 3],
-                    &[
-                        HeightPolicy::OrderedContent,
-                        HeightPolicy::FairFill,
-                        HeightPolicy::FairFill,
-                    ],
-                    12,
-                ),
-                [2, 7, 3]
-            );
-        }
-
-        #[test]
-        fn keeps_fair_content_within_its_equal_share() {
-            assert_eq!(
-                allocate_heights(
-                    &[1, 10, 10],
-                    &[
-                        HeightPolicy::FairContent,
-                        HeightPolicy::FairContent,
-                        HeightPolicy::FairContent,
-                    ],
-                    8,
-                ),
-                [1, 3, 2]
-            );
-        }
-    }
 
     mod visual_position {
         use super::*;
