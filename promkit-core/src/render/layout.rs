@@ -153,16 +153,13 @@ impl<K: Clone + Ord> RendererLayout<K> {
         let desired_heights = laid_out
             .iter()
             .map(|(_, layout, _, rows)| match layout.height_policy {
-                HeightPolicy::OrderedContent => {
-                    Ok(layout.max_height.unwrap_or(rows.len()).min(rows.len()))
+                HeightPolicy::OrderedContent | HeightPolicy::FairContent => {
+                    layout.max_height.unwrap_or(rows.len()).min(rows.len())
                 }
-                HeightPolicy::FairFill => Ok(layout.max_height.unwrap_or(terminal_height as usize)),
-                HeightPolicy::FairContent => Err(anyhow::anyhow!(
-                    "HeightPolicy::FairContent is not implemented"
-                )),
+                HeightPolicy::FairFill => layout.max_height.unwrap_or(terminal_height as usize),
             })
-            .map(|height| height.map(|height| height.max(1)))
-            .collect::<anyhow::Result<Vec<_>>>()?;
+            .map(|height| height.max(1))
+            .collect::<Vec<_>>();
         let heights = allocate_heights(
             &desired_heights,
             &laid_out
@@ -223,8 +220,7 @@ fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usi
     for (index, (&desired, &policy)) in desired.iter().zip(policies).enumerate() {
         match policy {
             HeightPolicy::OrderedContent => {}
-            HeightPolicy::FairFill => continue,
-            HeightPolicy::FairContent => unreachable!("rejected before height allocation"),
+            HeightPolicy::FairContent | HeightPolicy::FairFill => continue,
         }
         let extra = desired.saturating_sub(1).min(remaining);
         heights[index] = heights[index].saturating_add(extra);
@@ -234,11 +230,43 @@ fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usi
     while remaining > 0 {
         let mut distributed = false;
         for (index, policy) in policies.iter().enumerate() {
-            if *policy == HeightPolicy::FairFill && heights[index] < desired[index] {
+            if matches!(policy, HeightPolicy::FairContent | HeightPolicy::FairFill) {
                 heights[index] += 1;
                 remaining -= 1;
                 distributed = true;
                 if remaining == 0 {
+                    break;
+                }
+            }
+        }
+        if !distributed {
+            break;
+        }
+    }
+
+    let mut redistributable = 0;
+    for (index, policy) in policies.iter().enumerate() {
+        if *policy != HeightPolicy::FairFill || heights[index] <= desired[index] {
+            continue;
+        }
+        redistributable += heights[index] - desired[index];
+        heights[index] = desired[index];
+    }
+
+    for (index, policy) in policies.iter().enumerate() {
+        if *policy == HeightPolicy::FairContent {
+            heights[index] = heights[index].min(desired[index]);
+        }
+    }
+
+    while redistributable > 0 {
+        let mut distributed = false;
+        for (index, policy) in policies.iter().enumerate() {
+            if *policy == HeightPolicy::FairFill && heights[index] < desired[index] {
+                heights[index] += 1;
+                redistributable -= 1;
+                distributed = true;
+                if redistributable == 0 {
                     break;
                 }
             }
@@ -465,7 +493,7 @@ mod tests {
         }
 
         #[test]
-        fn shares_height_equally_between_fill_entries() {
+        fn shares_height_equally_between_fair_fill_entries() {
             assert_eq!(
                 allocate_heights(
                     &[2, 10, 10],
@@ -481,7 +509,7 @@ mod tests {
         }
 
         #[test]
-        fn reallocates_height_after_a_fill_entry_reaches_its_limit() {
+        fn reallocates_height_after_a_fair_fill_entry_reaches_its_limit() {
             assert_eq!(
                 allocate_heights(
                     &[2, 20, 3],
@@ -493,6 +521,22 @@ mod tests {
                     12,
                 ),
                 [2, 7, 3]
+            );
+        }
+
+        #[test]
+        fn keeps_fair_content_within_its_equal_share() {
+            assert_eq!(
+                allocate_heights(
+                    &[1, 10, 10],
+                    &[
+                        HeightPolicy::FairContent,
+                        HeightPolicy::FairContent,
+                        HeightPolicy::FairContent,
+                    ],
+                    8,
+                ),
+                [1, 3, 2]
             );
         }
     }
@@ -654,8 +698,8 @@ mod tests {
             }
 
             #[test]
-            fn rejects_unimplemented_fair_content() {
-                let created = CreatedGraphemes {
+            fn does_not_pad_fair_content_beyond_content_height() {
+                let created = || CreatedGraphemes {
                     graphemes: StyledGraphemes::from("content"),
                     layout: WidgetLayout {
                         height_policy: HeightPolicy::FairContent,
@@ -665,11 +709,13 @@ mod tests {
                 };
                 let mut layout = RendererLayout::default();
 
-                let error = layout.layout([(0, created)], 80, 24).unwrap_err();
+                let prepared = layout
+                    .layout([(0, created()), (1, created())], 80, 6)
+                    .unwrap();
 
                 assert_eq!(
-                    error.to_string(),
-                    "HeightPolicy::FairContent is not implemented"
+                    prepared.panes().iter().map(Vec::len).collect::<Vec<_>>(),
+                    [1, 1]
                 );
             }
         }

@@ -6,12 +6,13 @@
 //! include its cursor, and delegates the resulting visible rows to the terminal.
 //!
 //! Empty items and items with `max_height == Some(0)` do not occupy space.
-//! Content-sized items are allocated in key order while reserving at least one
+//! Ordered-content items are allocated in key order while reserving at least one
 //! row for every non-empty item. The remaining height is shared equally between
-//! items using [`crate::HeightPolicy::FairFill`].
-//! [`crate::HeightPolicy::FairContent`] is reserved and currently produces an
-//! error. A terminal that cannot provide one row per non-empty item also
-//! produces an error.
+//! items using [`crate::HeightPolicy::FairContent`] or
+//! [`crate::HeightPolicy::FairFill`]. Fair-content items stop at their content
+//! height without redistributing their unused share, while fair-fill items pad
+//! their content to preserve the allocated area. A terminal that cannot provide
+//! one row per non-empty item produces an error.
 //!
 //! A successful render saves a layout snapshot. [`Renderer::hit_test`] and
 //! [`Renderer::screen_position`] always use that snapshot, so event handling maps

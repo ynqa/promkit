@@ -32,10 +32,10 @@ The renderer defines three vertical sizing policies. `HeightPolicy::OrderedConte
 uses the wrapped content height, optionally capped by `max_height`, and allocates
 available rows in widget order. `HeightPolicy::FairFill` shares the height
 remaining after ordered-content items equally with other fair-fill items and
-pads content to preserve the allocated area. `HeightPolicy::FairContent` is
-reserved for fair allocation bounded by content height, but is not implemented
-yet. Keeping these policies explicit avoids making individual widgets reproduce
-container-level allocation policy.
+pads content to preserve the allocated area. `HeightPolicy::FairContent` joins
+the same initial fair allocation but stops at its content height without
+redistributing unused rows. Keeping these policies explicit avoids making
+individual widgets reproduce container-level allocation policy.
 
 For this reason, the `promkit` crate no longer owns preset implementations.
 It provides an optional `Prompt` lifecycle runtime, capabilities, and a widget
