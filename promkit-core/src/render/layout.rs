@@ -153,11 +153,16 @@ impl<K: Clone + Ord> RendererLayout<K> {
         let desired_heights = laid_out
             .iter()
             .map(|(_, layout, _, rows)| match layout.height_policy {
-                HeightPolicy::Content => layout.max_height.unwrap_or(rows.len()).min(rows.len()),
-                HeightPolicy::Fill => layout.max_height.unwrap_or(terminal_height as usize),
+                HeightPolicy::OrderedContent => {
+                    Ok(layout.max_height.unwrap_or(rows.len()).min(rows.len()))
+                }
+                HeightPolicy::FairFill => Ok(layout.max_height.unwrap_or(terminal_height as usize)),
+                HeightPolicy::FairContent => Err(anyhow::anyhow!(
+                    "HeightPolicy::FairContent is not implemented"
+                )),
             })
-            .map(|height| height.max(1))
-            .collect::<Vec<_>>();
+            .map(|height| height.map(|height| height.max(1)))
+            .collect::<anyhow::Result<Vec<_>>>()?;
         let heights = allocate_heights(
             &desired_heights,
             &laid_out
@@ -169,7 +174,7 @@ impl<K: Clone + Ord> RendererLayout<K> {
         let mut entries = Vec::with_capacity(pane_count);
 
         for ((index, layout, cursor, mut rows), height) in laid_out.into_iter().zip(heights) {
-            if layout.height_policy == HeightPolicy::Fill && rows.len() < height {
+            if layout.height_policy == HeightPolicy::FairFill && rows.len() < height {
                 pad_rows_to_height(&mut rows, height);
             }
             let mut viewport = WidgetViewport {
@@ -216,8 +221,10 @@ fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usi
     let mut remaining = available.saturating_sub(heights.len());
 
     for (index, (&desired, &policy)) in desired.iter().zip(policies).enumerate() {
-        if policy == HeightPolicy::Fill {
-            continue;
+        match policy {
+            HeightPolicy::OrderedContent => {}
+            HeightPolicy::FairFill => continue,
+            HeightPolicy::FairContent => unreachable!("rejected before height allocation"),
         }
         let extra = desired.saturating_sub(1).min(remaining);
         heights[index] = heights[index].saturating_add(extra);
@@ -227,7 +234,7 @@ fn allocate_heights(desired: &[usize], policies: &[HeightPolicy], available: usi
     while remaining > 0 {
         let mut distributed = false;
         for (index, policy) in policies.iter().enumerate() {
-            if *policy == HeightPolicy::Fill && heights[index] < desired[index] {
+            if *policy == HeightPolicy::FairFill && heights[index] < desired[index] {
                 heights[index] += 1;
                 remaining -= 1;
                 distributed = true;
@@ -447,9 +454,9 @@ mod tests {
                 allocate_heights(
                     &[10, 10, 10],
                     &[
-                        HeightPolicy::Content,
-                        HeightPolicy::Content,
-                        HeightPolicy::Content,
+                        HeightPolicy::OrderedContent,
+                        HeightPolicy::OrderedContent,
+                        HeightPolicy::OrderedContent,
                     ],
                     8,
                 ),
@@ -463,9 +470,9 @@ mod tests {
                 allocate_heights(
                     &[2, 10, 10],
                     &[
-                        HeightPolicy::Content,
-                        HeightPolicy::Fill,
-                        HeightPolicy::Fill,
+                        HeightPolicy::OrderedContent,
+                        HeightPolicy::FairFill,
+                        HeightPolicy::FairFill,
                     ],
                     10,
                 ),
@@ -479,9 +486,9 @@ mod tests {
                 allocate_heights(
                     &[2, 20, 3],
                     &[
-                        HeightPolicy::Content,
-                        HeightPolicy::Fill,
-                        HeightPolicy::Fill,
+                        HeightPolicy::OrderedContent,
+                        HeightPolicy::FairFill,
+                        HeightPolicy::FairFill,
                     ],
                     12,
                 ),
@@ -629,7 +636,7 @@ mod tests {
                 let created = || CreatedGraphemes {
                     graphemes: StyledGraphemes::from("content"),
                     layout: WidgetLayout {
-                        height_policy: HeightPolicy::Fill,
+                        height_policy: HeightPolicy::FairFill,
                         ..Default::default()
                     },
                     cursor: None,
@@ -643,6 +650,26 @@ mod tests {
                 assert_eq!(
                     prepared.panes().iter().map(Vec::len).collect::<Vec<_>>(),
                     [3, 3]
+                );
+            }
+
+            #[test]
+            fn rejects_unimplemented_fair_content() {
+                let created = CreatedGraphemes {
+                    graphemes: StyledGraphemes::from("content"),
+                    layout: WidgetLayout {
+                        height_policy: HeightPolicy::FairContent,
+                        ..Default::default()
+                    },
+                    cursor: None,
+                };
+                let mut layout = RendererLayout::default();
+
+                let error = layout.layout([(0, created)], 80, 24).unwrap_err();
+
+                assert_eq!(
+                    error.to_string(),
+                    "HeightPolicy::FairContent is not implemented"
                 );
             }
         }

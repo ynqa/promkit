@@ -1,0 +1,18 @@
+[package]
+name = "height-policy-tests"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = { workspace = true }
+futures = { workspace = true }
+promkit-core = { path = "../../promkit-core" }
+tokio = { workspace = true }
+
+[dev-dependencies]
+termharness = "0.2.0"
+
+[[bin]]
+name = "height-policy-fixture"
+path = "src/height_policy_fixture.rs"

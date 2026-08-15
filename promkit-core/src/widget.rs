@@ -70,22 +70,29 @@ pub enum WidthMode {
 /// Vertical sizing behavior applied by the renderer.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum HeightPolicy {
-    /// Use the content height, subject to [`WidgetLayout::max_height`].
+    /// Allocate content height in widget order, subject to
+    /// [`WidgetLayout::max_height`] and the remaining terminal height.
     #[default]
-    Content,
-    /// Share the height left after content-sized widgets with other fill widgets,
-    /// subject to [`WidgetLayout::max_height`].
-    Fill,
+    OrderedContent,
+    /// Share the remaining height fairly, but do not exceed the content height.
+    ///
+    /// This policy is reserved for a future implementation. The renderer
+    /// currently returns an error for a non-empty widget that uses it.
+    FairContent,
+    /// Share the height left after ordered-content widgets fairly with other
+    /// fill widgets, subject to [`WidgetLayout::max_height`].
+    FairFill,
 }
 
 /// Layout constraints requested by a widget.
 ///
 /// `max_height` is a preference rather than a terminal allocation. The renderer
 /// combines it with the laid-out content height, terminal height, and the other
-/// non-empty widgets. [`HeightPolicy::Content`] uses that content-derived
-/// height, while [`HeightPolicy::Fill`] shares the remaining terminal height
-/// equally with other fill widgets. `width_mode` controls whether each logical
-/// row wraps or is truncated with an ellipsis.
+/// non-empty widgets. [`HeightPolicy::OrderedContent`] uses that content-derived
+/// height in widget order, while [`HeightPolicy::FairFill`] shares the remaining
+/// terminal height equally with other fill widgets. [`HeightPolicy::FairContent`]
+/// is reserved and not yet implemented. `width_mode` controls whether each
+/// logical row wraps or is truncated with an ellipsis.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct WidgetLayout {
     pub height_policy: HeightPolicy,
