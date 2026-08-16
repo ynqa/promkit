@@ -1,5 +1,5 @@
 use promkit_core::{
-    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, grapheme::StyledGraphemes,
+    ContentPosition, CreatedGraphemes, Widget, WidgetLayout, WidthMode, grapheme::StyledGraphemes,
 };
 
 #[path = "text/text.rs"]
@@ -44,6 +44,10 @@ impl Widget for State {
             graphemes: StyledGraphemes::from_lines(lines),
             layout: WidgetLayout {
                 max_height: self.config.lines,
+                width_mode: match self.config.overflow_mode {
+                    config::OverflowMode::Truncate => WidthMode::Truncate,
+                    config::OverflowMode::Wrap => WidthMode::Wrap,
+                },
                 ..Default::default()
             },
             cursor: self
@@ -84,6 +88,28 @@ mod tests {
 
     mod state {
         use super::*;
+
+        mod create_graphemes {
+            use super::*;
+
+            #[test]
+            fn uses_configured_overflow_mode() {
+                for (overflow_mode, width_mode) in [
+                    (config::OverflowMode::Truncate, WidthMode::Truncate),
+                    (config::OverflowMode::Wrap, WidthMode::Wrap),
+                ] {
+                    let state = State {
+                        text: Text::from("text"),
+                        config: Config {
+                            overflow_mode,
+                            ..Default::default()
+                        },
+                    };
+
+                    assert_eq!(state.create_graphemes().layout.width_mode, width_mode);
+                }
+            }
+        }
 
         mod hit_at {
             use super::*;

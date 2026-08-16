@@ -28,6 +28,15 @@ The resulting development loop is:
 4. Application-specific orchestration remains in the application, while
    examples document useful compositions.
 
+The renderer defines three vertical sizing policies. `HeightPolicy::OrderedContent`
+uses the wrapped content height, optionally capped by `max_height`, and allocates
+available rows in widget order. `HeightPolicy::FairFill` shares the height
+remaining after ordered-content items equally with other fair-fill items and
+pads content to preserve the allocated area. `HeightPolicy::FairContent` joins
+the same initial fair allocation but stops at its content height without
+redistributing unused rows. Keeping these policies explicit avoids making
+individual widgets reproduce container-level allocation policy.
+
 For this reason, the `promkit` crate no longer owns preset implementations.
 It provides an optional `Prompt` lifecycle runtime, capabilities, and a widget
 facade for applications that find them useful, but it is not intended to replace
@@ -145,7 +154,7 @@ Applications select the capabilities and widgets they need through Cargo
 features. The runtime is independent from the widget set:
 
 ```toml
-promkit = { version = "0.14.0", features = [
+promkit = { version = "0.15.0", features = [
   "runtime",
   "validate",
   "prefixsearch",
@@ -171,7 +180,8 @@ that push grapheme changes directly to a shared renderer.
 ## Quality Strategy for Rendering Behavior
 
 Ensuring consistent rendering behavior across terminal environments is a key focus.
-The [readline terminal scenarios](./tests/readline/tests/scenarios) use
+The [terminal scenarios](./tests) use
 [`termharness`](https://github.com/ynqa/termharness) to verify wrapping, resizing,
-cursor movement, and viewport behavior against recorded screen expectations.
+cursor movement, viewport behavior, and height allocation against recorded
+screen expectations.
 This keeps terminal behavior predictable while the rendering internals evolve.

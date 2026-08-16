@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.14.0"
+version = "0.15.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -26,7 +26,6 @@ all = [
     "listbox",
     "serde",
     "spinner",
-    "status",
     "table",
     "text",
     "texteditor",
@@ -56,7 +55,6 @@ listbox = ["widgets", "promkit-widgets/listbox"]
 prefixsearch = ["widgets", "promkit-widgets/prefixsearch"]
 serde = ["widgets", "promkit-widgets/serde"]
 spinner = ["widgets", "promkit-widgets/spinner"]
-status = ["widgets", "promkit-widgets/status"]
 table = ["widgets", "promkit-widgets/table"]
 text = ["widgets", "promkit-widgets/text"]
 texteditor = ["widgets", "promkit-widgets/texteditor"]
@@ -68,8 +66,8 @@ async-trait = { workspace = true, optional = true }
 bitflags = { workspace = true, optional = true }
 crossterm = { workspace = true, optional = true }
 futures = { workspace = true, optional = true }
-promkit-core = { path = "../promkit-core", version = "=0.5.0", optional = true }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.7.0", default-features = false, optional = true }
+promkit-core = { path = "../promkit-core", version = "=0.6.0", optional = true }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.8.0", default-features = false, optional = true }
 tokio = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]

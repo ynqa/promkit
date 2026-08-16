@@ -1,0 +1,17 @@
+Scenario "ordered_content"
+Command "CARGO_BIN_EXE_height-policy-fixture"
+Arg "ordered-content"
+Terminal rows 8 cols 16
+Cursor row 1 col 1
+
+Step "content receives height from top to bottom"
+Settle 300ms
+Expect:
+  r00 |ordered-a-1·····|
+  r01 |ordered-a-2·····|
+  r02 |ordered-a-3·····|
+  r03 |ordered-a-4·····|
+  r04 |ordered-a-5·····|
+  r05 |ordered-b-1·····|
+  r06 |ordered-b-2·····|
+  r07 |ordered-c-1·····|

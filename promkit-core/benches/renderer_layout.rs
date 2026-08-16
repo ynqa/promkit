@@ -202,6 +202,7 @@ fn created_fixture(
         layout: WidgetLayout {
             max_height: None,
             width_mode,
+            ..Default::default()
         },
         cursor: Some(ContentPosition {
             row: cursor_row,

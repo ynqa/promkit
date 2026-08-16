@@ -1,0 +1,30 @@
+Scenario "fair_content"
+Command "CARGO_BIN_EXE_height-policy-fixture"
+Arg "fair-content"
+Terminal rows 8 cols 16
+Cursor row 1 col 1
+
+Step "both contents use one half of the terminal"
+Settle 300ms
+Expect:
+  r00 |upper-1·········|
+  r01 |upper-2·········|
+  r02 |upper-3·········|
+  r03 |upper-4·········|
+  r04 |lower-1·········|
+  r05 |lower-2·········|
+  r06 |lower-3·········|
+  r07 |lower-4·········|
+
+Step "short upper content packs the lower content upward"
+Input tab
+Settle 100ms
+Expect:
+  r00 |short-1·········|
+  r01 |short-2·········|
+  r02 |long-1··········|
+  r03 |long-2··········|
+  r04 |long-3··········|
+  r05 |long-4··········|
+  r06 |················|
+  r07 |················|

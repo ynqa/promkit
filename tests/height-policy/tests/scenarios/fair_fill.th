@@ -1,0 +1,17 @@
+Scenario "fair_fill"
+Command "CARGO_BIN_EXE_height-policy-fixture"
+Arg "fair-fill"
+Terminal rows 8 cols 16
+Cursor row 1 col 1
+
+Step "fill panes share and preserve the remaining height"
+Settle 300ms
+Expect:
+  r00 |header··········|
+  r01 |fair-a··········|
+  r02 |················|
+  r03 |················|
+  r04 |fair-b··········|
+  r05 |················|
+  r06 |················|
+  r07 |footer··········|

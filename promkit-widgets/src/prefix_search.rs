@@ -4,15 +4,15 @@ use promkit_core::{
 
 #[path = "prefix_search/prefix_search.rs"]
 mod inner;
-pub use inner::PrefixSearch;
+pub use inner::{PrefixSearch, PrefixSearchResult};
 pub mod config;
 pub use config::Config;
 
-/// State for searching, selecting, and rendering prefix-matched candidates.
+/// State for selecting and rendering a prefix-search result.
 #[derive(Clone)]
 pub struct State {
-    /// Prefix-search data and its current selection.
-    pub prefix_search: PrefixSearch,
+    /// The candidate snapshot and its current selection.
+    pub result: PrefixSearchResult,
     /// Rendering configuration.
     pub config: Config,
 }
@@ -22,11 +22,11 @@ impl Widget for State {
         let cursor = StyledGraphemes::from(&self.config.cursor);
         let cursor_width = cursor.widths();
         let lines = self
-            .prefix_search
+            .result
             .candidates()
             .enumerate()
             .map(|(index, candidate)| {
-                if Some(index) == self.prefix_search.selected() {
+                if Some(index) == self.result.selected() {
                     let line =
                         StyledGraphemes::from_iter([&cursor, &StyledGraphemes::from(candidate)]);
                     if let Some(style) = self.config.active_item_style {
@@ -53,13 +53,10 @@ impl Widget for State {
                 max_height: self.config.lines,
                 ..Default::default()
             },
-            cursor: self
-                .prefix_search
-                .selected()
-                .map(|selected| ContentPosition {
-                    row: selected,
-                    column: 0,
-                }),
+            cursor: self.result.selected().map(|selected| ContentPosition {
+                row: selected,
+                column: 0,
+            }),
         }
     }
 }
@@ -67,7 +64,7 @@ impl Widget for State {
 impl State {
     /// Interprets a content position as a prefix-search candidate.
     pub fn hit_at(&self, position: ContentPosition) -> Option<PrefixSearchHit> {
-        self.prefix_search
+        self.result
             .candidate_at(position.row)
             .map(|_| PrefixSearchHit::Select {
                 index: position.row,
@@ -95,12 +92,11 @@ mod tests {
 
             #[test]
             fn projects_trie_matches_and_tracks_hit_rows() {
-                let mut prefix_search: PrefixSearch = ["apple", "applet", "application", "banana"]
+                let prefix_search: PrefixSearch = ["apple", "applet", "application", "banana"]
                     .into_iter()
                     .collect();
-                prefix_search.search("app");
                 let mut state = State {
-                    prefix_search,
+                    result: prefix_search.query("app"),
                     config: Config {
                         lines: Some(3),
                         ..Default::default()
@@ -121,7 +117,7 @@ mod tests {
                 );
                 assert_eq!(state.hit_at(ContentPosition { row: 3, column: 0 }), None);
 
-                state.prefix_search.move_to(1);
+                state.result.move_to(1);
                 let created = state.create_graphemes();
 
                 assert_eq!(
