@@ -10,6 +10,8 @@ pub mod yaml;
 #[cfg_attr(docsrs, doc(cfg(feature = "tree")))]
 pub mod tree;
 
+mod path;
+
 use std::cell::Cell;
 
 use promkit_core::grapheme::StyledGraphemes;

@@ -2,14 +2,23 @@ use std::{cell::Cell, io::Read};
 
 use crate::structured::yaml::{
     deserializer,
-    yamlz::{self, Row, RowOperation},
+    yamlz::{
+        self, ContainerNode, ContainerType, IndexedRows, PathKeyKind, Row, RowOperation,
+        TagAwareContainer, YamlNode, is_invisible_root_container,
+        sequence_mapping_line_start_for_path,
+    },
 };
-use crate::structured::{ProjectionViewport, projection_viewport};
+use crate::structured::{
+    ProjectionViewport,
+    path::{append_bracket, append_string_key},
+    projection_viewport,
+};
 
 /// Represents a navigable YAML document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
 pub struct Document {
     rows: Vec<Row>,
+    path_key_kinds: Vec<PathKeyKind>,
     position: usize,
     line_numbers: Vec<Option<usize>>,
     line_count: usize,
@@ -18,7 +27,7 @@ pub struct Document {
 
 impl Document {
     pub fn new<'a, I: IntoIterator<Item = &'a serde_yaml::Value>>(iter: I) -> Self {
-        Self::from_rows(yamlz::create_rows(iter))
+        Self::from_rows(yamlz::create_indexed_rows(iter))
     }
 
     /// Parses one or more YAML documents directly into a navigable document.
@@ -32,7 +41,12 @@ impl Document {
         deserializer::from_reader(reader).map(Self::from_rows)
     }
 
-    fn from_rows(rows: Vec<Row>) -> Self {
+    fn from_rows(indexed_rows: IndexedRows) -> Self {
+        let IndexedRows {
+            rows,
+            path_key_kinds,
+        } = indexed_rows;
+        debug_assert_eq!(rows.len(), path_key_kinds.len());
         let position = rows.head();
         let mut line_numbers = vec![None; rows.len()];
         let mut line_count = 0;
@@ -53,6 +67,7 @@ impl Document {
 
         Self {
             rows,
+            path_key_kinds,
             position,
             line_numbers,
             line_count,
@@ -168,6 +183,38 @@ impl Document {
         row_index_at_visible_position(&self.rows, self.position, visible_offset)
     }
 
+    /// Resolves a jq-style path to its navigable underlying document row index.
+    ///
+    /// Paths use dot notation for identifier keys and bracket notation for sequence indices,
+    /// non-identifier strings, and non-string scalar keys.
+    pub fn row_index_for_path(&self, path: &str) -> Option<usize> {
+        locate_path(&self.rows, &self.path_key_kinds, path)
+            .map(|located| navigable_row(&self.rows, located.row_index))
+    }
+
+    /// Moves the cursor to the value at a jq-style path.
+    ///
+    /// Folded ancestors are expanded while unrelated folding state is preserved. Mapping keys
+    /// that cannot be represented by a jq-style path are not addressable.
+    pub fn move_to_path(&mut self, path: &str) -> bool {
+        let Some(located) = locate_path(&self.rows, &self.path_key_kinds, path) else {
+            return false;
+        };
+        for open_index in located.ancestors {
+            if matches!(
+                TagAwareContainer::get(&self.rows[open_index].node),
+                Some(ContainerNode::Open {
+                    collapsed: true,
+                    ..
+                })
+            ) {
+                self.rows.toggle(open_index);
+            }
+        }
+        self.position = navigable_row(&self.rows, located.row_index);
+        true
+    }
+
     pub(super) fn row_index_at_viewport_position(&self, visible_position: usize) -> Option<usize> {
         let viewport = self.viewport.get();
         viewport
@@ -208,6 +255,91 @@ impl Document {
     pub fn tail(&mut self) -> bool {
         self.position = self.rows.tail();
         true
+    }
+}
+
+struct PathFrame {
+    path: Option<String>,
+    typ: ContainerType,
+    next_index: usize,
+    open_index: usize,
+}
+
+struct LocatedRow {
+    row_index: usize,
+    ancestors: Vec<usize>,
+}
+
+fn locate_path(rows: &[Row], path_key_kinds: &[PathKeyKind], target: &str) -> Option<LocatedRow> {
+    let mut stack: Vec<PathFrame> = Vec::new();
+
+    for (row_index, row) in rows.iter().enumerate() {
+        if matches!(row.node, YamlNode::DocumentSeparator) {
+            stack.clear();
+            continue;
+        }
+        if matches!(
+            TagAwareContainer::get(&row.node),
+            Some(ContainerNode::Close { .. })
+        ) {
+            stack.truncate(row.depth);
+            continue;
+        }
+        stack.truncate(row.depth);
+
+        let path = if row.depth == 0 {
+            Some(".".to_owned())
+        } else {
+            let parent = stack.get_mut(row.depth - 1)?;
+            match parent.typ {
+                ContainerType::Object => parent.path.as_ref().and_then(|parent_path| {
+                    mapping_path(parent_path, row.key.as_deref()?, path_key_kinds[row_index])
+                }),
+                ContainerType::Array => {
+                    let path = parent.path.as_ref().map(|parent_path| {
+                        append_bracket(parent_path, &parent.next_index.to_string())
+                    });
+                    parent.next_index += 1;
+                    path
+                }
+            }
+        };
+
+        if path.as_deref() == Some(target) {
+            return Some(LocatedRow {
+                row_index,
+                ancestors: stack.iter().map(|frame| frame.open_index).collect(),
+            });
+        }
+
+        if let Some(ContainerNode::Open { typ, .. }) = TagAwareContainer::get(&row.node) {
+            stack.push(PathFrame {
+                path,
+                typ: typ.clone(),
+                next_index: 0,
+                open_index: row_index,
+            });
+        }
+    }
+
+    None
+}
+
+fn mapping_path(parent: &str, key: &str, kind: PathKeyKind) -> Option<String> {
+    match kind {
+        PathKeyKind::String => Some(append_string_key(parent, key)),
+        PathKeyKind::Number | PathKeyKind::Bool | PathKeyKind::Null => {
+            Some(append_bracket(parent, key))
+        }
+        PathKeyKind::None | PathKeyKind::Unsupported => None,
+    }
+}
+
+fn navigable_row(rows: &Vec<Row>, row_index: usize) -> usize {
+    if is_invisible_root_container(&rows[row_index]) {
+        rows.head()
+    } else {
+        sequence_mapping_line_start_for_path(rows, row_index).unwrap_or(row_index)
     }
 }
 
@@ -329,11 +461,96 @@ second: [1, 2]
             let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
 
             assert_eq!(actual.rows(), expected.rows());
+            for path in [
+                ".name",
+                "[1]",
+                "[true]",
+                "[null]",
+                ".tagged.nested",
+                ".items[2].aliased",
+                ".second[1]",
+            ] {
+                assert_eq!(
+                    actual.row_index_for_path(path),
+                    expected.row_index_for_path(path),
+                    "path: {path}"
+                );
+            }
         }
 
         #[test]
         fn reports_invalid_yaml() {
             assert!(Document::from_reader(Cursor::new(b"key: {")).is_err());
+        }
+    }
+
+    mod row_index_for_path {
+        use super::*;
+
+        #[test]
+        fn distinguishes_scalar_mapping_keys_and_sequence_indices() {
+            let document = Document::from_str(concat!(
+                "name: Alice\n",
+                "\"true\": string\n",
+                "true: boolean\n",
+                "1: number\n",
+                "null: null-key\n",
+                "items:\n",
+                "  - first\n",
+                "  - name: Bob\n",
+            ))
+            .unwrap();
+
+            assert_eq!(document.row_index_for_path(".name"), Some(1));
+            assert_eq!(document.row_index_for_path(r#"["true"]"#), Some(2));
+            assert_eq!(document.row_index_for_path("[true]"), Some(3));
+            assert_eq!(document.row_index_for_path("[1]"), Some(4));
+            assert_eq!(document.row_index_for_path("[null]"), Some(5));
+            assert_eq!(document.row_index_for_path(".items[0]"), Some(7));
+            assert_eq!(document.row_index_for_path(".items[1]"), Some(8));
+            assert_eq!(document.row_index_for_path(".items[1].name"), Some(8));
+            assert_eq!(document.row_index_for_path(".missing"), None);
+        }
+
+        #[test]
+        fn excludes_descendants_of_unrepresentable_mapping_keys() {
+            let document = Document::from_str(concat!(
+                "? [complex, key]\n",
+                ": { hidden: value }\n",
+                "visible: true\n",
+            ))
+            .unwrap();
+
+            assert_eq!(document.row_index_for_path(".hidden"), None);
+            assert!(document.row_index_for_path(".visible").is_some());
+        }
+    }
+
+    mod move_to_path {
+        use super::*;
+
+        #[test]
+        fn expands_ancestors_and_preserves_unrelated_folding() {
+            let mut document = Document::from_str(concat!(
+                "items:\n",
+                "  - name:\n",
+                "      nested: true\n",
+                "other:\n",
+                "  value: 1\n",
+            ))
+            .unwrap();
+            document.toggle_at(1);
+            document.toggle_at(8);
+
+            assert!(document.move_to_path(".items[0].name.nested"));
+            assert_eq!(document.visible_position(), 2);
+            assert!(
+                !document
+                    .visible_rows()
+                    .iter()
+                    .any(|row| row.key.as_deref() == Some("value"))
+            );
+            assert!(!document.move_to_path(".missing"));
         }
     }
 }

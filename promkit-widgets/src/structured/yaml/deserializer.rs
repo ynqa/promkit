@@ -6,10 +6,11 @@ use serde::{
 };
 
 use super::yamlz::{
-    ContainerNode, ContainerType, Row, YamlNode, normalize_mapping_key_for_display,
+    ContainerNode, ContainerType, IndexedRows, PathKeyKind, Row, YamlNode,
+    normalize_mapping_key_for_display,
 };
 
-struct ParsedRows(Vec<Row>);
+struct ParsedRows(IndexedRows);
 
 impl<'de> Deserialize<'de> for ParsedRows {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -17,21 +18,29 @@ impl<'de> Deserialize<'de> for ParsedRows {
         D: serde::Deserializer<'de>,
     {
         let mut rows = Vec::new();
+        let mut path_key_kinds = Vec::new();
         RowsSeed {
             rows: &mut rows,
+            path_key_kinds: &mut path_key_kinds,
             depth: 0,
             key: None,
+            path_key_kind: PathKeyKind::None,
             is_sequence_item: false,
         }
         .deserialize(deserializer)?;
-        Ok(Self(rows))
+        Ok(Self(IndexedRows {
+            rows,
+            path_key_kinds,
+        }))
     }
 }
 
 struct RowsSeed<'a> {
     rows: &'a mut Vec<Row>,
+    path_key_kinds: &'a mut Vec<PathKeyKind>,
     depth: usize,
     key: Option<String>,
+    path_key_kind: PathKeyKind,
     is_sequence_item: bool,
 }
 
@@ -44,8 +53,10 @@ impl<'de> DeserializeSeed<'de> for RowsSeed<'_> {
     {
         deserializer.deserialize_any(RowsVisitor {
             rows: self.rows,
+            path_key_kinds: self.path_key_kinds,
             depth: self.depth,
             key: self.key,
+            path_key_kind: self.path_key_kind,
             is_sequence_item: self.is_sequence_item,
         })
     }
@@ -53,8 +64,10 @@ impl<'de> DeserializeSeed<'de> for RowsSeed<'_> {
 
 struct RowsVisitor<'a> {
     rows: &'a mut Vec<Row>,
+    path_key_kinds: &'a mut Vec<PathKeyKind>,
     depth: usize,
     key: Option<String>,
+    path_key_kind: PathKeyKind,
     is_sequence_item: bool,
 }
 
@@ -66,6 +79,8 @@ impl RowsVisitor<'_> {
             node,
             is_sequence_item: self.is_sequence_item,
         });
+        self.path_key_kinds.push(self.path_key_kind);
+        debug_assert_eq!(self.rows.len(), self.path_key_kinds.len());
         self.rows.len() - 1
     }
 }
@@ -125,8 +140,10 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
     {
         let Self {
             rows,
+            path_key_kinds,
             depth,
             key,
+            path_key_kind,
             is_sequence_item,
         } = self;
         let open_index = rows.len();
@@ -140,13 +157,16 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 close_index: 0,
             }),
         });
+        path_key_kinds.push(path_key_kind);
 
         let mut is_empty = true;
         while sequence
             .next_element_seed(RowsSeed {
                 rows: &mut *rows,
+                path_key_kinds: &mut *path_key_kinds,
                 depth: depth + 1,
                 key: None,
+                path_key_kind: PathKeyKind::None,
                 is_sequence_item: true,
             })?
             .is_some()
@@ -172,6 +192,7 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 open_index,
             }),
         });
+        path_key_kinds.push(PathKeyKind::None);
         rows[open_index].node = YamlNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: false,
@@ -186,8 +207,10 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
     {
         let Self {
             rows,
+            path_key_kinds,
             depth,
             key,
+            path_key_kind,
             is_sequence_item,
         } = self;
         let open_index = rows.len();
@@ -201,17 +224,21 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 close_index: 0,
             }),
         });
+        path_key_kinds.push(path_key_kind);
 
         let mut keys = HashSet::new();
         while let Some(mapping_key) = mapping.next_key::<serde_yaml::Value>()? {
             let key = normalize_mapping_key_for_display(&mapping_key);
+            let path_key_kind = PathKeyKind::from_mapping_key(&mapping_key);
             if !keys.insert(mapping_key) {
                 return Err(de::Error::custom("duplicate entry in YAML map"));
             }
             mapping.next_value_seed(RowsSeed {
                 rows: &mut *rows,
+                path_key_kinds: &mut *path_key_kinds,
                 depth: depth + 1,
                 key,
+                path_key_kind,
                 is_sequence_item: false,
             })?;
         }
@@ -234,6 +261,7 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 open_index,
             }),
         });
+        path_key_kinds.push(PathKeyKind::None);
         rows[open_index].node = YamlNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
@@ -249,14 +277,18 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
         let (tag, contents) = data.variant::<String>()?;
         let Self {
             rows,
+            path_key_kinds,
             depth,
             key,
+            path_key_kind,
             is_sequence_item,
         } = self;
         let index = contents.newtype_variant_seed(RowsSeed {
             rows: &mut *rows,
+            path_key_kinds: &mut *path_key_kinds,
             depth,
             key,
+            path_key_kind,
             is_sequence_item,
         })?;
         rows[index].node = YamlNode::Tagged {
@@ -267,23 +299,29 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
     }
 }
 
-pub fn from_str(input: &str) -> Result<Vec<Row>, serde_yaml::Error> {
+pub fn from_str(input: &str) -> Result<IndexedRows, serde_yaml::Error> {
     collect(serde_yaml::Deserializer::from_str(input).map(ParsedRows::deserialize))
 }
 
-pub fn from_reader<R: Read>(reader: R) -> Result<Vec<Row>, serde_yaml::Error> {
+pub fn from_reader<R: Read>(reader: R) -> Result<IndexedRows, serde_yaml::Error> {
     collect(serde_yaml::Deserializer::from_reader(reader).map(ParsedRows::deserialize))
 }
 
-fn collect<I>(documents: I) -> Result<Vec<Row>, serde_yaml::Error>
+fn collect<I>(documents: I) -> Result<IndexedRows, serde_yaml::Error>
 where
     I: IntoIterator<Item = Result<ParsedRows, serde_yaml::Error>>,
 {
     let mut documents = documents.into_iter();
     let Some(first) = documents.next() else {
-        return Ok(Vec::new());
+        return Ok(IndexedRows {
+            rows: Vec::new(),
+            path_key_kinds: Vec::new(),
+        });
     };
-    let mut rows = first?.0;
+    let IndexedRows {
+        mut rows,
+        mut path_key_kinds,
+    } = first?.0;
 
     for document in documents {
         rows.push(Row {
@@ -292,14 +330,22 @@ where
             node: YamlNode::DocumentSeparator,
             is_sequence_item: false,
         });
-        let mut document_rows = document?.0;
+        path_key_kinds.push(PathKeyKind::None);
+        let IndexedRows {
+            rows: mut document_rows,
+            path_key_kinds: document_path_key_kinds,
+        } = document?.0;
         let offset = rows.len();
         for row in &mut document_rows {
             rebase_container_indices(&mut row.node, offset);
         }
         rows.extend(document_rows);
+        path_key_kinds.extend(document_path_key_kinds);
     }
-    Ok(rows)
+    Ok(IndexedRows {
+        rows,
+        path_key_kinds,
+    })
 }
 
 fn rebase_container_indices(node: &mut YamlNode, offset: usize) {

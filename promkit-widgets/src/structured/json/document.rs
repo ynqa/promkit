@@ -2,9 +2,13 @@ use std::{cell::Cell, io::Read};
 
 use super::{
     deserializer,
-    jsonz::{self, Row, RowOperation},
+    jsonz::{self, ContainerNode, ContainerType, JsonNode, Row, RowOperation},
 };
-use crate::structured::{ProjectionViewport, projection_viewport};
+use crate::structured::{
+    ProjectionViewport,
+    path::{append_bracket, append_string_key},
+    projection_viewport,
+};
 
 /// Represents a navigable JSON document, allowing for efficient row navigation and folding.
 #[derive(Clone)]
@@ -130,6 +134,36 @@ impl Document {
         row_index_at_visible_position(&self.rows, self.position, visible_offset)
     }
 
+    /// Resolves a jq-style path to its underlying document row index.
+    ///
+    /// Paths use dot notation for identifier keys and bracket notation for array indices and
+    /// other string keys, for example `.items[0].name` and `["first name"]`.
+    pub fn row_index_for_path(&self, path: &str) -> Option<usize> {
+        locate_path(&self.rows, path).map(|located| located.row_index)
+    }
+
+    /// Moves the cursor to the value at a jq-style path.
+    ///
+    /// Folded ancestors are expanded while unrelated folding state is preserved.
+    pub fn move_to_path(&mut self, path: &str) -> bool {
+        let Some(located) = locate_path(&self.rows, path) else {
+            return false;
+        };
+        for open_index in located.ancestors {
+            if matches!(
+                self.rows[open_index].node,
+                JsonNode::Container(ContainerNode::Open {
+                    collapsed: true,
+                    ..
+                })
+            ) {
+                self.rows.toggle(open_index);
+            }
+        }
+        self.position = located.row_index;
+        true
+    }
+
     pub(super) fn row_index_at_viewport_position(&self, visible_position: usize) -> Option<usize> {
         let viewport = self.viewport.get();
         viewport
@@ -171,6 +205,62 @@ impl Document {
         self.position = self.rows.tail();
         true
     }
+}
+
+struct PathFrame {
+    path: String,
+    typ: ContainerType,
+    next_index: usize,
+    open_index: usize,
+}
+
+struct LocatedRow {
+    row_index: usize,
+    ancestors: Vec<usize>,
+}
+
+fn locate_path(rows: &[Row], target: &str) -> Option<LocatedRow> {
+    let mut stack: Vec<PathFrame> = Vec::new();
+
+    for (row_index, row) in rows.iter().enumerate() {
+        if matches!(row.node, JsonNode::Container(ContainerNode::Close { .. })) {
+            stack.truncate(row.depth);
+            continue;
+        }
+        stack.truncate(row.depth);
+
+        let path = if row.depth == 0 {
+            ".".to_owned()
+        } else {
+            let parent = stack.get_mut(row.depth - 1)?;
+            match parent.typ {
+                ContainerType::Object => append_string_key(&parent.path, row.key.as_deref()?),
+                ContainerType::Array => {
+                    let path = append_bracket(&parent.path, &parent.next_index.to_string());
+                    parent.next_index += 1;
+                    path
+                }
+            }
+        };
+
+        if path == target {
+            return Some(LocatedRow {
+                row_index,
+                ancestors: stack.iter().map(|frame| frame.open_index).collect(),
+            });
+        }
+
+        if let JsonNode::Container(ContainerNode::Open { typ, .. }) = &row.node {
+            stack.push(PathFrame {
+                path,
+                typ: typ.clone(),
+                next_index: 0,
+                open_index: row_index,
+            });
+        }
+    }
+
+    None
 }
 
 fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
@@ -274,6 +364,46 @@ mod tests {
         #[test]
         fn reports_invalid_json() {
             assert!(Document::from_reader(Cursor::new(b"[1,")).is_err());
+        }
+    }
+
+    mod row_index_for_path {
+        use super::*;
+
+        #[test]
+        fn resolves_nested_values_arrays_and_quoted_keys() {
+            let document = Document::from_str(
+                r#"{"items":[null,{"first name":true}],"true":false,"a\"b\n":0}"#,
+            )
+            .unwrap();
+
+            assert_eq!(document.row_index_for_path("."), Some(0));
+            assert_eq!(document.row_index_for_path(".items"), Some(1));
+            assert_eq!(document.row_index_for_path(".items[1]"), Some(3));
+            assert_eq!(
+                document.row_index_for_path(r#".items[1]["first name"]"#),
+                Some(4)
+            );
+            assert_eq!(document.row_index_for_path(r#"["true"]"#), Some(7));
+            assert_eq!(document.row_index_for_path(r#"["a\"b\n"]"#), Some(8));
+            assert_eq!(document.row_index_for_path(".missing"), None);
+        }
+    }
+
+    mod move_to_path {
+        use super::*;
+
+        #[test]
+        fn expands_ancestors_and_selects_the_target() {
+            let mut document =
+                Document::from_str(r#"{"items":[{"nested":true}],"other":{"value":1}}"#).unwrap();
+            document.toggle_at(1);
+            document.toggle_at(6);
+
+            assert!(document.move_to_path(".items[0].nested"));
+            assert_eq!(document.visible_position(), 3);
+            assert_eq!(document.visible_rows().len(), 8);
+            assert!(!document.move_to_path(".missing"));
         }
     }
 }
