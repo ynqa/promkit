@@ -134,19 +134,23 @@ impl Document {
         row_index_at_visible_position(&self.rows, self.position, visible_offset)
     }
 
-    /// Resolves a jq-style path to its underlying document row index.
+    /// Resolves a jq-style path in a zero-based document to its underlying row index.
+    ///
+    /// Each top-level JSON value, including each JSON Lines value, increments the document index.
     ///
     /// Paths use dot notation for identifier keys and bracket notation for array indices and
     /// other string keys, for example `.items[0].name` and `["first name"]`.
-    pub fn row_index_for_path(&self, path: &str) -> Option<usize> {
-        locate_path(&self.rows, path).map(|located| located.row_index)
+    pub fn row_index_for_path(&self, document_index: usize, path: &str) -> Option<usize> {
+        locate_path(&self.rows, document_index, path).map(|located| located.row_index)
     }
 
-    /// Moves the cursor to the value at a jq-style path.
+    /// Moves the cursor to the value at a jq-style path in a zero-based document.
+    ///
+    /// Each top-level JSON value, including each JSON Lines value, increments the document index.
     ///
     /// Folded ancestors are expanded while unrelated folding state is preserved.
-    pub fn move_to_path(&mut self, path: &str) -> bool {
-        let Some(located) = locate_path(&self.rows, path) else {
+    pub fn move_to_path(&mut self, document_index: usize, path: &str) -> bool {
+        let Some(located) = locate_path(&self.rows, document_index, path) else {
             return false;
         };
         for open_index in located.ancestors {
@@ -219,12 +223,25 @@ struct LocatedRow {
     ancestors: Vec<usize>,
 }
 
-fn locate_path(rows: &[Row], target: &str) -> Option<LocatedRow> {
+fn locate_path(rows: &[Row], document_index: usize, target: &str) -> Option<LocatedRow> {
     let mut stack: Vec<PathFrame> = Vec::new();
+    let mut current_document_index = None;
+    let mut next_document_index = 0;
 
     for (row_index, row) in rows.iter().enumerate() {
         if matches!(row.node, JsonNode::Container(ContainerNode::Close { .. })) {
             stack.truncate(row.depth);
+            continue;
+        }
+        if row.depth == 0 {
+            if next_document_index > document_index {
+                return None;
+            }
+            current_document_index = Some(next_document_index);
+            next_document_index += 1;
+            stack.clear();
+        }
+        if current_document_index != Some(document_index) {
             continue;
         }
         stack.truncate(row.depth);
@@ -377,16 +394,32 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(document.row_index_for_path("."), Some(0));
-            assert_eq!(document.row_index_for_path(".items"), Some(1));
-            assert_eq!(document.row_index_for_path(".items[1]"), Some(3));
+            assert_eq!(document.row_index_for_path(0, "."), Some(0));
+            assert_eq!(document.row_index_for_path(0, ".items"), Some(1));
+            assert_eq!(document.row_index_for_path(0, ".items[1]"), Some(3));
             assert_eq!(
-                document.row_index_for_path(r#".items[1]["first name"]"#),
+                document.row_index_for_path(0, r#".items[1]["first name"]"#),
                 Some(4)
             );
-            assert_eq!(document.row_index_for_path(r#"["true"]"#), Some(7));
-            assert_eq!(document.row_index_for_path(r#"["a\"b\n"]"#), Some(8));
-            assert_eq!(document.row_index_for_path(".missing"), None);
+            assert_eq!(document.row_index_for_path(0, r#"["true"]"#), Some(7));
+            assert_eq!(document.row_index_for_path(0, r#"["a\"b\n"]"#), Some(8));
+            assert_eq!(document.row_index_for_path(0, ".missing"), None);
+        }
+
+        #[test]
+        fn distinguishes_json_lines_documents() {
+            let document = Document::from_str(concat!(
+                "{\"name\":\"first\"}\n",
+                "{\"name\":\"second\",\"second_only\":true}\n",
+            ))
+            .unwrap();
+
+            let first = document.row_index_for_path(0, ".name").unwrap();
+            let second = document.row_index_for_path(1, ".name").unwrap();
+            assert_ne!(first, second);
+            assert_eq!(document.row_index_for_path(0, ".second_only"), None);
+            assert!(document.row_index_for_path(1, ".second_only").is_some());
+            assert_eq!(document.row_index_for_path(2, "."), None);
         }
     }
 
@@ -400,10 +433,20 @@ mod tests {
             document.toggle_at(1);
             document.toggle_at(6);
 
-            assert!(document.move_to_path(".items[0].nested"));
+            assert!(document.move_to_path(0, ".items[0].nested"));
             assert_eq!(document.visible_position(), 3);
             assert_eq!(document.visible_rows().len(), 8);
-            assert!(!document.move_to_path(".missing"));
+            assert!(!document.move_to_path(0, ".missing"));
+        }
+
+        #[test]
+        fn selects_a_json_lines_document() {
+            let mut document =
+                Document::from_str("{\"first_only\":true}\n{\"second_only\":true}\n").unwrap();
+
+            assert!(document.move_to_path(1, ".second_only"));
+            assert!(!document.move_to_path(0, ".second_only"));
+            assert!(!document.move_to_path(2, "."));
         }
     }
 }

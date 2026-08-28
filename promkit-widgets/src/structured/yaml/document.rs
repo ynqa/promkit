@@ -183,21 +183,26 @@ impl Document {
         row_index_at_visible_position(&self.rows, self.position, visible_offset)
     }
 
-    /// Resolves a jq-style path to its navigable underlying document row index.
+    /// Resolves a jq-style path in a zero-based document to its navigable underlying row index.
+    ///
+    /// Each YAML document in the stream increments the document index.
     ///
     /// Paths use dot notation for identifier keys and bracket notation for sequence indices,
     /// non-identifier strings, and non-string scalar keys.
-    pub fn row_index_for_path(&self, path: &str) -> Option<usize> {
-        locate_path(&self.rows, &self.path_key_kinds, path)
+    pub fn row_index_for_path(&self, document_index: usize, path: &str) -> Option<usize> {
+        locate_path(&self.rows, &self.path_key_kinds, document_index, path)
             .map(|located| navigable_row(&self.rows, located.row_index))
     }
 
-    /// Moves the cursor to the value at a jq-style path.
+    /// Moves the cursor to the value at a jq-style path in a zero-based document.
+    ///
+    /// Each YAML document in the stream increments the document index.
     ///
     /// Folded ancestors are expanded while unrelated folding state is preserved. Mapping keys
     /// that cannot be represented by a jq-style path are not addressable.
-    pub fn move_to_path(&mut self, path: &str) -> bool {
-        let Some(located) = locate_path(&self.rows, &self.path_key_kinds, path) else {
+    pub fn move_to_path(&mut self, document_index: usize, path: &str) -> bool {
+        let Some(located) = locate_path(&self.rows, &self.path_key_kinds, document_index, path)
+        else {
             return false;
         };
         for open_index in located.ancestors {
@@ -270,8 +275,15 @@ struct LocatedRow {
     ancestors: Vec<usize>,
 }
 
-fn locate_path(rows: &[Row], path_key_kinds: &[PathKeyKind], target: &str) -> Option<LocatedRow> {
+fn locate_path(
+    rows: &[Row],
+    path_key_kinds: &[PathKeyKind],
+    document_index: usize,
+    target: &str,
+) -> Option<LocatedRow> {
     let mut stack: Vec<PathFrame> = Vec::new();
+    let mut current_document_index = None;
+    let mut next_document_index = 0;
 
     for (row_index, row) in rows.iter().enumerate() {
         if matches!(row.node, YamlNode::DocumentSeparator) {
@@ -283,6 +295,17 @@ fn locate_path(rows: &[Row], path_key_kinds: &[PathKeyKind], target: &str) -> Op
             Some(ContainerNode::Close { .. })
         ) {
             stack.truncate(row.depth);
+            continue;
+        }
+        if row.depth == 0 {
+            if next_document_index > document_index {
+                return None;
+            }
+            current_document_index = Some(next_document_index);
+            next_document_index += 1;
+            stack.clear();
+        }
+        if current_document_index != Some(document_index) {
             continue;
         }
         stack.truncate(row.depth);
@@ -337,7 +360,7 @@ fn mapping_path(parent: &str, key: &str, kind: PathKeyKind) -> Option<String> {
 
 fn navigable_row(rows: &Vec<Row>, row_index: usize) -> usize {
     if is_invisible_root_container(&rows[row_index]) {
-        rows.head()
+        rows.down(row_index)
     } else {
         sequence_mapping_line_start_for_path(rows, row_index).unwrap_or(row_index)
     }
@@ -461,18 +484,18 @@ second: [1, 2]
             let actual = Document::from_reader(Cursor::new(INPUT.as_bytes())).unwrap();
 
             assert_eq!(actual.rows(), expected.rows());
-            for path in [
-                ".name",
-                "[1]",
-                "[true]",
-                "[null]",
-                ".tagged.nested",
-                ".items[2].aliased",
-                ".second[1]",
+            for (document_index, path) in [
+                (0, ".name"),
+                (0, "[1]"),
+                (0, "[true]"),
+                (0, "[null]"),
+                (0, ".tagged.nested"),
+                (0, ".items[2].aliased"),
+                (1, ".second[1]"),
             ] {
                 assert_eq!(
-                    actual.row_index_for_path(path),
-                    expected.row_index_for_path(path),
+                    actual.row_index_for_path(document_index, path),
+                    expected.row_index_for_path(document_index, path),
                     "path: {path}"
                 );
             }
@@ -501,15 +524,15 @@ second: [1, 2]
             ))
             .unwrap();
 
-            assert_eq!(document.row_index_for_path(".name"), Some(1));
-            assert_eq!(document.row_index_for_path(r#"["true"]"#), Some(2));
-            assert_eq!(document.row_index_for_path("[true]"), Some(3));
-            assert_eq!(document.row_index_for_path("[1]"), Some(4));
-            assert_eq!(document.row_index_for_path("[null]"), Some(5));
-            assert_eq!(document.row_index_for_path(".items[0]"), Some(7));
-            assert_eq!(document.row_index_for_path(".items[1]"), Some(8));
-            assert_eq!(document.row_index_for_path(".items[1].name"), Some(8));
-            assert_eq!(document.row_index_for_path(".missing"), None);
+            assert_eq!(document.row_index_for_path(0, ".name"), Some(1));
+            assert_eq!(document.row_index_for_path(0, r#"["true"]"#), Some(2));
+            assert_eq!(document.row_index_for_path(0, "[true]"), Some(3));
+            assert_eq!(document.row_index_for_path(0, "[1]"), Some(4));
+            assert_eq!(document.row_index_for_path(0, "[null]"), Some(5));
+            assert_eq!(document.row_index_for_path(0, ".items[0]"), Some(7));
+            assert_eq!(document.row_index_for_path(0, ".items[1]"), Some(8));
+            assert_eq!(document.row_index_for_path(0, ".items[1].name"), Some(8));
+            assert_eq!(document.row_index_for_path(0, ".missing"), None);
         }
 
         #[test]
@@ -521,8 +544,27 @@ second: [1, 2]
             ))
             .unwrap();
 
-            assert_eq!(document.row_index_for_path(".hidden"), None);
-            assert!(document.row_index_for_path(".visible").is_some());
+            assert_eq!(document.row_index_for_path(0, ".hidden"), None);
+            assert!(document.row_index_for_path(0, ".visible").is_some());
+        }
+
+        #[test]
+        fn distinguishes_yaml_documents() {
+            let document = Document::from_str(concat!(
+                "name: first\n",
+                "---\n",
+                "name: second\n",
+                "second_only: true\n",
+            ))
+            .unwrap();
+
+            let first = document.row_index_for_path(0, ".name").unwrap();
+            let second = document.row_index_for_path(1, ".name").unwrap();
+            assert_ne!(first, second);
+            assert_eq!(document.row_index_for_path(1, "."), Some(second));
+            assert_eq!(document.row_index_for_path(0, ".second_only"), None);
+            assert!(document.row_index_for_path(1, ".second_only").is_some());
+            assert_eq!(document.row_index_for_path(2, "."), None);
         }
     }
 
@@ -542,7 +584,7 @@ second: [1, 2]
             document.toggle_at(1);
             document.toggle_at(8);
 
-            assert!(document.move_to_path(".items[0].name.nested"));
+            assert!(document.move_to_path(0, ".items[0].name.nested"));
             assert_eq!(document.visible_position(), 2);
             assert!(
                 !document
@@ -550,7 +592,26 @@ second: [1, 2]
                     .iter()
                     .any(|row| row.key.as_deref() == Some("value"))
             );
-            assert!(!document.move_to_path(".missing"));
+            assert!(!document.move_to_path(0, ".missing"));
+        }
+
+        #[test]
+        fn selects_a_yaml_document() {
+            let mut document = Document::from_str(concat!(
+                "first_only: true\n",
+                "---\n",
+                "second_only: true\n",
+            ))
+            .unwrap();
+
+            assert!(document.move_to_path(1, ".second_only"));
+            assert!(!document.move_to_path(0, ".second_only"));
+            assert!(!document.move_to_path(2, "."));
+
+            assert!(document.move_to_path(1, "."));
+            let root_position = document.visible_position();
+            assert!(document.move_to_path(1, ".second_only"));
+            assert_eq!(document.visible_position(), root_position);
         }
     }
 }
