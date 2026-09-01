@@ -9,7 +9,7 @@ use crate::structured::yaml::{
     },
 };
 use crate::structured::{
-    ProjectionViewport,
+    PathIndex, PathRow, ProjectionViewport, create_path_indices,
     path::{append_bracket, append_string_key},
     projection_viewport,
 };
@@ -19,6 +19,7 @@ use crate::structured::{
 pub struct Document {
     rows: Vec<Row>,
     path_key_kinds: Vec<PathKeyKind>,
+    path_indices: Box<[PathIndex]>,
     position: usize,
     line_numbers: Vec<Option<usize>>,
     line_count: usize,
@@ -47,6 +48,7 @@ impl Document {
             path_key_kinds,
         } = indexed_rows;
         debug_assert_eq!(rows.len(), path_key_kinds.len());
+        let path_indices = yaml_path_indices(&rows);
         let position = rows.head();
         let mut line_numbers = vec![None; rows.len()];
         let mut line_count = 0;
@@ -68,6 +70,7 @@ impl Document {
         Self {
             rows,
             path_key_kinds,
+            path_indices,
             position,
             line_numbers,
             line_count,
@@ -148,6 +151,16 @@ impl Document {
     /// Returns the selected row's index in the rendered visible row sequence.
     pub fn visible_position(&self) -> usize {
         visible_position(&self.rows, self.position)
+    }
+
+    /// Returns the zero-based document index and jq-style path of the selected row.
+    pub fn selected_path(&self) -> Option<(usize, String)> {
+        path_at_row(
+            &self.rows,
+            &self.path_key_kinds,
+            &self.path_indices,
+            self.position,
+        )
     }
 
     /// Toggles the container value associated with the YAML key at the cursor.
@@ -346,6 +359,67 @@ fn locate_path(
     }
 
     None
+}
+
+fn yaml_path_indices(rows: &[Row]) -> Box<[PathIndex]> {
+    create_path_indices(rows.iter().map(|row| {
+        if matches!(row.node, YamlNode::DocumentSeparator) {
+            return PathRow::Separator;
+        }
+        match TagAwareContainer::get(&row.node) {
+            Some(ContainerNode::Close { .. }) => PathRow::Close { depth: row.depth },
+            Some(ContainerNode::Open { typ, .. }) => PathRow::Value {
+                depth: row.depth,
+                open_type: Some(typ.clone()),
+            },
+            _ => PathRow::Value {
+                depth: row.depth,
+                open_type: None,
+            },
+        }
+    }))
+}
+
+fn path_at_row(
+    rows: &[Row],
+    path_key_kinds: &[PathKeyKind],
+    path_indices: &[PathIndex],
+    target_row_index: usize,
+) -> Option<(usize, String)> {
+    let target = rows.get(target_row_index)?;
+    if matches!(target.node, YamlNode::DocumentSeparator) {
+        return None;
+    }
+    let target_row_index = match TagAwareContainer::get(&target.node) {
+        Some(ContainerNode::Close { open_index, .. }) => *open_index,
+        _ => target_row_index,
+    };
+    let mut chain = vec![target_row_index];
+    while rows[*chain.last()?].depth > 0 {
+        chain.push(path_indices[*chain.last()?].parent()?);
+    }
+
+    let root_index = *chain.last()?;
+    let document_index = path_indices[root_index].document_index()?;
+    let mut path = ".".to_owned();
+    for &row_index in chain.iter().rev().skip(1) {
+        let index = path_indices[row_index];
+        let parent_index = index.parent()?;
+        let Some(ContainerNode::Open { typ, .. }) =
+            TagAwareContainer::get(&rows[parent_index].node)
+        else {
+            return None;
+        };
+        path = match typ {
+            ContainerType::Object => mapping_path(
+                &path,
+                rows[row_index].key.as_deref()?,
+                path_key_kinds[row_index],
+            )?,
+            ContainerType::Array => append_bracket(&path, &index.array_index()?.to_string()),
+        };
+    }
+    Some((document_index, path))
 }
 
 fn mapping_path(parent: &str, key: &str, kind: PathKeyKind) -> Option<String> {
@@ -586,6 +660,10 @@ second: [1, 2]
 
             assert!(document.move_to_path(0, ".items[0].name.nested"));
             assert_eq!(document.visible_position(), 2);
+            assert_eq!(
+                document.selected_path(),
+                Some((0, ".items[0].name.nested".to_owned()))
+            );
             assert!(
                 !document
                     .visible_rows()
@@ -605,6 +683,10 @@ second: [1, 2]
             .unwrap();
 
             assert!(document.move_to_path(1, ".second_only"));
+            assert_eq!(
+                document.selected_path(),
+                Some((1, ".second_only".to_owned()))
+            );
             assert!(!document.move_to_path(0, ".second_only"));
             assert!(!document.move_to_path(2, "."));
 

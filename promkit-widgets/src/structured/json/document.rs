@@ -5,7 +5,7 @@ use super::{
     jsonz::{self, ContainerNode, ContainerType, JsonNode, Row, RowOperation},
 };
 use crate::structured::{
-    ProjectionViewport,
+    PathIndex, PathRow, ProjectionViewport, create_path_indices,
     path::{append_bracket, append_string_key},
     projection_viewport,
 };
@@ -14,6 +14,7 @@ use crate::structured::{
 #[derive(Clone)]
 pub struct Document {
     rows: Vec<Row>,
+    path_indices: Box<[PathIndex]>,
     position: usize,
     viewport: Cell<ProjectionViewport>,
 }
@@ -35,8 +36,10 @@ impl Document {
     }
 
     fn from_rows(rows: Vec<Row>) -> Self {
+        let path_indices = json_path_indices(&rows);
         Self {
             rows,
+            path_indices,
             position: 0,
             viewport: Cell::default(),
         }
@@ -109,6 +112,11 @@ impl Document {
     /// Returns the selected row's index in the visible row sequence.
     pub fn visible_position(&self) -> usize {
         visible_position(&self.rows, self.position)
+    }
+
+    /// Returns the zero-based document index and jq-style path of the selected row.
+    pub fn selected_path(&self) -> Option<(usize, String)> {
+        path_at_row(&self.rows, &self.path_indices, self.position)
     }
 
     /// Toggles the visibility of a node at the cursor's current position.
@@ -280,6 +288,51 @@ fn locate_path(rows: &[Row], document_index: usize, target: &str) -> Option<Loca
     None
 }
 
+fn json_path_indices(rows: &[Row]) -> Box<[PathIndex]> {
+    create_path_indices(rows.iter().map(|row| match &row.node {
+        JsonNode::Container(ContainerNode::Close { .. }) => PathRow::Close { depth: row.depth },
+        JsonNode::Container(ContainerNode::Open { typ, .. }) => PathRow::Value {
+            depth: row.depth,
+            open_type: Some(typ.clone()),
+        },
+        _ => PathRow::Value {
+            depth: row.depth,
+            open_type: None,
+        },
+    }))
+}
+
+fn path_at_row(
+    rows: &[Row],
+    path_indices: &[PathIndex],
+    target_row_index: usize,
+) -> Option<(usize, String)> {
+    let target_row_index = match &rows.get(target_row_index)?.node {
+        JsonNode::Container(ContainerNode::Close { open_index, .. }) => *open_index,
+        _ => target_row_index,
+    };
+    let mut chain = vec![target_row_index];
+    while rows[*chain.last()?].depth > 0 {
+        chain.push(path_indices[*chain.last()?].parent()?);
+    }
+
+    let root_index = *chain.last()?;
+    let document_index = path_indices[root_index].document_index()?;
+    let mut path = ".".to_owned();
+    for &row_index in chain.iter().rev().skip(1) {
+        let index = path_indices[row_index];
+        let parent_index = index.parent()?;
+        let JsonNode::Container(ContainerNode::Open { typ, .. }) = &rows[parent_index].node else {
+            return None;
+        };
+        path = match typ {
+            ContainerType::Object => append_string_key(&path, rows[row_index].key.as_deref()?),
+            ContainerType::Array => append_bracket(&path, &index.array_index()?.to_string()),
+        };
+    }
+    Some((document_index, path))
+}
+
 fn visible_position(rows: &Vec<Row>, target: usize) -> usize {
     let mut position = rows.head();
     let mut visible = 0;
@@ -435,6 +488,10 @@ mod tests {
 
             assert!(document.move_to_path(0, ".items[0].nested"));
             assert_eq!(document.visible_position(), 3);
+            assert_eq!(
+                document.selected_path(),
+                Some((0, ".items[0].nested".to_owned()))
+            );
             assert_eq!(document.visible_rows().len(), 8);
             assert!(!document.move_to_path(0, ".missing"));
         }
@@ -445,6 +502,10 @@ mod tests {
                 Document::from_str("{\"first_only\":true}\n{\"second_only\":true}\n").unwrap();
 
             assert!(document.move_to_path(1, ".second_only"));
+            assert_eq!(
+                document.selected_path(),
+                Some((1, ".second_only".to_owned()))
+            );
             assert!(!document.move_to_path(0, ".second_only"));
             assert!(!document.move_to_path(2, "."));
         }

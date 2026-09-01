@@ -133,6 +133,126 @@ pub trait RowOperation {
     fn extract(&self, current: usize, n: usize) -> Vec<Self::Row>;
 }
 
+const NO_PATH_INDEX: u32 = u32::MAX;
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct PathIndex {
+    parent_or_document: u32,
+    array_index: u32,
+}
+
+impl PathIndex {
+    fn invalid() -> Self {
+        Self {
+            parent_or_document: NO_PATH_INDEX,
+            array_index: NO_PATH_INDEX,
+        }
+    }
+
+    fn root(document_index: usize) -> Self {
+        Self {
+            parent_or_document: path_index(document_index),
+            array_index: NO_PATH_INDEX,
+        }
+    }
+
+    fn child(parent: usize, array_index: Option<usize>) -> Self {
+        Self {
+            parent_or_document: path_index(parent),
+            array_index: array_index.map_or(NO_PATH_INDEX, path_index),
+        }
+    }
+
+    pub(crate) fn parent(self) -> Option<usize> {
+        (self.parent_or_document != NO_PATH_INDEX).then_some(self.parent_or_document as usize)
+    }
+
+    pub(crate) fn document_index(self) -> Option<usize> {
+        self.parent()
+    }
+
+    pub(crate) fn array_index(self) -> Option<usize> {
+        (self.array_index != NO_PATH_INDEX).then_some(self.array_index as usize)
+    }
+}
+
+fn path_index(index: usize) -> u32 {
+    assert!(
+        index < u32::MAX as usize,
+        "structured documents support fewer than u32::MAX rows"
+    );
+    index as u32
+}
+
+pub(crate) enum PathRow {
+    Separator,
+    Close {
+        depth: usize,
+    },
+    Value {
+        depth: usize,
+        open_type: Option<ContainerType>,
+    },
+}
+
+struct PathIndexFrame {
+    row_index: usize,
+    typ: ContainerType,
+    next_index: usize,
+}
+
+pub(crate) fn create_path_indices(rows: impl IntoIterator<Item = PathRow>) -> Box<[PathIndex]> {
+    let rows = rows.into_iter();
+    let mut indices = Vec::with_capacity(rows.size_hint().0);
+    let mut stack: Vec<PathIndexFrame> = Vec::new();
+    let mut document_index = 0;
+
+    for (row_index, row) in rows.enumerate() {
+        let (depth, open_type) = match row {
+            PathRow::Separator => {
+                stack.clear();
+                indices.push(PathIndex::invalid());
+                continue;
+            }
+            PathRow::Close { depth } => {
+                stack.truncate(depth);
+                indices.push(PathIndex::invalid());
+                continue;
+            }
+            PathRow::Value { depth, open_type } => (depth, open_type),
+        };
+
+        stack.truncate(depth);
+        let index = if depth == 0 {
+            let index = PathIndex::root(document_index);
+            document_index += 1;
+            stack.clear();
+            index
+        } else {
+            let parent = stack
+                .get_mut(depth - 1)
+                .expect("a child row must have a parent");
+            let array_index = matches!(parent.typ, ContainerType::Array).then(|| {
+                let index = parent.next_index;
+                parent.next_index += 1;
+                index
+            });
+            PathIndex::child(parent.row_index, array_index)
+        };
+        indices.push(index);
+
+        if let Some(typ) = open_type {
+            stack.push(PathIndexFrame {
+                row_index,
+                typ,
+                next_index: 0,
+            });
+        }
+    }
+
+    indices.into_boxed_slice()
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct ProjectionViewport {
     start: usize,
