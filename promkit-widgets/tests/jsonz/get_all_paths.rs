@@ -89,7 +89,7 @@ fn returns_all_paths() {
             ".nested.field1",
             ".nested.field2",
             ".nested.field2.inner",
-            ".null",
+            r#"["null"]"#,
             ".number",
             ".string",
         ]
