@@ -150,11 +150,6 @@ impl Document {
         visible_position(&self.rows, self.position)
     }
 
-    /// Returns the zero-based document index and jq-style path of the selected row.
-    pub fn selected_path(&self) -> Option<(usize, String)> {
-        path_at_row(&self.rows, &self.path_key_kinds, self.position)
-    }
-
     /// Toggles the container value associated with the YAML key at the cursor.
     ///
     /// The displayed key determines the toggle target:
@@ -338,71 +333,6 @@ fn locate_path(
                 row_index,
                 ancestors: stack.iter().map(|frame| frame.open_index).collect(),
             });
-        }
-
-        if let Some(ContainerNode::Open { typ, .. }) = TagAwareContainer::get(&row.node) {
-            stack.push(PathFrame {
-                path,
-                typ: typ.clone(),
-                next_index: 0,
-                open_index: row_index,
-            });
-        }
-    }
-
-    None
-}
-
-fn path_at_row(
-    rows: &[Row],
-    path_key_kinds: &[PathKeyKind],
-    target_row_index: usize,
-) -> Option<(usize, String)> {
-    let mut stack: Vec<PathFrame> = Vec::new();
-    let mut document_index = 0;
-    let mut found_document = false;
-
-    for (row_index, row) in rows.iter().enumerate() {
-        if matches!(row.node, YamlNode::DocumentSeparator) {
-            stack.clear();
-            continue;
-        }
-        if matches!(
-            TagAwareContainer::get(&row.node),
-            Some(ContainerNode::Close { .. })
-        ) {
-            stack.truncate(row.depth);
-            continue;
-        }
-        if row.depth == 0 {
-            if found_document {
-                document_index += 1;
-            }
-            found_document = true;
-            stack.clear();
-        }
-        stack.truncate(row.depth);
-
-        let path = if row.depth == 0 {
-            Some(".".to_owned())
-        } else {
-            let parent = stack.get_mut(row.depth - 1)?;
-            match parent.typ {
-                ContainerType::Object => parent.path.as_ref().and_then(|parent_path| {
-                    mapping_path(parent_path, row.key.as_deref()?, path_key_kinds[row_index])
-                }),
-                ContainerType::Array => {
-                    let path = parent.path.as_ref().map(|parent_path| {
-                        append_bracket(parent_path, &parent.next_index.to_string())
-                    });
-                    parent.next_index += 1;
-                    path
-                }
-            }
-        };
-
-        if row_index == target_row_index {
-            return path.map(|path| (document_index, path));
         }
 
         if let Some(ContainerNode::Open { typ, .. }) = TagAwareContainer::get(&row.node) {
@@ -656,10 +586,6 @@ second: [1, 2]
 
             assert!(document.move_to_path(0, ".items[0].name.nested"));
             assert_eq!(document.visible_position(), 2);
-            assert_eq!(
-                document.selected_path(),
-                Some((0, ".items[0].name.nested".to_owned()))
-            );
             assert!(
                 !document
                     .visible_rows()
@@ -679,10 +605,6 @@ second: [1, 2]
             .unwrap();
 
             assert!(document.move_to_path(1, ".second_only"));
-            assert_eq!(
-                document.selected_path(),
-                Some((1, ".second_only".to_owned()))
-            );
             assert!(!document.move_to_path(0, ".second_only"));
             assert!(!document.move_to_path(2, "."));
 

@@ -111,11 +111,6 @@ impl Document {
         visible_position(&self.rows, self.position)
     }
 
-    /// Returns the zero-based document index and jq-style path of the selected row.
-    pub fn selected_path(&self) -> Option<(usize, String)> {
-        path_at_row(&self.rows, self.position)
-    }
-
     /// Toggles the visibility of a node at the cursor's current position.
     pub fn toggle(&mut self) {
         let index = self.rows.toggle(self.position);
@@ -270,58 +265,6 @@ fn locate_path(rows: &[Row], document_index: usize, target: &str) -> Option<Loca
                 row_index,
                 ancestors: stack.iter().map(|frame| frame.open_index).collect(),
             });
-        }
-
-        if let JsonNode::Container(ContainerNode::Open { typ, .. }) = &row.node {
-            stack.push(PathFrame {
-                path,
-                typ: typ.clone(),
-                next_index: 0,
-                open_index: row_index,
-            });
-        }
-    }
-
-    None
-}
-
-fn path_at_row(rows: &[Row], target_row_index: usize) -> Option<(usize, String)> {
-    let target_row_index = match &rows.get(target_row_index)?.node {
-        JsonNode::Container(ContainerNode::Close { open_index, .. }) => *open_index,
-        _ => target_row_index,
-    };
-    let mut stack: Vec<PathFrame> = Vec::new();
-    let mut document_index = 0;
-
-    for (row_index, row) in rows.iter().enumerate() {
-        if matches!(row.node, JsonNode::Container(ContainerNode::Close { .. })) {
-            stack.truncate(row.depth);
-            continue;
-        }
-        if row.depth == 0 {
-            if row_index > 0 {
-                document_index += 1;
-            }
-            stack.clear();
-        }
-        stack.truncate(row.depth);
-
-        let path = if row.depth == 0 {
-            ".".to_owned()
-        } else {
-            let parent = stack.get_mut(row.depth - 1)?;
-            match parent.typ {
-                ContainerType::Object => append_string_key(&parent.path, row.key.as_deref()?),
-                ContainerType::Array => {
-                    let path = append_bracket(&parent.path, &parent.next_index.to_string());
-                    parent.next_index += 1;
-                    path
-                }
-            }
-        };
-
-        if row_index == target_row_index {
-            return Some((document_index, path));
         }
 
         if let JsonNode::Container(ContainerNode::Open { typ, .. }) = &row.node {
@@ -492,10 +435,6 @@ mod tests {
 
             assert!(document.move_to_path(0, ".items[0].nested"));
             assert_eq!(document.visible_position(), 3);
-            assert_eq!(
-                document.selected_path(),
-                Some((0, ".items[0].nested".to_owned()))
-            );
             assert_eq!(document.visible_rows().len(), 8);
             assert!(!document.move_to_path(0, ".missing"));
         }
@@ -506,10 +445,6 @@ mod tests {
                 Document::from_str("{\"first_only\":true}\n{\"second_only\":true}\n").unwrap();
 
             assert!(document.move_to_path(1, ".second_only"));
-            assert_eq!(
-                document.selected_path(),
-                Some((1, ".second_only".to_owned()))
-            );
             assert!(!document.move_to_path(0, ".second_only"));
             assert!(!document.move_to_path(2, "."));
         }
