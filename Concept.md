@@ -154,7 +154,7 @@ Applications select the capabilities and widgets they need through Cargo
 features. The runtime is independent from the widget set:
 
 ```toml
-promkit = { version = "0.15.0", features = [
+promkit = { version = "0.16.0", features = [
   "runtime",
   "validate",
   "prefixsearch",

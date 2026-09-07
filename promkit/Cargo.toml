@@ -1,6 +1,6 @@
 [package]
 name = "promkit"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["ynqa <un.pensiero.vano@gmail.com>"]
 edition = "2021"
 description = "A toolkit for building your own interactive command-line tools"
@@ -66,8 +66,8 @@ async-trait = { workspace = true, optional = true }
 bitflags = { workspace = true, optional = true }
 crossterm = { workspace = true, optional = true }
 futures = { workspace = true, optional = true }
-promkit-core = { path = "../promkit-core", version = "=0.6.0", optional = true }
-promkit-widgets = { path = "../promkit-widgets", version = "=0.8.0", default-features = false, optional = true }
+promkit-core = { path = "../promkit-core", version = "=0.6.1", optional = true }
+promkit-widgets = { path = "../promkit-widgets", version = "=0.9.0", default-features = false, optional = true }
 tokio = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]
