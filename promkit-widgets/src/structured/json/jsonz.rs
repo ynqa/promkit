@@ -1,5 +1,7 @@
 use rayon::prelude::*;
 
+use crate::structured::path::{append_bracket, append_string_key};
+
 pub use crate::structured::{ContainerNode, ContainerType, PrettyRender, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -63,22 +65,18 @@ impl PrettyRender for [Row] {
                 },
             }
 
-            if i + 1 < self.len() {
-                if matches!(
+            if i + 1 < self.len()
+                && !matches!(
                     &self[i + 1].node,
                     JsonNode::Container(ContainerNode::Close { .. })
-                ) {
-                } else if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
-                } else {
-                    result.push(',');
-                }
+                )
+                && !matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. }))
+            {
+                result.push(',');
             }
 
-            if matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. })) {
-                first_in_container = true;
-            } else {
-                first_in_container = false;
-            }
+            first_in_container =
+                matches!(&row.node, JsonNode::Container(ContainerNode::Open { .. }));
         }
 
         result
@@ -263,7 +261,7 @@ fn process_value(
         serde_json::Value::Null => {
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::Null,
             });
             rows.len() - 1
@@ -271,7 +269,7 @@ fn process_value(
         serde_json::Value::Bool(b) => {
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::Boolean(*b),
             });
             rows.len() - 1
@@ -279,7 +277,7 @@ fn process_value(
         serde_json::Value::Number(n) => {
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::Number(n.clone()),
             });
             rows.len() - 1
@@ -287,7 +285,7 @@ fn process_value(
         serde_json::Value::String(s) => {
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::String(s.clone()),
             });
             rows.len() - 1
@@ -296,7 +294,7 @@ fn process_value(
             if arr.is_empty() {
                 rows.push(Row {
                     depth,
-                    key: key,
+                    key,
                     node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Array,
                     }),
@@ -308,7 +306,7 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Array,
                     collapsed: false,
@@ -343,7 +341,7 @@ fn process_value(
             if obj.is_empty() {
                 rows.push(Row {
                     depth,
-                    key: key,
+                    key,
                     node: JsonNode::Container(ContainerNode::Empty {
                         typ: ContainerType::Object,
                     }),
@@ -355,7 +353,7 @@ fn process_value(
 
             rows.push(Row {
                 depth,
-                key: key,
+                key,
                 node: JsonNode::Container(ContainerNode::Open {
                     typ: ContainerType::Object,
                     collapsed: false,
@@ -402,16 +400,6 @@ pub struct PathIterator<'a> {
     stack: Vec<(String, &'a serde_json::Value)>,
 }
 
-impl PathIterator<'_> {
-    fn escape_json_path_key(key: &str) -> String {
-        if key.contains('.') || key.contains('-') || key.contains('@') {
-            format!("\"{}\"", key)
-        } else {
-            key.to_string()
-        }
-    }
-}
-
 impl Iterator for PathIterator<'_> {
     type Item = String;
 
@@ -420,18 +408,13 @@ impl Iterator for PathIterator<'_> {
             match value {
                 serde_json::Value::Object(obj) => {
                     for (key, val) in obj.iter() {
-                        let escaped = Self::escape_json_path_key(key);
-                        let new_path = if current_path == "." {
-                            format!(".{}", escaped)
-                        } else {
-                            format!("{}.{}", current_path, escaped)
-                        };
+                        let new_path = append_string_key(&current_path, key);
                         self.stack.push((new_path, val));
                     }
                 }
                 serde_json::Value::Array(arr) => {
                     for (i, val) in arr.iter().enumerate() {
-                        let new_path = format!("{}[{}]", current_path, i);
+                        let new_path = append_bracket(&current_path, &i.to_string());
                         self.stack.push((new_path, val));
                     }
                 }

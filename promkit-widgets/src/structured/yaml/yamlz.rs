@@ -1,5 +1,7 @@
 use rayon::prelude::*;
 
+use crate::structured::path::{append_bracket, append_string_key};
+
 pub use crate::structured::{ContainerNode, ContainerType, RowOperation};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -23,10 +25,10 @@ pub struct Row {
 
 /// YAML tags can wrap container nodes (`Tagged(Container(...))`).
 /// This helper centralizes "unwrap/rewrap while preserving tag" behavior.
-struct TagAwareContainer;
+pub(super) struct TagAwareContainer;
 
 impl TagAwareContainer {
-    fn get(node: &YamlNode) -> Option<&ContainerNode> {
+    pub(super) fn get(node: &YamlNode) -> Option<&ContainerNode> {
         match node {
             YamlNode::Container(container) => Some(container),
             YamlNode::Tagged { node, .. } => Self::get(node),
@@ -34,7 +36,7 @@ impl TagAwareContainer {
         }
     }
 
-    fn replace(node: &YamlNode, new_container: ContainerNode) -> Option<YamlNode> {
+    pub(super) fn replace(node: &YamlNode, new_container: ContainerNode) -> Option<YamlNode> {
         match node {
             YamlNode::Container(_) => Some(YamlNode::Container(new_container)),
             YamlNode::Tagged { tag, node } => Some(YamlNode::Tagged {
@@ -65,6 +67,23 @@ fn sequence_mapping_line_start(rows: &[Row], index: usize) -> Option<usize> {
     renders_as_sequence_mapping_line(&rows[previous], &rows[index]).then_some(previous)
 }
 
+pub(super) fn sequence_mapping_line_start_for_path(rows: &[Row], index: usize) -> Option<usize> {
+    let previous = index.checked_sub(1)?;
+    let row = &rows[previous];
+    let next_row = &rows[index];
+    (matches!(
+        TagAwareContainer::get(&row.node),
+        Some(ContainerNode::Open {
+            typ: ContainerType::Object,
+            ..
+        })
+    ) && row.is_sequence_item
+        && next_row.depth == row.depth + 1
+        && !next_row.is_sequence_item
+        && next_row.key.is_some())
+    .then_some(previous)
+}
+
 fn sequence_mapping_inline_row(rows: &[Row], index: usize) -> Option<usize> {
     let next = index + 1;
     let next_row = rows.get(next)?;
@@ -80,7 +99,7 @@ fn sequence_mapping_inline_container(rows: &[Row], index: usize) -> Option<usize
     .then_some(inline)
 }
 
-fn is_invisible_root_container(row: &Row) -> bool {
+pub(super) fn is_invisible_root_container(row: &Row) -> bool {
     row.depth == 0
         && row.key.is_none()
         && !row.is_sequence_item
@@ -389,98 +408,178 @@ pub(super) fn normalize_mapping_key_for_display(mapping_key: &serde_yaml::Value)
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(super) enum PathKeyKind {
+    #[default]
+    None,
+    String,
+    Number,
+    Bool,
+    Null,
+    Unsupported,
+}
+
+impl PathKeyKind {
+    pub(super) fn from_mapping_key(key: &serde_yaml::Value) -> Self {
+        match key {
+            serde_yaml::Value::String(_) => Self::String,
+            serde_yaml::Value::Number(_) => Self::Number,
+            serde_yaml::Value::Bool(_) => Self::Bool,
+            serde_yaml::Value::Null => Self::Null,
+            serde_yaml::Value::Tagged(_)
+            | serde_yaml::Value::Sequence(_)
+            | serde_yaml::Value::Mapping(_) => Self::Unsupported,
+        }
+    }
+}
+
+pub(super) struct IndexedRows {
+    pub(super) rows: Vec<Row>,
+    pub(super) path_key_kinds: Vec<PathKeyKind>,
+}
+
+fn push_indexed_row(
+    rows: &mut Vec<Row>,
+    path_key_kinds: &mut Vec<PathKeyKind>,
+    row: Row,
+    path_key_kind: PathKeyKind,
+) -> usize {
+    rows.push(row);
+    path_key_kinds.push(path_key_kind);
+    debug_assert_eq!(rows.len(), path_key_kinds.len());
+    rows.len() - 1
+}
+
 fn process_value(
     value: &serde_yaml::Value,
     rows: &mut Vec<Row>,
+    path_key_kinds: &mut Vec<PathKeyKind>,
     depth: usize,
     key: Option<String>,
+    path_key_kind: PathKeyKind,
     is_sequence_item: bool,
 ) -> usize {
     match value {
         serde_yaml::Value::Tagged(tagged) => {
-            let index = process_value(&tagged.value, rows, depth, key, is_sequence_item);
+            let index = process_value(
+                &tagged.value,
+                rows,
+                path_key_kinds,
+                depth,
+                key,
+                path_key_kind,
+                is_sequence_item,
+            );
             rows[index].node = YamlNode::Tagged {
                 tag: tagged.tag.to_string(),
                 node: Box::new(rows[index].node.clone()),
             };
             index
         }
-        serde_yaml::Value::Null => {
-            rows.push(Row {
+        serde_yaml::Value::Null => push_indexed_row(
+            rows,
+            path_key_kinds,
+            Row {
                 depth,
                 key,
                 is_sequence_item,
                 node: YamlNode::Null,
-            });
-            rows.len() - 1
-        }
-        serde_yaml::Value::Bool(b) => {
-            rows.push(Row {
+            },
+            path_key_kind,
+        ),
+        serde_yaml::Value::Bool(b) => push_indexed_row(
+            rows,
+            path_key_kinds,
+            Row {
                 depth,
                 key,
                 is_sequence_item,
                 node: YamlNode::Boolean(*b),
-            });
-            rows.len() - 1
-        }
-        serde_yaml::Value::Number(n) => {
-            rows.push(Row {
+            },
+            path_key_kind,
+        ),
+        serde_yaml::Value::Number(n) => push_indexed_row(
+            rows,
+            path_key_kinds,
+            Row {
                 depth,
                 key,
                 is_sequence_item,
                 node: YamlNode::Number(n.clone()),
-            });
-            rows.len() - 1
-        }
-        serde_yaml::Value::String(s) => {
-            rows.push(Row {
+            },
+            path_key_kind,
+        ),
+        serde_yaml::Value::String(s) => push_indexed_row(
+            rows,
+            path_key_kinds,
+            Row {
                 depth,
                 key,
                 is_sequence_item,
                 node: YamlNode::String(s.clone()),
-            });
-            rows.len() - 1
-        }
+            },
+            path_key_kind,
+        ),
         serde_yaml::Value::Sequence(seq) => {
             if seq.is_empty() {
-                rows.push(Row {
+                return push_indexed_row(
+                    rows,
+                    path_key_kinds,
+                    Row {
+                        depth,
+                        key,
+                        is_sequence_item,
+                        node: YamlNode::Container(ContainerNode::Empty {
+                            typ: ContainerType::Array,
+                        }),
+                    },
+                    path_key_kind,
+                );
+            }
+
+            let open_index = push_indexed_row(
+                rows,
+                path_key_kinds,
+                Row {
                     depth,
                     key,
                     is_sequence_item,
-                    node: YamlNode::Container(ContainerNode::Empty {
+                    node: YamlNode::Container(ContainerNode::Open {
                         typ: ContainerType::Array,
+                        collapsed: false,
+                        close_index: 0,
                     }),
-                });
-                return rows.len() - 1;
-            }
-
-            let open_index = rows.len();
-            rows.push(Row {
-                depth,
-                key,
-                is_sequence_item,
-                node: YamlNode::Container(ContainerNode::Open {
-                    typ: ContainerType::Array,
-                    collapsed: false,
-                    close_index: 0,
-                }),
-            });
+                },
+                path_key_kind,
+            );
 
             for item in seq {
-                process_value(item, rows, depth + 1, None, true);
+                process_value(
+                    item,
+                    rows,
+                    path_key_kinds,
+                    depth + 1,
+                    None,
+                    PathKeyKind::None,
+                    true,
+                );
             }
 
-            let close_index = rows.len();
-            rows.push(Row {
-                depth,
-                key: None,
-                is_sequence_item: false,
-                node: YamlNode::Container(ContainerNode::Close {
-                    typ: ContainerType::Array,
-                    collapsed: false,
-                    open_index,
-                }),
-            });
+            let close_index = push_indexed_row(
+                rows,
+                path_key_kinds,
+                Row {
+                    depth,
+                    key: None,
+                    is_sequence_item: false,
+                    node: YamlNode::Container(ContainerNode::Close {
+                        typ: ContainerType::Array,
+                        collapsed: false,
+                        open_index,
+                    }),
+                },
+                PathKeyKind::None,
+            );
 
             rows[open_index].node = YamlNode::Container(ContainerNode::Open {
                 typ: ContainerType::Array,
@@ -492,45 +591,66 @@ fn process_value(
         }
         serde_yaml::Value::Mapping(map) => {
             if map.is_empty() {
-                rows.push(Row {
+                return push_indexed_row(
+                    rows,
+                    path_key_kinds,
+                    Row {
+                        depth,
+                        key,
+                        is_sequence_item,
+                        node: YamlNode::Container(ContainerNode::Empty {
+                            typ: ContainerType::Object,
+                        }),
+                    },
+                    path_key_kind,
+                );
+            }
+
+            let open_index = push_indexed_row(
+                rows,
+                path_key_kinds,
+                Row {
                     depth,
                     key,
                     is_sequence_item,
-                    node: YamlNode::Container(ContainerNode::Empty {
+                    node: YamlNode::Container(ContainerNode::Open {
                         typ: ContainerType::Object,
+                        collapsed: false,
+                        close_index: 0,
                     }),
-                });
-                return rows.len() - 1;
-            }
-
-            let open_index = rows.len();
-            rows.push(Row {
-                depth,
-                key,
-                is_sequence_item,
-                node: YamlNode::Container(ContainerNode::Open {
-                    typ: ContainerType::Object,
-                    collapsed: false,
-                    close_index: 0,
-                }),
-            });
+                },
+                path_key_kind,
+            );
 
             for (mapping_key, map_value) in map {
                 let key = normalize_mapping_key_for_display(mapping_key);
-                process_value(map_value, rows, depth + 1, key, false);
+                let path_key_kind = PathKeyKind::from_mapping_key(mapping_key);
+                process_value(
+                    map_value,
+                    rows,
+                    path_key_kinds,
+                    depth + 1,
+                    key,
+                    path_key_kind,
+                    false,
+                );
             }
 
-            let close_index = rows.len();
-            rows.push(Row {
-                depth,
-                key: None,
-                is_sequence_item: false,
-                node: YamlNode::Container(ContainerNode::Close {
-                    typ: ContainerType::Object,
-                    collapsed: false,
-                    open_index,
-                }),
-            });
+            let close_index = push_indexed_row(
+                rows,
+                path_key_kinds,
+                Row {
+                    depth,
+                    key: None,
+                    is_sequence_item: false,
+                    node: YamlNode::Container(ContainerNode::Close {
+                        typ: ContainerType::Object,
+                        collapsed: false,
+                        open_index,
+                    }),
+                },
+                PathKeyKind::None,
+            );
 
             rows[open_index].node = YamlNode::Container(ContainerNode::Open {
                 typ: ContainerType::Object,
@@ -544,34 +664,47 @@ fn process_value(
 }
 
 pub fn create_rows<'a, T: IntoIterator<Item = &'a serde_yaml::Value>>(iter: T) -> Vec<Row> {
+    create_indexed_rows(iter).rows
+}
+
+pub(super) fn create_indexed_rows<'a, T: IntoIterator<Item = &'a serde_yaml::Value>>(
+    iter: T,
+) -> IndexedRows {
     let mut rows = Vec::new();
+    let mut path_key_kinds = Vec::new();
     for (index, value) in iter.into_iter().enumerate() {
         if index > 0 {
-            rows.push(Row {
-                depth: 0,
-                key: None,
-                node: YamlNode::DocumentSeparator,
-                is_sequence_item: false,
-            });
+            push_indexed_row(
+                &mut rows,
+                &mut path_key_kinds,
+                Row {
+                    depth: 0,
+                    key: None,
+                    node: YamlNode::DocumentSeparator,
+                    is_sequence_item: false,
+                },
+                PathKeyKind::None,
+            );
         }
-        process_value(value, &mut rows, 0, None, false);
+        process_value(
+            value,
+            &mut rows,
+            &mut path_key_kinds,
+            0,
+            None,
+            PathKeyKind::None,
+            false,
+        );
     }
-    rows
+    IndexedRows {
+        rows,
+        path_key_kinds,
+    }
 }
 
 #[derive(Debug)]
 pub struct PathIterator<'a> {
     stack: Vec<(String, &'a serde_yaml::Value)>,
-}
-
-impl PathIterator<'_> {
-    fn escape_path_key(key: &str) -> String {
-        if key.contains('.') || key.contains('-') || key.contains('@') {
-            format!("\"{}\"", key)
-        } else {
-            key.to_string()
-        }
-    }
 }
 
 impl Iterator for PathIterator<'_> {
@@ -587,22 +720,20 @@ impl Iterator for PathIterator<'_> {
                     for (key, val) in map {
                         match key {
                             serde_yaml::Value::String(key) => {
-                                let escaped = Self::escape_path_key(key);
-                                let new_path = if current_path == "." {
-                                    format!(".{}", escaped)
-                                } else {
-                                    format!("{}.{}", current_path, escaped)
-                                };
+                                let new_path = append_string_key(&current_path, key);
                                 self.stack.push((new_path, val));
                             }
                             serde_yaml::Value::Number(n) => {
-                                self.stack.push((format!("{}[{}]", current_path, n), val));
+                                self.stack
+                                    .push((append_bracket(&current_path, &n.to_string()), val));
                             }
                             serde_yaml::Value::Bool(b) => {
-                                self.stack.push((format!("{}[{}]", current_path, b), val));
+                                self.stack
+                                    .push((append_bracket(&current_path, &b.to_string()), val));
                             }
                             serde_yaml::Value::Null => {
-                                self.stack.push((format!("{}[null]", current_path), val));
+                                self.stack
+                                    .push((append_bracket(&current_path, "null"), val));
                             }
                             _ => {}
                         }
@@ -610,7 +741,8 @@ impl Iterator for PathIterator<'_> {
                 }
                 serde_yaml::Value::Sequence(seq) => {
                     for (i, val) in seq.iter().enumerate() {
-                        self.stack.push((format!("{}[{}]", current_path, i), val));
+                        self.stack
+                            .push((append_bracket(&current_path, &i.to_string()), val));
                     }
                 }
                 _ => {}

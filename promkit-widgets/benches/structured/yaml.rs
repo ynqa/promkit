@@ -65,6 +65,12 @@ fn benchmark_fixture(c: &mut Criterion, path: &Path) {
         b.iter(|| black_box(state.create_graphemes_in_viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT)));
     });
 
+    state.document.tail();
+    group.bench_function("selected_path/tail", |b| {
+        b.iter(|| black_box(state.document.selected_path()));
+    });
+
+    state.document.head();
     let mut forward = true;
     group.bench_function("cursor_only", |b| {
         b.iter(|| {
