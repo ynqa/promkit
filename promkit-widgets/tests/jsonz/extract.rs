@@ -28,6 +28,7 @@ fn extracts_visible_rows() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
+                child_count: 3,
             }),
         }
     );
@@ -94,6 +95,7 @@ fn extracts_a_collapsed_open_container() {
                 typ: ContainerType::Object,
                 collapsed: true,
                 close_index: 4,
+                child_count: 2,
             }),
         }
     );
@@ -150,6 +152,7 @@ fn extracts_a_nested_structure() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
+                child_count: 1,
             }),
         }
     );
@@ -261,6 +264,7 @@ fn extracts_complex_nested_collapsed_containers() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
+                child_count: 1,
             }),
         }
     );

@@ -70,6 +70,16 @@ impl ContainerType {
         }
     }
 
+    #[cfg(any(feature = "json", feature = "yaml"))]
+    fn child_count_label(&self, count: usize) -> String {
+        let unit = match self {
+            Self::Object => "key",
+            Self::Array => "item",
+        };
+        let plural = if count == 1 { "" } else { "s" };
+        format!(" ({count} {unit}{plural})")
+    }
+
     /// Collapsed preview string of the container.
     pub fn collapsed_preview(&self) -> &'static str {
         match self {
@@ -86,11 +96,13 @@ pub enum ContainerNode {
     /// An empty container (e.g., `{}` or `[]`).
     Empty { typ: ContainerType },
     /// An opening container (e.g., `{` or `[`), with information
-    /// about whether it's collapsed and its corresponding closing index.
+    /// about whether it's collapsed, its corresponding closing index, and child count.
     Open {
         typ: ContainerType,
         collapsed: bool,
         close_index: usize,
+        /// Number of immediate array elements or object entries.
+        child_count: usize,
     },
     /// A closing container (e.g., `}` or `]`), with information
     /// about whether it's collapsed and its corresponding opening index.

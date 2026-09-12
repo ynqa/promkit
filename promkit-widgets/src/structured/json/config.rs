@@ -92,6 +92,15 @@ pub struct Config {
     pub lines: Option<usize>,
     /// Whether to display stable one-based line numbers to the left of the content.
     pub show_line_numbers: bool,
+    /// Display immediate child counts next to collapsed and empty containers.
+    /// Disabled by default; changing this does not change folding state.
+    pub show_child_count: bool,
+    /// Style for child count annotations, such as ` (3 items)` or ` (2 keys)`.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
+    pub child_count_style: ContentStyle,
 }
 
 impl Default for Config {
@@ -110,6 +119,8 @@ impl Default for Config {
             overflow_mode: OverflowMode::default(),
             lines: Default::default(),
             show_line_numbers: false,
+            show_child_count: false,
+            child_count_style: Default::default(),
         }
     }
 }
@@ -174,8 +185,19 @@ impl Config {
                         parts.push(
                             StyledGraphemes::from(typ.empty_str()).apply_style(bracket_style),
                         );
+                        if self.show_child_count {
+                            parts.push(
+                                StyledGraphemes::from(typ.child_count_label(0))
+                                    .apply_style(self.child_count_style),
+                            );
+                        }
                     }
-                    ContainerNode::Open { typ, collapsed, .. } => {
+                    ContainerNode::Open {
+                        typ,
+                        collapsed,
+                        child_count,
+                        ..
+                    } => {
                         let bracket_style = match typ {
                             ContainerType::Object => self.curly_brackets_style,
                             ContainerType::Array => self.square_brackets_style,
@@ -185,6 +207,12 @@ impl Config {
                                 StyledGraphemes::from(typ.collapsed_preview())
                                     .apply_style(bracket_style),
                             );
+                            if self.show_child_count {
+                                parts.push(
+                                    StyledGraphemes::from(typ.child_count_label(*child_count))
+                                        .apply_style(self.child_count_style),
+                                );
+                            }
                         } else {
                             parts.push(
                                 StyledGraphemes::from(typ.open_str()).apply_style(bracket_style),
@@ -264,6 +292,83 @@ mod tests {
     mod config {
         use super::*;
 
+        mod render_content_rows {
+            use super::*;
+            use crate::structured::json::Document;
+            use promkit_core::crossterm::style::Color;
+
+            #[test]
+            fn annotates_collapsed_and_empty_containers_without_changing_state() {
+                let config = Config {
+                    show_child_count: true,
+                    ..Default::default()
+                };
+                for (input, expected) in [
+                    ("[]", "[] (0 items)"),
+                    ("{}", "{} (0 keys)"),
+                    ("[1]", "[…] (1 item)"),
+                    ("[1, [2, 3]]", "[…] (2 items)"),
+                    (r#"{"x": []}"#, "{…} (1 key)"),
+                    (r#"{"a": [], "b": {}}"#, "{…} (2 keys)"),
+                ] {
+                    let mut document = Document::from_str(input).unwrap();
+                    document.set_nodes_visibility(true);
+                    let before = document.rows().to_vec();
+                    let visible = document.visible_rows();
+                    assert_eq!(
+                        config.render_content_rows(&visible, 0)[0].to_string(),
+                        expected
+                    );
+                    assert_eq!(
+                        Config::default().render_content_rows(&visible, 0)[0].to_string(),
+                        expected.split(" (").next().unwrap()
+                    );
+                    assert_eq!(document.rows(), before);
+                }
+                let document = Document::from_str("[1, 2]").unwrap();
+                let rows = document.visible_rows();
+                assert_eq!(
+                    config.render_content_rows(&rows, 0),
+                    Config::default().render_content_rows(&rows, 0)
+                );
+            }
+
+            #[test]
+            fn styles_annotations_and_respects_width_limits() {
+                let mut document = Document::from_str("[1, 2]").unwrap();
+                document.set_nodes_visibility(true);
+                let rows = document.visible_rows();
+                let style = ContentStyle {
+                    foreground_color: Some(Color::Cyan),
+                    ..Default::default()
+                };
+                let mut config = Config {
+                    show_child_count: true,
+                    child_count_style: style,
+                    ..Default::default()
+                };
+                let expected: StyledGraphemes = [
+                    StyledGraphemes::from("[…]"),
+                    StyledGraphemes::from(" (2 items)").apply_style(style),
+                ]
+                .into_iter()
+                .collect();
+                assert_eq!(
+                    config.render_content_rows(&rows, 0),
+                    [expected.apply_attribute(config.active_item_attribute)]
+                );
+                let truncated = config.render_terminal_rows(&rows, 7);
+                assert_eq!(truncated[0].to_string(), "[…] (2…");
+                config.overflow_mode = OverflowMode::Wrap;
+                let wrapped = config.render_terminal_rows(&rows, 7);
+                assert!(wrapped.iter().all(|line| line.widths() <= 7));
+                assert_eq!(
+                    wrapped.iter().map(ToString::to_string).collect::<String>(),
+                    "[…] (2 items)"
+                );
+            }
+        }
+
         mod render_terminal_rows {
             use super::*;
 
@@ -336,6 +441,8 @@ mod tests {
                 obj.remove("overflow_mode");
                 obj.remove("lines");
                 obj.remove("show_line_numbers");
+                obj.remove("show_child_count");
+                obj.remove("child_count_style");
 
                 let formatter: Config = serde_json::from_value(value).unwrap();
 
@@ -345,6 +452,8 @@ mod tests {
                 assert_eq!(formatter.overflow_mode, OverflowMode::Truncate);
                 assert_eq!(formatter.lines, None);
                 assert!(!formatter.show_line_numbers);
+                assert!(!formatter.show_child_count);
+                assert_eq!(formatter.child_count_style, ContentStyle::default());
             }
 
             #[test]
@@ -353,6 +462,8 @@ mod tests {
                 indent = 4
                 lines = 7
                 show_line_numbers = true
+                show_child_count = true
+                child_count_style = "fg=cyan"
                 curly_brackets_style = "attr=bold"
                 square_brackets_style = "attr=bold"
                 key_style = "fg=cyan"
@@ -370,6 +481,11 @@ mod tests {
                 assert_eq!(formatter.indent, 4);
                 assert_eq!(formatter.lines, Some(7));
                 assert!(formatter.show_line_numbers);
+                assert!(formatter.show_child_count);
+                assert_eq!(
+                    formatter.child_count_style.foreground_color,
+                    Some(Color::Cyan)
+                );
                 assert_eq!(
                     formatter.curly_brackets_style.attributes,
                     Attributes::from(Attribute::Bold),

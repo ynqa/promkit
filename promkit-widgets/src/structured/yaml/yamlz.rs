@@ -241,6 +241,7 @@ impl RowOperation for Vec<Row> {
                 typ,
                 collapsed,
                 close_index,
+                child_count,
             }) => {
                 let new_collapsed = !collapsed;
 
@@ -250,6 +251,7 @@ impl RowOperation for Vec<Row> {
                         typ: typ.clone(),
                         collapsed: new_collapsed,
                         close_index,
+                        child_count,
                     },
                 )
                 .expect("container open node must be present");
@@ -278,6 +280,12 @@ impl RowOperation for Vec<Row> {
                 open_index,
             }) => {
                 let new_collapsed = !collapsed;
+                let Some(ContainerNode::Open { child_count, .. }) =
+                    TagAwareContainer::get(&self[open_index].node)
+                else {
+                    unreachable!("paired container must be open");
+                };
+                let child_count = *child_count;
 
                 self[target].node = TagAwareContainer::replace(
                     &self[target].node,
@@ -295,6 +303,7 @@ impl RowOperation for Vec<Row> {
                         typ,
                         collapsed: new_collapsed,
                         close_index: target,
+                        child_count,
                     },
                 )
                 .expect("container open node must be present");
@@ -310,7 +319,10 @@ impl RowOperation for Vec<Row> {
             let container = TagAwareContainer::get(&row.node).cloned();
             match container {
                 Some(ContainerNode::Open {
-                    typ, close_index, ..
+                    typ,
+                    close_index,
+                    child_count,
+                    ..
                 }) => {
                     row.node = TagAwareContainer::replace(
                         &row.node,
@@ -318,6 +330,7 @@ impl RowOperation for Vec<Row> {
                             typ,
                             collapsed,
                             close_index,
+                            child_count,
                         },
                     )
                     .expect("container open node must be present");
@@ -548,6 +561,7 @@ fn process_value(
                         typ: ContainerType::Array,
                         collapsed: false,
                         close_index: 0,
+                        child_count: seq.len(),
                     }),
                 },
                 path_key_kind,
@@ -585,6 +599,7 @@ fn process_value(
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
+                child_count: seq.len(),
             });
 
             open_index
@@ -617,6 +632,7 @@ fn process_value(
                         typ: ContainerType::Object,
                         collapsed: false,
                         close_index: 0,
+                        child_count: map.len(),
                     }),
                 },
                 path_key_kind,
@@ -656,6 +672,7 @@ fn process_value(
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
+                child_count: map.len(),
             });
 
             open_index

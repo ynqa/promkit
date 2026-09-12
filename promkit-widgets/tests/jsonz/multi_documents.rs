@@ -35,6 +35,7 @@ fn creates_rows_for_multiple_documents() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 3,
+                child_count: 2,
             }),
         }
     );
@@ -76,6 +77,7 @@ fn creates_rows_for_multiple_documents() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 7,
+                child_count: 2,
             }),
         }
     );
@@ -115,6 +117,7 @@ fn creates_rows_for_multiple_documents() {
             typ: ContainerType::Object,
             collapsed: true,
             close_index: 3,
+            child_count: 2,
         })
     );
     assert_eq!(
@@ -169,6 +172,7 @@ fn creates_rows_for_mixed_documents() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
+                child_count: 1,
             }),
         }
     );
@@ -181,6 +185,7 @@ fn creates_rows_for_mixed_documents() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 5,
+                child_count: 3,
             }),
         }
     );
@@ -206,6 +211,7 @@ fn creates_rows_for_mixed_documents() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 14,
+                child_count: 2,
             }),
         }
     );
@@ -219,6 +225,7 @@ fn creates_rows_for_mixed_documents() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
+                child_count: 1,
             }),
         }
     );
@@ -234,6 +241,7 @@ fn creates_rows_for_mixed_documents() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 10,
+                child_count: 1,
             }),
         }
     );
@@ -265,6 +273,7 @@ fn creates_rows_for_mixed_documents() {
             typ: ContainerType::Array,
             collapsed: true,
             close_index: 14,
+            child_count: 2,
         })
     );
 }

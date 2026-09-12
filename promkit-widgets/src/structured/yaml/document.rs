@@ -93,6 +93,26 @@ impl Document {
         &self.rows
     }
 
+    /// Returns the number of immediate children of the container at a zero-based
+    /// index in [`Self::rows`], independently of its folding state.
+    ///
+    /// Empty containers return `Some(0)`. Closing rows return their opening
+    /// container's count. Scalars, document separators, and out-of-bounds indices
+    /// return `None`. YAML tags do not affect the count.
+    pub fn child_count(&self, row_index: usize) -> Option<usize> {
+        let container = TagAwareContainer::get(&self.rows.get(row_index)?.node)?;
+        match container {
+            ContainerNode::Empty { .. } => Some(0),
+            ContainerNode::Open { child_count, .. } => Some(*child_count),
+            ContainerNode::Close { open_index, .. } => {
+                match TagAwareContainer::get(&self.rows.get(*open_index)?.node)? {
+                    ContainerNode::Open { child_count, .. } => Some(*child_count),
+                    _ => None,
+                }
+            }
+        }
+    }
+
     /// Extract rows from the current cursor position.
     pub fn extract_rows_from_current(&self, n: usize) -> Vec<Row> {
         self.rows.extract(self.position, n)
@@ -507,6 +527,88 @@ second: [1, 2]
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         Document::new(values.iter())
+    }
+
+    mod child_count {
+        use super::*;
+
+        #[test]
+        fn counts_immediate_children_across_construction_and_folding() {
+            let input = "items: [1, {x: []}]\nempty: {}\nscalar: true\n---\n[null]";
+            let expected = [
+                Some(3),
+                Some(2),
+                None,
+                Some(1),
+                Some(0),
+                Some(1),
+                Some(2),
+                Some(0),
+                None,
+                Some(3),
+                None,
+                Some(1),
+                None,
+                Some(1),
+            ];
+            for mut document in [
+                via_value(input),
+                Document::from_str(input).unwrap(),
+                Document::from_reader(Cursor::new(input)).unwrap(),
+            ] {
+                let counts = |document: &Document| {
+                    (0..document.rows().len())
+                        .map(|i| document.child_count(i))
+                        .collect::<Vec<_>>()
+                };
+                assert_eq!(counts(&document), expected);
+                assert_eq!(document.child_count(usize::MAX), None);
+                // Toggle from opening and closing rows, including nested containers.
+                for index in [1, 6, 3, 5, 0, 9] {
+                    document.toggle_at(index);
+                    assert_eq!(counts(&document), expected);
+                }
+                for collapsed in [true, false] {
+                    document.set_nodes_visibility(collapsed);
+                    assert_eq!(counts(&document), expected);
+                }
+            }
+        }
+
+        #[test]
+        fn counts_tagged_containers_and_non_string_mapping_keys() {
+            let input =
+                "!Root {seq: !Items [!Map {a: [], b: 1}, {}], empty: !Empty [], scalar: !Scalar x}";
+            for document in [
+                via_value(input),
+                Document::from_str(input).unwrap(),
+                Document::from_reader(Cursor::new(input)).unwrap(),
+            ] {
+                let counts = (0..document.rows().len())
+                    .map(|i| document.child_count(i))
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    counts,
+                    [
+                        Some(3),
+                        Some(2),
+                        Some(2),
+                        Some(0),
+                        None,
+                        Some(2),
+                        Some(0),
+                        Some(2),
+                        Some(0),
+                        None,
+                        Some(3)
+                    ]
+                );
+            }
+            let input = "{1: a, true: b, null: c, ? [a, b] : d}";
+            for document in [via_value(input), Document::from_str(input).unwrap()] {
+                assert_eq!(document.child_count(0), Some(4));
+            }
+        }
     }
 
     mod from_str {
