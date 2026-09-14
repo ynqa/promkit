@@ -10,6 +10,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Patch versions are not included due to maintenance cost considerations.
 > More detailed version tracking may be described as the project matures.
 
+## [0.17.0] - Unreleased
+
+### Added
+
+- Added `Document::child_count(row_index)` to JSON and YAML for querying immediate container sizes independently of folding; empty containers return `Some(0)`, closing rows return their opening container's count, and non-container rows return `None`
+- Added optional child-count annotations for collapsed and empty JSON and YAML containers, such as `[…] (3 items)` and `{…} (2 keys)`, controlled by `show_child_count` and `child_count_style`
+
+### Changed
+
+- Added `child_count` to `ContainerNode::Open`; direct constructors and exhaustive patterns must account for the new field
+- Extended JSON and YAML `Config` with child-count settings, disabled by default; existing serialized configurations retain the previous display, and pretty-printed exports omit annotations
+- Updated `promkit-widgets` to `v0.10.0`
+
+## [0.16.0] - 2026-09-07
+
+### Added
+
+- Added `Document::row_index_for_path` and `Document::move_to_path` to JSON and YAML for navigating jq-style paths, including object keys, array indices, quoted string keys, and YAML non-string scalar keys
+- Added zero-based document indexes to path navigation for JSON Lines and YAML document streams; moving to a path expands folded ancestors while preserving unrelated folding state
+- Added `Document::selected_path()` to retrieve the selected row's document index and jq-style path
+
+### Changed
+
+- Improved selected-path lookup with compact per-row parent and array-index metadata
+- Updated workspace dependencies, `promkit-core` to `v0.6.1`, and `promkit-widgets` to `v0.9.0`
+
+## [0.15.0] - 2026-08-16
+
+### Added
+
+- Added `WidgetLayout::height_policy` with `HeightPolicy::OrderedContent`, `FairContent`, and `FairFill` for content-based allocation, equal-share limits, and padded fill areas
+- Added configurable text overflow through `text::config::OverflowMode`, supporting wrapping by default or truncation with an ellipsis
+- Added terminal regression scenarios for renderer height allocation
+
+### Changed
+
+- Replaced the mutating `PrefixSearch::search` API with `PrefixSearch::query`, which returns an independently selectable `PrefixSearchResult` snapshot
+- Changed prefix-search widget state from `State::prefix_search` to `State::result`, moving candidate selection and navigation to the result snapshot
+- Extracted renderer height allocation into a dedicated module; fair-content panes stay within their equal share without redistributing unused rows
+- Updated `promkit-core` to `v0.6.0` and `promkit-widgets` to `v0.8.0`
+
+### Removed
+
+- Removed the status widget and its `status` Cargo feature from `promkit` and `promkit-widgets`
+
 ## [0.14.0] - 2026-07-28
 
 ### Added
@@ -158,7 +203,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For versions prior to 0.10.0, please refer to the git history or GitHub releases.
 
-[Unreleased]: https://github.com/ynqa/promkit/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/ynqa/promkit/compare/v0.16.0...HEAD
+[0.17.0]: https://github.com/ynqa/promkit/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/ynqa/promkit/releases/tag/v0.16.0
+[0.15.0]: https://github.com/ynqa/promkit/releases/tag/v0.15.0
+[0.14.0]: https://github.com/ynqa/promkit/releases/tag/v0.14.0
 [0.13.0]: https://github.com/ynqa/promkit/releases/tag/v0.13.0
 [0.12.0]: https://github.com/ynqa/promkit/releases/tag/v0.12.0
 [0.11.0]: https://github.com/ynqa/promkit/releases/tag/v0.11.0
