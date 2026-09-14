@@ -126,10 +126,11 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 0,
+                child_count: 0,
             }),
         });
 
-        let mut is_empty = true;
+        let mut child_count = 0;
         while sequence
             .next_element_seed(RowsSeed {
                 rows: &mut *rows,
@@ -138,10 +139,10 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
             })?
             .is_some()
         {
-            is_empty = false;
+            child_count += 1;
         }
 
-        if is_empty {
+        if child_count == 0 {
             rows[open_index].node = JsonNode::Container(ContainerNode::Empty {
                 typ: ContainerType::Array,
             });
@@ -162,6 +163,7 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
             typ: ContainerType::Array,
             collapsed: false,
             close_index,
+            child_count,
         });
         Ok(open_index)
     }
@@ -179,20 +181,21 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 0,
+                child_count: 0,
             }),
         });
 
-        let mut is_empty = true;
+        let mut child_count = 0;
         while let Some(key) = mapping.next_key::<String>()? {
             mapping.next_value_seed(RowsSeed {
                 rows: &mut *rows,
                 depth: depth + 1,
                 key: Some(key),
             })?;
-            is_empty = false;
+            child_count += 1;
         }
 
-        if is_empty {
+        if child_count == 0 {
             rows[open_index].node = JsonNode::Container(ContainerNode::Empty {
                 typ: ContainerType::Object,
             });
@@ -213,6 +216,7 @@ impl<'de> Visitor<'de> for RowsVisitor<'_> {
             typ: ContainerType::Object,
             collapsed: false,
             close_index,
+            child_count,
         });
         Ok(open_index)
     }

@@ -98,6 +98,21 @@ fn benchmark_fixture(c: &mut Criterion, path: &Path) {
         });
     });
 
+    state.document.set_nodes_visibility(true);
+    for show_child_count in [false, true] {
+        state.config.show_child_count = show_child_count;
+        let label = if show_child_count {
+            "counts_visible"
+        } else {
+            "counts_hidden"
+        };
+        group.bench_function(format!("collapsed_viewport_projection/{label}"), |b| {
+            b.iter(|| {
+                black_box(state.create_graphemes_in_viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT))
+            });
+        });
+    }
+
     group.finish();
 }
 

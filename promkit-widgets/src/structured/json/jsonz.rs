@@ -154,15 +154,18 @@ impl RowOperation for Vec<Row> {
                 typ,
                 collapsed,
                 close_index,
+                child_count,
             }) => {
                 let new_collapsed = !collapsed;
                 let close_idx = *close_index;
+                let child_count = *child_count;
                 let typ_clone = typ.clone();
 
                 self[current].node = JsonNode::Container(ContainerNode::Open {
                     typ: typ_clone.clone(),
                     collapsed: new_collapsed,
                     close_index: close_idx,
+                    child_count,
                 });
 
                 self[close_idx].node = JsonNode::Container(ContainerNode::Close {
@@ -180,6 +183,11 @@ impl RowOperation for Vec<Row> {
             }) => {
                 let new_collapsed = !collapsed;
                 let open_idx = *open_index;
+                let JsonNode::Container(ContainerNode::Open { child_count, .. }) =
+                    self[open_idx].node
+                else {
+                    unreachable!("paired container must be open");
+                };
                 let typ_clone = typ.clone();
 
                 self[current].node = JsonNode::Container(ContainerNode::Close {
@@ -192,6 +200,7 @@ impl RowOperation for Vec<Row> {
                     typ: typ_clone,
                     collapsed: new_collapsed,
                     close_index: current,
+                    child_count,
                 });
 
                 if new_collapsed { open_idx } else { current }
@@ -203,13 +212,17 @@ impl RowOperation for Vec<Row> {
     fn set_rows_visibility(&mut self, collapsed: bool) {
         self.par_iter_mut().for_each(|row| {
             if let JsonNode::Container(ContainerNode::Open {
-                typ, close_index, ..
+                typ,
+                close_index,
+                child_count,
+                ..
             }) = &row.node
             {
                 row.node = JsonNode::Container(ContainerNode::Open {
                     typ: typ.clone(),
                     collapsed,
                     close_index: *close_index,
+                    child_count: *child_count,
                 });
             } else if let JsonNode::Container(ContainerNode::Close {
                 typ, open_index, ..
@@ -311,6 +324,7 @@ fn process_value(
                     typ: ContainerType::Array,
                     collapsed: false,
                     close_index: 0,
+                    child_count: arr.len(),
                 }),
             });
 
@@ -333,6 +347,7 @@ fn process_value(
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index,
+                child_count: arr.len(),
             });
 
             open_index
@@ -358,6 +373,7 @@ fn process_value(
                     typ: ContainerType::Object,
                     collapsed: false,
                     close_index: 0,
+                    child_count: obj.len(),
                 }),
             });
 
@@ -380,6 +396,7 @@ fn process_value(
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index,
+                child_count: obj.len(),
             });
 
             open_index

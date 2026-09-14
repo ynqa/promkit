@@ -60,6 +60,26 @@ impl Document {
         &self.rows
     }
 
+    /// Returns the number of immediate children of the container at a zero-based
+    /// index in [`Self::rows`], independently of its folding state.
+    ///
+    /// Empty containers return `Some(0)`. Closing rows return their opening
+    /// container's count. Scalars and out-of-bounds indices return `None`.
+    pub fn child_count(&self, row_index: usize) -> Option<usize> {
+        let container = match &self.rows.get(row_index)?.node {
+            JsonNode::Container(container) => container,
+            _ => return None,
+        };
+        match container {
+            ContainerNode::Empty { .. } => Some(0),
+            ContainerNode::Open { child_count, .. } => Some(*child_count),
+            ContainerNode::Close { open_index, .. } => match &self.rows.get(*open_index)?.node {
+                JsonNode::Container(ContainerNode::Open { child_count, .. }) => Some(*child_count),
+                _ => None,
+            },
+        }
+    }
+
     /// Extract rows from the current cursor position.
     pub fn extract_rows_from_current(&self, n: usize) -> Vec<Row> {
         self.rows.extract(self.position, n)
@@ -383,6 +403,52 @@ mod tests {
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         Document::new(values.iter())
+    }
+
+    mod child_count {
+        use super::*;
+
+        #[test]
+        fn counts_immediate_children_across_construction_and_folding() {
+            let input = r#"{"items":[1,{"x":[]}],"empty":{},"scalar":true} [null]"#;
+            let expected = [
+                Some(3),
+                Some(2),
+                None,
+                Some(1),
+                Some(0),
+                Some(1),
+                Some(2),
+                Some(0),
+                None,
+                Some(3),
+                Some(1),
+                None,
+                Some(1),
+            ];
+            for mut document in [
+                via_value(input),
+                Document::from_str(input).unwrap(),
+                Document::from_reader(Cursor::new(input)).unwrap(),
+            ] {
+                let counts = |document: &Document| {
+                    (0..document.rows().len())
+                        .map(|i| document.child_count(i))
+                        .collect::<Vec<_>>()
+                };
+                assert_eq!(counts(&document), expected);
+                assert_eq!(document.child_count(usize::MAX), None);
+                // Toggle from opening and closing rows, including nested containers.
+                for index in [1, 6, 3, 5, 0, 9] {
+                    document.toggle_at(index);
+                    assert_eq!(counts(&document), expected);
+                }
+                for collapsed in [true, false] {
+                    document.set_nodes_visibility(collapsed);
+                    assert_eq!(counts(&document), expected);
+                }
+            }
+        }
     }
 
     mod from_str {

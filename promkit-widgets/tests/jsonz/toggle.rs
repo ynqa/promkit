@@ -29,7 +29,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
-            close_index: 3
+            close_index: 3,
+            child_count: 1,
         })
     );
     assert_eq!(
@@ -48,7 +49,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
-            close_index: 8
+            close_index: 8,
+            child_count: 3,
         })
     );
     assert_eq!(
@@ -67,7 +69,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
-            close_index: 9
+            close_index: 9,
+            child_count: 2,
         })
     );
     assert_eq!(
@@ -85,7 +88,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
-            close_index: 9
+            close_index: 9,
+            child_count: 2,
         })
     );
     assert_eq!(
@@ -103,7 +107,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: false,
-            close_index: 8
+            close_index: 8,
+            child_count: 3,
         })
     );
     assert_eq!(
@@ -121,7 +126,8 @@ fn collapses_open_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: false,
-            close_index: 3
+            close_index: 3,
+            child_count: 1,
         })
     );
     assert_eq!(
@@ -161,7 +167,8 @@ fn expands_collapsed_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
-            close_index: 3
+            close_index: 3,
+            child_count: 1,
         })
     );
     assert_eq!(
@@ -180,7 +187,8 @@ fn expands_collapsed_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Array,
             collapsed: true,
-            close_index: 8
+            close_index: 8,
+            child_count: 3,
         })
     );
     assert_eq!(
@@ -199,7 +207,8 @@ fn expands_collapsed_containers() {
         JsonNode::Container(ContainerNode::Open {
             typ: ContainerType::Object,
             collapsed: true,
-            close_index: 9
+            close_index: 9,
+            child_count: 2,
         })
     );
     assert_eq!(

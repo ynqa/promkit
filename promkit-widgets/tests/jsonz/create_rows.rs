@@ -68,6 +68,7 @@ fn creates_rows_for_a_nested_object() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 6,
+                child_count: 1,
             }),
         }
     );
@@ -81,6 +82,7 @@ fn creates_rows_for_a_nested_object() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 5,
+                child_count: 1,
             }),
         }
     );
@@ -94,6 +96,7 @@ fn creates_rows_for_a_nested_object() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
+                child_count: 1,
             }),
         }
     );
@@ -175,6 +178,7 @@ fn creates_rows_for_a_nested_array() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 8,
+                child_count: 1,
             }),
         }
     );
@@ -188,6 +192,7 @@ fn creates_rows_for_a_nested_array() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 7,
+                child_count: 1,
             }),
         }
     );
@@ -201,6 +206,7 @@ fn creates_rows_for_a_nested_array() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 6,
+                child_count: 3,
             }),
         }
     );
@@ -290,6 +296,7 @@ fn creates_rows_for_mixed_containers() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 14,
+                child_count: 2,
             }),
         }
     );
@@ -303,6 +310,7 @@ fn creates_rows_for_mixed_containers() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 10,
+                child_count: 2,
             }),
         }
     );
@@ -316,6 +324,7 @@ fn creates_rows_for_mixed_containers() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 4,
+                child_count: 1,
             }),
         }
     );
@@ -351,6 +360,7 @@ fn creates_rows_for_mixed_containers() {
                 typ: ContainerType::Array,
                 collapsed: false,
                 close_index: 9,
+                child_count: 3,
             }),
         }
     );
@@ -401,6 +411,7 @@ fn creates_rows_for_mixed_containers() {
                 typ: ContainerType::Object,
                 collapsed: false,
                 close_index: 13,
+                child_count: 1,
             }),
         }
     );

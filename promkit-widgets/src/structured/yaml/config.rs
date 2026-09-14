@@ -103,6 +103,15 @@ pub struct Config {
     pub lines: Option<usize>,
     /// Whether to display stable one-based line numbers to the left of the content.
     pub show_line_numbers: bool,
+    /// Display immediate child counts next to collapsed and empty containers.
+    /// Disabled by default; changing this does not change folding state.
+    pub show_child_count: bool,
+    /// Style for child count annotations, such as ` (3 items)` or ` (2 keys)`.
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "termcfg::crossterm_config::content_style_serde")
+    )]
+    pub child_count_style: ContentStyle,
 }
 
 impl Default for Config {
@@ -122,6 +131,8 @@ impl Default for Config {
             overflow_mode: OverflowMode::default(),
             lines: None,
             show_line_numbers: false,
+            show_child_count: false,
+            child_count_style: Default::default(),
         }
     }
 }
@@ -156,15 +167,42 @@ impl Config {
             ContainerType::Object => self.map_style,
             ContainerType::Array => self.sequence_style,
         };
-        StyledGraphemes::from(typ.empty_str()).apply_style(style)
+        self.with_child_count(
+            StyledGraphemes::from(typ.empty_str()).apply_style(style),
+            typ,
+            0,
+        )
     }
 
-    fn render_collapsed_marker(&self, typ: &ContainerType) -> StyledGraphemes {
+    fn render_collapsed_marker(&self, typ: &ContainerType, child_count: usize) -> StyledGraphemes {
         let style = match typ {
             ContainerType::Object => self.map_style,
             ContainerType::Array => self.sequence_style,
         };
-        StyledGraphemes::from(typ.collapsed_preview()).apply_style(style)
+        self.with_child_count(
+            StyledGraphemes::from(typ.collapsed_preview()).apply_style(style),
+            typ,
+            child_count,
+        )
+    }
+
+    fn with_child_count(
+        &self,
+        marker: StyledGraphemes,
+        typ: &ContainerType,
+        count: usize,
+    ) -> StyledGraphemes {
+        if self.show_child_count {
+            [
+                marker,
+                StyledGraphemes::from(typ.child_count_label(count))
+                    .apply_style(self.child_count_style),
+            ]
+            .into_iter()
+            .collect()
+        } else {
+            marker
+        }
     }
 
     fn render_node(&self, node: &YamlNode) -> Option<StyledGraphemes> {
@@ -193,8 +231,9 @@ impl Config {
                 ContainerNode::Open {
                     typ,
                     collapsed: true,
+                    child_count,
                     ..
-                } => Some(self.render_collapsed_marker(typ)),
+                } => Some(self.render_collapsed_marker(typ, *child_count)),
                 ContainerNode::Open {
                     collapsed: false, ..
                 } => None,
@@ -319,6 +358,124 @@ mod tests {
     mod config {
         use super::*;
 
+        mod render_content_rows {
+            use super::*;
+            use crate::structured::yaml::Document;
+            use promkit_core::crossterm::style::Color;
+
+            #[test]
+            fn annotates_collapsed_and_empty_containers_without_changing_state() {
+                let config = Config {
+                    show_child_count: true,
+                    ..Default::default()
+                };
+                for (input, expected) in [
+                    ("[]", "[] (0 items)"),
+                    ("{}", "{} (0 keys)"),
+                    ("[1]", "[…] (1 item)"),
+                    ("[1, [2, 3]]", "[…] (2 items)"),
+                    (r#"{"x": []}"#, "{…} (1 key)"),
+                    (r#"{"a": [], "b": {}}"#, "{…} (2 keys)"),
+                ] {
+                    let mut document = Document::from_str(input).unwrap();
+                    document.set_nodes_visibility(true);
+                    let before = document.rows().to_vec();
+                    let visible = document.visible_rows();
+                    assert_eq!(
+                        config.render_content_rows(&visible, 0)[0].to_string(),
+                        expected
+                    );
+                    assert_eq!(
+                        Config::default().render_content_rows(&visible, 0)[0].to_string(),
+                        expected.split(" (").next().unwrap()
+                    );
+                    assert_eq!(document.rows(), before);
+                }
+                let document = Document::from_str("[1, 2]").unwrap();
+                let rows = document.visible_rows();
+                assert_eq!(
+                    config.render_content_rows(&rows, 0),
+                    Config::default().render_content_rows(&rows, 0)
+                );
+            }
+
+            #[test]
+            fn annotates_tagged_containers_on_sequence_mapping_lines() {
+                let mut document =
+                    Document::from_str("- items: !Items [1, 2]\n  empty: !Empty {}\n").unwrap();
+                document.toggle_at(2);
+                let config = Config {
+                    show_child_count: true,
+                    ..Default::default()
+                };
+                let lines = config
+                    .render_content_rows(&document.visible_rows(), 0)
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    lines,
+                    [
+                        "- items: !Items […] (2 items)",
+                        "  empty: !Empty {} (0 keys)"
+                    ]
+                );
+            }
+
+            #[test]
+            fn styles_annotations_and_respects_width_limits() {
+                let mut document = Document::from_str("[1, 2]").unwrap();
+                document.set_nodes_visibility(true);
+                let rows = document.visible_rows();
+                let style = ContentStyle {
+                    foreground_color: Some(Color::Cyan),
+                    ..Default::default()
+                };
+                let mut config = Config {
+                    show_child_count: true,
+                    child_count_style: style,
+                    ..Default::default()
+                };
+                let expected: StyledGraphemes = [
+                    StyledGraphemes::from("[…]"),
+                    StyledGraphemes::from(" (2 items)").apply_style(style),
+                ]
+                .into_iter()
+                .collect();
+                assert_eq!(
+                    config.render_content_rows(&rows, 0),
+                    [expected.apply_attribute(config.active_item_attribute)]
+                );
+                let truncated = config.render_terminal_rows(&rows, 7);
+                assert_eq!(truncated[0].to_string(), "[…] (2…");
+                config.overflow_mode = OverflowMode::Wrap;
+                let wrapped = config.render_terminal_rows(&rows, 7);
+                assert!(wrapped.iter().all(|line| line.widths() <= 7));
+                assert_eq!(
+                    wrapped.iter().map(ToString::to_string).collect::<String>(),
+                    "[…] (2 items)"
+                );
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        mod deserialize {
+            use super::*;
+
+            #[test]
+            fn defaults_and_round_trips_count_settings() {
+                let config: Config = toml::from_str("indent = 2").unwrap();
+                assert!(!config.show_child_count);
+                assert_eq!(config.child_count_style, ContentStyle::default());
+                let config: Config =
+                    toml::from_str("show_child_count = true\nchild_count_style = \"fg=cyan\"")
+                        .unwrap();
+                let restored: Config = toml::from_str(&toml::to_string(&config).unwrap()).unwrap();
+                assert!(restored.show_child_count);
+                assert_eq!(restored.child_count_style, config.child_count_style);
+            }
+        }
+
         mod render_terminal_rows {
             use super::*;
             use crate::structured::ContainerNode;
@@ -334,6 +491,7 @@ mod tests {
                             typ: ContainerType::Object,
                             collapsed: false,
                             close_index: 3,
+                            child_count: 2,
                         }),
                     },
                     Row {

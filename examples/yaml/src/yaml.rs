@@ -108,6 +108,11 @@ impl YamlViewer {
                     overflow_mode: OverflowMode::Wrap,
                     lines: None,
                     show_line_numbers: true,
+                    show_child_count: true,
+                    child_count_style: ContentStyle {
+                        foreground_color: Some(Color::DarkGrey),
+                        ..Default::default()
+                    },
                 },
             },
         }
