@@ -31,6 +31,13 @@ fn tiny_viewport_overflow_wrap_scroll() -> Result<()> {
     ))
 }
 
+#[test]
+fn mouse_disabled_submitted_lines_remain_in_scrollback() -> Result<()> {
+    run(include_str!(
+        "scenarios/mouse_disabled_submitted_lines_remain_in_scrollback.th"
+    ))
+}
+
 fn run(document: &str) -> Result<()> {
     scenario::run_document(document)?;
     Ok(())

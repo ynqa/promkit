@@ -1,0 +1,90 @@
+Scenario "mouse_disabled_submitted_lines_remain_in_scrollback"
+Command "CARGO_BIN_EXE_readline-fixture"
+Arg "--no-mouse"
+Terminal rows 4 cols 24
+Cursor row 4 col 1
+
+Step "start with mouse capture disabled"
+WaitFrontendLineStartsWith "❯❯" timeout 1000ms
+Settle 0ms
+Expect:
+  r00 |························|
+  r01 |························|
+  r02 |························|
+  r03 |❯❯······················|
+
+Step "submit line 1 and display its result"
+Input "01-aaaaaaaaa"
+Input enter
+Settle 100ms
+Expect:
+  r00 |························|
+  r01 |❯❯·01-aaaaaaaaa·········|
+  r02 |result:·"01-aaaaaaaaa"··|
+  r03 |❯❯······················|
+
+Step "submit line 2 and display its result"
+Input "02-bbbbbbbbb"
+Input enter
+Settle 100ms
+Expect:
+  r00 |result:·"01-aaaaaaaaa"··|
+  r01 |❯❯·02-bbbbbbbbb·········|
+  r02 |result:·"02-bbbbbbbbb"··|
+  r03 |❯❯······················|
+
+Step "submit line 3 and display its result"
+Input "03-ccccccccc"
+Input enter
+Settle 100ms
+Expect:
+  r00 |result:·"02-bbbbbbbbb"··|
+  r01 |❯❯·03-ccccccccc·········|
+  r02 |result:·"03-ccccccccc"··|
+  r03 |❯❯······················|
+
+Step "submit line 4 and display its result"
+Input "04-ddddddddd"
+Input enter
+Settle 100ms
+Expect:
+  r00 |result:·"03-ccccccccc"··|
+  r01 |❯❯·04-ddddddddd·········|
+  r02 |result:·"04-ddddddddd"··|
+  r03 |❯❯······················|
+
+Step "scroll back to the first two submitted lines and their results"
+Scroll up 5
+Settle 0ms
+Expect:
+  r00 |❯❯·01-aaaaaaaaa·········|
+  r01 |result:·"01-aaaaaaaaa"··|
+  r02 |❯❯·02-bbbbbbbbb·········|
+  r03 |result:·"02-bbbbbbbbb"··|
+
+Step "read the next submitted line without missing or duplicated rows"
+Scroll down 2
+Settle 0ms
+Expect:
+  r00 |❯❯·02-bbbbbbbbb·········|
+  r01 |result:·"02-bbbbbbbbb"··|
+  r02 |❯❯·03-ccccccccc·········|
+  r03 |result:·"03-ccccccccc"··|
+
+Step "read the last submitted line and its result"
+Scroll down 2
+Settle 0ms
+Expect:
+  r00 |❯❯·03-ccccccccc·········|
+  r01 |result:·"03-ccccccccc"··|
+  r02 |❯❯·04-ddddddddd·········|
+  r03 |result:·"04-ddddddddd"··|
+
+Step "return to the current empty prompt"
+Scroll down 1
+Settle 0ms
+Expect:
+  r00 |result:·"03-ccccccccc"··|
+  r01 |❯❯·04-ddddddddd·········|
+  r02 |result:·"04-ddddddddd"··|
+  r03 |❯❯······················|

@@ -6,11 +6,13 @@ use readline_example::Readline;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let mut modes = TerminalModes::RAW_MODE | TerminalModes::HIDDEN_CURSOR;
+    if !std::env::args().skip(1).any(|arg| arg == "--no-mouse") {
+        modes |= TerminalModes::MOUSE_CAPTURE;
+    }
+
     loop {
         let result = {
-            let modes = TerminalModes::RAW_MODE
-                | TerminalModes::HIDDEN_CURSOR
-                | TerminalModes::MOUSE_CAPTURE;
             let _terminal_session = TerminalSession::try_new(modes)?;
             Readline::default().run().await
         };
