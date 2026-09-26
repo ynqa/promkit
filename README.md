@@ -77,6 +77,8 @@ how applications can compose the widgets they need.
 | [Multiline REPL](#multiline-repl) | Multiline editing in an interactive loop |
 
 Each section includes a command, source link, and recorded demo.
+Demo GIFs and their VHS tapes are stored in [`tapes/`](./tapes/).
+Regenerate them with `bash scripts/render_tapes_gif.sh` (requires VHS).
 
 ### Readline
 
@@ -92,7 +94,7 @@ cargo run --bin readline
 [Composition](./examples/readline/src/lib.rs) /
 [Usage](./examples/readline/src/readline.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/readline.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/readline.gif" width="50%" height="auto">
 
 ### Confirm
 
@@ -107,7 +109,7 @@ cargo run --bin confirm
 
 [Code](./examples/confirm/src/confirm.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/confirm.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/confirm.gif" width="50%" height="auto">
 
 ### Password
 
@@ -122,7 +124,7 @@ cargo run --bin password
 
 [Code](./examples/password/src/password.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/password.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/password.gif" width="50%" height="auto">
 
 ### Form
 
@@ -137,7 +139,7 @@ cargo run --bin form
 
 [Code](./examples/form/src/form.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/form.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/form.gif" width="50%" height="auto">
 
 ### Listbox
 
@@ -151,7 +153,7 @@ cargo run --bin listbox
 
 [Code](./examples/listbox/src/listbox.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/listbox.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/listbox.gif" width="50%" height="auto">
 
 ### QuerySelector
 
@@ -165,7 +167,7 @@ cargo run --bin query-selector
 
 [Code](./examples/query_selector/src/query_selector.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/query_selector.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/query_selector.gif" width="50%" height="auto">
 
 ### Checkbox
 
@@ -179,7 +181,7 @@ cargo run --bin checkbox
 
 [Code](./examples/checkbox/src/checkbox.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/checkbox.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/checkbox.gif" width="50%" height="auto">
 
 ### Tree
 
@@ -193,7 +195,7 @@ cargo run --bin tree
 
 [Code](./examples/tree/src/tree.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/tree.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/tree.gif" width="50%" height="auto">
 
 ### JSON
 
@@ -207,7 +209,7 @@ cargo run --bin json ${PATH_TO_JSON_FILE}
 
 [Code](./examples/json/src/json.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/json.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/json.gif" width="50%" height="auto">
 
 ### YAML
 
@@ -221,7 +223,7 @@ cargo run --bin yaml ${PATH_TO_YAML_FILE}
 
 [Code](./examples/yaml/src/yaml.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/yaml.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/yaml.gif" width="50%" height="auto">
 
 ### CSV
 
@@ -235,7 +237,7 @@ cargo run --bin csv ${PATH_TO_CSV_FILE}
 
 [Code](./examples/csv/src/csv.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/csv.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/csv.gif" width="50%" height="auto">
 
 ### Text
 
@@ -250,7 +252,7 @@ cargo run --bin text
 
 [Code](./examples/text/src/text.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/text.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/text.gif" width="50%" height="auto">
 
 ## Advanced Examples
 
@@ -270,7 +272,7 @@ cargo run --bin async_task
 
 [Code](./examples/async_task/src/async_task.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/async_task.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/async_task.gif" width="50%" height="auto">
 
 ### Multiline REPL
 
@@ -285,7 +287,7 @@ cargo run --bin repl
 
 [Code](./examples/repl/src/repl.rs)
 
-<img src="https://github.com/ynqa/ynqa/blob/master/demo/promkit/repl.gif" width="50%" height="auto">
+<img src="https://raw.githubusercontent.com/ynqa/promkit/main/tapes/repl.gif" width="50%" height="auto">
 
 ## License
 

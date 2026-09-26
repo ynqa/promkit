@@ -12,11 +12,3 @@ Cargo.lock
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
-
-# Ignore GIF files in the tapes directory
-tapes/*.gif
-
-# Keep tape fixtures under version control
-!tapes/*.csv
-!tapes/*.json
-!tapes/*.yaml
