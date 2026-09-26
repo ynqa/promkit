@@ -1,9 +1,9 @@
-Scenario "titled_long_input_resize_roundtrip_clears_stale_rows"
-Command "CARGO_BIN_EXE_titled-readline-fixture"
+Scenario "long_input_resize_roundtrip_clears_stale_rows"
+Command "CARGO_BIN_EXE_readline-fixture"
 Terminal rows 10 cols 60
 Cursor row 10 col 1
 
-Step "spawn after preceding output"
+Step "spawn at the bottom of the screen"
 WaitScreenLineStartsWith "❯❯" timeout 1000ms
 Settle 0ms
 Expect timeout 0ms:
@@ -14,8 +14,8 @@ Expect timeout 0ms:
   r04 |····························································|
   r05 |····························································|
   r06 |····························································|
-  r07 |Build·completed·successfully.·······························|
-  r08 |Hi!·························································|
+  r07 |····························································|
+  r08 |····························································|
   r09 |❯❯··························································|
 
 Step "resize rapidly while input is rendering"
@@ -125,7 +125,7 @@ Expect timeout 0ms:
   r03 |····························································|
   r04 |····························································|
   r05 |····························································|
-  r06 |Build·completed·successfully.·······························|
-  r07 |Hi!·························································|
+  r06 |····························································|
+  r07 |····························································|
   r08 |❯❯·Terminal·prompts·should·remain·stable·when·the·window·shr|
   r09 |inks·and·expands·again······································|

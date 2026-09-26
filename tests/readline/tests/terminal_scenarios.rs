@@ -18,9 +18,9 @@ fn resize_roundtrip_wrap_reflow() -> Result<()> {
 }
 
 #[test]
-fn titled_long_input_resize_roundtrip_clears_stale_rows() -> Result<()> {
+fn long_input_resize_roundtrip_clears_stale_rows() -> Result<()> {
     run(include_str!(
-        "scenarios/titled_long_input_resize_roundtrip_clears_stale_rows.th"
+        "scenarios/long_input_resize_roundtrip_clears_stale_rows.th"
     ))
 }
 

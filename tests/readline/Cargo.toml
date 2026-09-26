@@ -16,7 +16,3 @@ termharness = "0.2.0"
 [[bin]]
 name = "readline-fixture"
 path = "src/readline_fixture.rs"
-
-[[bin]]
-name = "titled-readline-fixture"
-path = "src/titled_readline_fixture.rs"
