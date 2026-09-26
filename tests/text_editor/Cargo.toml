@@ -11,7 +11,7 @@ promkit-widgets = { path = "../../promkit-widgets", features = ["texteditor"] }
 tokio = { workspace = true }
 
 [dev-dependencies]
-termharness = "0.2.0"
+termharness = { workspace = true }
 
 [[bin]]
 name = "text-editor-fixture"
